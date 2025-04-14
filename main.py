@@ -1,4 +1,5 @@
 from flask import Flask, Blueprint, render_template, redirect, send_from_directory, request, jsonify
+import json
 import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -178,6 +179,19 @@ def api_questions():
     else:
         # Placeholder: Replace with actual question saving
         return jsonify({"status": "success"})
+
+@app.route('/upload-config', methods=['POST'])
+def upload_config():
+    config_data = request.json
+    if not config_data:
+        return jsonify({"status": "error", "message": "No data provided"}), 400
+    
+    try:
+        json_object = json.dumps(config_data, separators=(',', ':'))
+        client.upload_from_text("jaffar/configs/jaffarConfig.json", json_object)
+        return jsonify({"status": "success", "message": "Configuration uploaded."}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 # Placeholder for Jaffar and Sultan file serving (adapt as needed)
