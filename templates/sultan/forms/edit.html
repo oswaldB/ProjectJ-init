@@ -114,15 +114,6 @@
                           <input type="text" x-model="option.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Label">
                         </div>
                         <div class="mb-2">
-                          <label class="block text-sm font-medium text-gray-300">Show When Parent Value Is</label>
-                          <select x-model="option.show" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                            <option value="">Select a value</option>
-                            <template x-for="parentOption in field.options" :key="parentOption.name">
-                              <option x-text="parentOption.name" :value="parentOption.name"></option>
-                            </template>
-                          </select>
-                        </div>
-                        <div class="mb-2">
                           <label class="block text-sm font-medium text-gray-300">Template Type</label>
                           <select x-model="option.template" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
                           <option value="text_input">Text Input</option>
