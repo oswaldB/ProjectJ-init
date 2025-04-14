@@ -267,13 +267,9 @@ def api_forms_list():
 
 @app.route('/api/sultan/forms/<form_id>')
 def api_form_get(form_id):
-    email = request.args.get('email')
-    if not email:
-        return jsonify({"error": "Email required"}), 400
-
     try:
         content = client.download_from_text(
-            f'sultan/configs/draft/{email}/forms/{form_id}.json')
+            f'sultan/configs/draft//forms/{form_id}.json')
         return jsonify(json.loads(content))
     except Exception as e:
         logger.error(f"Failed to load form {form_id}: {e}")
@@ -299,11 +295,6 @@ def api_form_save():
     except Exception as e:
         logger.error(f"Failed to save form: {e}")
         return jsonify({"error": "Failed to save form"}), 500
-
-
-@app.route('/questions/url-upload')
-def url_upload():
-    return render_template('sultan/questions/url_upload.html')
 
 
 if __name__ == '__main__':
