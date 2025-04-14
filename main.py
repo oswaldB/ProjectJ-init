@@ -219,12 +219,13 @@ def api_forms_list():
         return jsonify([])
     
     forms = []
-    files = client.list(prefix=f'sultan/configs/draft/{email}/forms/')
+    files = client.list(prefix='sultan/configs/draft/forms/')
     for file in files:
         try:
             content = client.download_from_text(file)
             form = json.loads(content)
-            forms.append(form)
+            if form.get('user_email') == email:
+                forms.append(form)
         except Exception as e:
             logger.error(f"Failed to load form {file}: {e}")
     
@@ -253,8 +254,9 @@ def api_form_save():
         return jsonify({"error": "Email and form required"}), 400
     
     try:
+        form['user_email'] = email
         client.upload_from_text(
-            f'sultan/configs/draft/{email}/forms/{form["id"]}.json',
+            f'sultan/configs/draft/forms/{form["id"]}.json',
             json.dumps(form)
         )
         return jsonify({"status": "success"})

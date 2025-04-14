@@ -27,6 +27,7 @@
         this.form.id = `forms-${Date.now()}`;
       }
       const userEmail = localStorage.getItem('user_email');
+      this.form.user_email = userEmail;
       try {
         await fetch('/api/sultan/forms/save', {
           method: 'POST',
