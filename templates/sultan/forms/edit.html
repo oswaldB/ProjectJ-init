@@ -282,7 +282,7 @@
             </template>
 
             <template x-if="field.type === 'list'">
-              <div x-data="{ values: [] }" class="space-y-2">
+              <div x-data="{ values: [''] }" class="space-y-2">
                 <template x-for="(value, index) in values" :key="index">
                   <div class="flex space-x-2">
                     <input type="text" 
