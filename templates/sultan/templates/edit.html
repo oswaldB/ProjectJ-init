@@ -1,0 +1,240 @@
+
+{% extends "sultan/base.html" %}
+
+{% block title %}Template Editor{% endblock %}
+
+{% block alpine_component %}
+  {
+    page: 'template-editor',
+    template: { id: '', name: '', fields: [] },
+    preview: true,
+    async init() {
+      this.$watch('template', () => {
+        this.saveTemplate();
+      }, { deep: true });
+      const templateId = window.location.pathname.split('/').pop();
+      if (templateId !== 'new') {
+        const userEmail = localStorage.getItem('user_email');
+        try {
+          const response = await fetch(`/api/sultan/templates/${templateId}?email=${userEmail}`);
+          const data = await response.json();
+          if (!response.ok) {
+            showNotification('Template not found', 'error');
+            setTimeout(() => {
+              window.location.href = '/sultan/templates/list';
+            }, 2000);
+            return;
+          }
+          this.template = data;
+        } catch (error) {
+          console.error('Failed to load template:', error);
+          showNotification('Template not found', 'error');
+          window.location.href = '/sultan/templates/list';
+        }
+      }
+    },
+    async saveTemplate() {
+      if (!this.template.id) {
+        this.template.id = `templates-${Date.now()}`;
+      }
+      const userEmail = localStorage.getItem('user_email');
+      if (!userEmail) {
+        console.error('User email not found');
+        return;
+      }
+      this.template.user_email = userEmail;
+      try {
+        await fetch('/api/sultan/templates/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: userEmail, template: this.template })
+        });
+      } catch (error) {
+        console.error('Failed to save template:', error);
+      }
+    },
+    addField() {
+      this.template.fields.push({
+        type: 'text',
+        label: '',
+        description: '',
+        required: false,
+        key: ''
+      });
+    }
+  }
+{% endblock %}
+
+{% block content %}
+<div class="p-6 flex gap-6">
+  <!-- Editor -->
+  <div class="w-1/2">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-white">Template Editor</h1>
+      <div class="space-x-4">
+        <button @click="saveTemplate()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Save</button>
+        <button @click="preview = !preview" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600" x-text="preview ? 'Hide Preview' : 'Show Preview'"></button>
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      <input type="text" x-model.debounce.500ms="template.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Template Name">
+
+      <div class="space-y-4">
+        <template x-for="(field, index) in template.fields" :key="index">
+          <div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
+            <div class="flex justify-between mb-4">
+              <select x-model="field.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
+                <option value="text_input">Text Input</option>
+                <option value="number">Number</option>
+                <option value="single_select">Single Select</option>
+                <option value="multiple_checkbox">Multiple Checkbox</option>
+                <option value="textarea">Long Text</option>
+                <option value="date">Date</option>
+                <option value="list">List</option>
+              </select>
+              <button @click="template.fields.splice(index, 1)" class="text-red-400 hover:text-red-300">Remove</button>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-300">Question Title</label>
+              <input type="text" x-model.debounce.500ms="field.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question title">
+            </div>
+
+            <div class="mt-4 space-y-2">
+              <label class="block text-sm font-medium text-gray-300">Question Description</label>
+              <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
+              <textarea x-model.debounce.500ms="field.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question description" rows="3"></textarea>
+            </div>
+
+            <label class="flex items-center space-x-2 text-white mt-4">
+              <input type="checkbox" x-model="field.required" class="bg-gray-800 border-gray-600">
+              <span>Required</span>
+            </label>
+
+            <div class="mb-2">
+              <label class="block text-sm font-medium text-gray-300">Question Key</label>
+              <div class="relative">
+                <input type="text" x-model="field.key"
+                       @input="field.key = field.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                       class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                       placeholder="Question Key (slug format)">
+              </div>
+            </div>
+
+            <template x-if="['single_select', 'multiple_checkbox'].includes(field.type)">
+              <div class="mt-2 space-y-4">
+                <div class="border-b border-gray-600 pb-4">
+                  <h3 class="text-lg font-medium text-white mb-2">Options</h3>
+                  <div class="space-y-2">
+                    <button @click="field.options = field.options || []; field.options.push({name: '', description: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                    <template x-for="(option, optIndex) in field.options" :key="optIndex">
+                      <div class="p-2 border border-gray-600 rounded">
+                        <div class="flex space-x-2">
+                          <div class="flex-1 space-y-2">
+                            <input type="text" x-model.debounce.500ms="option.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                            <textarea x-model="option.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Description" rows="3"></textarea>
+                          </div>
+                          <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+
+      <button @click="addField()" class="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Add Field</button>
+    </div>
+  </div>
+
+  <!-- Preview -->
+  <div class="w-1/2" x-show="preview">
+    <h2 class="text-xl font-bold mb-6 text-white">Preview</h2>
+    <div class="bg-gray-800 p-6 rounded-lg border border-gray-600">
+      <h3 class="text-xl font-bold text-white mb-4" x-text="template.name"></h3>
+      <form class="space-y-4">
+        <template x-for="field in template.fields" :key="field.label">
+          <div class="space-y-2">
+            <label class="block">
+              <span class="text-xl font-medium text-white" x-text="field.label"></span>
+              <span x-show="field.required" class="text-red-500">*</span>
+            </label>
+            <p class="text-gray-400 text-sm" x-text="field.description"></p>
+
+            <template x-if="field.type === 'single_select'">
+              <select :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                <option value="">Select an option</option>
+                <template x-for="option in field.options" :key="option.name">
+                  <option x-text="option.name" :value="option.name"></option>
+                </template>
+              </select>
+            </template>
+
+            <template x-if="field.type === 'multiple_checkbox'">
+              <div class="space-y-2" x-data="{ filter: '' }">
+                <template x-if="field.options.length > 5">
+                  <div class="mb-4 relative">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0014 0z" />
+                      </svg>
+                    </div>
+                    <input type="search" x-model.debounce="filter" class="pl-10 w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Filter options...">
+                  </div>
+                </template>
+                <div class="max-h-60 overflow-y-auto">
+                  <template x-for="option in field.options" :key="option.name">
+                    <div class="flex items-center" x-show="!filter || option.name.toLowerCase().includes(filter.toLowerCase())">
+                      <input type="checkbox" class="bg-gray-800 border-gray-600">
+                      <label class="ml-2 text-sm font-medium text-white" x-text="option.name"></label>
+                      <p x-text="option.description"></p>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
+            <template x-if="field.type === 'textarea'">
+              <textarea :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 min-h-[100px]"></textarea>
+            </template>
+
+            <template x-if="field.type === 'date'">
+              <input type="text" x-mask="9999/99/99" placeholder="YYYY/MM/DD" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+            </template>
+
+            <template x-if="field.type === 'list'">
+              <div x-data="{ values: [''] }" class="space-y-2">
+                <template x-for="(value, index) in values" :key="index">
+                  <div class="flex space-x-2">
+                    <input type="text" 
+                           x-model="values[index]"
+                           :required="field.required"
+                           class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                    <button @click="values.splice(index, 1)"
+                            class="bg-red-600 text-white w-8 h-8 rounded flex items-center justify-center">
+                      -
+                    </button>
+                  </div>
+                </template>
+                <button @click.prevent="values.push('')" 
+                        type="button"
+                        class="bg-green-600 text-white px-3 py-1 rounded">
+                  +
+                </button>
+              </div>
+            </template>
+
+            <template x-if="!['single_select', 'multiple_checkbox', 'textarea', 'date', 'list'].includes(field.type)">
+              <input :type="field.type" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+            </template>
+          </div>
+        </template>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

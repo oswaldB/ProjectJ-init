@@ -405,5 +405,89 @@ def api_form_save():
         return jsonify({"error": "Failed to save form"}), 500
 
 
+@app.route('/api/sultan/templates/list')
+def api_templates_list():
+    templates = []
+    draft_prefix = 'sultan/configs/draft/templates/'
+
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=draft_prefix)
+        for obj in response.get('Contents', []):
+            try:
+                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                content = response['Body'].read().decode('utf-8')
+                template = json.loads(content)
+
+                # Add status if not present
+                if 'status' not in template:
+                    template['status'] = 'Draft'
+
+                # Add last_modified if not present
+                metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                if 'last_modified' not in template:
+                    template['last_modified'] = metadata['LastModified']
+
+                templates.append(template)
+            except Exception as e:
+                logger.error(f"Failed to load template {obj['Key']}: {e}")
+    except Exception as e:
+        logger.error(f"Failed to list templates: {e}")
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify(templates)
+
+
+@app.route('/api/sultan/templates/<template_id>')
+def api_template_get(template_id):
+    try:
+        if template_id.endswith('.json'):
+            key = f'sultan/configs/draft/templates/{template_id}'
+        else:
+            key = f'sultan/configs/draft/templates/{template_id}.json'
+            
+        content = s3.get_object(
+            Bucket=BUCKET_NAME,
+            Key=key)['Body'].read().decode('utf-8')
+        return jsonify(json.loads(content))
+    except Exception as e:
+        logger.error(f"Failed to load template {template_id}: {e}")
+        return jsonify({
+            "error": "Template not found",
+            "redirect": "/sultan/templates/list"
+        }), 404
+
+
+@app.route('/api/sultan/templates/delete/<template_id>', methods=['DELETE'])
+def api_template_delete(template_id):
+    try:
+        template_path = f'sultan/configs/draft/templates/{template_id}.json'
+        delete(template_path)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to delete template: {e}")
+        return jsonify({"error": "Failed to delete template"}), 500
+
+
+@app.route('/api/sultan/templates/save', methods=['POST'])
+def api_template_save():
+    data = request.json
+    template = data.get('template')
+
+    if not template:
+        return jsonify({"error": "Template required"}), 400
+
+    try:
+        # Ensure directory structure exists
+        template_path = f'sultan/configs/draft/templates/{template["id"]}.json'
+
+        # Save template as JSON
+        save_in_global_db(template_path, template)
+
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to save template: {e}")
+        return jsonify({"error": "Failed to save template"}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
