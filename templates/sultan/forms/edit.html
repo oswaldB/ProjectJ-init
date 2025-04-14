@@ -244,6 +244,37 @@
                                                       <template x-if="thirdQuestion.type === 'textarea'">
                                                         <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
                                                       </template>
+                                                      <template x-if="thirdQuestion.type === 'conditional'">
+                                                        <div class="space-y-4">
+                                                          <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="fourthLevelSelected">
+                                                            <option value="">Select an option</option>
+                                                            <template x-for="fourthOption in thirdQuestion.options" :key="fourthOption.name">
+                                                              <option x-text="fourthOption.name" :value="fourthOption.name"></option>
+                                                            </template>
+                                                          </select>
+                                                          
+                                                          <template x-for="fourthOption in thirdQuestion.options" :key="fourthOption.name">
+                                                            <div x-show="fourthLevelSelected === fourthOption.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
+                                                              <template x-for="fourthQuestion in fourthOption.questions" :key="fourthQuestion.key">
+                                                                <div class="space-y-2">
+                                                                  <label class="block">
+                                                                    <span class="text-lg font-medium text-white" x-text="fourthQuestion.label"></span>
+                                                                  </label>
+                                                                  <template x-if="fourthQuestion.type === 'text_input'">
+                                                                    <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                                                  </template>
+                                                                  <template x-if="fourthQuestion.type === 'number'">
+                                                                    <input type="number" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                                                  </template>
+                                                                  <template x-if="fourthQuestion.type === 'textarea'">
+                                                                    <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
+                                                                  </template>
+                                                                </div>
+                                                              </template>
+                                                            </div>
+                                                          </template>
+                                                        </div>
+                                                      </template>
                                                     </div>
                                                   </template>
                                                 </div>
