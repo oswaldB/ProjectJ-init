@@ -162,7 +162,7 @@
                                 <option value="multiple_checkbox">Multiple Checkbox</option>
                                 <option value="textarea">Long Text</option>
                                 <option value="date">Date</option>
-                                <option value="conditional">Conditional</option>
+                                <option value="list">List</option>
                               </select>
                               <button @click="option.questions.splice(qIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
                             </div>
@@ -191,82 +191,7 @@
                                 </div>
                               </template>
 
-                              <!-- Nested conditional questions -->
-                              <template x-if="question.type === 'conditional'">
-                                <div class="mt-4 space-y-4 pl-4 border-l-2 border-gray-600">
-                                  <h4 class="text-white font-medium">Options & Conditional Questions</h4>
-                                  <div class="space-y-2">
-                                    <button @click="question.options = question.options || []; question.options.push({name: '', questions: []})" class="text-blue-400 hover:text-blue-300">Add Option</button>
-                                    <template x-for="(opt, optIdx) in question.options" :key="optIdx">
-                                      <div class="p-4 border border-gray-600 rounded">
-                                        <div class="flex space-x-2 mb-4">
-                                          <input type="text" x-model="opt.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
-                                          <button @click="question.options.splice(optIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
-                                        </div>
-
-                                        <div class="mt-4">
-                                          <button @click="opt.questions = opt.questions || []; opt.questions.push({type: 'text_input', key: '', label: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Nested Question</button>
-                                          <template x-for="(nestedQ, qIdx) in opt.questions" :key="qIdx">
-                                            <div class="mt-4 p-4 border border-gray-600 rounded">
-                                              <div class="flex justify-between mb-2">
-                                                <button @click="opt.questions.splice(qIdx, 1)" class="text-red-400 hover:text-red-300">Remove Question</button>
-                                              </div>
-                                              <div x-data="{ question: nestedQ }" class="space-y-4">
-                                                <!-- Recursively include the same question fields -->
-                                                <div class="space-y-2">
-                                                  <input type="text" x-model="question.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Label">
-
-                                                  <div class="relative">
-                                                    <input type="text" 
-                                                           x-model="question.key"
-                                                           @input="question.key = question.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
-                                                           class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
-                                                           placeholder="Question Key (slug format)">
-                                                  </div>
-
-                                                  <!-- Only allow nesting up to 4 levels -->
-                                                  <template x-if="opt.questions && opt.questions.length > 0 && Object.keys(nestedQ).length <= 4">
-                                                    <div class="mt-2 space-y-2">
-                                                      <button @click="question.options = question.options || []; question.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
-                                                      <template x-for="(opt, optIdx) in question.options" :key="optIdx">
-                                                        <div class="flex space-x-2">
-                                                          <input type="text" x-model="opt.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
-                                                          <button @click="question.options.splice(optIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
-                                                        </div>
-                                                      </template>
-                                                    </div>
-                                                  </template>
-
-                                                  <template x-if="question.type === 'conditional'">
-                                                    <div class="mt-4 space-y-4 pl-4 border-l-2 border-gray-600">
-                                                      <h4 class="text-white font-medium">Nested Options & Conditional Questions</h4>
-                                                      <div class="space-y-2">
-                                                        <button @click="question.options = question.options || []; question.options.push({name: '', questions: []})" class="text-blue-400 hover:text-blue-300">Add Option</button>
-                                                        <template x-for="(opt, optIdx) in question.options" :key="optIdx">
-                                                          <div class="p-4 border border-gray-600 rounded">
-                                                            <div class="flex space-x-2 mb-4">
-                                                              <input type="text" x-model="opt.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
-                                                              <button @click="question.options.splice(optIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
-                                                            </div>
-
-                                                            <div class="mt-4">
-                                                              <button x-show="Object.keys(nestedQ).length <= 4" @click="opt.questions = opt.questions || []; opt.questions.push({type: 'text_input', key: '', label: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Nested Question</button>
-                                                            </div>
-                                                          </div>
-                                                        </template>
-                                                      </div>
-                                                    </div>
-                                                  </template>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </template>
-                                        </div>
-                                      </div>
-                                    </template>
-                                  </div>
-                                </div>
-                              </template>
+                              
                             </div>
                           </div>
                         </template>
@@ -333,37 +258,7 @@
                         <template x-if="question.type === 'textarea'">
                           <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
                         </template>
-                        <template x-if="question.type === 'conditional'">
-                          <div class="space-y-4">
-                            <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="nestedSelected">
-                              <option value="">Select an option</option>
-                              <template x-for="nestedOption in question.options" :key="nestedOption.name">
-                                <option x-text="nestedOption.name" :value="nestedOption.name"></option>
-                              </template>
-                            </select>
-
-                            <template x-for="nestedOption in question.options" :key="nestedOption.name">
-                              <div x-show="nestedSelected === nestedOption.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
-                                <template x-for="nestedQuestion in nestedOption.questions" :key="nestedQuestion.key">
-                                  <div class="space-y-2">
-                                    <label class="block">
-                                      <span class="text-lg font-medium text-white" x-text="nestedQuestion.label"></span>
-                                    </label>
-                                    <template x-if="nestedQuestion.type === 'text_input'">
-                                      <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                    </template>
-                                    <template x-if="nestedQuestion.type === 'number'">
-                                      <input type="number" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                    </template>
-                                    <template x-if="nestedQuestion.type === 'textarea'">
-                                      <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
-                                    </template>
-                                  </div>
-                                </template>
-                              </div>
-                            </template>
-                          </div>
-                        </template>
+                        
                       </div>
                     </template>
                   </div>
