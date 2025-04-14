@@ -14,12 +14,23 @@
     },
     preview: true,
     formFields: [],
+    availableForms: [],
     async init() {
       const templateId = window.location.pathname.split('/').pop();
       const userEmail = localStorage.getItem('user_email');
       
+      await this.loadForms();
       await this.loadTemplate(templateId, userEmail);
       this.initTrumbowyg();
+    },
+    async loadForms() {
+      try {
+        const response = await fetch('/api/sultan/forms/list');
+        this.availableForms = await response.json();
+      } catch (error) {
+        console.error('Failed to load forms:', error);
+        this.availableForms = [];
+      }
     },
     async loadTemplate(templateId, userEmail) {
       if (templateId === 'new') return;
@@ -106,8 +117,6 @@
     </div>
 
     <div class="space-y-4">
-      <input type="text" x-model="template.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Template Name">
-
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-300">Form for Variables</label>
         <select x-model="template.selectedForm" @change="loadFormFields()" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
@@ -117,6 +126,8 @@
           </template>
         </select>
       </div>
+
+      <input type="text" x-model="template.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Template Name">
 
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-300">Email Subject</label>
