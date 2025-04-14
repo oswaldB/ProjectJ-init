@@ -49,6 +49,15 @@ def flatten_dict(dd, separator='_', prefix=''):
         f"{prefix}{separator}{k}" if prefix else k: v
 
 @app.route('/sultan/login', methods=['GET', 'POST'])
+def flatten_dict(dd, separator='_', prefix=''):
+    if isinstance(dd, dict):
+        return {
+            f"{prefix}{separator}{k}" if prefix else k: v
+            for kk, vv in dd.items()
+            for k, v in flatten_dict(vv, separator, kk).items()
+        }
+    return {prefix: dd}
+
 def sultan_login():
     if request.method == 'POST':
         if request.form.get('password') == 'sesame':
@@ -61,12 +70,6 @@ def sultan_login():
 def sultan_logout():
     session.pop('authenticated', None)
     return redirect('/sultan/login')
-
-        for kk, vv in dd.items()
-        for k, v in flatten_dict(vv, separator, kk).items()
-    } if isinstance(dd, dict) else {
-        prefix: dd
-    }
 
 def process_issue_data(issue_data):
     processed_data = {}
