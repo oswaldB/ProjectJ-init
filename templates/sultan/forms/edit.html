@@ -117,10 +117,11 @@
                           <option value="text_input">Text Input</option>
                           <option value="single_select">Single Select</option>
                           <option value="multiple_checkbox">Multiple Checkbox</option>
-                          <option value="conditional">Conditional</option>
+                          <option value="conditional">Conditional (Single Select)</option>
                         </select>
 
                         <template x-if="option.template === 'conditional'">
+                          <div x-init="option.template = 'single_select'"></div>
                           <div class="mt-4 pl-4 border-l-2 border-gray-600">
                             <button @click="option.nested_options = option.nested_options || []; option.nested_options.push({name: '', show: ''})" class="text-blue-400 hover:text-blue-300">Add Nested Option</button>
                             
