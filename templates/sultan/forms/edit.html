@@ -151,18 +151,8 @@
                           <div class="relative flex items-center">
                             <input type="text" 
                                    x-model="option.key" 
-                                   @input="if(!option.keyUnlocked) option.key = option.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
-                                   :disabled="option.key && !option.keyUnlocked"
                                    class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" 
                                    placeholder="Question Key">
-                            <button 
-                                x-show="option.key"
-                                @click="option.keyUnlocked = !option.keyUnlocked"
-                                class="absolute right-2 text-lg cursor-pointer hover:text-yellow-500"
-                                type="button">
-                              <span x-show="!option.keyUnlocked" class="text-gray-400">🔒</span>
-                              <span x-show="option.keyUnlocked" class="text-yellow-500">🔓</span>
-                            </button>
                           </div>
                         </div>
                         <div class="mb-2">
