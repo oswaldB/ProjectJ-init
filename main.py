@@ -7,21 +7,24 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
 
+app = Flask(__name__)
+logger = logging.getLogger(__name__)
+
 class Email:
     def __init__(self, to, subject, content):
         self.to = to if isinstance(to, list) else [to]
         self.subject = subject
         self.content = content
-        
+
     def send(self):
         msg = MIMEMultipart('alternative')
         msg['Subject'] = self.subject
         msg['From'] = "jaffar@hsbc.com"
         msg['To'] = ", ".join(self.to)
-        
+
         html_part = MIMEText(self.content, 'html')
         msg.attach(html_part)
-        
+
         try:
             with smtplib.SMTP('localhost') as server:
                 server.send_message(msg)
@@ -30,16 +33,8 @@ class Email:
             logger.error(f"Failed to send email: {e}")
             return False
 
-app = Flask(__name__)
-logger = logging.getLogger(__name__)
-
-# custom health check
-def custom_health_check():
-    return Response(status=200, response="Custom health check OK")
-
 # Create blueprint
 bp = Blueprint('main', __name__, url_prefix='/')
-app.register_blueprint(bp)
 
 @bp.route('/')
 def serve_entrypoint():
@@ -83,13 +78,12 @@ def Issue_submit():
     sendConfirmationEmail(data['obj']['answers']['author'],data['obj']['answers']['_id'],data['obj']['answers'])
     return {"status": "issue submited"}
 
-# Keep the rest of your functions as is
-# (storage config, helpers, etc.)
+# Register blueprint after all routes are defined
+app.register_blueprint(bp)
 
 """
 SG configuration
 """
-
 endpoint = settings.SG_URL
 access_key = settings.SG_ID_KEY
 secret_key = settings.SG_SECRET
@@ -103,11 +97,24 @@ storage_obj_config = {
 client = boto3.client("s3", **storage_obj_config)
 bucket = bucket_name
 
-"""
-Helpers
-"""
+def flatten_dict(dd, separator='_', prefix=''):
+    return {f"{prefix}{separator}{k}" if prefix else k: v
+            for kk, vv in dd.items()
+            for k, v in flatten_dict(vv, separator, kk).items()
+            } if isinstance(dd, dict) else {prefix: dd}
 
-## Write in DB
+def process_issue_data(issue_data):
+    processed_data = {}
+    for key, value in issue_data.items():
+        if isinstance(value, list):
+            processed_data[key] = ', '.join(value)
+        elif isinstance(value, dict):
+            flattened_dict = flatten_dict(value)
+            processed_data.update(flattened_dict)
+        else:
+            processed_data[key] = value
+    return processed_data
+
 def save_in_global_db(key, obj):
     json_object = json.dumps(obj,separators=(',', ':'))
     print(json_object)
@@ -118,7 +125,6 @@ def save_in_global_db(key, obj):
     )
     return
 
-## Read from DB
 def get_one_from_global_db(key):
     print(f"get from db: {key}")
     response = client.get_object(
@@ -128,35 +134,25 @@ def get_one_from_global_db(key):
     json_content = json.loads(response['Body'].read())
     return json_content
 
-## LIst from db
 def get_all_from_global_db():
     folder = client.list_objects(
         Bucket=bucket
     )
-
     for object in folder['Contents']:
         print(get_one_from_global_db(object['Key']))
-
     return
 
-## get the latest config file
 def get_max_from_global_db(key):
     folder = client.list_objects(
         Bucket=bucket,
-        Prefix='jaffar/configs/'  # Add prefix to only search for objects within the jaffar/configs/ folder
+        Prefix='jaffar/configs/'
     )
-
     max_number = -1
     max_object = None
     for obj in folder['Contents']:
-        # Check if the object key starts with the input key after the 'jaffar/configs/' prefix
         remaining_parts = obj['Key'][len('jaffar/configs/'):]
-
-        # Use regex to find the first number in the remaining characters
         import re
-        match = re.match(r'(\d+)-' + key, remaining_parts)  # Match number-name format
-
-        # If a number is found, compare it to the current maximum number
+        match = re.match(r'(\d+)-' + key, remaining_parts)
         if match:
             number = int(match.group(1))
             print(f"Found number {number} in remaining parts: {remaining_parts}")
@@ -165,7 +161,6 @@ def get_max_from_global_db(key):
                 max_object = obj
         else:
             print(f"No number found in remaining parts: {remaining_parts}")
-
     if max_object is not None:
         print(f"Max number found: {max_number}")
         return get_one_from_global_db(max_object['Key'])
@@ -174,21 +169,15 @@ def get_max_from_global_db(key):
 
 def get_max_filename_from_global_db(key):
     folder = client.list_objects(
-    Bucket=bucket,
-    Prefix='jaffar/configs/' # Add prefix to only search for objects within the jaffar/configs/ folder
+        Bucket=bucket,
+        Prefix='jaffar/configs/'
     )
-
     max_number = -1
     max_object = None
     for obj in folder['Contents']:
-        # Check if the object key starts with the input key after the 'jaffar/configs/' prefix
         remaining_parts = obj['Key'][len('jaffar/configs/'):]
-
-        # Use regex to find the first number in the remaining characters
         import re
-        match = re.match(r'(\d+)-' + key, remaining_parts)  # Match number-name format
-
-        # If a number is found, compare it to the current maximum number
+        match = re.match(r'(\d+)-' + key, remaining_parts)
         if match:
             number = int(match.group(1))
             print(f"Found number {number} in remaining parts: {remaining_parts}")
@@ -197,7 +186,6 @@ def get_max_filename_from_global_db(key):
                 max_object = obj
         else:
             print(f"No number found in remaining parts: {remaining_parts}")
-
     if max_object is not None:
         print(f"Max number found: {max_number}")
         return max_object['Key']
@@ -211,93 +199,57 @@ def delete(key):
     )
     return
 
-def sendConfirmationEmail(email_address: str, subject:str, issue:dict) -> bool:
-        """
-        Send the confirmation email to the author email address.
-        """
-        logger.info(f"Sending email to {email_address}")
-
-        issue_data = process_issue_data(issue)
-
-        style = """
-        <style>
-                table {
-                    border-collapse: collapse;
-                    font-family: 'Helvetica';
-                    font-size:   12px;
-                }
-                th {
-                    font-weight: normal
-                }
-                th, td {
-                    border: 1px solid #ccc;
-                    padding: 5px;
-                    text-align: left;
-                }
-                td {
-                    font-family: Helvetica;
-                    font-size:   12px;
-                    text-decoration: none;
-                }
-        </style>
-        """
-        df = pd.DataFrame(data=issue_data, index=[0])
-        df = df.fillna(' ').T
-
-        message = f"""
-        <p>Hello,</p>
-        <p>Jaffar here!</p>
-        <p>I recieved your issue number: {subject}.</p>
-        <hr>
-        <p><strong>Description of the issue</strong></p>
-        <hr>
-        <br>
-        {df.to_html()}
-        <br>
-        <br>
-        <p>If it requires escalation, you will get another email very soon.</p.
-        <br>
-        <br>
-        <p>All the best,</p>
-        """
-
-        content = style + message
-
-        print(content)
-
-        # create an email
-        email = Email(
-            to=[email_address,"global.control.remediation.programme@noexternalmail.hsbc.com"],
-            subject=subject,
-            content=content,
-        )
-        email.send()
-        return True
-
-def flatten_dict(dd: Dict, separator='_', prefix=''):
+def sendConfirmationEmail(email_address, subject, issue):
+    logger.info(f"Sending email to {email_address}")
+    issue_data = process_issue_data(issue)
+    style = """
+    <style>
+            table {
+                border-collapse: collapse;
+                font-family: 'Helvetica';
+                font-size:   12px;
+            }
+            th {
+                font-weight: normal
+            }
+            th, td {
+                border: 1px solid #ccc;
+                padding: 5px;
+                text-align: left;
+            }
+            td {
+                font-family: Helvetica;
+                font-size:   12px;
+                text-decoration: none;
+            }
+    </style>
     """
-    Flattens a nested dictionary and concatenates the keys with a separator.
+    df = pd.DataFrame(data=issue_data, index=[0])
+    df = df.fillna(' ').T
+    message = f"""
+    <p>Hello,</p>
+    <p>Jaffar here!</p>
+    <p>I recieved your issue number: {subject}.</p>
+    <hr>
+    <p><strong>Description of the issue</strong></p>
+    <hr>
+    <br>
+    {df.to_html()}
+    <br>
+    <br>
+    <p>If it requires escalation, you will get another email very soon.</p>
+    <br>
+    <br>
+    <p>All the best,</p>
     """
-    return {f"{prefix}{separator}{k}" if prefix else k: v
-            for kk, vv in dd.items()
-            for k, v in flatten_dict(vv, separator, kk).items()
-            } if isinstance(dd, dict) else {prefix: dd}
-
-def process_issue_data(issue_data):
-    """
-    Converts list-type values to strings and flattens nested dictionaries.
-    """
-    processed_data = {}
-    for key, value in issue_data.items():
-        if isinstance(value, list):
-            processed_data[key] = ', '.join(value)
-        elif isinstance(value, dict):
-            flattened_dict = flatten_dict(value)
-            processed_data.update(flattened_dict)
-        else:
-            processed_data[key] = value
-
-    return processed_data
+    content = style + message
+    print(content)
+    email = Email(
+        to=[email_address,"global.control.remediation.programme@noexternalmail.hsbc.com"],
+        subject=subject,
+        content=content,
+    )
+    return email.send()
 
 if __name__ == '__main__':
-  app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000)
