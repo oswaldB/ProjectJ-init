@@ -146,12 +146,22 @@
 
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-300">Email Body (HTML)</label>
-        <div class="flex space-x-2 mb-2">
-          <button @click="insertTable()" class="bg-gray-600 text-white px-3 py-1 rounded text-sm">Insert Table</button>
+        <div x-init="
+          tinymce.init({
+            selector: '#emailEditor',
+            skin: 'oxide-dark',
+            content_css: 'dark',
+            height: 500,
+            plugins: 'table link image lists',
+            toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | indent outdent | bullist numlist | table | link image',
+            setup: function(editor) {
+              editor.on('change', function(e) {
+                template.body = editor.getContent();
+              });
+            }
+          });">
+          <textarea id="emailEditor" x-model="template.body" placeholder="Enter email body"></textarea>
         </div>
-        <textarea x-model="template.body" @focus="currentFocus='body'" x-ref="body"
-                  class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 min-h-[300px] font-mono"
-                  placeholder="Enter email body (HTML supported)"></textarea>
       </div>
 
       <!-- Variables Panel -->
