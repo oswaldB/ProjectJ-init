@@ -352,6 +352,16 @@ def api_form_get(form_id):
         return jsonify({"error": "Form not found"}), 404
 
 
+@app.route('/api/sultan/forms/delete/<form_id>', methods=['DELETE'])
+def api_form_delete(form_id):
+    try:
+        form_path = f'sultan/configs/draft/forms/{form_id}.json'
+        delete(form_path)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to delete form: {e}")
+        return jsonify({"error": "Failed to delete form"}), 500
+
 @app.route('/api/sultan/forms/save', methods=['POST'])
 def api_form_save():
     data = request.json
