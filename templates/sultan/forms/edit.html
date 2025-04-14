@@ -91,25 +91,8 @@
               <label class="block text-sm font-medium text-gray-300">Question Key</label>
               <div class="relative">
                 <input type="text" x-model="field.key"
-                       @input="if(!field.keyUnlocked) field.key = field.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
-                       :disabled="field.key && !field.keyUnlocked"
                        class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
-                       placeholder="Question Key (slug format)">
-                <button x-show="field.key"
-                        @click="field.keyUnlocked = !field.keyUnlocked"
-                        class="absolute right-2 top-2 text-lg cursor-pointer hover:text-yellow-500 focus:outline-none"
-                        type="button">
-                  <span x-show="!field.keyUnlocked" class="text-gray-400">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
-                  </span>
-                  <span x-show="field.keyUnlocked" class="text-yellow-500">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
-                    </svg>
-                  </span>
-                </button>
+                       placeholder="Question Key">
               </div>
             </div>
 
