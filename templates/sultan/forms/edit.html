@@ -40,6 +40,8 @@
         label: '',
         description: '', // Added description field
         required: false,
+        key: '',
+        keyUnlocked: true,
         options: []
       });
     }
@@ -85,6 +87,24 @@
               <span>Required</span>
             </label>
 
+            <div class="mb-2">
+              <label class="block text-sm font-medium text-gray-300">Key</label>
+              <div class="relative">
+                <input type="text" x-model="field.key"
+                       @input="if(!field.keyUnlocked) field.key = field.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                       :disabled="field.key && !field.keyUnlocked"
+                       class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                       placeholder="Field Key">
+                <button x-show="field.key"
+                        @click="field.keyUnlocked = !field.keyUnlocked"
+                        class="absolute right-2 top-2">
+                  <span x-show="!field.keyUnlocked">🔒</span>
+                  <span x-show="field.keyUnlocked">🔓</span>
+                </button>
+              </div>
+            </div>
+
+
             <template x-if="field.type === 'single_select'">
               <div class="mt-4 space-y-2">
                 <button @click="field.options = field.options || []; field.options.push({name: '', description: '', key: '', keyUnlocked: true})" class="text-blue-400 hover:text-blue-300">Add Option</button>
@@ -94,12 +114,12 @@
                       <div class="flex-1 space-y-2">
                         <input type="text" x-model="option.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
                         <div class="relative">
-                          <input type="text" x-model="option.key" 
+                          <input type="text" x-model="option.key"
                                  @input="if(!option.keyUnlocked) option.key = option.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
                                  :disabled="option.key && !option.keyUnlocked"
-                                 class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" 
+                                 class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
                                  placeholder="Option Key">
-                          <button x-show="option.key" 
+                          <button x-show="option.key"
                                   @click="option.keyUnlocked = !option.keyUnlocked"
                                   class="absolute right-2 top-2">
                             <span x-show="!option.keyUnlocked">🔒</span>
@@ -126,12 +146,12 @@
                       <div class="flex-1 space-y-2">
                         <input type="text" x-model="option.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
                         <div class="relative">
-                          <input type="text" x-model="option.key" 
+                          <input type="text" x-model="option.key"
                                  @input="if(!option.keyUnlocked) option.key = option.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
                                  :disabled="option.key && !option.keyUnlocked"
-                                 class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" 
+                                 class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
                                  placeholder="Option Key">
-                          <button x-show="option.key" 
+                          <button x-show="option.key"
                                   @click="option.keyUnlocked = !option.keyUnlocked"
                                   class="absolute right-2 top-2">
                             <span x-show="!option.keyUnlocked">🔒</span>
@@ -152,14 +172,14 @@
                           <input type="text" x-model="option.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Label">
                         </div>
                         <div class="mb-2">
-                          <label class="block text-sm font-medium text-gray-300">Question Key</label>
+                          <label class="block text-sm font-medium text-gray-300">Key</label>
                           <div class="relative">
-                            <input type="text" x-model="option.key" 
+                            <input type="text" x-model="option.key"
                                    @input="if(!option.keyUnlocked) option.key = option.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
                                    :disabled="option.key && !option.keyUnlocked"
-                                   class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" 
+                                   class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
                                    placeholder="Question Key">
-                            <button x-show="option.key" 
+                            <button x-show="option.key"
                                     @click="option.keyUnlocked = !option.keyUnlocked"
                                     class="absolute right-2 top-2">
                               <span x-show="!option.keyUnlocked">🔒</span>
@@ -170,113 +190,48 @@
                         <div class="mb-2">
                           <label class="block text-sm font-medium text-gray-300">Template Type</label>
                           <select x-model="option.template" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                          <option value="text_input">Text Input</option>
-                          <option value="number">Number</option>
-                          <option value="single_select">Single Select</option>
-                          <option value="multiple_checkbox">Multiple Checkbox</option>
-                          <option value="textarea">Long Text</option>
-                          <option value="date">Date</option>
-                          <option value="conditional">Conditional</option>
-                        </select>
+                            <option value="text_input">Text Input</option>
+                            <option value="number">Number</option>
+                            <option value="single_select">Single Select</option>
+                            <option value="multiple_checkbox">Multiple Checkbox</option>
+                            <option value="textarea">Long Text</option>
+                            <option value="date">Date</option>
+                            <option value="conditional">Conditional</option>
+                          </select>
 
-                        <template x-if="option.template === 'conditional'">
-                          <div class="mt-4 pl-4 border-l-2 border-gray-600">
-                            <button @click="option.options = option.options || []; option.options.push({name: '', description:'', show: '', key: '', keyUnlocked: true})" class="text-blue-400 hover:text-blue-300">Add Option</button>
-                            <template x-for="(nestedOption, nestedIndex) in option.options" :key="nestedIndex">
-                              <div class="mt-2 p-2 border border-gray-600 rounded">
-                                <div class="flex space-x-2">
-                                  <input type="text" x-model="nestedOption.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
-                                  <button @click="option.options.splice(nestedIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
+                          <template x-if="option.template === 'conditional'">
+                            <div class="mt-4 pl-4 border-l-2 border-gray-600">
+                              <button @click="option.options = option.options || []; option.options.push({name: '', description:'', show: '', key: '', keyUnlocked: true})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                              <template x-for="(nestedOption, nestedIndex) in option.options" :key="nestedIndex">
+                                <div class="mt-2 p-2 border border-gray-600 rounded">
+                                  <div class="flex space-x-2">
+                                    <input type="text" x-model="nestedOption.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                                    <button @click="option.options.splice(nestedIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                  </div>
+                                  <div class="mt-2">
+                                    <textarea x-model="nestedOption.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Description" rows="3"></textarea>
+                                  </div>
+                                  <div class="mb-2">
+                                    <label class="block text-sm font-medium text-gray-300">Key</label>
+                                    <div class="relative">
+                                      <input type="text" x-model="nestedOption.key"
+                                             @input="if(!nestedOption.keyUnlocked) nestedOption.key = nestedOption.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                                             :disabled="nestedOption.key && !nestedOption.keyUnlocked"
+                                             class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                                             placeholder="Question Key">
+                                      <button x-show="nestedOption.key"
+                                              @click="nestedOption.keyUnlocked = !nestedOption.keyUnlocked"
+                                              class="absolute right-2 top-2">
+                                        <span x-show="!nestedOption.keyUnlocked">🔒</span>
+                                        <span x-show="nestedOption.keyUnlocked">🔓</span>
+                                      </button>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div class="mt-2">
-                                  <textarea x-model="nestedOption.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Description" rows="3"></textarea>
-                                </div>
-                              </div>
-                            </template>
-                          </div>
-                          <div class="mt-4 pl-4 border-l-2 border-gray-600">
-                            <button @click="option.nested_options = option.nested_options || []; option.nested_options.push({name: '', description:'', show: '', key: '', keyUnlocked: true})" class="text-blue-400 hover:text-blue-300">Add Nested Option</button>
-
-                            <template x-for="(nestedOption, nestedIndex) in option.nested_options" :key="nestedIndex">
-                              <div class="mt-2 p-2 border border-gray-600 rounded">
-                                <div class="flex space-x-2">
-                                  <input type="text" x-model="nestedOption.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Nested Option Name">
-                                  <button @click="option.nested_options.splice(nestedIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
-                                </div>
-                                <div class="mt-2">
-                                  <textarea x-model="nestedOption.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Nested Option Description" rows="3"></textarea>
-                                </div>
-                                <div class="mt-2">
-                                  <input type="text" x-model="nestedOption.show" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Show When">
-                                  <select x-model="nestedOption.template" class="mt-2 w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                      <option value="text_input">Text Input</option>
-                                      <option value="number">Number</option>
-                                      <option value="single_select">Single Select</option>
-                                      <option value="multiple_checkbox">Multiple Checkbox</option>
-                                      <option value="textarea">Long Text</option>
-                                      <option value="date">Date</option>
-                                      <option value="conditional">Conditional</option>
-                                    </select>
-
-                                    <template x-if="nestedOption.template === 'conditional'">
-                                      <div class="mt-4 pl-4 border-l-2 border-gray-600">
-                                        <button @click="nestedOption.options = nestedOption.options || []; nestedOption.options.push({name: '', description:'', show: '', key: '', keyUnlocked: true})" class="text-blue-400 hover:text-blue-300">Add Option</button>
-                                        <template x-for="(nestedOption2, nestedIndex2) in nestedOption.options" :key="nestedIndex2">
-                                          <div class="mt-2 p-2 border border-gray-600 rounded">
-                                            <div class="flex space-x-2">
-                                              <input type="text" x-model="nestedOption2.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
-                                              <button @click="nestedOption.options.splice(nestedIndex2, 1)" class="text-red-400 hover:text-red-300">×</button>
-                                            </div>
-                                            <div class="mt-2">
-                                              <textarea x-model="nestedOption2.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Description" rows="3"></textarea>
-                                            </div>
-                                            <div class="mt-2">
-                                              <select x-model="nestedOption2.template" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                                  <option value="text_input">Text Input</option>
-                                                  <option value="number">Number</option>
-                                                  <option value="single_select">Single Select</option>
-                                                  <option value="multiple_checkbox">Multiple Checkbox</option>
-                                                  <option value="textarea">Long Text</option>
-                                                  <option value="date">Date</option>
-                                                  <option value="conditional">Conditional</option>
-                                                </select>
-
-                                                <template x-if="nestedOption2.template === 'conditional'">
-                                                  <div class="mt-4 pl-4 border-l-2 border-gray-600">
-                                                    <button @click="nestedOption2.options = nestedOption2.options || []; nestedOption2.options.push({name: '', description:'', show: '', key: '', keyUnlocked: true})" class="text-blue-400 hover:text-blue-300">Add Option</button>
-                                                    <template x-for="(nestedOption3, nestedIndex3) in nestedOption2.options" :key="nestedIndex3">
-                                                      <div class="mt-2 p-2 border border-gray-600 rounded">
-                                                        <div class="flex space-x-2">
-                                                          <input type="text" x-model="nestedOption3.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
-                                                          <button @click="nestedOption2.options.splice(nestedIndex3, 1)" class="text-red-400 hover:text-red-300">×</button>
-                                                        </div>
-                                                        <div class="mt-2">
-                                                          <textarea x-model="nestedOption3.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Description" rows="3"></textarea>
-                                                        </div>
-                                                        <div class="mt-2">
-                                                          <select x-model="nestedOption3.template" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                                            <option value="text_input">Text Input</option>
-                                                            <option value="number">Number</option>
-                                                            <option value="single_select">Single Select</option>
-                                                            <option value="multiple_checkbox">Multiple Checkbox</option>
-                                                            <option value="textarea">Long Text</option>
-                                                            <option value="date">Date</option>
-                                                          </select>
-                                                        </div>
-                                                      </div>
-                                                    </template>
-                                                  </div>
-                                                </template>
-                                            </div>
-                                          </div>
-                                        </template>
-                                      </div>
-                                    </template>
-                                </div>
-                              </div>
-                            </template>
-                          </div>
-                        </template>
+                              </template>
+                            </div>
+                          </template>
+                        </div>
                       </div>
                     </template>
                   </div>
