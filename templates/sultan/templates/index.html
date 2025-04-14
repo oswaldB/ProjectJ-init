@@ -9,6 +9,7 @@
     templates: [],
     searchQuery: '',
     statuses: ['Dev', 'Prod', 'Old version', 'Draft'],
+    currentFocus: null,
     filteredTemplates() {
       return this.templates.filter(template => 
         template.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
