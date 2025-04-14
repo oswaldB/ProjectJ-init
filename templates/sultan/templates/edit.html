@@ -168,12 +168,6 @@
             <option :value="form.id" x-text="form.name"></option>
           </template>
         </select>
-        <button 
-          x-show="template.selectedForm"
-          @click="loadFormFields()"
-          class="mt-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-sm">
-          Insert Form Fields Preset
-        </button>
       </div>
 
       <input type="text" x-model="template.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Template Name">
