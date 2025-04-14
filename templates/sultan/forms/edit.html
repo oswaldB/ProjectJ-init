@@ -216,7 +216,11 @@
               </div>
             </template>
 
-            <template x-if="field.type !== 'select' && field.type !== 'checkbox' && field.type !== 'conditional' && field.type !== 'single_select' && field.type !== 'multiple_checkbox'">
+            <template x-if="field.type === 'textarea'">
+              <textarea :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 min-h-[100px]"></textarea>
+            </template>
+
+            <template x-if="field.type !== 'select' && field.type !== 'checkbox' && field.type !== 'conditional' && field.type !== 'single_select' && field.type !== 'multiple_checkbox' && field.type !== 'textarea'">
               <input :type="field.type" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
             </template>
 
