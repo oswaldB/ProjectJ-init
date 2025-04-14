@@ -82,20 +82,11 @@ def Issue_submit():
 app.register_blueprint(bp)
 
 """
-SG configuration
+Replit Object Storage configuration
 """
-endpoint = settings.SG_URL
-access_key = settings.SG_ID_KEY
-secret_key = settings.SG_SECRET
-bucket_name = settings.SG_BUCKET
+from replit.object_storage import Client
 
-storage_obj_config = {
-    "aws_access_key_id": access_key,
-    "aws_secret_access_key": secret_key,
-    "endpoint_url": endpoint
-}
-client = boto3.client("s3", **storage_obj_config)
-bucket = bucket_name
+client = Client()
 
 def flatten_dict(dd, separator='_', prefix=''):
     return {f"{prefix}{separator}{k}" if prefix else k: v
@@ -116,41 +107,28 @@ def process_issue_data(issue_data):
     return processed_data
 
 def save_in_global_db(key, obj):
-    json_object = json.dumps(obj,separators=(',', ':'))
+    json_object = json.dumps(obj, separators=(',', ':'))
     print(json_object)
-    client.put_object(
-        Body=f"{json_object}",
-        Bucket=bucket,
-        Key=key,
-    )
+    client.upload_from_text(key, json_object)
     return
 
 def get_one_from_global_db(key):
     print(f"get from db: {key}")
-    response = client.get_object(
-        Bucket=bucket,
-        Key=key
-    )
-    json_content = json.loads(response['Body'].read())
-    return json_content
+    content = client.download_from_text(key)
+    return json.loads(content)
 
 def get_all_from_global_db():
-    folder = client.list_objects(
-        Bucket=bucket
-    )
-    for object in folder['Contents']:
-        print(get_one_from_global_db(object['Key']))
+    files = client.list()
+    for file in files:
+        print(get_one_from_global_db(file))
     return
 
 def get_max_from_global_db(key):
-    folder = client.list_objects(
-        Bucket=bucket,
-        Prefix='jaffar/configs/'
-    )
+    files = client.list(prefix='jaffar/configs/')
     max_number = -1
     max_object = None
-    for obj in folder['Contents']:
-        remaining_parts = obj['Key'][len('jaffar/configs/'):]
+    for file in files:
+        remaining_parts = file[len('jaffar/configs/'):]
         import re
         match = re.match(r'(\d+)-' + key, remaining_parts)
         if match:
@@ -158,24 +136,21 @@ def get_max_from_global_db(key):
             print(f"Found number {number} in remaining parts: {remaining_parts}")
             if number > max_number:
                 max_number = number
-                max_object = obj
+                max_object = file
         else:
             print(f"No number found in remaining parts: {remaining_parts}")
     if max_object is not None:
         print(f"Max number found: {max_number}")
-        return get_one_from_global_db(max_object['Key'])
+        return get_one_from_global_db(max_object)
     else:
         return "No objects with the given key and a digit at the beginning found."
 
 def get_max_filename_from_global_db(key):
-    folder = client.list_objects(
-        Bucket=bucket,
-        Prefix='jaffar/configs/'
-    )
+    files = client.list(prefix='jaffar/configs/')
     max_number = -1
     max_object = None
-    for obj in folder['Contents']:
-        remaining_parts = obj['Key'][len('jaffar/configs/'):]
+    for file in files:
+        remaining_parts = file[len('jaffar/configs/'):]
         import re
         match = re.match(r'(\d+)-' + key, remaining_parts)
         if match:
@@ -183,20 +158,17 @@ def get_max_filename_from_global_db(key):
             print(f"Found number {number} in remaining parts: {remaining_parts}")
             if number > max_number:
                 max_number = number
-                max_object = obj
+                max_object = file
         else:
             print(f"No number found in remaining parts: {remaining_parts}")
     if max_object is not None:
         print(f"Max number found: {max_number}")
-        return max_object['Key']
+        return max_object
     else:
         return "No objects with the given key and a digit at the beginning found."
 
 def delete(key):
-    client.delete_object(
-        Bucket=bucket,
-        Key=key
-    )
+    client.delete(key)
     return
 
 def sendConfirmationEmail(email_address, subject, issue):
