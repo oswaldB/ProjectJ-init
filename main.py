@@ -79,23 +79,38 @@ def process_issue_data(issue_data):
 
 def save_in_global_db(key, obj):
     json_object = json.dumps(obj, separators=(',', ':'))
-    # S3 save
-    s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_object)
-    
-    # Local save
-    full_path = os.path.join(LOCAL_BUCKET_DIR, key)
-    directory = os.path.dirname(full_path)
-    if directory:
-        os.makedirs(directory, exist_ok=True)
-    with open(full_path, "w", encoding='utf-8') as f:
-        f.write(json_object)
-    return
+    try:
+        # S3 save
+        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_object)
+        
+        # Local save
+        full_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        directory = os.path.dirname(full_path)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
+        with open(full_path, "w", encoding='utf-8') as f:
+            f.write(json_object)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to save data: {e}")
+        return False
 
 
 def get_one_from_global_db(key):
-    response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-    content = response['Body'].read().decode('utf-8')
-    return json.loads(content)
+    try:
+        # Try S3 first
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+        content = response['Body'].read().decode('utf-8')
+        return json.loads(content)
+    except:
+        # Fallback to local
+        try:
+            local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+            with open(local_path, 'r', encoding='utf-8') as f:
+                return json.loads(f.read())
+        except Exception as e:
+            logger.error(f"Failed to get data: {e}")
+            raise
 
 
 def get_max_from_global_db(key):
