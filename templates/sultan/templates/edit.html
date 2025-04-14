@@ -33,32 +33,37 @@
         window.location.href = '/sultan/templates/list';
       }
     },
-    initQuill() {
-      const quill = new Quill('#emailEditor', {
-        theme: 'snow',
-        modules: {
-          toolbar: {
-            container: [
-              ['bold', 'italic', 'underline'],
-              [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-              [{ 'align': [] }],
-              ['link', 'image'],
-              ['clean'],
-              ['insertTable']
-            ],
-            handlers: {
-              'insertTable': function() {
-                const tableHTML = `<table class='w-full border-collapse my-4'><tr><th class='border p-2 bg-gray-200'>Header 1</th><th class='border p-2 bg-gray-200'>Header 2</th></tr><tr><td class='border p-2'>Cell 1</td><td class='border p-2'>Cell 2</td></tr></table>`;
-                const range = this.quill.getSelection();
-                this.quill.clipboard.dangerouslyPasteHTML(range.index, tableHTML);
-              }
-            }
+    initTrumbowyg() {
+      $('#emailEditor').trumbowyg({
+        btns: [
+          ['viewHTML'],
+          ['formatting'],
+          ['fontfamily'],
+          ['fontsize'],
+          ['strong', 'em', 'underline'],
+          ['link'],
+          ['insertImage'],
+          ['justifyLeft', 'justifyCenter', 'justifyRight'],
+          ['unorderedList', 'orderedList'],
+          ['table'],
+          ['foreColor', 'backColor'],
+          ['mention'],
+          ['removeformat']
+        ],
+        plugins: {
+          colors: {
+            colorList: [
+              'ffff00', '000000', '808080', 'ff0000', '008000', '0000ff'
+            ]
+          },
+          mention: {
+            source: []
           }
         }
       });
       
-      quill.on('text-change', () => {
-        this.template.body = quill.root.innerHTML;
+      $('#emailEditor').on('tbwchange', () => {
+        this.template.body = $('#emailEditor').trumbowyg('html');
         this.saveTemplate();
       });
     },
@@ -121,8 +126,8 @@
 
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-300">Email Body (HTML)</label>
-        <div x-init="initQuill()" class="bg-gray-800 rounded-lg">
-          <div id="emailEditor" x-ref="editor"></div>
+        <div x-init="initTrumbowyg()" class="bg-gray-800 rounded-lg">
+          <textarea id="emailEditor" x-ref="editor"></textarea>
         </div>
       </div>
 
