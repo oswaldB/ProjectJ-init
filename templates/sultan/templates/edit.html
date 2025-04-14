@@ -91,7 +91,7 @@
         const endPos = textArea.selectionEnd;
         const before = this.template[this.currentFocus].substring(0, startPos);
         const after = this.template[this.currentFocus].substring(endPos);
-        this.template[this.currentFocus] = `${before}{{${key}}}${after}`;
+        this.template[this.currentFocus] = before + '{{' + key + '}}' + after;
       }
     },
     insertTable() {
