@@ -177,7 +177,6 @@ def require_auth(f):
     return decorated
 
 @app.route('/')
-@require_auth
 def index():
     return render_template('jaffar/index.html')
 
