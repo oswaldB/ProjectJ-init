@@ -1,5 +1,4 @@
-from flask import Flask, Blueprint, render_template, redirect, send_from_directory, request, jsonify, session
-from functools import wraps
+from flask import Flask, Blueprint, render_template, redirect, send_from_directory, request, jsonify
 import json
 import logging
 from email.mime.text import MIMEText
@@ -11,15 +10,6 @@ import re
 import pandas as pd
 
 app = Flask(__name__)
-app.secret_key = 'votre_clé_secrète_ici'  # Change this in production
-
-def requires_auth(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if 'authenticated' not in session:
-            return redirect('/sultan/login')
-        return f(*args, **kwargs)
-    return decorated
 logger = logging.getLogger(__name__)
 client = Client()
 
@@ -47,29 +37,11 @@ class Email:
 def flatten_dict(dd, separator='_', prefix=''):
     return {
         f"{prefix}{separator}{k}" if prefix else k: v
-
-@app.route('/sultan/login', methods=['GET', 'POST'])
-def flatten_dict(dd, separator='_', prefix=''):
-    if isinstance(dd, dict):
-        return {
-            f"{prefix}{separator}{k}" if prefix else k: v
-            for kk, vv in dd.items()
-            for k, v in flatten_dict(vv, separator, kk).items()
-        }
-    return {prefix: dd}
-
-def sultan_login():
-    if request.method == 'POST':
-        if request.form.get('password') == 'sesame':
-            session['authenticated'] = True
-            return redirect('/sultan')
-        return render_template('sultan/login.html', error=True)
-    return render_template('sultan/login.html', error=False)
-
-@app.route('/sultan/logout')
-def sultan_logout():
-    session.pop('authenticated', None)
-    return redirect('/sultan/login')
+        for kk, vv in dd.items()
+        for k, v in flatten_dict(vv, separator, kk).items()
+    } if isinstance(dd, dict) else {
+        prefix: dd
+    }
 
 def process_issue_data(issue_data):
     processed_data = {}
@@ -192,7 +164,6 @@ def index():
     return render_template('jaffar/index.html')
 
 @app.route('/sultan')
-@requires_auth
 def sultan():
     return render_template('sultan/base.html')
 
