@@ -8,7 +8,7 @@ import json
 import re
 import pandas as pd
 import boto3
-from moto.mock_s3 import mock_s3
+from moto import mock_aws
 import os
 
 app = Flask(__name__)
@@ -19,8 +19,8 @@ LOCAL_BUCKET_DIR = "./local_bucket"
 BUCKET_NAME = "jaffar-bucket"
 os.makedirs(LOCAL_BUCKET_DIR, exist_ok=True)
 
-# Initialize mocked S3
-mock = mock_s3()
+# Initialize mocked AWS
+mock = mock_aws()
 mock.start()
 
 # Create S3 client and bucket
