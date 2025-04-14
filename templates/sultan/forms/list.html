@@ -7,6 +7,7 @@
   {
     page: 'forms-list',
     forms: [],
+    statuses: ['Dev', 'Prod', 'Old version', 'Draft'],
     async init() {
       const userEmail = localStorage.getItem('user_email');
       try {
@@ -34,7 +35,24 @@
     <template x-for="form in forms" :key="form.id">
       <div class="bg-gray-800 p-4 rounded-lg">
         <div class="flex justify-between items-center">
-          <h3 class="text-lg font-semibold" x-text="form.name"></h3>
+          <div class="flex-1">
+            <h3 class="text-lg font-semibold" x-text="form.name"></h3>
+            <div class="text-sm text-gray-400 mt-1">
+              <p>User: <span x-text="form.user_email"></span></p>
+              <p>Last modified: <span x-text="new Date(form.last_modified || Date.now()).toLocaleString()"></span></p>
+              <div class="mt-2">
+                <span class="px-2 py-1 rounded-full text-xs" 
+                      :class="{
+                        'bg-blue-600': form.status === 'Dev',
+                        'bg-green-600': form.status === 'Prod',
+                        'bg-yellow-600': form.status === 'Old version',
+                        'bg-gray-600': form.status === 'Draft'
+                      }" 
+                      x-text="form.status || 'Draft'">
+                </span>
+              </div>
+            </div>
+          </div>
           <div class="space-x-2">
             <a :href="'/sultan/forms/edit/' + form.id" class="text-blue-400 hover:text-blue-300">Edit</a>
             <button @click="deleteForm(form.id)" class="text-red-400 hover:text-red-300">Delete</button>
