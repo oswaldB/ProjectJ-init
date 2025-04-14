@@ -4,14 +4,19 @@ import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
-from replit.object_storage import Client
+#import replit.object_storage #Removed
 import json
 import re
 import pandas as pd
+import boto3
 
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
-client = Client()
+#client = Client() #Removed
+
+# Replace with your S3 bucket name
+bucket_name = "your-s3-bucket-name" #Add this line.  Replace your-s3-bucket-name with your actual bucket name.
+s3 = boto3.client('s3')
 
 
 class Email:
@@ -62,53 +67,71 @@ def process_issue_data(issue_data):
 
 def save_in_global_db(key, obj):
     json_object = json.dumps(obj, separators=(',', ':'))
-    client.upload_from_text(key, json_object)
+    s3.put_object(Bucket=bucket_name, Key=key, Body=json_object)
     return
 
 
 def get_one_from_global_db(key):
-    content = client.download_as_text(key)
+    response = s3.get_object(Bucket=bucket_name, Key=key)
+    content = response['Body'].read().decode('utf-8')
     return json.loads(content)
 
 
 def get_max_from_global_db(key):
-    files = client.list(prefix='jaffar/configs/')
-    max_number = -1
-    max_object = None
-    for file in files:
-        remaining_parts = file[len('jaffar/configs/'):]
-        match = re.match(r'(\d+)-' + key, remaining_parts)
-        if match:
-            number = int(match.group(1))
-            if number > max_number:
-                max_number = number
-                max_object = file
-    if max_object is not None:
-        return get_one_from_global_db(max_object)
-    else:
-        return "No objects with the given key and a digit at the beginning found."
+    files = []
+    try:
+        response = s3.list_objects_v2(Bucket=bucket_name, Prefix='jaffar/configs/')
+        for obj in response.get('Contents', []):
+            files.append(obj['Key'])
+
+        max_number = -1
+        max_object = None
+        for file in files:
+            remaining_parts = file[len('jaffar/configs/'):]
+            match = re.match(r'(\d+)-' + key, remaining_parts)
+            if match:
+                number = int(match.group(1))
+                if number > max_number:
+                    max_number = number
+                    max_object = file
+        if max_object is not None:
+            return get_one_from_global_db(max_object)
+        else:
+            return "No objects with the given key and a digit at the beginning found."
+    except Exception as e:
+        logger.error(f"Error in get_max_from_global_db: {e}")
+        return None
 
 
 def get_max_filename_from_global_db(key):
-    files = client.list(prefix='jaffar/configs/')
-    max_number = -1
-    max_object = None
-    for file in files:
-        remaining_parts = file[len('jaffar/configs/'):]
-        match = re.match(r'(\d+)-' + key, remaining_parts)
-        if match:
-            number = int(match.group(1))
-            if number > max_number:
-                max_number = number
-                max_object = file
-    if max_object is not None:
-        return max_object
-    else:
-        return "No objects with the given key and a digit at the beginning found."
+    files = []
+    try:
+        response = s3.list_objects_v2(Bucket=bucket_name, Prefix='jaffar/configs/')
+        for obj in response.get('Contents', []):
+            files.append(obj['Key'])
+
+        max_number = -1
+        max_object = None
+        for file in files:
+            remaining_parts = file[len('jaffar/configs/'):]
+            match = re.match(r'(\d+)-' + key, remaining_parts)
+            if match:
+                number = int(match.group(1))
+                if number > max_number:
+                    max_number = number
+                    max_object = file
+        if max_object is not None:
+            return max_object
+        else:
+            return "No objects with the given key and a digit at the beginning found."
+    except Exception as e:
+        logger.error(f"Error in get_max_filename_from_global_db: {e}")
+        return None
+
 
 
 def delete(key):
-    client.delete(key)
+    s3.delete_object(Bucket=bucket_name, Key=key)
     return
 
 
@@ -157,6 +180,7 @@ def sendConfirmationEmail(email_address, subject, issue):
     """
     content = style + message
     email = Email(
+        to=email_address, #Added email_address here
         subject=subject,
         content=content,
     )
@@ -240,10 +264,11 @@ def api_forms_list():
     draft_prefix = 'sultan/configs/draft/forms/'
 
     try:
-        files = client.list(prefix=draft_prefix)
-        for file in files:
+        response = s3.list_objects_v2(Bucket=bucket_name, Prefix=draft_prefix)
+        for obj in response.get('Contents', []):
             try:
-                content = client.download_as_text(file)
+                response = s3.get_object(Bucket=bucket_name, Key=obj['Key'])
+                content = response['Body'].read().decode('utf-8')
                 form = json.loads(content)
 
                 # Add status if not present
@@ -251,13 +276,13 @@ def api_forms_list():
                     form['status'] = 'Draft'
 
                 # Add last_modified if not present
-                metadata = client.get_metadata(file)
+                metadata = s3.head_object(Bucket=bucket_name, Key=obj['Key'])
                 if 'last_modified' not in form:
-                    form['last_modified'] = metadata.get('last_modified', None)
+                    form['last_modified'] = metadata['LastModified']
 
                 forms.append(form)
             except Exception as e:
-                logger.error(f"Failed to load form {file}: {e}")
+                logger.error(f"Failed to load form {obj['Key']}: {e}")
     except Exception as e:
         logger.error(f"Failed to list forms: {e}")
         return jsonify({"error": str(e)}), 500
@@ -268,8 +293,7 @@ def api_forms_list():
 @app.route('/api/sultan/forms/<form_id>')
 def api_form_get(form_id):
     try:
-        content = client.download_from_text(
-            f'sultan/configs/draft//forms/{form_id}.json')
+        content = s3.get_object(Bucket=bucket_name, Key=f'sultan/configs/draft//forms/{form_id}.json')['Body'].read().decode('utf-8')
         return jsonify(json.loads(content))
     except Exception as e:
         logger.error(f"Failed to load form {form_id}: {e}")
@@ -290,7 +314,7 @@ def api_form_save():
 
         # Save form as JSON
         json_data = json.dumps(form, indent=2, ensure_ascii=False)
-        client.upload_from_text(form_path, json_data)
+        s3.put_object(Bucket=bucket_name, Key=form_path, Body=json_data)
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save form: {e}")
