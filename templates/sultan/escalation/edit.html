@@ -4,114 +4,108 @@
 {% block title %}Escalation Editor{% endblock %}
 
 {% block alpine_component %}
-  {
-    page: 'escalation-editor',
-    escalation: {
-      id: '',
-      name: '',
-      template: '',
-      form: '',
-      rules: [],
-      status: 'Draft'
-    },
-    templates: [],
-    forms: [],
-    newRule: {
-      condition: '',
-      action: '',
-      target: ''
-    },
-    async init() {
-      const escalationId = window.location.pathname.split('/').pop();
-      if (escalationId !== 'new') {
-        await this.loadEscalation(escalationId);
-      }
-      await this.loadTemplates();
-      await this.loadForms();
-    },
-    async loadEscalation(id) {
-      try {
-        const response = await fetch(`/api/sultan/escalation/${id}`);
-        this.escalation = await response.json();
-      } catch (error) {
-        console.error('Failed to load escalation:', error);
-      }
-    },
-    async loadTemplates() {
-      try {
-        const response = await fetch('/api/sultan/templates/list');
-        this.templates = await response.json();
-      } catch (error) {
-        console.error('Failed to load templates:', error);
-      }
-    },
-    async loadForms() {
-      try {
-        const response = await fetch('/api/sultan/forms/list');
-        this.forms = await response.json();
-      } catch (error) {
-        console.error('Failed to load forms:', error);
-      }
-    },
-    addRule() {
-      this.escalation.rules.push({ ...this.newRule });
-      this.newRule = { condition: '', action: '', target: '' };
-    },
-    removeRule(index) {
-      this.escalation.rules.splice(index, 1);
-    },
-    async save() {
-      if (!this.escalation.id) {
-        this.escalation.id = `escalation-${Date.now()}`;
-      }
-      try {
-        await fetch('/api/sultan/escalation/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: localStorage.getItem('user_email'),
-            escalation: this.escalation
-          })
-        });
-        window.location.href = '/sultan/escalation';
-      } catch (error) {
-        console.error('Failed to save escalation:', error);
-      }
+{
+  escalation: {
+    id: null,
+    name: '',
+    template: '',
+    form: '',
+    rules: []
+  },
+  templates: [],
+  forms: [],
+  newRule: {
+    condition: '',
+    action: '',
+    target: ''
+  },
+  selectedCell: null,
+  init() {
+    const id = window.location.pathname.split('/').pop();
+    if (id === 'new') {
+      this.escalation.id = `escalation-${Date.now()}`;
+    } else {
+      this.loadEscalation(id);
     }
+    this.loadTemplates();
+    this.loadForms();
+  },
+  async loadEscalation(id) {
+    try {
+      const response = await fetch(`/api/sultan/escalation/${id}`);
+      this.escalation = await response.json();
+    } catch (error) {
+      console.error('Failed to load escalation:', error);
+    }
+  },
+  async loadTemplates() {
+    try {
+      const response = await fetch('/api/sultan/templates/list');
+      this.templates = await response.json();
+    } catch (error) {
+      console.error('Failed to load templates:', error);
+    }
+  },
+  async loadForms() {
+    try {
+      const response = await fetch('/api/sultan/forms/list');
+      this.forms = await response.json();
+    } catch (error) {
+      console.error('Failed to load forms:', error);
+    }
+  },
+  addRule() {
+    if (this.newRule.condition || this.newRule.action || this.newRule.target) {
+      this.escalation.rules.push({...this.newRule});
+      this.newRule = {condition: '', action: '', target: ''};
+    }
+  },
+  removeRule(index) {
+    this.escalation.rules.splice(index, 1);
+  },
+  async save() {
+    try {
+      const response = await fetch('/api/sultan/escalation/save', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({escalation: this.escalation})
+      });
+      if (response.ok) {
+        window.location.href = '/sultan/escalation';
+      }
+    } catch (error) {
+      console.error('Failed to save escalation:', error);
+    }
+  },
+  selectCell(rowIndex, colIndex) {
+    this.selectedCell = `${rowIndex}-${colIndex}`;
   }
+}
 {% endblock %}
 
 {% block content %}
-<div class="p-6">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-white">Escalation Editor</h1>
-    <div class="space-x-4">
-      <button @click="save()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Save</button>
-    </div>
-  </div>
-
-  <div class="space-y-6">
-    <div class="grid grid-cols-3 gap-4">
+<div class="h-screen bg-gray-900 text-white">
+  <!-- Top Bar -->
+  <div class="border-b border-gray-700 p-2 flex items-center justify-between bg-gray-800">
+    <div class="flex items-center space-x-4">
       <input 
         type="text" 
         x-model="escalation.name" 
         placeholder="Escalation Name"
-        class="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-red-500"
+        class="bg-gray-900 text-white px-3 py-1 rounded border border-gray-600 focus:outline-none focus:border-red-500"
       >
-      
       <select 
         x-model="escalation.template"
-        class="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-red-500"
+        class="bg-gray-900 text-white px-3 py-1 rounded border border-gray-600 focus:outline-none focus:border-red-500"
       >
         <option value="">Select Template</option>
         <template x-for="template in templates" :key="template.id">
           <option :value="template.id" x-text="template.name"></option>
         </template>
       </select>
-
       <select 
         x-model="escalation.form"
-        class="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-red-500"
+        class="bg-gray-900 text-white px-3 py-1 rounded border border-gray-600 focus:outline-none focus:border-red-500"
       >
         <option value="">Select Form</option>
         <template x-for="form in forms" :key="form.id">
@@ -119,79 +113,102 @@
         </template>
       </select>
     </div>
+    <button @click="save()" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">Save</button>
+  </div>
 
-    <!-- Excel-like Rules Table -->
-    <div class="overflow-x-auto bg-gray-800 rounded-lg p-4">
-      <table class="w-full text-white">
-        <thead>
-          <tr class="border-b border-gray-600">
-            <th class="px-4 py-2 text-left">Condition</th>
-            <th class="px-4 py-2 text-left">Action</th>
-            <th class="px-4 py-2 text-left">Target</th>
-            <th class="px-4 py-2 text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <template x-for="(rule, index) in escalation.rules" :key="index">
-            <tr class="border-b border-gray-700">
-              <td class="px-4 py-2">
-                <input 
-                  type="text" 
-                  x-model="rule.condition"
-                  class="w-full bg-transparent border-none focus:outline-none"
-                >
-              </td>
-              <td class="px-4 py-2">
-                <input 
-                  type="text" 
-                  x-model="rule.action"
-                  class="w-full bg-transparent border-none focus:outline-none"
-                >
-              </td>
-              <td class="px-4 py-2">
-                <input 
-                  type="text" 
-                  x-model="rule.target"
-                  class="w-full bg-transparent border-none focus:outline-none"
-                >
-              </td>
-              <td class="px-4 py-2">
-                <button @click="removeRule(index)" class="text-red-400 hover:text-red-300">Remove</button>
-              </td>
-            </tr>
-          </template>
-          <tr>
-            <td class="px-4 py-2">
+  <!-- Excel-like Grid -->
+  <div class="overflow-auto h-[calc(100vh-8rem)]">
+    <table class="w-full border-collapse">
+      <!-- Headers -->
+      <thead class="sticky top-0 bg-gray-800">
+        <tr>
+          <th class="border-b border-r border-gray-600 px-4 py-2 text-left font-medium w-10">#</th>
+          <th class="border-b border-r border-gray-600 px-4 py-2 text-left font-medium">Condition</th>
+          <th class="border-b border-r border-gray-600 px-4 py-2 text-left font-medium">Action</th>
+          <th class="border-b border-r border-gray-600 px-4 py-2 text-left font-medium">Target</th>
+          <th class="border-b border-gray-600 px-4 py-2 text-center font-medium w-20">Actions</th>
+        </tr>
+      </thead>
+      
+      <!-- Body -->
+      <tbody>
+        <template x-for="(rule, index) in escalation.rules" :key="index">
+          <tr class="hover:bg-gray-800">
+            <td class="border-r border-gray-600 px-4 py-2 text-gray-400" x-text="index + 1"></td>
+            <td class="border-r border-gray-600 px-4 py-2">
               <input 
                 type="text" 
-                x-model="newRule.condition"
-                placeholder="Enter condition"
-                class="w-full bg-transparent border-none focus:outline-none"
+                x-model="rule.condition"
+                @focus="selectCell(index, 0)"
+                :class="{'bg-gray-700': selectedCell === `${index}-0`}"
+                class="w-full bg-transparent border-none focus:outline-none px-1"
               >
             </td>
-            <td class="px-4 py-2">
+            <td class="border-r border-gray-600 px-4 py-2">
               <input 
                 type="text" 
-                x-model="newRule.action"
-                placeholder="Enter action"
-                class="w-full bg-transparent border-none focus:outline-none"
+                x-model="rule.action"
+                @focus="selectCell(index, 1)"
+                :class="{'bg-gray-700': selectedCell === `${index}-1`}"
+                class="w-full bg-transparent border-none focus:outline-none px-1"
               >
             </td>
-            <td class="px-4 py-2">
+            <td class="border-r border-gray-600 px-4 py-2">
               <input 
                 type="text" 
-                x-model="newRule.target"
-                placeholder="Enter target"
-                class="w-full bg-transparent border-none focus:outline-none"
+                x-model="rule.target"
+                @focus="selectCell(index, 2)"
+                :class="{'bg-gray-700': selectedCell === `${index}-2`}"
+                class="w-full bg-transparent border-none focus:outline-none px-1"
               >
             </td>
-            <td class="px-4 py-2">
-              <button @click="addRule()" class="text-green-400 hover:text-green-300">Add Rule</button>
+            <td class="border-gray-600 px-4 py-2 text-center">
+              <button @click="removeRule(index)" class="text-red-400 hover:text-red-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
             </td>
           </tr>
-        </tbody>
-      </table>
-    </div>
+        </template>
+        
+        <!-- New Rule Row -->
+        <tr class="hover:bg-gray-800">
+          <td class="border-r border-gray-600 px-4 py-2 text-gray-400" x-text="escalation.rules.length + 1"></td>
+          <td class="border-r border-gray-600 px-4 py-2">
+            <input 
+              type="text" 
+              x-model="newRule.condition"
+              placeholder="Enter condition"
+              class="w-full bg-transparent border-none focus:outline-none px-1"
+            >
+          </td>
+          <td class="border-r border-gray-600 px-4 py-2">
+            <input 
+              type="text" 
+              x-model="newRule.action"
+              placeholder="Enter action"
+              class="w-full bg-transparent border-none focus:outline-none px-1"
+            >
+          </td>
+          <td class="border-r border-gray-600 px-4 py-2">
+            <input 
+              type="text" 
+              x-model="newRule.target"
+              placeholder="Enter target"
+              class="w-full bg-transparent border-none focus:outline-none px-1"
+            >
+          </td>
+          <td class="border-gray-600 px-4 py-2 text-center">
+            <button @click="addRule()" class="text-green-400 hover:text-green-300">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
 {% endblock %}
