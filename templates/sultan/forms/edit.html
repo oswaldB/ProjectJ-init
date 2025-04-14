@@ -171,16 +171,16 @@
               <span x-show="field.required" class="text-red-500">*</span>
             </label>
             
-            <template x-if="field.type === 'select'">
+            <template x-if="field.type === 'select' || field.type === 'conditional'">
               <select :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
                 <option value="">Select an option</option>
-                <template x-for="option in field.options" :key="option">
-                  <option x-text="option"></option>
+                <template x-for="option in field.options" :key="option.name">
+                  <option x-text="option.name" :value="option.name"></option>
                 </template>
               </select>
             </template>
 
-            <template x-if="field.type !== 'select' && field.type !== 'checkbox'">
+            <template x-if="field.type !== 'select' && field.type !== 'checkbox' && field.type !== 'conditional'">
               <input :type="field.type" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
             </template>
 
