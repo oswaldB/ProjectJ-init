@@ -157,7 +157,9 @@ def sendConfirmationEmail(email_address, subject, issue):
 # Routes
 @app.route('/login')
 def login():
-    return render_template('login.html')
+    if request.path == '/login':
+        return render_template('login.html')
+    return redirect('/')
 
 def require_auth(f):
     from functools import wraps
