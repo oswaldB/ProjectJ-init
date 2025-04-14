@@ -5,7 +5,7 @@
 {% block alpine_component %}
   {
     page: 'form-editor',
-    form: { id: '', name: '', fields: [], key: '', keyUnlocked: true },
+    form: { id: '', name: '', fields: [] },
     preview: true,
     async init() {
       const formId = window.location.pathname.split('/').pop();
@@ -60,20 +60,6 @@
 
     <div class="space-y-4">
       <input type="text" x-model="form.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Form Name">
-
-      <div class="relative">
-        <input type="text" x-model="form.key" 
-               @input="if(!form.keyUnlocked) form.key = form.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
-               :disabled="form.key && !form.keyUnlocked"
-               class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" 
-               placeholder="Form Key">
-        <button x-show="form.key" 
-                @click="form.keyUnlocked = !form.keyUnlocked"
-                class="absolute right-2 top-2">
-          <span x-show="!form.keyUnlocked">🔒</span>
-          <span x-show="form.keyUnlocked">🔓</span>
-        </button>
-      </div>
 
       <div class="space-y-4">
         <template x-for="(field, index) in form.fields" :key="index">
