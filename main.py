@@ -79,11 +79,15 @@ def process_issue_data(issue_data):
 
 def save_in_global_db(key, obj):
     json_object = json.dumps(obj, separators=(',', ':'))
+    # S3 save
     s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_object)
+    
     # Local save
     full_path = os.path.join(LOCAL_BUCKET_DIR, key)
-    os.makedirs(os.path.dirname(full_path), exist_ok=True)
-    with open(full_path, "w") as f:
+    directory = os.path.dirname(full_path)
+    if directory:
+        os.makedirs(directory, exist_ok=True)
+    with open(full_path, "w", encoding='utf-8') as f:
         f.write(json_object)
     return
 
