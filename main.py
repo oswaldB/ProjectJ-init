@@ -8,7 +8,7 @@ import json
 import re
 import pandas as pd
 import boto3
-from moto import mock_s3
+from moto.mock_s3 import mock_s3
 import os
 
 app = Flask(__name__)
