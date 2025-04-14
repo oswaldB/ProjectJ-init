@@ -165,11 +165,11 @@ def index():
 
 @app.route('/questions')
 def questions():
-    return render_template('components/questions/studio.html')
+    return render_template('sultan/pages/jaffar-questions-studio.html')
 
 @app.route('/questions/import')
 def questions_import():
-    return render_template('components/questions/import.html')
+    return render_template('sultan/questions/import.html')
 
 @app.route('/questions/export')
 def questions_export():
