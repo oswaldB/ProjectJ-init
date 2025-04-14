@@ -150,9 +150,10 @@
                           <label class="block text-sm font-medium text-gray-300">Question Key</label>
                           <div class="relative flex items-center">
                             <input type="text" 
-                                   x-model="option.key" 
+                                   x-model="option.key"
+                                   @input="option.key = option.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
                                    class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" 
-                                   placeholder="Question Key">
+                                   placeholder="Question Key (slug format)">
                           </div>
                         </div>
                         <div class="mb-2">
@@ -183,8 +184,9 @@
                                     <label class="block text-sm font-medium text-gray-300">Question Key</label>
                                     <div class="relative flex items-center">
                                       <input type="text" x-model="nestedOption.key"
+                                             @input="nestedOption.key = nestedOption.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
                                              class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
-                                             placeholder="Question Key">
+                                             placeholder="Question Key (slug format)">
                                     </div>
                                   </div>
                                 </div>
