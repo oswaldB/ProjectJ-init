@@ -91,8 +91,9 @@
               <label class="block text-sm font-medium text-gray-300">Question Key</label>
               <div class="relative">
                 <input type="text" x-model="field.key"
+                       @input="field.key = field.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
                        class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
-                       placeholder="Question Key">
+                       placeholder="Question Key (slug format)">
               </div>
             </div>
 
