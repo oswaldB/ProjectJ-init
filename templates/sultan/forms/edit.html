@@ -100,7 +100,7 @@
               </div>
             </template>
 
-            <template x-if="['select', 'conditional'].includes(field.type)">
+            <template x-if="['select', 'conditional', 'multiple_checkbox'].includes(field.type)">
               <div class="mt-2 space-y-2">
                 <button @click="field.options = field.options || []; field.options.push({name: '', show: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
                 <template x-for="(option, optIndex) in field.options" :key="optIndex">
@@ -194,7 +194,18 @@
               </select>
             </template>
 
-            <template x-if="field.type !== 'select' && field.type !== 'checkbox' && field.type !== 'conditional' && field.type !== 'single_select'">
+            <template x-if="field.type === 'multiple_checkbox'">
+              <div class="space-y-2">
+                <template x-for="option in field.options" :key="option.name">
+                  <div class="flex items-center">
+                    <input type="checkbox" class="bg-gray-800 border-gray-600">
+                    <label class="ml-2 text-sm font-medium text-white" x-text="option.name"></label>
+                  </div>
+                </template>
+              </div>
+            </template>
+
+            <template x-if="field.type !== 'select' && field.type !== 'checkbox' && field.type !== 'conditional' && field.type !== 'single_select' && field.type !== 'multiple_checkbox'">
               <input :type="field.type" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
             </template>
 
