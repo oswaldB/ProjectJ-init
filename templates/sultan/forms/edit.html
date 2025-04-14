@@ -298,13 +298,45 @@
             </label>
             <p class="text-gray-400 text-sm" x-text="field.description"></p>
 
-            <template x-if="field.type === 'single_select' || field.type === 'conditional'">
+            <template x-if="field.type === 'single_select'">
               <select :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
                 <option value="">Select an option</option>
                 <template x-for="option in field.options" :key="option.name">
                   <option x-text="option.name" :value="option.name"></option>
                 </template>
               </select>
+            </template>
+
+            <template x-if="field.type === 'conditional'">
+              <div class="space-y-4">
+                <select :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="field.selected">
+                  <option value="">Select an option</option>
+                  <template x-for="option in field.options" :key="option.name">
+                    <option x-text="option.name" :value="option.name"></option>
+                  </template>
+                </select>
+
+                <template x-for="option in field.options" :key="option.name">
+                  <div x-show="field.selected === option.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
+                    <template x-for="question in option.questions" :key="question.key">
+                      <div class="space-y-2">
+                        <label class="block">
+                          <span class="text-lg font-medium text-white" x-text="question.label"></span>
+                        </label>
+                        <template x-if="question.type === 'text_input'">
+                          <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                        </template>
+                        <template x-if="question.type === 'number'">
+                          <input type="number" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                        </template>
+                        <template x-if="question.type === 'textarea'">
+                          <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+              </div>
             </template>
 
             <template x-if="field.type === 'multiple_checkbox'">
