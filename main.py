@@ -163,6 +163,10 @@ def login():
 def index():
     return render_template('jaffar/index.html')
 
+@app.route('/sultan')
+def sultan():
+    return render_template('sultan/base.html')
+
 @app.route('/questions')
 def questions():
     return render_template('sultan/pages/jaffar-questions-studio.html')

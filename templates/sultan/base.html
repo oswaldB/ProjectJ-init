@@ -10,10 +10,15 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     {% block head %}{% endblock %}
 </head>
-<body class="bg-gray-900">
+<body class="bg-gray-900 text-white">
     <div class="flex min-h-screen" x-data="{% block alpine_component %}{% endblock %}">
         {% include 'sultan/menu.html' %}
-        {% block content %}{% endblock %}
+        {% block content %}
+        <div class="flex-1 p-8">
+            <h1 class="text-4xl font-bold mb-4">Welcome to Sultan</h1>
+            <p class="text-gray-300">Supervisory Utilities for Ledger Tools and Accurate Numbers</p>
+        </div>
+        {% endblock %}
     </div>
     {% block scripts %}{% endblock %}
 </body>
