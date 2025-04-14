@@ -59,13 +59,13 @@
     </div>
 
     <div class="space-y-4">
-      <input type="text" x-model="form.name" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Form Name">
+      <input type="text" x-model="form.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Form Name">
       
       <div class="space-y-4">
         <template x-for="(field, index) in form.fields" :key="index">
-          <div class="bg-gray-800 p-4 rounded-lg">
+          <div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
             <div class="flex justify-between mb-4">
-              <select x-model="field.type" class="bg-gray-700 text-white p-2 rounded">
+              <select x-model="field.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
                 <option value="text">Text</option>
                 <option value="number">Number</option>
                 <option value="select">Select</option>
@@ -74,10 +74,10 @@
               <button @click="form.fields.splice(index, 1)" class="text-red-400 hover:text-red-300">Remove</button>
             </div>
             
-            <input type="text" x-model="field.label" class="w-full bg-gray-700 text-white p-2 rounded mb-2" placeholder="Field Label">
+            <input type="text" x-model="field.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 mb-2" placeholder="Field Label">
             
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" x-model="field.required">
+            <label class="flex items-center space-x-2 text-white">
+              <input type="checkbox" x-model="field.required" class="bg-gray-800 border-gray-600">
               <span>Required</span>
             </label>
 
@@ -86,7 +86,7 @@
                 <button @click="field.options.push('')" class="text-blue-400 hover:text-blue-300">Add Option</button>
                 <template x-for="(option, optIndex) in field.options" :key="optIndex">
                   <div class="flex space-x-2">
-                    <input type="text" x-model="field.options[optIndex]" class="flex-1 bg-gray-700 text-white p-2 rounded" placeholder="Option">
+                    <input type="text" x-model="field.options[optIndex]" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option">
                     <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
                   </div>
                 </template>
@@ -102,19 +102,19 @@
 
   <!-- Preview -->
   <div class="w-1/2" x-show="preview">
-    <h2 class="text-xl font-bold mb-6">Preview</h2>
-    <div class="bg-white p-6 rounded-lg">
-      <h3 class="text-xl font-bold text-gray-800 mb-4" x-text="form.name"></h3>
+    <h2 class="text-xl font-bold mb-6 text-white">Preview</h2>
+    <div class="bg-gray-800 p-6 rounded-lg border border-gray-600">
+      <h3 class="text-xl font-bold text-white mb-4" x-text="form.name"></h3>
       <form class="space-y-4">
         <template x-for="field in form.fields" :key="field.label">
           <div>
-            <label class="block text-gray-800 mb-2">
+            <label class="block text-white mb-2">
               <span x-text="field.label"></span>
               <span x-show="field.required" class="text-red-500">*</span>
             </label>
             
             <template x-if="field.type === 'select'">
-              <select :required="field.required" class="w-full border p-2 rounded">
+              <select :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
                 <option value="">Select an option</option>
                 <template x-for="option in field.options" :key="option">
                   <option x-text="option"></option>
@@ -123,11 +123,11 @@
             </template>
 
             <template x-if="field.type !== 'select' && field.type !== 'checkbox'">
-              <input :type="field.type" :required="field.required" class="w-full border p-2 rounded">
+              <input :type="field.type" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
             </template>
 
             <template x-if="field.type === 'checkbox'">
-              <input type="checkbox" :required="field.required" class="border p-2 rounded">
+              <input type="checkbox" :required="field.required" class="bg-gray-800 border-gray-600">
             </template>
           </div>
         </template>
