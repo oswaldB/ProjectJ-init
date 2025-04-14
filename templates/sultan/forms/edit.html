@@ -179,13 +179,38 @@
                                             </div>
                                             <div class="mt-2">
                                               <select x-model="nestedOption2.template" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                                <option value="text_input">Text Input</option>
-                                                <option value="number">Number</option>
-                                                <option value="single_select">Single Select</option>
-                                                <option value="multiple_checkbox">Multiple Checkbox</option>
-                                                <option value="textarea">Long Text</option>
-                                                <option value="date">Date</option>
-                                              </select>
+                                                  <option value="text_input">Text Input</option>
+                                                  <option value="number">Number</option>
+                                                  <option value="single_select">Single Select</option>
+                                                  <option value="multiple_checkbox">Multiple Checkbox</option>
+                                                  <option value="textarea">Long Text</option>
+                                                  <option value="date">Date</option>
+                                                  <option value="conditional">Conditional</option>
+                                                </select>
+
+                                                <template x-if="nestedOption2.template === 'conditional'">
+                                                  <div class="mt-4 pl-4 border-l-2 border-gray-600">
+                                                    <button @click="nestedOption2.options = nestedOption2.options || []; nestedOption2.options.push({name: '', show: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                                                    <template x-for="(nestedOption3, nestedIndex3) in nestedOption2.options" :key="nestedIndex3">
+                                                      <div class="mt-2 p-2 border border-gray-600 rounded">
+                                                        <div class="flex space-x-2">
+                                                          <input type="text" x-model="nestedOption3.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                                                          <button @click="nestedOption2.options.splice(nestedIndex3, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                        </div>
+                                                        <div class="mt-2">
+                                                          <select x-model="nestedOption3.template" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                                            <option value="text_input">Text Input</option>
+                                                            <option value="number">Number</option>
+                                                            <option value="single_select">Single Select</option>
+                                                            <option value="multiple_checkbox">Multiple Checkbox</option>
+                                                            <option value="textarea">Long Text</option>
+                                                            <option value="date">Date</option>
+                                                          </select>
+                                                        </div>
+                                                      </div>
+                                                    </template>
+                                                  </div>
+                                                </template>
                                             </div>
                                           </div>
                                         </template>
