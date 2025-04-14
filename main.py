@@ -305,7 +305,7 @@ def questions_export():
 
 @app.route('/sultan/forms/list')
 def forms_list():
-    return render_template('sultan/forms/list.html')
+    return render_template('sultan/forms/index.html')
 
 
 @app.route('/sultan/forms/edit/<form_id>')
