@@ -330,6 +330,10 @@ def api_form_get(form_id):
         return jsonify(json.loads(content))
     except Exception as e:
         logger.error(f"Failed to load form {form_id}: {e}")
+        return jsonify({
+            "error": "Form not found",
+            "redirect": "/sultan/forms/list"
+        }), 404
         return jsonify({"error": "Form not found"}), 404
 
 

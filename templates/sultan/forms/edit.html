@@ -17,10 +17,17 @@
         try {
           const isFilename = formId.endsWith('.json');
           const response = await fetch(`/api/sultan/forms/${formId}?email=${userEmail}`);
-          if (!response.ok) throw new Error('Form not found');
-          this.form = await response.json();
+          const data = await response.json();
+          if (!response.ok) {
+            alert('Form not found');
+            window.location.href = '/sultan/forms/list';
+            return;
+          }
+          this.form = data;
         } catch (error) {
           console.error('Failed to load form:', error);
+          alert('Form not found');
+          window.location.href = '/sultan/forms/list';
         }
       }
     },
