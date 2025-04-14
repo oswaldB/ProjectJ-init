@@ -33,20 +33,23 @@
         window.location.href = '/sultan/templates/list';
       }
     },
-    initTinyMCE() {
-      tinymce.init({
-        selector: '#emailEditor',
-        skin: 'oxide-dark',
-        content_css: 'dark',
-        height: 500,
-        plugins: 'table link image lists',
-        toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | indent outdent | bullist numlist | table | link image',
-        setup: (editor) => {
-          editor.on('change', () => {
-            this.template.body = editor.getContent();
-            this.saveTemplate();
-          });
+    initQuill() {
+      const quill = new Quill('#emailEditor', {
+        theme: 'snow',
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline'],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            [{ 'align': [] }],
+            ['link', 'image'],
+            ['clean']
+          ]
         }
+      });
+      
+      quill.on('text-change', () => {
+        this.template.body = quill.root.innerHTML;
+        this.saveTemplate();
       });
     },
     async saveTemplate() {
