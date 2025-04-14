@@ -2,11 +2,16 @@
 
 {% block title %}Jaffar{% endblock %}
 
-{% block alpine_component %}jaffar(){% endblock %}
+{% block alpine_component %}
+{
+  ...jaffar(),
+  page: 'main'
+}
+{% endblock %}
 
 {% block content %}
 <!-- JAFFAR APP -->
-<div class="mx-auto flex min-h-screen min-w-screen" x-data="jaffar()">
+<div class="mx-auto flex min-h-screen min-w-screen">
     <!-- empty first page to hide -->
     <div class="h-screen w-screen bg-gray-900 z-50" x-show="!page"></div>
 
