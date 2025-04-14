@@ -61,7 +61,7 @@ def save_in_global_db(key, obj):
     return
 
 def get_one_from_global_db(key):
-    content = client.download_from_text(key)
+    content = client.download_as_text(key)
     return json.loads(content)
 
 def get_max_from_global_db(key):
