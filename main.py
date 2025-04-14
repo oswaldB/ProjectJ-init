@@ -163,9 +163,17 @@ def login():
 def index():
     return render_template('jaffar/index.html')
 
+@app.route('/sultan/login')
+def sultan_login():
+    return render_template('sultan/login.html')
+
 @app.route('/sultan')
 def sultan():
     return render_template('sultan/base.html')
+
+@app.route('/sultan/<path:path>')
+def sultan_pages(path):
+    return render_template(f'sultan/{path}')
 
 @app.route('/questions')
 def questions():
