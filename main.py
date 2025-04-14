@@ -236,7 +236,10 @@ def api_forms_list():
                 forms.append(form)
             except Exception as e:
                 logger.error(f"Failed to load form {file}: {e}")
-    
+    except Exception as e:
+        logger.error(f"Failed to list forms: {e}")
+        return jsonify({"error": str(e)}), 500
+        
     return jsonify(forms)
 
 @app.route('/api/sultan/forms/<form_id>')
