@@ -8,106 +8,68 @@
     template: { 
       id: '', 
       name: '',
-      type: 'email',
       subject: '',
       body: '',
-      selectedForm: '',
-      availableForms: []
+      selectedForm: ''
     },
     preview: true,
     formFields: [],
     async init() {
-      this.$watch('template', () => {
-        this.saveTemplate();
-      }, { deep: true });
-
       const templateId = window.location.pathname.split('/').pop();
       const userEmail = localStorage.getItem('user_email');
-
-      // Load forms for variables
+      
+      await this.loadTemplate(templateId, userEmail);
+      this.initTinyMCE();
+    },
+    async loadTemplate(templateId, userEmail) {
+      if (templateId === 'new') return;
+      
       try {
-        const response = await fetch(`/api/sultan/forms/list?email=${userEmail}`);
-        this.availableForms = await response.json();
+        const response = await fetch(`/api/sultan/templates/${templateId}?email=${userEmail}`);
+        const data = await response.json();
+        this.template = data;
       } catch (error) {
-        console.error('Failed to load forms:', error);
-      }
-
-      if (templateId !== 'new') {
-        try {
-          const response = await fetch(`/api/sultan/templates/${templateId}?email=${userEmail}`);
-          const data = await response.json();
-          if (!response.ok) {
-            showNotification('Template not found', 'error');
-            setTimeout(() => {
-              window.location.href = '/sultan/templates/list';
-            }, 2000);
-            return;
-          }
-          this.template = data;
-          if (this.template.selectedForm) {
-            await this.loadFormFields();
-          }
-        } catch (error) {
-          console.error('Failed to load template:', error);
-          showNotification('Template not found', 'error');
-          window.location.href = '/sultan/templates/list';
-        }
+        console.error('Failed to load template:', error);
+        window.location.href = '/sultan/templates/list';
       }
     },
-    async loadFormFields() {
-      if (!this.template.selectedForm) return;
-      try {
-        const response = await fetch(`/api/sultan/forms/${this.template.selectedForm}`);
-        const form = await response.json();
-        this.formFields = form.fields;
-      } catch (error) {
-        console.error('Failed to load form fields:', error);
-      }
+    initTinyMCE() {
+      tinymce.init({
+        selector: '#emailEditor',
+        skin: 'oxide-dark',
+        content_css: 'dark',
+        height: 500,
+        plugins: 'table link image lists',
+        toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | indent outdent | bullist numlist | table | link image',
+        setup: (editor) => {
+          editor.on('change', () => {
+            this.template.body = editor.getContent();
+            this.saveTemplate();
+          });
+        }
+      });
     },
     async saveTemplate() {
       if (!this.template.id) {
         this.template.id = `templates-${Date.now()}`;
       }
+      
       const userEmail = localStorage.getItem('user_email');
-      if (!userEmail) {
-        console.error('User email not found');
-        return;
-      }
-      this.template.user_email = userEmail;
+      if (!userEmail) return;
+
       try {
         await fetch('/api/sultan/templates/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: userEmail, template: this.template })
+          body: JSON.stringify({ 
+            email: userEmail, 
+            template: { ...this.template, user_email: userEmail }
+          })
         });
       } catch (error) {
         console.error('Failed to save template:', error);
       }
-    },
-    insertVariable(key) {
-      const textArea = this.$refs[this.currentFocus];
-      if (textArea) {
-        const startPos = textArea.selectionStart;
-        const endPos = textArea.selectionEnd;
-        const before = this.template[this.currentFocus].substring(0, startPos);
-        const after = this.template[this.currentFocus].substring(endPos);
-        this.template[this.currentFocus] = before + '{{' + key + '}}' + after;
-      }
-    },
-    insertTable() {
-      const table = `<table border="1" cellpadding="5">
-  <tr>
-    <th>Header 1</th>
-    <th>Header 2</th>
-  </tr>
-  <tr>
-    <td>Content 1</td>
-    <td>Content 2</td>
-  </tr>
-</table>`;
-      this.template.body += table;
-    },
-    currentFocus: null
+    }
   }
 {% endblock %}
 
