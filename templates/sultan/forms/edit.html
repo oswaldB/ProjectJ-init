@@ -308,8 +308,8 @@
             </template>
 
             <template x-if="field.type === 'conditional'">
-              <div class="space-y-4">
-                <select :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="field.selected">
+              <div class="space-y-4" x-data="{ selected: '' }">
+                <select :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="selected">
                   <option value="">Select an option</option>
                   <template x-for="option in field.options" :key="option.name">
                     <option x-text="option.name" :value="option.name"></option>
@@ -317,12 +317,13 @@
                 </select>
 
                 <template x-for="option in field.options" :key="option.name">
-                  <div x-show="field.selected === option.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
+                  <div x-show="selected === option.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
                     <template x-for="question in option.questions" :key="question.key">
-                      <div class="space-y-2">
+                      <div class="space-y-2" x-data="{ nestedSelected: '' }">
                         <label class="block">
                           <span class="text-lg font-medium text-white" x-text="question.label"></span>
                         </label>
+
                         <template x-if="question.type === 'text_input'">
                           <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
                         </template>
@@ -331,6 +332,37 @@
                         </template>
                         <template x-if="question.type === 'textarea'">
                           <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
+                        </template>
+                        <template x-if="question.type === 'conditional'">
+                          <div class="space-y-4">
+                            <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="nestedSelected">
+                              <option value="">Select an option</option>
+                              <template x-for="nestedOption in question.options" :key="nestedOption.name">
+                                <option x-text="nestedOption.name" :value="nestedOption.name"></option>
+                              </template>
+                            </select>
+
+                            <template x-for="nestedOption in question.options" :key="nestedOption.name">
+                              <div x-show="nestedSelected === nestedOption.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
+                                <template x-for="nestedQuestion in nestedOption.questions" :key="nestedQuestion.key">
+                                  <div class="space-y-2">
+                                    <label class="block">
+                                      <span class="text-lg font-medium text-white" x-text="nestedQuestion.label"></span>
+                                    </label>
+                                    <template x-if="nestedQuestion.type === 'text_input'">
+                                      <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                    </template>
+                                    <template x-if="nestedQuestion.type === 'number'">
+                                      <input type="number" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                    </template>
+                                    <template x-if="nestedQuestion.type === 'textarea'">
+                                      <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
+                                    </template>
+                                  </div>
+                                </template>
+                              </div>
+                            </template>
+                          </div>
                         </template>
                       </div>
                     </template>
