@@ -74,6 +74,7 @@
                 <option value="multiple_checkbox">Multiple Checkbox</option>
                 <option value="textarea">Long Text</option>
                 <option value="date">Date</option>
+                <option value="list">List</option>
                 <option value="conditional">Conditional</option>
               </select>
               <button @click="form.fields.splice(index, 1)" class="text-red-400 hover:text-red-300">Remove</button>
@@ -280,7 +281,28 @@
               <input type="text" x-mask="9999/99/99" placeholder="YYYY/MM/DD" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
             </template>
 
-            <template x-if="field.type !== 'select' && field.type !== 'checkbox' && field.type !== 'conditional' && field.type !== 'single_select' && field.type !== 'multiple_checkbox' && field.type !== 'textarea' && field.type !== 'date'">
+            <template x-if="field.type === 'list'">
+              <div x-data="{ values: [] }" class="space-y-2">
+                <template x-for="(value, index) in values" :key="index">
+                  <div class="flex space-x-2">
+                    <input type="text" 
+                           x-model="values[index]"
+                           :required="field.required"
+                           class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                    <button @click="values.splice(index, 1)"
+                            class="bg-red-600 text-white w-8 h-8 rounded flex items-center justify-center">
+                      -
+                    </button>
+                  </div>
+                </template>
+                <button @click="values.push('')" 
+                        class="bg-green-600 text-white px-3 py-1 rounded">
+                  +
+                </button>
+              </div>
+            </template>
+
+            <template x-if="field.type !== 'select' && field.type !== 'checkbox' && field.type !== 'conditional' && field.type !== 'single_select' && field.type !== 'multiple_checkbox' && field.type !== 'textarea' && field.type !== 'date' && field.type !== 'list'">
               <input :type="field.type" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
             </template>
 
