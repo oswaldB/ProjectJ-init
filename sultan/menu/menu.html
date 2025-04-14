@@ -1,0 +1,44 @@
+<aside
+  aria-label="Sidebar"
+  class="fixed bg-gray-900 text-white top-0 left-0 z-40 p-4 w-[280px] h-screen transition-transform -translate-x-full sm:translate-x-0"
+  id="default-sidebar"
+  x-data="menu()"
+>
+  <div class="h-full px-3 py-4 overflow-y-auto bg-gray-900 text-white">
+    <div class="items-center-space-x-4 flex">
+      <img
+        class="mr-2 h-7"
+        src="https://stash.hk.hsbc/projects/STRATPCJAFFAR/repos/pc-sultan/raw/apps/pc_sultan/assets/images/hsbc-logo.png"
+      />
+      <h4 class="mb-4 text-center text-xl font-semibold">SULTAN</h4>
+    </div>
+    <ul class="space-y-2 font-medium mt-4">
+      <template x-for="(m,index) in menu"> 
+        <li>        
+        <div class="mt-6">
+          <span class="ms-3 text-bold" x-text="m.level1.name.toUpperCase()">Jaffar</span>
+        </div>
+        <template x-for="(sub,index) in m.level1.submenu">
+          <div class="flex items-center m-cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-100 hover:bg-gray-700 group ">
+          <span x-html="sub.icon" class="mr-2"></span>
+          <a x-bind:href="sub.link" x-text="sub.name">          
+          </a>
+          </div>
+        </template>
+      </li>
+    </template>
+    </ul>
+    <ul class="space-y-2 font-medium absolute inset-x-0 bottom-0 mb-5">
+      <li>
+        <a
+          _target="blank"
+          class="cursor-pointer flex items-center p-2 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+          href="https://gbmt-confluence.prd.fx.gbm.cloud.uk.hsbc/display/GPCR/Sultan"
+        >
+          <span class="ms-3">Documentation</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</aside>
+

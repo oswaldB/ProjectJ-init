@@ -1,0 +1,104 @@
+<!--############-->
+<!--# This page hosts the chat-->
+<!--# Author : @oswaldbernard-->
+<!--############-->
+
+<!--############-->
+<!--# This page is a nested base.html that describe the app layout-->
+<!--# it also add the alpinejs, tailwindcss and pouchdb to the project-->
+<!--# Author : @oswaldbernard-->
+<!--############-->
+<!--working -->
+<!doctype html>
+<html lang="en">
+
+<head>
+
+
+    <meta charset="utf-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
+
+
+    <title>
+
+        Sultan
+
+    </title>
+
+
+    <script defer
+            src="https://stash.hk.hsbc/projects/STRATPCJAFFAR/repos/pc-sultan/raw/apps/pc_sultan/assets/pouchdb.js"></script>
+    <script defer
+            src="https://stash.hk.hsbc/projects/STRATPCJAFFAR/repos/pc-sultan/raw/apps/pc_sultan/assets/axios.js"></script>
+    <!-- <link rel="stylesheet" href="https://stash.hk.hsbc/projects/STRATPCJAFFAR/repos/pc-sultan/raw/apps/pc_sultan/assets/css/custom.css"> -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,container-queries"></script>
+    <script> async function loadComponent(elementId,componentPath){
+        try {
+            const response = await fetch(componentPath);
+            const html = await response.text();
+            document.getElementById(elementId).innerHTML = html;
+        } catch(error){console.error('Error loading componentn:',error)}
+    }</script>
+
+</head>
+
+<body>
+
+<div class="content">
+    <div class="mx-auto flex min-h-screen min-w-screen bg-black" x-data="menu()">
+        <!--    PASSWORD PROTECTED -->
+        <div class="h-screen w-screen bg-gray-900 flex border-red-500 z-50 justify-center items-center"
+             x-data="{password:''}"
+             x-show="page=='password'">
+            <div class="flex-col flex">
+                <input class="text-white w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                       type="password" x-model='password'
+                       x-show="password!='sesame'">
+                <button @click="page='menu-sultan'"
+                        class="hoverx-text-gray-500 hover:cursor-pointer bg-red-600 px-4 py-2 rounded text-center font-bold text-white"
+                        x-show="password=='sesame'">
+                    ENTER
+                </button>
+            </div>
+        </div>
+
+        <div class="h-screen w-screen flex flex-col items-stretch bg-gray-900 border-red-500 z-50 justify-center"
+        x-show="page=='menu-sultan'">
+        <div class="w-3/4 mx-auto">
+            <h1 class="text-white text-6xl text-bold ">SULTAN</h1>
+            <p class="text-white mb-20">Supervisory Utilities for Ledger Tools and Accurate Numbers</p>
+        <template x-for="(item,index) in menu">
+            <div class="m-8">
+            <p class="text-white text-bold text-2xl mb-2" x-text="item.level1.name.toUpperCase()">hello</p>
+            
+                <div class="grid grid-flow-col gap-4">
+                    <template x-for="(action,index) in item.level1.submenu">
+                        <a x-bind:href="'./pages/'+action.link" class="border border-white p-4 rounded-lg text-white hover:bg-gray-100 hover:bg-gray-700 group">
+                            <span x-html="action.icon" class="text-white"></span>
+                            <span x-text="action.name" class="text-white"></span>
+                        </a>
+                    </template>
+                </div>
+            </div>      
+        </template>
+    </div>
+   </div>
+
+<script defer src="./menu/menu.js"></script>
+<script defer
+        src="https://stash.hk.hsbc/projects/STRATPCJAFFAR/repos/pc-sultan/raw/apps/pc_sultan/assets/mask-alpine.js"></script>
+<script defer
+        src="https://stash.hk.hsbc/projects/STRATPCJAFFAR/repos/pc-sultan/raw/apps/pc_sultan/assets/alpine.js"></script>
+
+
+</div>
+
+</body>
+
+<footer>
+
+
+</footer>
+
+</html>
