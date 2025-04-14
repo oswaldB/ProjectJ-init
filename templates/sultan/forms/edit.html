@@ -79,10 +79,18 @@
               <button @click="form.fields.splice(index, 1)" class="text-red-400 hover:text-red-300">Remove</button>
             </div>
 
-            <input type="text" x-model="field.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 mb-2" placeholder="Field Label">
-            <textarea x-model="field.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 mb-2" placeholder="Field Description" rows="3"></textarea>
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-300">Question Title</label>
+              <input type="text" x-model="field.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question title">
+            </div>
+            
+            <div class="mt-4 space-y-2">
+              <label class="block text-sm font-medium text-gray-300">Question Description</label>
+              <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
+              <textarea x-model="field.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question description" rows="3"></textarea>
+            </div>
 
-            <label class="flex items-center space-x-2 text-white">
+            <label class="flex items-center space-x-2 text-white mt-4">
               <input type="checkbox" x-model="field.required" class="bg-gray-800 border-gray-600">
               <span>Required</span>
             </label>
