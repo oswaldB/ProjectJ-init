@@ -83,16 +83,11 @@
               <label class="block text-sm font-medium text-gray-300">Question Title</label>
               <input type="text" x-model="field.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question title">
             </div>
-
+            
             <div class="mt-4 space-y-2">
-              <label class="block text-sm font-medium text-gray-300">Question Description (Markdown enabled)</label>
-              <p class="text-xs text-gray-400">Add additional context or instructions for this question using Markdown</p>
-              <div class="flex flex-col gap-2">
-                <textarea x-model="field.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question description (supports Markdown)" rows="3"></textarea>
-                <div x-show="field.description" class="bg-gray-700 p-2 rounded prose prose-invert max-w-none">
-                  <div x-html="marked.parse(field.description || '')"></div>
-                </div>
-              </div>
+              <label class="block text-sm font-medium text-gray-300">Question Description</label>
+              <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
+              <textarea x-model="field.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question description" rows="3"></textarea>
             </div>
 
             <label class="flex items-center space-x-2 text-white mt-4">
@@ -242,7 +237,7 @@
               <span class="text-xl font-medium text-white" x-text="field.label"></span>
               <span x-show="field.required" class="text-red-500">*</span>
             </label>
-            <p class="text-gray-400 text-sm" x-html="marked.parse(field.description || '')"></p>
+            <p class="text-gray-400 text-sm" x-text="field.description"></p>
 
             <template x-if="field.type === 'single_select' || field.type === 'conditional'">
               <select :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
