@@ -155,6 +155,10 @@ def sendConfirmationEmail(email_address, subject, issue):
 
 
 # Routes
+@app.route('/login')
+def login():
+    return render_template('jaffar/login.html')
+
 @app.route('/')
 def index():
     return render_template('jaffar/index.html')
