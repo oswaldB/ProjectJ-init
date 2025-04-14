@@ -12,6 +12,22 @@
 </head>
 <body class="bg-gray-900 text-white">
     <div class="min-h-screen flex" x-data="{% block alpine_component %}{% endblock %}">
+        <!-- Password protection -->
+        <div class="h-screen w-screen bg-gray-900 flex border-red-500 z-50 justify-center items-center"
+             x-data="{password:''}" 
+             x-show="page=='password'">
+            <div class="flex-col flex">
+                <input class="text-white w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                       type="password" 
+                       x-model='password'
+                       x-show="password!='sesame'">
+                <button @click="localStorage.setItem('sultan_auth', 'true'); page='menu-sultan'"
+                        class="hoverx-text-gray-500 hover:cursor-pointer bg-red-600 px-4 py-2 rounded text-center font-bold text-white"
+                        x-show="password=='sesame'">
+                    ENTER
+                </button>
+            </div>
+        </div>
         <!-- Sidebar -->
         <div class="w-64 min-h-screen bg-gray-800 fixed left-0 top-0">
             {% include 'sultan/menu.html' %}

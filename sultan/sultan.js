@@ -16,7 +16,7 @@ let escalationQuestionsConfigLocalDB = new PouchDB("eqcDB");
 
 function sultan() {
   return {
-     page:'password',
+     page: localStorage.getItem('sultan_auth') === 'true' ? 'menu-sultan' : 'password',
      //     Jaffar config page
      jaffarConfigs:[],
      escalationQuestionsConfig:[],
