@@ -4,25 +4,31 @@ import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
-#import replit.object_storage #Removed
 import json
 import re
 import pandas as pd
 import boto3
+from moto import mock_s3
+import os
 
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
-#client = Client() #Removed
 
-# Configuration pour Replit Storage
-bucket_name = "replit-objstore-8f06b167-ee2e-4911-8d12-71ad8c05d333"
-s3 = boto3.client(
-    's3',
-    endpoint_url='https://bucket.replit.com',
-    aws_access_key_id='REPLIT',
-    aws_secret_access_key='REPLIT',
-    region_name='us-east-1'
-)
+# Local storage configuration
+LOCAL_BUCKET_DIR = "./local_bucket"
+BUCKET_NAME = "jaffar-bucket"
+os.makedirs(LOCAL_BUCKET_DIR, exist_ok=True)
+
+# Initialize mocked S3
+mock = mock_s3()
+mock.start()
+
+# Create S3 client and bucket
+s3 = boto3.client('s3', region_name='us-east-1')
+try:
+    s3.create_bucket(Bucket=BUCKET_NAME)
+except:
+    pass  # Bucket may already exist
 
 
 class Email:
@@ -73,12 +79,17 @@ def process_issue_data(issue_data):
 
 def save_in_global_db(key, obj):
     json_object = json.dumps(obj, separators=(',', ':'))
-    s3.put_object(Bucket=bucket_name, Key=key, Body=json_object)
+    s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_object)
+    # Local save
+    full_path = os.path.join(LOCAL_BUCKET_DIR, key)
+    os.makedirs(os.path.dirname(full_path), exist_ok=True)
+    with open(full_path, "w") as f:
+        f.write(json_object)
     return
 
 
 def get_one_from_global_db(key):
-    response = s3.get_object(Bucket=bucket_name, Key=key)
+    response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
     content = response['Body'].read().decode('utf-8')
     return json.loads(content)
 
@@ -86,7 +97,7 @@ def get_one_from_global_db(key):
 def get_max_from_global_db(key):
     files = []
     try:
-        response = s3.list_objects_v2(Bucket=bucket_name, Prefix='jaffar/configs/')
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix='jaffar/configs/')
         for obj in response.get('Contents', []):
             files.append(obj['Key'])
 
@@ -112,7 +123,7 @@ def get_max_from_global_db(key):
 def get_max_filename_from_global_db(key):
     files = []
     try:
-        response = s3.list_objects_v2(Bucket=bucket_name, Prefix='jaffar/configs/')
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix='jaffar/configs/')
         for obj in response.get('Contents', []):
             files.append(obj['Key'])
 
@@ -137,7 +148,11 @@ def get_max_filename_from_global_db(key):
 
 
 def delete(key):
-    s3.delete_object(Bucket=bucket_name, Key=key)
+    s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+    #Local delete
+    full_path = os.path.join(LOCAL_BUCKET_DIR, key)
+    if os.path.exists(full_path):
+        os.remove(full_path)
     return
 
 
@@ -186,7 +201,7 @@ def sendConfirmationEmail(email_address, subject, issue):
     """
     content = style + message
     email = Email(
-        to=email_address, #Added email_address here
+        to=email_address,
         subject=subject,
         content=content,
     )
@@ -270,10 +285,10 @@ def api_forms_list():
     draft_prefix = 'sultan/configs/draft/forms/'
 
     try:
-        response = s3.list_objects_v2(Bucket=bucket_name, Prefix=draft_prefix)
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=draft_prefix)
         for obj in response.get('Contents', []):
             try:
-                response = s3.get_object(Bucket=bucket_name, Key=obj['Key'])
+                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
                 content = response['Body'].read().decode('utf-8')
                 form = json.loads(content)
 
@@ -282,7 +297,7 @@ def api_forms_list():
                     form['status'] = 'Draft'
 
                 # Add last_modified if not present
-                metadata = s3.head_object(Bucket=bucket_name, Key=obj['Key'])
+                metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
                 if 'last_modified' not in form:
                     form['last_modified'] = metadata['LastModified']
 
@@ -299,7 +314,7 @@ def api_forms_list():
 @app.route('/api/sultan/forms/<form_id>')
 def api_form_get(form_id):
     try:
-        content = s3.get_object(Bucket=bucket_name, Key=f'sultan/configs/draft//forms/{form_id}.json')['Body'].read().decode('utf-8')
+        content = s3.get_object(Bucket=BUCKET_NAME, Key=f'sultan/configs/draft//forms/{form_id}.json')['Body'].read().decode('utf-8')
         return jsonify(json.loads(content))
     except Exception as e:
         logger.error(f"Failed to load form {form_id}: {e}")
@@ -320,7 +335,7 @@ def api_form_save():
 
         # Save form as JSON
         json_data = json.dumps(form, indent=2, ensure_ascii=False)
-        s3.put_object(Bucket=bucket_name, Key=form_path, Body=json_data)
+        s3.put_object(Bucket=BUCKET_NAME, Key=form_path, Body=json_data)
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save form: {e}")
