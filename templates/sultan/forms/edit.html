@@ -185,7 +185,7 @@
               <span x-show="field.required" class="text-red-500">*</span>
             </label>
             
-            <template x-if="field.type === 'select' || field.type === 'conditional'">
+            <template x-if="field.type === 'select' || field.type === 'conditional' || field.type === 'single_select'">
               <select :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
                 <option value="">Select an option</option>
                 <template x-for="option in field.options" :key="option.name">
