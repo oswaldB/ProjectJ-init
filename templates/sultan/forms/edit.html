@@ -87,11 +87,26 @@
 
             <template x-if="field.type === 'single_select'">
               <div class="mt-4 space-y-2">
-                <button @click="field.options = field.options || []; field.options.push({name: '', description: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                <button @click="field.options = field.options || []; field.options.push({name: '', description: '', key: '', keyUnlocked: true})" class="text-blue-400 hover:text-blue-300">Add Option</button>
                 <template x-for="(option, optIndex) in field.options" :key="optIndex">
                   <div class="space-y-2 p-2 border border-gray-600 rounded">
                     <div class="flex space-x-2">
-                      <input type="text" x-model="option.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                      <div class="flex-1 space-y-2">
+                        <input type="text" x-model="option.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                        <div class="relative">
+                          <input type="text" x-model="option.key" 
+                                 @input="if(!option.keyUnlocked) option.key = option.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                                 :disabled="option.key && !option.keyUnlocked"
+                                 class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" 
+                                 placeholder="Option Key">
+                          <button x-show="option.key" 
+                                  @click="option.keyUnlocked = !option.keyUnlocked"
+                                  class="absolute right-2 top-2">
+                            <span x-show="!option.keyUnlocked">🔒</span>
+                            <span x-show="option.keyUnlocked">🔓</span>
+                          </button>
+                        </div>
+                      </div>
                       <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
                     </div>
                     <div class="mt-2">
@@ -104,11 +119,26 @@
 
             <template x-if="['select', 'conditional', 'multiple_checkbox'].includes(field.type)">
               <div class="mt-2 space-y-2">
-                <button @click="field.options = field.options || []; field.options.push({name: '', description:'', show: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                <button @click="field.options = field.options || []; field.options.push({name: '', description:'', show: '', key: '', keyUnlocked: true})" class="text-blue-400 hover:text-blue-300">Add Option</button>
                 <template x-for="(option, optIndex) in field.options" :key="optIndex">
                   <div class="space-y-2 p-2 border border-gray-600 rounded">
                     <div class="flex space-x-2">
-                      <input type="text" x-model="option.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                      <div class="flex-1 space-y-2">
+                        <input type="text" x-model="option.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                        <div class="relative">
+                          <input type="text" x-model="option.key" 
+                                 @input="if(!option.keyUnlocked) option.key = option.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                                 :disabled="option.key && !option.keyUnlocked"
+                                 class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" 
+                                 placeholder="Option Key">
+                          <button x-show="option.key" 
+                                  @click="option.keyUnlocked = !option.keyUnlocked"
+                                  class="absolute right-2 top-2">
+                            <span x-show="!option.keyUnlocked">🔒</span>
+                            <span x-show="option.keyUnlocked">🔓</span>
+                          </button>
+                        </div>
+                      </div>
                       <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
                     </div>
                     <div class="mt-2">
@@ -135,7 +165,7 @@
 
                         <template x-if="option.template === 'conditional'">
                           <div class="mt-4 pl-4 border-l-2 border-gray-600">
-                            <button @click="option.options = option.options || []; option.options.push({name: '', description:'', show: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                            <button @click="option.options = option.options || []; option.options.push({name: '', description:'', show: '', key: '', keyUnlocked: true})" class="text-blue-400 hover:text-blue-300">Add Option</button>
                             <template x-for="(nestedOption, nestedIndex) in option.options" :key="nestedIndex">
                               <div class="mt-2 p-2 border border-gray-600 rounded">
                                 <div class="flex space-x-2">
@@ -149,7 +179,7 @@
                             </template>
                           </div>
                           <div class="mt-4 pl-4 border-l-2 border-gray-600">
-                            <button @click="option.nested_options = option.nested_options || []; option.nested_options.push({name: '', description:'', show: ''})" class="text-blue-400 hover:text-blue-300">Add Nested Option</button>
+                            <button @click="option.nested_options = option.nested_options || []; option.nested_options.push({name: '', description:'', show: '', key: '', keyUnlocked: true})" class="text-blue-400 hover:text-blue-300">Add Nested Option</button>
 
                             <template x-for="(nestedOption, nestedIndex) in option.nested_options" :key="nestedIndex">
                               <div class="mt-2 p-2 border border-gray-600 rounded">
@@ -174,7 +204,7 @@
 
                                     <template x-if="nestedOption.template === 'conditional'">
                                       <div class="mt-4 pl-4 border-l-2 border-gray-600">
-                                        <button @click="nestedOption.options = nestedOption.options || []; nestedOption.options.push({name: '', description:'', show: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                                        <button @click="nestedOption.options = nestedOption.options || []; nestedOption.options.push({name: '', description:'', show: '', key: '', keyUnlocked: true})" class="text-blue-400 hover:text-blue-300">Add Option</button>
                                         <template x-for="(nestedOption2, nestedIndex2) in nestedOption.options" :key="nestedIndex2">
                                           <div class="mt-2 p-2 border border-gray-600 rounded">
                                             <div class="flex space-x-2">
@@ -197,7 +227,7 @@
 
                                                 <template x-if="nestedOption2.template === 'conditional'">
                                                   <div class="mt-4 pl-4 border-l-2 border-gray-600">
-                                                    <button @click="nestedOption2.options = nestedOption2.options || []; nestedOption2.options.push({name: '', description:'', show: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                                                    <button @click="nestedOption2.options = nestedOption2.options || []; nestedOption2.options.push({name: '', description:'', show: '', key: '', keyUnlocked: true})" class="text-blue-400 hover:text-blue-300">Add Option</button>
                                                     <template x-for="(nestedOption3, nestedIndex3) in nestedOption2.options" :key="nestedIndex3">
                                                       <div class="mt-2 p-2 border border-gray-600 rounded">
                                                         <div class="flex space-x-2">
