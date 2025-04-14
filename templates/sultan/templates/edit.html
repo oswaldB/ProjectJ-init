@@ -198,7 +198,7 @@
         <h3 class="text-lg font-medium text-white mb-2">Available Variables</h3>
         <div class="grid grid-cols-2 gap-2">
           <template x-for="field in formFields" :key="field.key">
-            <button @click="insertVariable(field.key)" 
+            <button @click="$refs.editor.trumbowyg('execCmd', {cmd: 'insertHTML', param: '{{' + field.key + '}}'});" 
                     class="text-left px-2 py-1 bg-gray-700 rounded hover:bg-gray-600 text-sm">
               <span x-text="field.label"></span>
               <span class="text-gray-400" x-text="'{{' + field.key + '}}'"></span>
