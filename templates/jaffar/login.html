@@ -7,15 +7,26 @@
     <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
     <title>Login - Jaffar</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-gray-900">
-    <script>
+<body class="bg-gray-900" x-data="{ 
+    email: '',
+    init() {
         if (localStorage.getItem('user_email')) {
             const urlParams = new URLSearchParams(window.location.search);
             const redirect = urlParams.get('redirect') || '/';
             window.location.href = redirect;
         }
-    </script>
+    },
+    login() {
+        if (this.email && this.email.length > 0) {
+            localStorage.setItem('user_email', this.email);
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirect = urlParams.get('redirect') || '/';
+            window.location.href = redirect;
+        }
+    }
+}">
     <div class="fixed flex h-screen w-screen items-center justify-center bg-gray-900 text-white">
         <div class="grid grid-cols-2 items-center place-items-center border w-screen mx-auto h-screen">
             <div class="flex flex-col w-1/3">
@@ -24,9 +35,12 @@
                     required
                     class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
                     type="text" 
-                    id="author-email"
+                    x-model="email"
+                    @keyup.enter="login()"
                 />
-                <button onclick="login()" class="hover:cursor-pointer bg-red-600 px-4 py-2 rounded text-center font-bold mt-4">
+                <button 
+                    @click="login()" 
+                    class="hover:cursor-pointer bg-red-600 px-4 py-2 rounded text-center font-bold mt-4">
                     Login
                 </button>
             </div>
@@ -35,17 +49,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-    function login() {
-        const email = document.getElementById('author-email').value;
-        if (email && email.length > 0) {
-            localStorage.setItem('user_email', email);
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirect = urlParams.get('redirect') || '/';
-            window.location.href = redirect;
-        }
-    }
-    </script>
 </body>
 </html>
