@@ -1,0 +1,900 @@
+  <div class="flex flex-row">
+    
+                <!--        The questions studio-->
+                <div class="m-4 h-screen w-full overflow-y-auto bg-gray-800 p-8">
+                    <h2 class="mb-3 text-xl font-medium text-white col-span-2">Configuration</h2>
+    
+                    <ul class="space-y-2">
+                        <template x-for="(question,index) in escalationQuestionsConfig">
+                            <li>
+                                <div class="min-h-12 w-full space-y-2 rounded border-white bg-gray-600 p-4">
+                                    <div class="grid grid-cols-3 gap-1">
+                                        <h3 class="col-span-2 font-medium text-white">Question <span
+                                                x-text="index+1"></span>:
+                                            <span x-text="question.name">Who are you?</span>
+                                        </h3>
+                                        <div class="flex space-x-2 justify-end">
+                                            <svg @click="escalationQuestionConfigsSelectedQuestion=index"
+                                                 class="size-6 cursor-pointer place-self-center bg-gray-400 p-1 text-white hover:bg-gray-200"
+                                                 fill="none" stroke="currentColor" stroke-width="1.5"
+                                                 viewBox="0 0 24 24" x-show="index!=escalationQuestionConfigsSelectedQuestion"
+                                                 xmlns="http://www.w3.org/2000/svg">
+                                                <path
+                                                        d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+                                                        stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" stroke-linecap="round"
+                                                      stroke-linejoin="round"/>
+                                            </svg>
+                                            <svg @click="escalationQuestionConfigsSelectedQuestion=-1"
+                                                 class="size-6 cursor-pointer place-self-center bg-gray-400 p-1 text-white hover:bg-gray-200"
+                                                 fill="none" stroke="currentColor" stroke-width="1.5"
+                                                 viewBox="0 0 24 24" x-show="index==escalationQuestionConfigsSelectedQuestion"
+                                                 xmlns="http://www.w3.org/2000/svg">
+                                                <path
+                                                        d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"
+                                                        stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                            <svg @click="MoveDownEscalationQuestions(index)"
+                                                 class="place-self-center size-6 cursor-pointer bg-gray-400 hover:bg-gray-200 p-1 text-white"
+                                                 fill="none" stroke="currentColor" stroke-width="1.5"
+                                                 viewBox="0 0 24 24" x-show="index>0"
+                                                 xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" stroke-linecap="round"
+                                                      stroke-linejoin="round"></path>
+                                            </svg>
+                                            <svg @click="MoveUpEscalationQuestions(index)"
+                                                 class="place-self-center size-6 cursor-pointer bg-gray-400 p-1 text-white hover:bg-gray-200"
+                                                 fill="none" stroke="currentColor" stroke-width="1.5"
+                                                 viewBox="0 0 24 24" x-show="index<escalationQuestionsConfig.length"
+                                                 xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3"
+                                                      stroke-linecap="round" stroke-linejoin="round"></path>
+                                            </svg>
+                                            <svg @click="removeAQuestionEscalationQuestion(index)"
+                                                 class="place-self-center size-6 cursor-pointer bg-gray-400 p-1 text-white hover:bg-gray-200"
+                                                 fill="none" stroke="currentColor" stroke-width="1.5"
+                                                 viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path
+                                                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                                                        stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+    
+                                        </div>
+    
+                                    </div>
+                                    <div class="space-y-2" x-show="index==escalationQuestionConfigsSelectedQuestion">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-50">Question</label>
+                                            <small class="text-white">The question as it will be displayed</small>
+                                            <input
+                                                    class="mt-1 w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                    x-model="question.name"/>
+                                        </div>
+    
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-50">Template</label>
+                                            <small class="text-white">Chose the most appropriate template for your
+                                                question</small>
+                                            <select
+                                                    class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                    x-model="question.template">
+                                                <option disabled value="">Select an item</option>
+                                                <option value="single_select">Single
+                                                    select
+                                                </option>
+                                                <option value="multiple_checkbox">Multi select checkboxes
+                                                </option>
+                                                <option value="text_input">Text input
+                                                </option>
+                                                <option value="textarea">Long text
+                                                </option>
+                                                <option value="conditionnal">Conditionnal
+                                                </option>
+                                                <option value="date">Date
+                                                </option>
+                                                <option value="composite">Composite
+                                                </option>
+                                                <option value="list">List
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-50">Key</label>
+                                            <small class="text-white">The identifier is the name of the column in
+                                                the
+                                                excel file
+                                                for
+                                                example</small>
+                                            <input
+                                                    class="mt-1 w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                    x-model="question.key"/>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-50">Required</label>
+                                            <small class="text-white">If the question is mandatory or not</small>
+                                            <input class="h-4 w-4 " type="checkbox" x-model="question.required"/>
+                                        </div>
+                                        <div>
+                                            <label
+                                                    class="block text-sm font-medium text-gray-50">Description</label>
+                                            <small class="text-white">Put here information to help the user to fill
+                                                the
+                                                question.
+                                                You can use Markdown.</small>
+                                            <textarea
+                                                    class="mt-1 w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                    rows="6" x-model="question.description"></textarea>
+                                        </div>
+                                        <div
+                                                x-show="['single_select','multiple_checkbox','conditionnal','search_single_select','composite'].includes(question.template)">
+                                            <div class="grid grid-cols-3 gap-4 align-middle">
+                                                <label
+                                                        class="col-span-2 text-xs font-medium text-gray-50">Options</label>
+                                                <div>
+                                                    <div @click.prevent="question.options ? question.options.push({'name':''}) : question.options = [{'name':''}]"
+                                                         class="ml-1 float-end px-2 rounded bg-green-600 text-white font-medium cursor-pointer">
+                                                        +
+                                                    </div>
+                                                </div>
+    
+                                            </div>
+                                            <template x-for="(option,index) in question.options">
+                                                <div
+                                                        class="grid grid-cols-12 gap-2 align-middle justify-center mt-2">
+                                                    <input
+                                                            class="col-span-11 mt-1 w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                            x-model="option.name"/>
+                                                    <div @click.prevent="question.options.splice(index,1)"
+                                                         class="bg-red-600 text-white font-medium w-6 h-6 rounded px-2 mt-3 cursor-pointer">
+                                                        -
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+    
+                                        <!--  options conditionnal -->
+                                        <div x-show="question.template=='conditionnal'">
+                                            <div class="grid grid-cols-3 gap-4 align-middle">
+                                                <label class="col-span-2 text-xs font-medium text-gray-50">Options
+                                                    (conditionnal)</label>
+                                                <div>
+                                                    <div @click.prevent="question.optionsCond ? question.optionsCond.push({'name':'','description':'','template':'text_input','show':'','key':'','required':true}) : (question.optionsCond = [{'name':'','description':'','template':'text_input','show':'','key':'','required':true}])"
+                                                         class="ml-1 float-end px-2 rounded bg-green-600 text-white font-medium cursor-pointer">
+                                                        +
+                                                    </div>
+                                                </div>
+    
+                                            </div>
+                                            <template x-for="(optionCond,index) in question.optionsCond">
+    
+                                                <div class="mt-2 bg-gray-500 p-2 border-b-4 m-3">
+    
+                                                    <div class="mt-1 w-full">
+                                                        <p class="w-full text-white">if value is </p>
+                                                        <select
+                                                                class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                                x-model="optionCond.show">
+                                                            <option disabled value="">Select an item</option>
+                                                            <template x-for="option in question.options">
+                                                                <option :value="option.name" x-text="option.name">
+                                                                </option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+    
+                                                    <div class="mt-1 w-full">
+                                                        <p class="w-full text-white">Question </p>
+                                                        <input
+                                                                class="w-full rounded-lg border border-gray-600 bg-gray-900 px-2 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                                x-model="optionCond.name"/>
+                                                    </div>
+                                                    <div class="mt-1 w-full">
+                                                        <p class="w-full text-white">key </p>
+                                                        <input
+                                                                class="w-full rounded-lg border border-gray-600 bg-gray-900 px-2 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                                x-model="optionCond.key"/>
+                                                    </div>
+    
+    
+                                                    <div class="mt-1 w-full">
+                                                        <label
+                                                                class="block text-sm font-medium text-gray-50">Required</label>
+                                                        <small class="text-white">If the question is mandatory or
+                                                            not</small>
+                                                        <input class="h-4 w-4 " type="checkbox"
+                                                               x-model="optionCond.required"/>
+                                                    </div>
+    
+                                                    <div class="mt-1 w-full">
+                                                        <label
+                                                                class="block text-sm font-medium text-gray-50">Template</label>
+                                                        <small class="text-white">Chose the most appropriate template
+                                                            for your
+                                                            question</small>
+                                                        <select
+                                                                class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                                x-model="optionCond.template">
+                                                            <option disabled value="">Select an item</option>
+                                                            <option value="single_select">Single
+                                                                select
+                                                            </option>
+                                                            <option value="multiple_checkbox">Multi select checkboxes
+                                                            </option>
+                                                            <option value="text_input">Text input
+                                                            </option>
+                                                            <option value="textarea">Long text
+                                                            </option>
+                                                            <option value="conditionnal">Conditionnal
+                                                            </option>
+                                                            <option value="date">Date
+                                                            </option>
+                                                            <option value="composite">Composite
+                                                            </option>
+                                                            <option value="list">List
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                                class="block text-sm font-medium text-gray-50">Description</label>
+                                                        <small class="text-white">Put here information to help the user to fill
+                                                            the
+                                                            question.
+                                                            You can use Markdown.</small>
+                                                        <textarea
+                                                                class="mt-1 w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                                rows="6" x-model="optionCond.description"></textarea>
+                                                    </div>
+    
+                                                    <div
+                                                x-show="['single_select','multiple_checkbox','conditionnal','search_single_select','composite'].includes(optionCond.template)">
+                                            <div class="grid grid-cols-3 gap-4 align-middle">
+                                                <label
+                                                        class="col-span-2 text-xs font-medium text-gray-50">Options</label>
+                                                <div>
+                                                    <div @click.prevent="optionCond.options ? optionCond.options.push({'name':''}) : optionCond.options = [{'name':''}]"
+                                                         class="ml-1 float-end px-2 rounded bg-green-600 text-white font-medium cursor-pointer">
+                                                        +
+                                                    </div>
+                                                </div>
+    
+                                            </div>
+                                            <template x-for="(optionCond1,index) in optionCond.options">
+                                                <div
+                                                        class="grid grid-cols-12 gap-2 align-middle justify-center mt-2">
+                                                    <input
+                                                            class="col-span-11 mt-1 w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                            x-model="optionCond1.name"/>
+                                                    <div @click.prevent="optionCond.options.splice(index,1)"
+                                                         class="bg-red-600 text-white font-medium w-6 h-6 rounded px-2 mt-3 cursor-pointer">
+                                                        -
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+    
+                                        <!--  options conditionnal -->
+                                        <div x-show="optionCond.template=='conditionnal'">
+                                            <div class="grid grid-cols-3 gap-4 align-middle">
+                                                <label class="col-span-2 text-xs font-medium text-gray-50">Options
+                                                    (conditionnal)</label>
+                                                <div>
+                                                    <div @click.prevent="optionCond.optionsCond ? optionCond.optionsCond.push({'name':'','description':'','template':'text_input','show':'','key':'','required':true}) : (optionCond.optionsCond = [{'name':'','description':'','template':'text_input','show':'','key':'','required':true}])"
+                                                         class="ml-1 float-end px-2 rounded bg-green-600 text-white font-medium cursor-pointer">
+                                                        +
+                                                    </div>
+                                                </div>
+    
+                                            </div>
+                                            <template x-for="(optionCond2,index) in optionCond.optionsCond">
+    
+                                                <div class="mt-2 bg-gray-400 p-2 border-b-4 m-3">
+    
+                                                    <div class="mt-1 w-full">
+                                                        <p class="w-full text-white">if value is </p>
+                                                        <select
+                                                                class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                                x-model="optionCond2.show">
+                                                            <option disabled value="">Select an item</option>
+                                                            <template x-for="option in optionCond.options">
+                                                                <option :value="option.name" x-text="option.name">
+                                                                </option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+    
+                                                    <div class="mt-1 w-full">
+                                                        <p class="w-full text-white">Question </p>
+                                                        <input
+                                                                class="w-full rounded-lg border border-gray-600 bg-gray-900 px-2 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                                x-model="optionCond2.name"/>
+                                                    </div>
+                                                    <div class="mt-1 w-full">
+                                                        <p class="w-full text-white">key </p>
+                                                        <input
+                                                                class="w-full rounded-lg border border-gray-600 bg-gray-900 px-2 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                                x-model="optionCond2.key"/>
+                                                    </div>
+    
+    
+                                                    <div class="mt-1 w-full">
+                                                        <label
+                                                                class="block text-sm font-medium text-gray-50">Required</label>
+                                                        <small class="text-white">If the question is mandatory or
+                                                            not</small>
+                                                        <input class="h-4 w-4 " type="checkbox"
+                                                               x-model="optionCond2.required"/>
+                                                    </div>
+    
+                                                    <div class="mt-1 w-full">
+                                                        <label
+                                                                class="block text-sm font-medium text-gray-50">Template</label>
+                                                        <small class="text-white">Chose the most appropriate template
+                                                            for your
+                                                            question</small>
+                                                        <select
+                                                                class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                                x-model="optionCond2.template">
+                                                            <option disabled value="">Select an item</option>
+                                                            <option value="single_select">Single
+                                                                select
+                                                            </option>
+                                                            <option value="multiple_checkbox">Multi select checkboxes
+                                                            </option>
+                                                            <option value="text_input">Text input
+                                                            </option>
+                                                            <option value="textarea">Long text
+                                                            </option>
+                                                            <option value="date">Date
+                                                            </option>
+                                                            <option value="composite">Composite
+                                                            </option>
+                                                            <option value="list">List
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                                class="block text-sm font-medium text-gray-50">Description</label>
+                                                        <small class="text-white">Put here information to help the user to fill
+                                                            the
+                                                            question.
+                                                            You can use Markdown.</small>
+                                                        <textarea
+                                                                class="mt-1 w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                                rows="6" x-model="optionCond2.description"></textarea>
+                                                    </div>
+    
+                                                    <div
+                                                x-show="['single_select','multiple_checkbox','conditionnal','search_single_select','composite'].includes(optionCond2.template)">
+                                            <div class="grid grid-cols-3 gap-4 align-middle">
+                                                <label
+                                                        class="col-span-2 text-xs font-medium text-gray-50">Options</label>
+                                                <div>
+                                                    <div @click.prevent="optionCond2.options ? optionCond2.options.push({'name':''}) : optionCond2.options = [{'name':''}]"
+                                                         class="ml-1 float-end px-2 rounded bg-green-600 text-white font-medium cursor-pointer">
+                                                        +
+                                                    </div>
+                                                </div>
+    
+                                            </div>
+                                            <template x-for="(optionCond3,index) in optionCond2.options">
+                                                <div
+                                                        class="grid grid-cols-12 gap-2 align-middle justify-center mt-2">
+                                                    <input
+                                                            class="col-span-11 mt-1 w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-white focus:border-red-500 focus:ring-red-500"
+                                                            x-model="optionCond3.name"/>
+                                                    <div @click.prevent="optionCond2.options.splice(index,1)"
+                                                         class="bg-red-600 text-white font-medium w-6 h-6 rounded px-2 mt-3 cursor-pointer">
+                                                        -
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+    
+                                                    <div @click.prevent="question.optionsCond.splice(index,1)"
+                                                        class="bg-red-600 text-white font-medium h-6 rounded px-2 mt-3 cursor-pointer place-self-end">
+                                                        Remove
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+    
+                                                    <div @click.prevent="question.optionsCond.splice(index,1)"
+                                                        class="bg-red-600 text-white font-medium h-6 rounded px-2 mt-3 cursor-pointer place-self-end">
+                                                        Remove
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+            </div>
+    
+    
+        </div>
+        </li>
+    
+        </template>
+    
+        </ul>
+        <a @click.prevent="addAQuestionEscalationQuestion()"
+           class=" bg-red-600 hover:bg-red-500 text-white p-2 rounded-lg  font-semibold transition duration-200 float-right">Add
+            a question</a>
+    </div>
+    <!--        The live preview -->
+    <div class="p-8 bg-gray-800 m-4 h-screen w-full overflow-y-auto ">
+        <div class="grid grid-cols-3">
+            <h2 class="text-white font-medium text-xl col-span-2">Live preview </h2>
+            <p @click="escalationQuestionConfigsSelectedQuestion='showAll'"
+               class="place-self-end text-white underline underline-offset-2 cursor-pointer">show all the form</p>
+        </div>
+    
+    
+        <template x-for="(question,index) in escalationQuestionsConfig">
+            <div class="p-2 py-10 mx-2 bg-gray-800 text-white space-y-2"
+                 x-show="index==escalationQuestionConfigsSelectedQuestion || escalationQuestionConfigsSelectedQuestion == 'showAll'">
+                <!-- Search Single select: to show if more than 6 options -->
+                <div x-show="question.template=='search_single_select'">
+                    <label class="block mt-1 font-medium text-xl" for="pc-function" x-text="question.name">PC
+                        Function</label>
+                    <div class="text-gray-300" x-text="question.description"></div>
+                    <input :list="question.key" :required="question.required"
+                           class="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                           name="pc-function">
+                    <datalist :id="question.key"
+                              class="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500">
+                        <template x-for="option in question.options">
+                            <option x-text="option.name" x-value="option.name">
+                        </template>
+                    </datalist>
+                </div>
+                <!-- Search Multiple select: to show if more than 11 options -->
+    
+                <!--Composite template-->
+                <div class="space-y-2" x-show="question.template=='composite'">
+                    <label class="block mt-1 font-medium text-xl" for="pc-function" x-text="question.name">PC
+                        Function</label>
+                    <div class="text-gray-300" x-text="question.description"></div>
+                    <div class="flex">
+                        <select :required="question.required"
+                                class="px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                                id="pc-function" name="pc-function">
+                            <option disabled selected value="">Select an item</option>
+                            <template x-for="option in question.options">
+                                <option x-text="option.name" x-value="option.name">Core PC</option>
+                            </template>
+                        </select>
+                        <p class="px-4 self-center"> - </p>
+                        <input :required="question.required"
+                               class="mt-1 flex-grow px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                               type="text">
+                    </div>
+                </div>
+    
+                <!--Single select template-->
+                <div class="space-y-2" x-show="question.template=='single_select'">
+                    <label class="block mt-1 font-medium text-xl" for="pc-function" x-text="question.name">PC
+                        Function</label>
+                    <div class="text-gray-300" x-text="question.description"></div>
+                    <select :required="question.required"
+                            class=" w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                            id="pc-function" name="pc-function">
+                        <option disabled selected value="">Select an item</option>
+                        <template x-for="option in question.options">
+                            <option x-text="option.name" x-value="option.name">Core PC</option>
+                        </template>
+                    </select>
+                </div>
+    
+    
+                <!--conditionnal template-->
+                <div class="space-y-2" x-data="{'selected':''}" x-show="question.template=='conditionnal'">
+                    <p @click="selected='',selected2=''"
+                    class="place-self-end text-white underline underline-offset-2 cursor-pointer">reset</p>
+                    <label class="block mt-1 font-medium text-xl" for="pc-function" x-text="question.name">PC
+                        Function</label>
+                    <div class="text-gray-300" x-text="question.description"></div>
+                    <select :required="question.required"
+                            class=" w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                            id="pc-function" name="pc-function" x-model="selected">
+                        <option disabled selected value="">Select an item</option>
+                        <template x-for="option in question.options">
+                            <option x-text="option.name" x-value="option.name">Core PC</option>
+                        </template>
+                    </select>
+    
+                    <template x-for="optionCond in question.optionsCond">
+                        <div class="mt-4 space-y-2" x-show="selected==optionCond.show">
+                            
+                   
+    
+                            <!--text_input template-->
+                            <div x-show="optionCond.template=='text_input'">
+                                <div class="space-y-2">
+                                    <label class="block font-medium text-xl" for="pc-function" x-text="optionCond.name">Title
+                                        of
+                                        the Issue</label>
+                                    <div class="text-gray-300" x-text="optionCond.description"></div>
+                                    <input :required="optionCond.required"
+                                        class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                                        type="text">
+                                </div>
+                            </div>
+    
+                            <!--list template-->
+                            <div x-data="{'ans':[]}" x-show="optionCond.template=='list'">
+                                <div class="space-y-2">
+                                    <label class="block font-medium text-xl" for="pc-function" x-text="optionCond.name">Title
+                                        of
+                                        the Issue</label>
+                                    <div class="text-gray-300" x-text="optionCond.description"></div>
+    
+                                    <template x-for="(i,index) in ans">
+                                        <div class="flex space-x-2">
+                                            <input :required="optionCond.required"
+                                                class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                                                type="text">
+                                            <div @click.prevent="ans.splice(index,1)"
+                                                class="bg-red-600 text-white font-medium w-6 h-6 rounded px-2 mt-3 cursor-pointer place-self-center">
+                                                -
+                                            </div>
+                                        </div>
+    
+    
+                                    </template>
+                                    <div @click.prevent="ans.push('input')"
+                                        class="ml-1 float-end px-2 rounded bg-green-600 text-white font-medium cursor-pointer">
+                                        +
+                                    </div>
+    
+                                </div>
+                            </div>
+    
+                            <!--date template-->
+                            <div x-show="optionCond.template=='date'">
+                                <div class="space-y-2">
+                                    <label class="block font-medium text-xl" for="pc-function" x-text="optionCond.name">Title
+                                        of
+                                        the Issue</label>
+                                    <div class="text-gray-300" x-text="optionCond.description"></div>
+                                    <input :required="optionCond.required"
+                                        class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                                        placeholder="YYYY-MM-DD" type="text" x-mask="9999-99-99">
+                                </div>
+                            </div>
+    
+                            <!--Textarea input-->
+                            <div x-show="optionCond.template=='textarea'">
+                                <div class="space-y-2">
+                                    <label class="block  font-medium text-xl" for="pc-function" x-text="optionCond.name">Root
+                                        Cause
+                                        - Further Details</label>
+                                    <div class="text-gray-300" x-text="optionCond.description"></div>
+                                    <textarea :required="optionCond.required"
+                                            class="  min-h-[100px] mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                                            row="5" type="textarea"></textarea>
+                                </div>
+                            </div>
+    
+                            <!--multiple checkboxes template-->
+                            <div x-show="optionCond.template=='multiple_checkbox'">
+                                <div class="space-y-2">
+                                    <label class="block font-medium text-xl" x-text="optionCond.name">Select Asset
+                                        class</label>
+                                    <div class="text-gray-300" x-text="optionCond.description"></div>
+                                    <div class="space-y-2 mt-1">
+                                        <div class="w-full flex">
+                                            <div :class="optionCond.options?.length??0 >5 ? 'w-1/2' : 'w-full'">
+                                                <template x-for="(option,index) in optionCond.options">
+                                                    <div
+                                                            x-show="optionCond.options.length>5?(index < Math.floor(optionCond.options.length/2)):true">
+                                                        <div class="flex items-center">
+                                                            <input class="h-4 w-4 " id="service1" name="services"
+                                                                type="checkbox" x-value="option.name">
+                                                            <label class="ml-2 text-sm font-medium"
+                                                                x-text="option.name">ALCM</label>
+                                                        </div>
+                                                </template>
+                                            </div>
+                                            <div class="w-1/2">
+                                                <template x-for="(option,index) in optionCond.options">
+                                                    <div
+                                                            x-show="optionCond.options.length>5?(index > Math.floor(optionCond.options.length/2)):false">
+                                                        <div class="flex items-center">
+                                                            <input class="h-4 w-4 " id="service1" name="services"
+                                                                type="checkbox" x-value="option.name">
+                                                            <label class="ml-2 text-sm font-medium"
+                                                                x-text="option.name">ALCM</label>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+    
+                                    </div>
+                                </div>
+                            </div>
+    
+                            <!--Single select template-->
+                            <div class="space-y-2" x-show="optionCond.template=='single_select'">
+                                <label class="block mt-1 font-medium text-xl" for="pc-function" x-text="optionCond.name">PC
+                                    Function</label>
+                                <div class="text-gray-300" x-text="optionCond.description"></div>
+                                <select :required="optionCond.required"
+                                        class=" w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                                        id="pc-function" name="pc-function">
+                                    <option disabled selected value="">Select an item</option>
+                                    <template x-for="option in optionCond.options">
+                                        <option x-text="option.name" x-value="option.name">Core PC</option>
+                                    </template>
+                                </select>
+                            </div>
+    
+    
+                              <!--conditionnal template-->
+                            <div class="space-y-2" x-data="{'selected2':''}" x-show="optionCond.template=='conditionnal'">
+                                <label class="block mt-1 font-medium text-xl" for="pc-function" x-text="optionCond.name">PC
+                                    Function</label>
+                                <div class="text-gray-300" x-text="optionCond.description"></div>
+                                <select :required="optionCond.required"
+                                        class=" w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                                        id="pc-function" name="pc-function" x-model="selected2">
+                                    <option disabled selected value="">Select an item</option>
+                                    <template x-for="option in optionCond.options">
+                                        <option x-text="option.name" x-value="option.name">Core PC</option>
+                                    </template>
+                                </select>
+    
+                                <template x-for="optionCond2 in optionCond.optionsCond">
+                                    <div class="mt-4 space-y-2" x-show="selected2==optionCond2.show">
+                                        
+                            
+    
+                                        <!--text_input template-->
+                                        <div x-show="optionCond2.template=='text_input'">
+                                            <div class="space-y-2">
+                                                <label class="block font-medium text-xl" for="pc-function" x-text="optionCond2.name">Title
+                                                    of
+                                                    the Issue</label>
+                                                <div class="text-gray-300" x-text="optionCond2.description"></div>
+                                                <input :required="optionCond2.required"
+                                                    class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                                                    type="text">
+                                            </div>
+                                        </div>
+    
+                                        <!--list template-->
+                                        <div x-data="{'ans':[]}" x-show="optionCond2.template=='list'">
+                                            <div class="space-y-2">
+                                                <label class="block font-medium text-xl" for="pc-function" x-text="optionCond2.name">Title
+                                                    of
+                                                    the Issue</label>
+                                                <div class="text-gray-300" x-text="optionCond2.description"></div>
+    
+                                                <template x-for="(i,index) in ans">
+                                                    <div class="flex space-x-2">
+                                                        <input :required="optionCond2.required"
+                                                            class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                                                            type="text">
+                                                        <div @click.prevent="ans.splice(index,1)"
+                                                            class="bg-red-600 text-white font-medium w-6 h-6 rounded px-2 mt-3 cursor-pointer place-self-center">
+                                                            -
+                                                        </div>
+                                                    </div>
+    
+    
+                                                </template>
+                                                <div @click.prevent="ans.push('input')"
+                                                    class="ml-1 float-end px-2 rounded bg-green-600 text-white font-medium cursor-pointer">
+                                                    +
+                                                </div>
+    
+                                            </div>
+                                        </div>
+    
+                                        <!--date template-->
+                                        <div x-show="optionCond2.template=='date'">
+                                            <div class="space-y-2">
+                                                <label class="block font-medium text-xl" for="pc-function" x-text="optionCond2.name">Title
+                                                    of
+                                                    the Issue</label>
+                                                <div class="text-gray-300" x-text="optionCond2.description"></div>
+                                                <input :required="optionCond2.required"
+                                                    class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                                                    placeholder="YYYY-MM-DD" type="text" x-mask="9999-99-99">
+                                            </div>
+                                        </div>
+    
+                                        <!--Textarea input-->
+                                        <div x-show="optionCond2.template=='textarea'">
+                                            <div class="space-y-2">
+                                                <label class="block  font-medium text-xl" for="pc-function" x-text="optionCond2.name">Root
+                                                    Cause
+                                                    - Further Details</label>
+                                                <div class="text-gray-300" x-text="optionCond2.description"></div>
+                                                <textarea :required="optionCond2.required"
+                                                        class="  min-h-[100px] mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                                                        row="5" type="textarea"></textarea>
+                                            </div>
+                                        </div>
+    
+                                        <!--multiple checkboxes template-->
+                                        <div x-show="optionCond2.template=='multiple_checkbox'">
+                                            <div class="space-y-2">
+                                                <label class="block font-medium text-xl" x-text="optionCond2.name">Select Asset
+                                                    class</label>
+                                                <div class="text-gray-300" x-text="optionCond2.description"></div>
+                                                <div class="space-y-2 mt-1">
+                                                    <div class="w-full flex">
+                                                        <div :class="optionCond2.options?.length??0 >5 ? 'w-1/2' : 'w-full'">
+                                                            <template x-for="(option,index) in optionCond2.options">
+                                                                <div
+                                                                        x-show="optionCond2.options.length>5?(index < Math.floor(optionCond2.options.length/2)):true">
+                                                                    <div class="flex items-center">
+                                                                        <input class="h-4 w-4 " id="service1" name="services"
+                                                                            type="checkbox" x-value="option.name">
+                                                                        <label class="ml-2 text-sm font-medium"
+                                                                            x-text="option.name">ALCM</label>
+                                                                    </div>
+                                                            </template>
+                                                        </div>
+                                                        <div class="w-1/2">
+                                                            <template x-for="(option,index) in optionCond2.options">
+                                                                <div
+                                                                        x-show="optionCond2.options.length>5?(index > Math.floor(optionCond2.options.length/2)):false">
+                                                                    <div class="flex items-center">
+                                                                        <input class="h-4 w-4 " id="service1" name="services"
+                                                                            type="checkbox" x-value="option.name">
+                                                                        <label class="ml-2 text-sm font-medium"
+                                                                            x-text="option.name">ALCM</label>
+                                                                    </div>
+                                                                </div>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+    
+                                                </div>
+                                            </div>
+                                        </div>
+    
+                                        <!--Single select template-->
+                                        <div class="space-y-2" x-show="optionCond2.template=='single_select'">
+                                            <label class="block mt-1 font-medium text-xl" for="pc-function" x-text="optionCond2.name">PC
+                                                Function</label>
+                                            <div class="text-gray-300" x-text="optionCond2.description"></div>
+                                            <select :required="optionCond2.required"
+                                                    class=" w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                                                    id="pc-function" name="pc-function">
+                                                <option disabled selected value="">Select an item</option>
+                                                <template x-for="option in optionCond2.options">
+                                                    <option x-text="option.name" x-value="option.name">Core PC</option>
+                                                </template>
+                                            </select>
+                                        </div>
+    
+                                    </div>
+                                </template>
+    
+                                
+                            </div>
+    
+                        </div>
+                    </template>
+    
+                    
+                </div>
+    
+                <!--text_input template-->
+                <div x-show="question.template=='text_input'">
+                    <div class="space-y-2">
+                        <label class="block font-medium text-xl" for="pc-function" x-text="question.name">Title
+                            of
+                            the Issue</label>
+                        <div class="text-gray-300" x-text="question.description"></div>
+                        <input :required="question.required"
+                               class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                               type="text">
+                    </div>
+                </div>
+    
+                <!--list template-->
+                <div x-data="{'ans':[]}" x-show="question.template=='list'">
+                    <div class="space-y-2">
+                        <label class="block font-medium text-xl" for="pc-function" x-text="question.name">Title
+                            of
+                            the Issue</label>
+                        <div class="text-gray-300" x-text="question.description"></div>
+    
+                        <template x-for="(i,index) in ans">
+                            <div class="flex space-x-2">
+                                <input :required="question.required"
+                                       class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                                       type="text">
+                                <div @click.prevent="ans.splice(index,1)"
+                                     class="bg-red-600 text-white font-medium w-6 h-6 rounded px-2 mt-3 cursor-pointer place-self-center">
+                                    -
+                                </div>
+                            </div>
+    
+    
+                        </template>
+                        <div @click.prevent="ans.push('input')"
+                             class="ml-1 float-end px-2 rounded bg-green-600 text-white font-medium cursor-pointer">
+                            +
+                        </div>
+    
+                    </div>
+                </div>
+    
+                <!--date template-->
+                <div x-show="question.template=='date'">
+                    <div class="space-y-2">
+                        <label class="block font-medium text-xl" for="pc-function" x-text="question.name">Title
+                            of
+                            the Issue</label>
+                        <div class="text-gray-300" x-text="question.description"></div>
+                        <input :required="question.required"
+                               class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                               placeholder="YYYY-MM-DD" type="text" x-mask="9999-99-99">
+                    </div>
+                </div>
+    
+                <!--Textarea input-->
+                <div x-show="question.template=='textarea'">
+                    <div class="space-y-2">
+                        <label class="block  font-medium text-xl" for="pc-function" x-text="question.name">Root
+                            Cause
+                            - Further Details</label>
+                        <div class="text-gray-300" x-text="question.description"></div>
+                        <textarea :required="question.required"
+                                  class="  min-h-[100px] mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                                  row="5" type="textarea"></textarea>
+                    </div>
+                </div>
+    
+                <!--multiple checkboxes template-->
+                <div x-show="question.template=='multiple_checkbox'">
+                    <div class="space-y-2">
+                        <label class="block font-medium text-xl" x-text="question.name">Select Asset
+                            class</label>
+                        <div class="text-gray-300" x-text="question.description"></div>
+                        <div class="space-y-2 mt-1">
+                            <div class="w-full flex">
+                                <div :class="question.options?.length??0 >5 ? 'w-1/2' : 'w-full'">
+                                    <template x-for="(option,index) in question.options">
+                                        <div
+                                                x-show="question.options.length>5?(index < Math.floor(question.options.length/2)):true">
+                                            <div class="flex items-center">
+                                                <input class="h-4 w-4 " id="service1" name="services"
+                                                       type="checkbox" x-value="option.name">
+                                                <label class="ml-2 text-sm font-medium"
+                                                       x-text="option.name">ALCM</label>
+                                            </div>
+                                    </template>
+                                </div>
+                                <div class="w-1/2">
+                                    <template x-for="(option,index) in question.options">
+                                        <div
+                                                x-show="question.options.length>5?(index > Math.floor(question.options.length/2)):false">
+                                            <div class="flex items-center">
+                                                <input class="h-4 w-4 " id="service1" name="services"
+                                                       type="checkbox" x-value="option.name">
+                                                <label class="ml-2 text-sm font-medium"
+                                                       x-text="option.name">ALCM</label>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+    
+                        </div>
+                    </div>
+                </div>
+            </div>
+    
+    
+        </template>
+    
+    
+    </div>
+    </div>
+    
