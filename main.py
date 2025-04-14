@@ -319,10 +319,14 @@ def api_forms_list():
 @app.route('/api/sultan/forms/<form_id>')
 def api_form_get(form_id):
     try:
+        if form_id.endswith('.json'):
+            key = f'sultan/configs/draft/forms/{form_id}'
+        else:
+            key = f'sultan/configs/draft/forms/{form_id}.json'
+            
         content = s3.get_object(
             Bucket=BUCKET_NAME,
-            Key=f'sultan/configs/draft//forms/{form_id}.json')['Body'].read(
-            ).decode('utf-8')
+            Key=key)['Body'].read().decode('utf-8')
         return jsonify(json.loads(content))
     except Exception as e:
         logger.error(f"Failed to load form {form_id}: {e}")

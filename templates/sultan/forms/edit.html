@@ -15,7 +15,9 @@
       if (formId !== 'new') {
         const userEmail = localStorage.getItem('user_email');
         try {
+          const isFilename = formId.endsWith('.json');
           const response = await fetch(`/api/sultan/forms/${formId}?email=${userEmail}`);
+          if (!response.ok) throw new Error('Form not found');
           this.form = await response.json();
         } catch (error) {
           console.error('Failed to load form:', error);
