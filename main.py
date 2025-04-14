@@ -157,7 +157,7 @@ def sendConfirmationEmail(email_address, subject, issue):
 # Routes
 @app.route('/login')
 def login():
-    return render_template('jaffar/login.html')
+    return render_template('login.html')
 
 def require_auth(f):
     from functools import wraps
