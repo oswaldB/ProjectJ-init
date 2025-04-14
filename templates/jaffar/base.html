@@ -9,10 +9,27 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-gray-900">
-    <div class="flex min-h-screen" x-data="{% block alpine_component %}{% endblock %}">
-        {% include 'jaffar/menu.html' %}
-        {% block content %}{% endblock %}
+<body class="bg-gray-900 text-white">
+    <div class="min-h-screen flex" x-data="{% block alpine_component %}{% endblock %}">
+        <!-- Sidebar -->
+        <div class="w-64 min-h-screen bg-gray-800 fixed left-0 top-0">
+            {% include 'jaffar/menu.html' %}
+        </div>
+        
+        <!-- Main Content -->
+        <div class="flex-1 ml-64">
+            <!-- Header -->
+            <header class="bg-gray-800 shadow h-16 fixed w-full z-10">
+                <div class="flex items-center justify-between h-full px-6">
+                    <h1 class="text-xl font-semibold">Jaffar</h1>
+                </div>
+            </header>
+            
+            <!-- Main Content Area -->
+            <main class="p-6 mt-16">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
     </div>
     {% block scripts %}{% endblock %}
 </body>
