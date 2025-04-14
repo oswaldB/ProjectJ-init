@@ -33,7 +33,11 @@
         await fetch('/api/sultan/forms/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: userEmail, form: form })
+          body: JSON.stringify({ 
+            email: userEmail, 
+            form: form,
+            status: form.status 
+          })
         });
       } catch (error) {
         console.error('Failed to save form:', error);

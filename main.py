@@ -449,13 +449,29 @@ def api_form_delete(form_id):
 def api_form_save():
     data = request.json
     form = data.get('form')
+    status = form.get('status', 'Draft')
 
     if not form:
         return jsonify({"error": "Form required"}), 400
 
     try:
-        # Ensure directory structure exists
-        form_path = f'sultan/configs/draft/forms/{form["id"]}.json'
+        # Delete old file if it exists
+        old_path = f'sultan/configs/draft/forms/{form["id"]}.json'
+        try:
+            delete(old_path)
+        except:
+            pass
+
+        # Determine new path based on status
+        status_map = {
+            'Dev': 'dev',
+            'Prod': 'prod',
+            'Old version': 'archive',
+            'Draft': 'draft'
+        }
+        
+        status_dir = status_map.get(status, 'draft')
+        form_path = f'sultan/configs/{status_dir}/forms/{form["id"]}.json'
 
         # Save form as JSON
         save_in_global_db(form_path, form)
