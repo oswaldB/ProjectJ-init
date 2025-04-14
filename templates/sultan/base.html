@@ -7,32 +7,17 @@
     <title>Sultan - {% block title %}{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-<script>
-    // Check auth on page load
-    if (!localStorage.getItem('sultan_auth')) {
-        window.location.href = '/sultan/login?redirect=' + encodeURIComponent(window.location.pathname);
-    }
-</script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!localStorage.getItem('user_email')) {
+                window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+            }
+        });
+    </script>
     {% block head %}{% endblock %}
 </head>
 <body class="bg-gray-900 text-white">
     <div class="min-h-screen flex" x-data="{% block alpine_component %}{% endblock %}">
-        <!-- Password protection -->
-        <div class="h-screen w-screen bg-gray-900 flex border-red-500 z-50 justify-center items-center"
-             x-data="{password:''}" 
-             x-show="page=='password'">
-            <div class="flex-col flex">
-                <input class="text-white w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
-                       type="password" 
-                       x-model='password'
-                       x-show="password!='sesame'">
-                <button @click="localStorage.setItem('sultan_auth', 'true'); page='menu-sultan'"
-                        class="hoverx-text-gray-500 hover:cursor-pointer bg-red-600 px-4 py-2 rounded text-center font-bold text-white"
-                        x-show="password=='sesame'">
-                    ENTER
-                </button>
-            </div>
-        </div>
         <!-- Sidebar -->
         <div class="w-64 min-h-screen bg-gray-800 fixed left-0 top-0">
             {% include 'sultan/menu.html' %}
@@ -44,17 +29,19 @@
             <header class="bg-gray-800 shadow h-16 fixed w-full z-10">
                 <div class="flex items-center justify-between h-full px-6">
                     <h1 class="text-xl font-semibold">Sultan</h1>
+                    <div class="flex items-center space-x-4">
+                        <span x-text="localStorage.getItem('user_email')" class="text-sm text-gray-300"></span>
+                        <button @click="localStorage.removeItem('user_email'); window.location.href='/login'" 
+                                class="text-sm text-red-400 hover:text-red-300">
+                            Logout
+                        </button>
+                    </div>
                 </div>
             </header>
 
             <!-- Main Content Area -->
             <main class="p-6 mt-16">
-                {% block content %}
-                <div class="flex-1 p-8">
-                    <h1 class="text-4xl font-bold mb-4">Welcome to Sultan</h1>
-                    <p class="text-gray-300">Supervisory Utilities for Ledger Tools and Accurate Numbers</p>
-                </div>
-                {% endblock %}
+                {% block content %}{% endblock %}
             </main>
         </div>
     </div>
