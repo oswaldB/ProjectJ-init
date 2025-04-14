@@ -171,6 +171,41 @@ def questions_import():
 def questions_export():
     return render_template('components/questions/export.html')
 
+@app.route('/questions/url-upload')
+def url_upload():
+    return render_template('sultan/questions/url_upload.html')
+
+@app.route('/api/upload-config-from-url', methods=['POST'])
+def upload_config_from_url():
+    try:
+        url = request.json.get('url')
+        if not url:
+            return jsonify({"status": "error", "message": "No URL provided"}), 400
+            
+        # Fetch configuration from URL
+        response = requests.get(url)
+        response.raise_for_status()
+        config_data = response.json()
+        
+        # Save to object storage
+        client.upload_from_text("jaffar/configs/jaffarConfig.json", json.dumps(config_data))
+        
+        return jsonify({
+            "status": "success",
+            "message": "Configuration uploaded successfully"
+        }), 200
+        
+    except requests.exceptions.RequestException as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to fetch configuration: {str(e)}"
+        }), 400
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Error processing configuration: {str(e)}"
+        }), 500
+
 @app.route('/api/questions', methods=['GET', 'POST'])
 def api_questions():
     if request.method == 'GET':
