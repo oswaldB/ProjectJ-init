@@ -312,6 +312,67 @@ def forms_list():
 def form_edit(form_id):
     return render_template('sultan/forms/edit.html')
 
+@app.route('/sultan/escalation')
+def escalation_list():
+    return render_template('sultan/escalation/index.html')
+
+@app.route('/sultan/escalation/edit/<escalation_id>')
+def escalation_edit(escalation_id):
+    return render_template('sultan/escalation/edit.html')
+
+@app.route('/api/sultan/escalation/list')
+def api_escalation_list():
+    escalations = []
+    draft_prefix = 'sultan/configs/draft/escalations/'
+
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=draft_prefix)
+        for obj in response.get('Contents', []):
+            try:
+                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                content = response['Body'].read().decode('utf-8')
+                escalation = json.loads(content)
+                escalations.append(escalation)
+            except Exception as e:
+                logger.error(f"Failed to load escalation {obj['Key']}: {e}")
+    except Exception as e:
+        logger.error(f"Failed to list escalations: {e}")
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify(escalations)
+
+@app.route('/api/sultan/escalation/<escalation_id>')
+def api_escalation_get(escalation_id):
+    try:
+        if escalation_id.endswith('.json'):
+            key = f'sultan/configs/draft/escalations/{escalation_id}'
+        else:
+            key = f'sultan/configs/draft/escalations/{escalation_id}.json'
+            
+        content = s3.get_object(
+            Bucket=BUCKET_NAME,
+            Key=key)['Body'].read().decode('utf-8')
+        return jsonify(json.loads(content))
+    except Exception as e:
+        logger.error(f"Failed to load escalation {escalation_id}: {e}")
+        return jsonify({"error": "Escalation not found"}), 404
+
+@app.route('/api/sultan/escalation/save', methods=['POST'])
+def api_escalation_save():
+    data = request.json
+    escalation = data.get('escalation')
+
+    if not escalation:
+        return jsonify({"error": "Escalation required"}), 400
+
+    try:
+        escalation_path = f'sultan/configs/draft/escalations/{escalation["id"]}.json'
+        save_in_global_db(escalation_path, escalation)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to save escalation: {e}")
+        return jsonify({"error": "Failed to save escalation"}), 500
+
 @app.route('/sultan/templates/list')
 def templates_list():
     return render_template('sultan/templates/index.html')
