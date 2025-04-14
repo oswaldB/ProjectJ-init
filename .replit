@@ -1,16 +1,17 @@
-run = "python main.py"
-modules = ["python-3.10:v18-20230807-322e88b"]
+run =  ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+entrypoint = "main.py"
+modules = ["python-3.11"]
+
+hidden = [".pythonlibs"]
 
 [nix]
-channel = "stable-23_05"
+channel = "stable-24_05"
 
 [deployment]
-run = ["sh", "-c", "python main.py"]
+run =  ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+deploymentTarget = "cloudrun"
 
-[objectStorage]
-enabled = true
-
-[ports]
+[[ports]]
 localPort = 5000
 externalPort = 80
 
@@ -25,3 +26,6 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "gunicorn --bind 0.0.0.0:5000 main:app"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-8f06b167-ee2e-4911-8d12-71ad8c05d333"
