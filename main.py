@@ -1,49 +1,46 @@
+from flask import Flask, Blueprint, Response, redirect, send_from_directory, request
 import logging
-from flask import Flask
+import json
+import boto3
+import pandas as pd
+from email import Email
 
 app = Flask(__name__)
-
 logger = logging.getLogger(__name__)
-
 
 # custom health check
 def custom_health_check():
     return Response(status=200, response="Custom health check OK")
 
+# Create blueprint
+bp = Blueprint('main', __name__, url_prefix='/')
+app.register_blueprint(bp)
 
-app = Blueprint(__name__, health_check_func=custom_health_check)
-
-@app.route('/')
+@bp.route('/')
 def serve_entrypoint():
     return redirect("/pc-analytics-jaffar/assets/jaffar/index.html", code=302)
 
-
-@app.route('/pc-analytics-jaffar/assets/jaffar/<path:filename>')
+@bp.route('/pc-analytics-jaffar/assets/jaffar/<path:filename>')
 def serve_jaffar(filename):
-    # Using request args for path will expose you to directory traversal attacks
     return send_from_directory('jaffar', filename)
 
-
-@app.route('/pc-analytics-jaffar/assets/sultan/<path:filename>')
+@bp.route('/pc-analytics-jaffar/assets/sultan/<path:filename>')
 def serve_sultan(filename):
-    # Using request args for path will expose you to directory traversal attacks
     return send_from_directory('sultan', filename)
 
-
-@app.route('/jaffar/configs/get')
+@bp.route('/jaffar/configs/get')
 def Get_Config():
     file = request.args.get('file')
     config = get_max_from_global_db(file)
     return config
 
-@app.route('/jaffar/configs/get-current-name')
+@bp.route('/jaffar/configs/get-current-name')
 def Get_Config_Current_Name():
     file = request.args.get('file')
     config = get_max_filename_from_global_db(file)
     return config
 
-
-@app.route('/jaffar/issues/save', methods=['POST'])
+@bp.route('/jaffar/issues/save', methods=['POST'])
 def Issue_save():
     data = request.get_json()
     key = f"jaffar/issues/draft/{data['obj']['answers']['_id']}"
@@ -51,8 +48,7 @@ def Issue_save():
     save_in_global_db(key, obj)
     return {"status": "issue saved"}
 
-
-@app.route('/jaffar/issues/submit', methods=['POST'])
+@bp.route('/jaffar/issues/submit', methods=['POST'])
 def Issue_submit():
     data = request.get_json()
     key = f"jaffar/issues/new/{data['obj']['answers']['_id']}"
@@ -62,12 +58,12 @@ def Issue_submit():
     sendConfirmationEmail(data['obj']['answers']['author'],data['obj']['answers']['_id'],data['obj']['answers'])
     return {"status": "issue submited"}
 
-
+# Keep the rest of your functions as is
+# (storage config, helpers, etc.)
 
 """
 SG configuration
 """
-
 
 endpoint = settings.SG_URL
 access_key = settings.SG_ID_KEY
@@ -86,7 +82,6 @@ bucket = bucket_name
 Helpers
 """
 
-
 ## Write in DB
 def save_in_global_db(key, obj):
     json_object = json.dumps(obj,separators=(',', ':'))
@@ -98,7 +93,6 @@ def save_in_global_db(key, obj):
     )
     return
 
-
 ## Read from DB
 def get_one_from_global_db(key):
     print(f"get from db: {key}")
@@ -108,7 +102,6 @@ def get_one_from_global_db(key):
     )
     json_content = json.loads(response['Body'].read())
     return json_content
-
 
 ## LIst from db
 def get_all_from_global_db():
@@ -283,4 +276,3 @@ def process_issue_data(issue_data):
 
 if __name__ == '__main__':
   app.run(host='0.0.0.0', port=5000)
-
