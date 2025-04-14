@@ -292,9 +292,9 @@ def api_form_save():
         # Ensure directory structure exists
         form_path = f'sultan/configs/draft/forms/{form["id"]}.json'
 
-        # Ensure proper UTF-8 encoding
-        json_data = json.dumps(form, indent=2, ensure_ascii=False, encoding='utf-8')
-        client.upload_from_text(form_path, json_data.encode('utf-8').decode('utf-8'))
+        # Save form as JSON
+        json_data = json.dumps(form, indent=2, ensure_ascii=False)
+        client.upload_from_text(form_path, json_data)
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save form: {e}")
