@@ -1,0 +1,1677 @@
+{
+    "_id": "jaffarConfig",
+    "questions": [
+      {
+        "description": "Which function of PC is raising the issue",
+        "key": "Function",
+        "name": "PC Function",
+        "options": [
+          {
+            "name": "Analytics"
+          },
+          {
+            "name": "Core PC"
+          },
+          {
+            "name": "PC Valuations"
+          },
+          {
+            "name": "Reporting"
+          },
+          {
+            "name": "RHU"
+          },
+          {
+            "name": "Treasury"
+          }
+        ],
+        "optionsCond": [],
+        "order": 1,
+        "required": true,
+        "template": "single_select"
+      },
+      {
+        "description": "Headline sentence on Issue",
+        "key": "Title",
+        "name": "Title of the Issue",
+        "optionsCond": [],
+        "order": 7,
+        "required": true,
+        "template": "text_input"
+      },
+      {
+        "description": "Select the corresponding choice(s)",
+        "key": "Region",
+        "name": "Region",
+        "options": [
+          {
+            "name": "Africa"
+          },
+          {
+            "name": "Americas"
+          },
+          {
+            "name": "Asia Pacific"
+          },
+          {
+            "name": "Europe"
+          },
+          {
+            "name": "MENAT"
+          },
+          {
+            "name": "United Kingdom"
+          }
+        ],
+        "optionsCond": [],
+        "order": 2,
+        "required": true,
+        "template": "multiple_checkbox"
+      },
+      {
+        "description": "Indicate the Entities this issue relates to",
+        "key": "Entity",
+        "name": "Entity",
+        "options": [
+          {
+            "name": "AMEU"
+          },
+          {
+            "name": "AMGB"
+          },
+          {
+            "name": "AMHK"
+          },
+          {
+            "name": "AMMX"
+          },
+          {
+            "name": "AMTR"
+          },
+          {
+            "name": "BANCNOMGUE_1"
+          },
+          {
+            "name": "CBBS"
+          },
+          {
+            "name": "EDPM"
+          },
+          {
+            "name": "HACN"
+          },
+          {
+            "name": "HAFL"
+          },
+          {
+            "name": "HAHO"
+          },
+          {
+            "name": "HAHU"
+          },
+          {
+            "name": "HAMINOMGUE"
+          },
+          {
+            "name": "HANGSENBAN"
+          },
+          {
+            "name": "HASEHK"
+          },
+          {
+            "name": "HASESGP"
+          },
+          {
+            "name": "HBAM"
+          },
+          {
+            "name": "HBAP"
+          },
+          {
+            "name": "HBAPBKH"
+          },
+          {
+            "name": "HBAPBSB"
+          },
+          {
+            "name": "HBAPCBH"
+          },
+          {
+            "name": "HBAPDAK"
+          },
+          {
+            "name": "HBAPHO"
+          },
+          {
+            "name": "HBAPIFC"
+          },
+          {
+            "name": "HBAPIMO"
+          },
+          {
+            "name": "HBAPINM"
+          },
+          {
+            "name": "HBAPLBU"
+          },
+          {
+            "name": "HBAPLOH"
+          },
+          {
+            "name": "HBAPMLE"
+          },
+          {
+            "name": "HBAPMMO"
+          },
+          {
+            "name": "HBAPMNL"
+          },
+          {
+            "name": "HBAPNZM"
+          },
+          {
+            "name": "HBAPPTL"
+          },
+          {
+            "name": "HBAPSEL"
+          },
+          {
+            "name": "HBAPSGH"
+          },
+          {
+            "name": "HBAPSLS"
+          },
+          {
+            "name": "HBAPSYH"
+          },
+          {
+            "name": "HBAPTKY"
+          },
+          {
+            "name": "HBAPTPE"
+          },
+          {
+            "name": "HBAR"
+          },
+          {
+            "name": "HBAU"
+          },
+          {
+            "name": "HBBM"
+          },
+          {
+            "name": "HBBZ"
+          },
+          {
+            "name": "HBCE"
+          },
+          {
+            "name": "HBCL"
+          },
+          {
+            "name": "HBCN"
+          },
+          {
+            "name": "HBEG"
+          },
+          {
+            "name": "HBEU"
+          },
+          {
+            "name": "HBFR"
+          },
+          {
+            "name": "HBFRADA"
+          },
+          {
+            "name": "HBFRBUS"
+          },
+          {
+            "name": "HBFRDBR"
+          },
+          {
+            "name": "HBFRDEU"
+          },
+          {
+            "name": "HBFRFMB"
+          },
+          {
+            "name": "HBFRLUE"
+          },
+          {
+            "name": "HBFRMIA"
+          },
+          {
+            "name": "HBFRPGE"
+          },
+          {
+            "name": "HBID"
+          },
+          {
+            "name": "HBIO"
+          },
+          {
+            "name": "HBMEALGERI"
+          },
+          {
+            "name": "HBMEBAHBR"
+          },
+          {
+            "name": "HBMEBAOBBR"
+          },
+          {
+            "name": "HBMEDIFC"
+          },
+          {
+            "name": "HBMEKUWBR"
+          },
+          {
+            "name": "HBMELEBBR"
+          },
+          {
+            "name": "HBMEQATBR"
+          },
+          {
+            "name": "HBMEUAEBR"
+          },
+          {
+            "name": "HBMI"
+          },
+          {
+            "name": "HBMI"
+          },
+          {
+            "name": "HBMS"
+          },
+          {
+            "name": "HBMT"
+          },
+          {
+            "name": "HBMU"
+          },
+          {
+            "name": "HBMY"
+          },
+          {
+            "name": "HBON"
+          },
+          {
+            "name": "HBPH"
+          },
+          {
+            "name": "HBSP"
+          },
+          {
+            "name": "HBTR"
+          },
+          {
+            "name": "HBTW"
+          },
+          {
+            "name": "HBUK"
+          },
+          {
+            "name": "HBUS"
+          },
+          {
+            "name": "HBUY"
+          },
+          {
+            "name": "HBVN"
+          },
+          {
+            "name": "HCBK"
+          },
+          {
+            "name": "HCBS"
+          },
+          {
+            "name": "HCCB"
+          },
+          {
+            "name": "HCES"
+          },
+          {
+            "name": "HCID"
+          },
+          {
+            "name": "HCPT"
+          },
+          {
+            "name": "HCRR"
+          },
+          {
+            "name": "HCSU"
+          },
+          {
+            "name": "HCTWHJT"
+          },
+          {
+            "name": "HCZA"
+          },
+          {
+            "name": "HDPG"
+          },
+          {
+            "name": "HDPI"
+          },
+          {
+            "name": "HDPL"
+          },
+          {
+            "name": "HDPM"
+          },
+          {
+            "name": "HDPP"
+          },
+          {
+            "name": "HEFU"
+          },
+          {
+            "name": "HFFA"
+          },
+          {
+            "name": "HFHK"
+          },
+          {
+            "name": "HFNL"
+          },
+          {
+            "name": "HFTL"
+          },
+          {
+            "name": "HGHQ"
+          },
+          {
+            "name": "HGMS"
+          },
+          {
+            "name": "HGSC"
+          },
+          {
+            "name": "HGSH"
+          },
+          {
+            "name": "HGSL"
+          },
+          {
+            "name": "HGSU"
+          },
+          {
+            "name": "HHBV"
+          },
+          {
+            "name": "HIBH"
+          },
+          {
+            "name": "HIBV"
+          },
+          {
+            "name": "HIFL"
+          },
+          {
+            "name": "HIFU"
+          },
+          {
+            "name": "HKIC"
+          },
+          {
+            "name": "HKIT"
+          },
+          {
+            "name": "HKTH"
+          },
+          {
+            "name": "HKTS"
+          },
+          {
+            "name": "HLAH"
+          },
+          {
+            "name": "HMUS"
+          },
+          {
+            "name": "HNAH"
+          },
+          {
+            "name": "HOHU"
+          },
+          {
+            "name": "HRFBIRB"
+          },
+          {
+            "name": "HSBCBAPLIB_1"
+          },
+          {
+            "name": "HSBCBAPLJB"
+          },
+          {
+            "name": "HSBCBAPLJB_1"
+          },
+          {
+            "name": "HSBCBAPLPB"
+          },
+          {
+            "name": "HSBCBAPLSB_1"
+          },
+          {
+            "name": "HSBCBPCRB"
+          },
+          {
+            "name": "HSBCBPSEE"
+          },
+          {
+            "name": "HSBCFPL"
+          },
+          {
+            "name": "HSBCFRGRBR"
+          },
+          {
+            "name": "HSBCINVIND"
+          },
+          {
+            "name": "HSBCLEAFRA"
+          },
+          {
+            "name": "HSCI"
+          },
+          {
+            "name": "HSDI"
+          },
+          {
+            "name": "HSDM"
+          },
+          {
+            "name": "HSEP"
+          },
+          {
+            "name": "HSFN"
+          },
+          {
+            "name": "HSIASSSEC"
+          },
+          {
+            "name": "HSIL"
+          },
+          {
+            "name": "HSSG"
+          },
+          {
+            "name": "HSSI"
+          },
+          {
+            "name": "HTHK"
+          },
+          {
+            "name": "HTHL"
+          },
+          {
+            "name": "HTHO"
+          },
+          {
+            "name": "HTMU"
+          },
+          {
+            "name": "HTSC"
+          },
+          {
+            "name": "HTSG"
+          },
+          {
+            "name": "HTSU"
+          },
+          {
+            "name": "HTVG"
+          },
+          {
+            "name": "HUHO"
+          },
+          {
+            "name": "HUSI"
+          },
+          {
+            "name": "IBCN"
+          },
+          {
+            "name": "IBJP"
+          },
+          {
+            "name": "INMX"
+          },
+          {
+            "name": "ISFR"
+          },
+          {
+            "name": "JAMESCAP"
+          },
+          {
+            "name": "PBCI"
+          },
+          {
+            "name": "PBGB"
+          },
+          {
+            "name": "PBLU"
+          },
+          {
+            "name": "PBRS"
+          },
+          {
+            "name": "PBSEC"
+          },
+          {
+            "name": "SABB"
+          },
+          {
+            "name": "SATF"
+          },
+          {
+            "name": "SBAR"
+          },
+          {
+            "name": "SFM"
+          },
+          {
+            "name": "SOFL"
+          },
+          {
+            "name": "STLL"
+          }
+        ],
+        "required": true,
+        "template": "multiple_checkbox"
+      },
+      {
+        "description": "Trading Location",
+        "key": "Location",
+        "name": "Location",
+        "options": [
+          {
+            "name": "Algeria"
+          },
+          {
+            "name": "Argentina"
+          },
+          {
+            "name": "Armenia"
+          },
+          {
+            "name": "Australia"
+          },
+          {
+            "name": "Bahrain"
+          },
+          {
+            "name": "Bangladesh"
+          },
+          {
+            "name": "Belgium"
+          },
+          {
+            "name": "Bermuda"
+          },
+          {
+            "name": "Brazil"
+          },
+          {
+            "name": "Brunei Darussalam"
+          },
+          {
+            "name": "Channel Islands"
+          },
+          {
+            "name": "Chile"
+          },
+          {
+            "name": "China"
+          },
+          {
+            "name": "Czech Republic"
+          },
+          {
+            "name": "Egypt"
+          },
+          {
+            "name": "France"
+          },
+          {
+            "name": "Germany"
+          },
+          {
+            "name": "Greece"
+          },
+          {
+            "name": "Hong Kong"
+          },
+          {
+            "name": "India"
+          },
+          {
+            "name": "Indonesia"
+          },
+          {
+            "name": "Ireland"
+          },
+          {
+            "name": "Israel"
+          },
+          {
+            "name": "Italy"
+          },
+          {
+            "name": "Japan"
+          },
+          {
+            "name": "Jersey"
+          },
+          {
+            "name": "Korea Republic Of"
+          },
+          {
+            "name": "Kuweit"
+          },
+          {
+            "name": "Lebanon"
+          },
+          {
+            "name": "Luxembourg"
+          },
+          {
+            "name": "Macau"
+          },
+          {
+            "name": "Malaysia"
+          },
+          {
+            "name": "Maldives"
+          },
+          {
+            "name": "Malta"
+          },
+          {
+            "name": "Maurtius"
+          },
+          {
+            "name": "Mexico"
+          },
+          {
+            "name": "Monaco"
+          },
+          {
+            "name": "Netherlands"
+          },
+          {
+            "name": "New Zealand"
+          },
+          {
+            "name": "Oman"
+          },
+          {
+            "name": "Philippines"
+          },
+          {
+            "name": "Poland"
+          },
+          {
+            "name": "Qatar"
+          },
+          {
+            "name": "Russia"
+          },
+          {
+            "name": "Saudi Arabia"
+          },
+          {
+            "name": "Singapore"
+          },
+          {
+            "name": "South Africa"
+          },
+          {
+            "name": "Spain"
+          },
+          {
+            "name": "Sri Lanka"
+          },
+          {
+            "name": "Switzerland"
+          },
+          {
+            "name": "Taiwan"
+          },
+          {
+            "name": "Thailand"
+          },
+          {
+            "name": "Turkey"
+          },
+          {
+            "name": "UK - NRFB"
+          },
+          {
+            "name": "UK - RFB"
+          },
+          {
+            "name": "US"
+          },
+          {
+            "name": "United Arab Emirates"
+          },
+          {
+            "name": "Uruguay"
+          },
+          {
+            "name": "Vietnam"
+          }
+        ],
+        "optionsCond": [],
+        "order": 3,
+        "required": true,
+        "template": "multiple_checkbox"
+      },
+      {
+        "description": "Indicate one or all affected Business Units per TM1 MI Actuals",
+        "key": "Business Unit",
+        "name": "Business Unit",
+        "options": [
+          {
+            "name": "ABS"
+          },
+          {
+            "name": "Accrural"
+          },
+          {
+            "name": "All"
+          },
+          {
+            "name": "CEM (Discounting)"
+          },
+          {
+            "name": "CVA"
+          },
+          {
+            "name": "Cash Equities"
+          },
+          {
+            "name": "Cash Financing Solutions"
+          },
+          {
+            "name": "Collateral Treasury "
+          },
+          {
+            "name": "Commodities"
+          },
+          {
+            "name": "Commodities Financing"
+          },
+          {
+            "name": "DVA"
+          },
+          {
+            "name": "Disposal"
+          },
+          {
+            "name": "ECM"
+          },
+          {
+            "name": "EM Rates"
+          },
+          {
+            "name": "EOC/ TLAC "
+          },
+          {
+            "name": "Equity Derivatives"
+          },
+          {
+            "name": "Equity Linked Notes"
+          },
+          {
+            "name": "FFVA"
+          },
+          {
+            "name": "FX Cash"
+          },
+          {
+            "name": "FX Options"
+          },
+          {
+            "name": "Flow Credit - EM"
+          },
+          {
+            "name": "Flow Credit G10"
+          },
+          {
+            "name": "Flow Rates G10"
+          },
+          {
+            "name": "Futures"
+          },
+          {
+            "name": "GIS"
+          },
+          {
+            "name": "GM Managment"
+          },
+          {
+            "name": "MTM"
+          },
+          {
+            "name": "Management Books"
+          },
+          {
+            "name": "OCS"
+          },
+          {
+            "name": "Primary Credit"
+          },
+          {
+            "name": "Primary Rates"
+          },
+          {
+            "name": "Prime Finance"
+          },
+          {
+            "name": "Private Credit"
+          },
+          {
+            "name": "Rates Legacy"
+          },
+          {
+            "name": "Repo Rates"
+          },
+          {
+            "name": "SIP"
+          },
+          {
+            "name": "Senior Managment Book"
+          },
+          {
+            "name": "Structured Notes/ Bonds"
+          },
+          {
+            "name": "Structured Rates"
+          }
+        ],
+        "optionsCond": [],
+        "order": 5,
+        "required": true,
+        "template": "multiple_checkbox"
+      },
+      {
+        "description": "Select all asset classes the issue relates to",
+        "key": "Asset Class",
+        "name": "Asset Class",
+        "options": [
+          {
+            "name": "ALCM"
+          },
+          {
+            "name": "All"
+          },
+          {
+            "name": "Corporate Center"
+          },
+          {
+            "name": "DCM"
+          },
+          {
+            "name": "Equities"
+          },
+          {
+            "name": "GDM"
+          },
+          {
+            "name": "GFX"
+          },
+          {
+            "name": "Markets Treasury"
+          },
+          {
+            "name": "RHU"
+          },
+          {
+            "name": "SecFin"
+          },
+          {
+            "name": "XVA"
+          }
+        ],
+        "optionsCond": [],
+        "order": 4,
+        "required": true,
+        "template": "multiple_checkbox"
+      },
+      {
+        "description": "",
+        "key": "family issue",
+        "name": "What is the family of issues?",
+        "options": [
+          {
+            "name": "Daily/Month-end P&L"
+          },
+          {
+            "name": "Financial Reporting Error"
+          },
+          {
+            "name": "Month-End BS - Accuracy and Substantiation"
+          },
+          {
+            "name": "Reg reporting/Disclosure Reporting"
+          },
+          {
+            "name": "Valuations Contol"
+          },
+          {
+            "name": "Trader Estimates /Signoffs"
+          },
+          {
+            "name": "Hedge Accounting"
+          },
+          {
+            "name": "Other Controls"
+          }
+        ],
+        "template": "single_select"
+      },
+      {
+        "description": "When did the Issue first occur?",
+        "key": "Date",
+        "name": "Date of Identification",
+        "optionsCond": [],
+        "order": 6,
+        "required": true,
+        "template": "date"
+      },
+      {
+        "description": "If issue start date is known",
+        "key": "Impact or breach start date",
+        "name": "Impact or breach start date",
+        "options": [],
+        "required": true,
+        "template": "date"
+      },
+      {
+        "description": "Outline of the issue including: What occurred, Frequency of issue,  Identification & detection process, Reason for occurrence, Result of Issue, Prior solving approaches, Other functions/ regions involved in solution/ suffer Issue, Other impacts besides BS and PL (Impact of Issue on ex. incorrect reporting, RWA values, delays, pending, P&L/BS/GL breaks, funding, etc.), Risk if no fix (Risks associated with the issue for Exco and CFO to be aware of, client reputation risk)",
+        "key": "Description of the Issue",
+        "name": "Description of the Issue",
+        "optionsCond": [],
+        "order": 8,
+        "required": true,
+        "template": "textarea"
+      },
+      {
+        "description": "Select all corresponding choices",
+        "key": "Control Pillar",
+        "name": "Control Pillar",
+        "options": [
+          {
+            "name": "Accounting"
+          },
+          {
+            "name": "All"
+          },
+          {
+            "name": "P&L"
+          },
+          {
+            "name": "Treasury"
+          },
+          {
+            "name": "Valuations"
+          }
+        ],
+        "optionsCond": [],
+        "order": 9,
+        "required": true,
+        "template": "multiple_checkbox"
+      },
+      {
+        "description": "Indicate which Helios Control IDs the issue relates to or put N/A and specify OR TO BE CONFIRMED",
+        "key": "Helios control IDs",
+        "name": "Linked Helios control IDs",
+        "options": [
+          {
+            "name": "Related to Helios Controls"
+          },
+          {
+            "name": "Not related to Helios"
+          }
+        ],
+        "optionsCond": [
+          {
+            "name": "Helios Control IDs",
+            "show": "Related to Helios L1 Controls",
+            "type": "text_input"
+          }
+        ],
+        "order": 10,
+        "required": true,
+        "template": "list"
+      },
+      {
+        "key": "issue category",
+        "name": "Issue category",
+        "options": [
+          {
+            "name": "Daily/Month-end P&L"
+          },
+          {
+            "name": "Financial Reporting Error"
+          },
+          {
+            "name": "Month-End BS - Accuracy and Substantiation"
+          },
+          {
+            "name": "Reg reporting/Disclosure Reporting"
+          },
+          {
+            "name": "Valuations Control (IPV, FVA, PVA, FV Levelling)"
+          },
+          {
+            "name": "Trader Estimates /Signoffs"
+          },
+          {
+            "name": "Hedge Accounting"
+          },
+          {
+            "name": "Other Controls"
+          }
+        ],
+        "optionsCond": [
+          {
+            "description": "",
+            "key": "escalation category other details",
+            "name": "Please detail",
+            "required": true,
+            "show": "Other Controls",
+            "template": "textarea"
+          }
+        ],
+        "required": true,
+        "template": "multiple_checkbox"
+      },
+      {
+        "description": "Select the corresponding choice",
+        "key": "Root Cause",
+        "name": "Primary Root Cause",
+        "options": [
+          {
+            "name": "Accounting Rules Engine"
+          },
+          {
+            "name": "Data/Systems"
+          },
+          {
+            "name": "External Event"
+          },
+          {
+            "name": "Knowledge / People"
+          },
+          {
+            "name": "Manual Process"
+          },
+          {
+            "name": "Policy"
+          },
+          {
+            "name": "Procedure"
+          },
+          {
+            "name": "RACI"
+          },
+          {
+            "name": "Trade Booking"
+          },
+          {
+            "name": "Other"
+          }
+        ],
+        "optionsCond": [
+          {
+            "key": "Root cause - other - more infos",
+            "name": "If Other: provide precise detail",
+            "show": "Other",
+            "template": "textarea",
+            "type": "text_input"
+          },
+          {
+            "key": "Root cause - external - more infos",
+            "name": "If External: provide precise detail",
+            "show": "External Event",
+            "template": "textarea",
+            "type": "text_input"
+          },
+          {
+            "key": "Root cause - people - more infos",
+            "name": "If People:",
+            "show": "Knowledge / People",
+            "template": "textarea",
+            "type": "text_input"
+          },
+          {
+            "key": "Root cause - systems-data- more infos",
+            "name": "If Systems and Data: ",
+            "show": "Data",
+            "template": "textarea",
+            "type": "text_input"
+          }
+        ],
+        "order": 13,
+        "required": true,
+        "template": "conditionnal"
+      },
+      {
+        "description": "Provide more details regarding the primary cause, (ex.: Data: further dividable ex. quality/ static, System: logic issues, inadequate infrastructure, changing server)",
+        "key": "Root Cause Further Details",
+        "name": "Root Cause - Further Details",
+        "optionsCond": [],
+        "order": 14,
+        "required": true,
+        "template": "textarea"
+      },
+      {
+        "description": "Select the corresponding choice that indicates who the owner is of the Root Cause of the Issue",
+        "key": "RC_Owner",
+        "name": "Root Cause Owner",
+        "options": [
+          {
+            "name": "Accounting Control"
+          },
+          {
+            "name": "FCD"
+          },
+          {
+            "name": "FO"
+          },
+          {
+            "name": "FO IT"
+          },
+          {
+            "name": "FO Quant"
+          },
+          {
+            "name": "Finance IT"
+          },
+          {
+            "name": "MO"
+          },
+          {
+            "name": "Ops"
+          },
+          {
+            "name": "Other"
+          },
+          {
+            "name": "PC"
+          },
+          {
+            "name": "PC Quant"
+          },
+          {
+            "name": "Sparc IT"
+          },
+          {
+            "name": "TO BE CONFIRMED"
+          }
+        ],
+        "optionsCond": [
+          {
+            "key": "who is root cause owner if other",
+            "name": "Who is the Root Cause Owner",
+            "show": "Other",
+            "type": "text_input"
+          },
+          {
+            "key": "who are root cause owner if multiple",
+            "name": "List the Root Cause Owners",
+            "show": "Multiple",
+            "type": "text_input"
+          }
+        ],
+        "order": 15,
+        "required": true,
+        "template": "conditionnal"
+      },
+      {
+        "description": "Select the corresponding choice - noting these are not location specific thresholds. Please use the RAG field to highlight key risk even if marked low risk using this option.",
+        "key": "Materiality-BS",
+        "name": "Materiality BS",
+        "options": [
+          {
+            "name": "$0-40m"
+          },
+          {
+            "name": "$100-250m"
+          },
+          {
+            "name": "$1bn+"
+          },
+          {
+            "name": "$250-500m"
+          },
+          {
+            "name": "$40-100m"
+          },
+          {
+            "name": "$500-1bn"
+          },
+          {
+            "name": "0-500k"
+          },
+          {
+            "name": "500k - 1000k"
+          }
+        ],
+        "optionsCond": [],
+        "order": 16,
+        "required": true,
+        "template": "single_select"
+      },
+      {
+        "description": "Select the corresponding choice - noting these are not location specific thresholds. Please use the RAG field to highlight key risk even if marked low risk using this option.",
+        "key": "Materiality-P&L",
+        "name": "Materiality P&L",
+        "options": [
+          {
+            "name": "$0 to 0.15m "
+          },
+          {
+            "name": "$0.15 to 0.5m "
+          },
+          {
+            "name": "$0.5 to 1.5m "
+          },
+          {
+            "name": "$1.5 to 5m "
+          },
+          {
+            "name": "$5 to 10m "
+          },
+          {
+            "name": "$10m +"
+          }
+        ],
+        "optionsCond": [],
+        "order": 17,
+        "required": true,
+        "template": "single_select"
+      },
+      {
+        "description": "The RAG-rating should account for not only the Materiality Impact but also the amount of time and scope of efforts associated with a possible EUC/ Adjustment. Consequently, a combination of Materiality, time spend and effort should be considered for the rating assignment.\n\nBased on materiality, time and effort to fix automatically filled and  can be overwritten with a comment by reviewer ",
+        "key": "RAG",
+        "name": "RAG Rating",
+        "options": [
+          {
+            "name": "Green"
+          },
+          {
+            "name": "Amber 1"
+          },
+          {
+            "name": "Amber 2"
+          },
+          {
+            "name": "Red 1"
+          },
+          {
+            "name": "Red 2"
+          },
+          {
+            "name": "Red 3"
+          }
+        ],
+        "optionsCond": [],
+        "order": 18,
+        "required": true,
+        "template": "single_select"
+      },
+      {
+        "description": "To be ask to the reviewer - TO BE CONFIRMED \n\nreviewer = oversight  ",
+        "key": "saved in helios",
+        "name": "Does this require to be logged in Helios? ",
+        "options": [
+          {
+            "name": "Yes"
+          },
+          {
+            "name": "No"
+          }
+        ],
+        "optionsCond": [
+          {
+            "description": "",
+            "key": "helios issue ID",
+            "name": "What is the Helios issue ID?",
+            "required": true,
+            "show": "Yes",
+            "template": "text_input"
+          }
+        ],
+        "required": false,
+        "template": "conditionnal"
+      },
+      {
+        "description": "In the case that one or multiple MSIIs are raised, provide the MSII IDs the Issue links to\n\nreviewer - tbc",
+        "key": "MSII",
+        "name": "MSII logged",
+        "options": [
+          {
+            "name": "Yes"
+          },
+          {
+            "name": "No"
+          }
+        ],
+        "optionsCond": [
+          {
+            "name": "MSII IDs",
+            "show": "Yes",
+            "type": "text_input"
+          },
+          {
+            "name": "Group SOX Deficiency Rating, Assessment Year, Potential Financial Impact – Profit and Loss/ Elsewhere in the Financial Reports/ Balance Sheet",
+            "show": "Yes",
+            "type": "text_input"
+          }
+        ],
+        "required": false,
+        "template": "conditionnal"
+      },
+      {
+        "description": "Is the Issue logged in Aurora?\n\nreviewer - tbc",
+        "key": "Aurora",
+        "name": "Aurora logged",
+        "options": [
+          {
+            "name": "Yes"
+          },
+          {
+            "name": "N/A (not Data related)"
+          },
+          {
+            "name": "Needs to be logged"
+          }
+        ],
+        "optionsCond": [
+          {
+            "key": "aurora ID",
+            "name": "Aurora ID",
+            "show": "Yes",
+            "type": "text_input"
+          },
+          {
+            "key": "Aurora link",
+            "name": "What is the link to the Aurora log?",
+            "show": "Yes",
+            "type": "text_input"
+          }
+        ],
+        "order": 19,
+        "required": false,
+        "template": "conditionnal"
+      },
+      {
+        "description": "Select all the corresponding choices",
+        "key": "System to fix",
+        "name": "System to fix",
+        "options": [
+          {
+            "name": "AMS"
+          },
+          {
+            "name": "Bloomberg"
+          },
+          {
+            "name": "Calypso"
+          },
+          {
+            "name": "Cognizant"
+          },
+          {
+            "name": "Core IMS & FTP"
+          },
+          {
+            "name": "DTP"
+          },
+          {
+            "name": "ETP"
+          },
+          {
+            "name": "EUC"
+          },
+          {
+            "name": "FLARE"
+          },
+          {
+            "name": "FTP"
+          },
+          {
+            "name": "GC"
+          },
+          {
+            "name": "GRDS"
+          },
+          {
+            "name": "HMS"
+          },
+          {
+            "name": "HUB"
+          },
+          {
+            "name": "Loan IQ"
+          },
+          {
+            "name": "Murex"
+          },
+          {
+            "name": "PC Portal"
+          },
+          {
+            "name": "PLEX"
+          },
+          {
+            "name": "Pegasus"
+          },
+          {
+            "name": "RIMS"
+          },
+          {
+            "name": "Risk Analyser"
+          },
+          {
+            "name": "River Mtm Override"
+          },
+          {
+            "name": "SBB"
+          },
+          {
+            "name": "SPARC"
+          },
+          {
+            "name": "Sophis"
+          },
+          {
+            "name": "Summit"
+          },
+          {
+            "name": "TLM"
+          },
+          {
+            "name": "Treats"
+          },
+          {
+            "name": "XFOS"
+          },
+          {
+            "name": "XTP"
+          },
+          {
+            "name": "Other"
+          }
+        ],
+        "optionsCond": [
+          {
+            "name": "",
+            "show": "",
+            "type": "text_input"
+          }
+        ],
+        "order": 21,
+        "required": true,
+        "template": "multiple_checkbox"
+      },
+      {
+        "description": "Select the corresponding choice",
+        "key": "limitation",
+        "name": "Data limitation",
+        "options": [
+          {
+            "name": "Accounting Rules not rich enough"
+          },
+          {
+            "name": "Data not available from upstream"
+          },
+          {
+            "name": "Data not captured adequately in Ledger"
+          },
+          {
+            "name": "Other"
+          },
+          {
+            "name": "PC Portal"
+          }
+        ],
+        "optionsCond": [
+          {
+            "key": "data limitation - other",
+            "name": "If Other, indicate the Data limitation",
+            "show": "Other",
+            "type": "text_input"
+          }
+        ],
+        "order": 22,
+        "required": true,
+        "template": "conditionnal"
+      },
+      {
+        "description": "Indicate Risk Type based on HSBC Risk Taxonomy",
+        "key": "Impact or breach category",
+        "name": "Impact or breach risk type based on HSBC’s risk taxonomy",
+        "options": [
+          {
+            "name": "Failure in Other Principal Risk Processing"
+          },
+          {
+            "name": "Financial Reporting and Tax Risk"
+          },
+          {
+            "name": "Model Risk"
+          },
+          {
+            "name": "Regulatory Compliance Risk"
+          },
+          {
+            "name": "Traded Risk"
+          },
+          {
+            "name": "Financial Crime"
+          },
+          {
+            "name": "Legal Risk"
+          },
+          {
+            "name": "People Risk"
+          },
+          {
+            "name": "Resilience Risk"
+          },
+          {
+            "name": "Strategic Risk"
+          },
+          {
+            "name": "Treasury Risk"
+          }
+        ],
+        "template": "multiple_checkbox"
+      },
+      {
+        "description": "Impact or breach category: Actual loss, Potential loss, Near miss, Gain, Other impact)\n",
+        "key": "Impact or breach category ",
+        "name": "Impact or breach category (actual loss, potential loss, near miss, gain, other impact)",
+        "options": [
+          {
+            "name": "Actual Loss"
+          },
+          {
+            "name": "Potential Loss"
+          },
+          {
+            "name": "Near Miss"
+          },
+          {
+            "name": "Gain"
+          },
+          {
+            "name": "Other Impact"
+          }
+        ],
+        "optionsCond": [
+          {
+            "description": "",
+            "key": "other impact details",
+            "name": "Please detail",
+            "required": true,
+            "show": "Other Impact",
+            "template": "textarea"
+          }
+        ],
+        "template": "conditionnal"
+      },
+      {
+        "key": "impact breach severity",
+        "name": "Estimated overall impact or breach severity (Moderate, Major, or Extreme)",
+        "options": [
+          {
+            "name": "Minor"
+          },
+          {
+            "name": "Moderate"
+          },
+          {
+            "name": "Major"
+          },
+          {
+            "name": "Extreme"
+          }
+        ],
+        "template": "single_select"
+      },
+      {
+        "description": "Does Regulators need to be notified? ",
+        "key": "regulatory notifications",
+        "name": "Regulatory notifications (if applicable)",
+        "options": [
+          {
+            "name": "Yes"
+          },
+          {
+            "name": "No"
+          }
+        ],
+        "template": "single_select"
+      },
+      {
+        "key": "recurring escalation",
+        "name": "Is this a recurring escalation (please provide reason for repeated escalation)?",
+        "options": [
+          {
+            "name": "Yes"
+          },
+          {
+            "name": "No"
+          }
+        ],
+        "template": "single_select"
+      }
+    ]
+  }
