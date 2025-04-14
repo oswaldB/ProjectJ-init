@@ -84,7 +84,7 @@
               <label class="block text-sm font-medium text-gray-300">Question Title</label>
               <input type="text" x-model="field.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question title">
             </div>
-            
+
             <div class="mt-4 space-y-2">
               <label class="block text-sm font-medium text-gray-300">Question Description</label>
               <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
@@ -296,6 +296,7 @@
                   </div>
                 </template>
                 <button @click.prevent="values.push('')" 
+                        type="button"
                         class="bg-green-600 text-white px-3 py-1 rounded">
                   +
                 </button>
