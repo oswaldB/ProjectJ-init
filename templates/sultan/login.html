@@ -31,7 +31,7 @@
             const password = document.getElementById('password').value;
             if (password === 'sesame') {
                 localStorage.setItem('sultan_auth', 'true');
-                const redirect = new URLSearchParams(window.location.search).get('redirect') || '/sultan';
+                const redirect = new URLSearchParams(window.location.search).get('redirect') || '/';
                 window.location.href = redirect;
             } else {
                 alert('Invalid password');
