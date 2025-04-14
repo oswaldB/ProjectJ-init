@@ -1,0 +1,29 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Import Questions{% endblock %}
+
+{% block alpine_component %}questionsImport(){% endblock %}
+
+{% block content %}
+<div class="w-screen p-4 ml-[260px]" x-show="page=='import'">
+    <div class="flex justify-between">
+        <h1 class="text-white text-2xl h-4 p-2 ml-4">Questions Import</h1>
+        <div class="inline-flex rounded-md shadow-sm justify-end">
+            <a @click="page='studio'" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 text-sm font-medium rounded-lg">
+                Return to Studio
+            </a>
+        </div>
+    </div>
+    <div class="grid grid-cols-3 gap-10">
+        <div class="m-4 h-screen col-span-2 w-full overflow-y-auto bg-gray-800 p-8">
+            <textarea x-model="importConfig" class="min-h-[85vh] w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg"></textarea>
+        </div>
+        <div class="m-4 h-screen w-full overflow-y-auto bg-gray-800 p-8 text-white">
+            <button @click="loadConfig()" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg">
+                Load Configuration
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
