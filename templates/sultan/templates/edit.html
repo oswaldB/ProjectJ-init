@@ -19,7 +19,7 @@
       const userEmail = localStorage.getItem('user_email');
       
       await this.loadTemplate(templateId, userEmail);
-      this.initTinyMCE();
+      this.initTrumbowyg();
     },
     async loadTemplate(templateId, userEmail) {
       if (templateId === 'new') return;
