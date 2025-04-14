@@ -97,9 +97,10 @@
                        placeholder="Question Key (slug format)">
                 <button x-show="field.key"
                         @click="field.keyUnlocked = !field.keyUnlocked"
-                        class="absolute right-2 top-2 text-lg">
-                  <span x-show="!field.keyUnlocked">🔒</span>
-                  <span x-show="field.keyUnlocked">🔓</span>
+                        class="absolute right-2 top-2 text-lg cursor-pointer hover:text-yellow-500 focus:outline-none"
+                        type="button">
+                  <span x-show="!field.keyUnlocked" class="text-gray-400">🔒</span>
+                  <span x-show="field.keyUnlocked" class="text-yellow-500">🔓</span>
                 </button>
               </div>
             </div>
