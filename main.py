@@ -214,38 +214,26 @@ def form_edit(form_id):
 
 @app.route('/api/sultan/forms/list')
 def api_forms_list():
-    email = request.args.get('email')
-    if not email:
-        return jsonify([])
-    
     forms = []
+    draft_prefix = 'sultan/configs/draft/forms/'
     
-    # Get forms from all relevant directories
-    form_paths = {
-        'Dev': 'sultan/configs/dev/forms/',
-        'Prod': 'sultan/configs/prod/forms/',
-        'Old version': 'sultan/configs/old/forms/',
-        'Draft': 'sultan/configs/draft/forms/'
-    }
-    
-    for status, prefix in form_paths.items():
-        files = client.list(prefix=prefix)
+    try:
+        files = client.list(prefix=draft_prefix)
         for file in files:
             try:
-                content = client.download_from_text(file)
+                content = client.download_as_text(file)
                 form = json.loads(content)
                 
-                if form.get('user_email') == email:
-                    # Add status if not present
-                    if 'status' not in form:
-                        form['status'] = status
-                    
-                    # Add last_modified if not present (using file metadata)
-                    if 'last_modified' not in form:
-                        metadata = client.get_metadata(file)
-                        form['last_modified'] = metadata.get('last_modified', None)
-                    
-                    forms.append(form)
+                # Add status if not present
+                if 'status' not in form:
+                    form['status'] = 'Draft'
+                
+                # Add last_modified if not present
+                metadata = client.get_metadata(file)
+                if 'last_modified' not in form:
+                    form['last_modified'] = metadata.get('last_modified', None)
+                
+                forms.append(form)
             except Exception as e:
                 logger.error(f"Failed to load form {file}: {e}")
     
