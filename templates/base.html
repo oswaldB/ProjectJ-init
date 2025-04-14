@@ -5,26 +5,37 @@
     <meta charset="utf-8">
 
     <div id="notification-container" class="fixed top-4 right-4 z-50"></div>
+    <style>
+        .notification-slide {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .notification-fade {
+            animation: fadeOut 0.3s ease-in forwards;
+        }
+        @keyframes fadeOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
     <script>
         function showNotification(message, type = 'info') {
             const container = document.getElementById('notification-container');
             const notification = document.createElement('div');
-            notification.className = `p-4 mb-2 rounded-lg text-white transform translate-x-full transition-all duration-300 ${
+            notification.className = `p-4 mb-2 rounded-lg text-white shadow-lg ${
                 type === 'error' ? 'bg-red-500' : 
                 type === 'success' ? 'bg-green-500' : 
                 'bg-blue-500'
-            }`;
+            } notification-slide`;
             notification.textContent = message;
             container.appendChild(notification);
             
-            // Fade in
-            requestAnimationFrame(() => {
-                notification.classList.remove('translate-x-full');
-            });
-            
             // Fade out and remove
             setTimeout(() => {
-                notification.classList.add('translate-x-full');
+                notification.classList.add('notification-fade');
                 setTimeout(() => notification.remove(), 300);
             }, 3000);
         }

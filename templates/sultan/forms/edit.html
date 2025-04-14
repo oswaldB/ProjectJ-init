@@ -20,7 +20,9 @@
           const data = await response.json();
           if (!response.ok) {
             showNotification('Form not found', 'error');
-            setTimeout(() => window.location.href = '/sultan/forms/list', 1000);
+            setTimeout(() => {
+              window.location.href = '/sultan/forms/list';
+            }, 2000);
             return;
           }
           this.form = data;
