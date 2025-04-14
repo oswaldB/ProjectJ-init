@@ -7,7 +7,16 @@
   {
     page: 'forms-list',
     forms: [],
+    searchQuery: '',
     statuses: ['Dev', 'Prod', 'Old version', 'Draft'],
+    filteredForms() {
+      return this.forms.filter(form => 
+        form.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        form.id.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        form.status?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        form.user_email.toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
+    },
     async init() {
       const userEmail = localStorage.getItem('user_email');
       try {
@@ -43,6 +52,20 @@
   <h1 class="text-2xl font-bold text-white mb-6">Forms</h1>
   
   <div class="space-y-6">
+    <!-- Search bar -->
+    <div class="relative">
+      <input 
+        type="text" 
+        x-model="searchQuery" 
+        placeholder="Search forms..." 
+        class="w-full bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-red-500"
+      >
+      <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+    </div>
     <!-- Actions -->
     <div class="flex justify-end space-x-4">
       <a href="/sultan/forms/edit/new" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Create New Form</a>
@@ -51,7 +74,7 @@
 
     <!-- Forms List -->
     <div class="grid gap-4">
-      <template x-for="form in forms" :key="form.id">
+      <template x-for="form in filteredForms()" :key="form.id">
         <div class="bg-gray-800 p-4 rounded-lg">
           <div class="flex justify-between items-center">
             <div class="flex-1">
@@ -59,13 +82,14 @@
               <div class="text-sm text-gray-400 mt-1">
                 <p>User: <span x-text="form.user_email"></span></p>
                 <p>Last modified: <span x-text="new Date(form.last_modified || Date.now()).toLocaleString()"></span></p>
-                <div class="mt-2">
-                  <span class="px-2 py-1 rounded-full text-xs" 
+                <p class="text-xs text-gray-500 mt-1">File: <span x-text="form.id + '.json'"></span></p>
+                <div class="mt-2 flex items-center space-x-2">
+                  <span class="px-2 py-1 rounded-full text-xs font-medium" 
                         :class="{
-                          'bg-blue-600': form.status === 'Dev',
-                          'bg-green-600': form.status === 'Prod',
-                          'bg-yellow-600': form.status === 'Old version',
-                          'bg-gray-600': form.status === 'Draft'
+                          'bg-blue-600 text-blue-100': form.status === 'Dev',
+                          'bg-green-600 text-green-100': form.status === 'Prod',
+                          'bg-yellow-600 text-yellow-100': form.status === 'Old version',
+                          'bg-gray-600 text-gray-100': form.status === 'Draft'
                         }" 
                         x-text="form.status || 'Draft'">
                   </span>
