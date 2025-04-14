@@ -142,20 +142,16 @@
 
                     <template x-if="field.type === 'conditional'">
                       <div class="mt-2">
-                        <div class="mb-2">
-                          <label class="block text-sm font-medium text-gray-300">Question Label</label>
-                          <input type="text" x-model="option.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Label">
-                        </div>
-                        <div class="mb-2">
-                          <label class="block text-sm font-medium text-gray-300">Question Key</label>
-                          <div class="relative flex items-center">
-                            <input type="text" 
-                                   x-model="option.key"
-                                   @input="option.key = option.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
-                                   class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" 
-                                   placeholder="Question Key (slug format)">
+                          <div class="mb-2">
+                            <label class="block text-sm font-medium text-gray-300">Question Key</label>
+                            <div class="relative flex items-center">
+                              <input type="text" 
+                                     x-model="option.key"
+                                     @input="option.key = option.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                                     class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" 
+                                     placeholder="Question Key (slug format)">
+                            </div>
                           </div>
-                        </div>
                         <div class="mb-2">
                           <label class="block text-sm font-medium text-gray-300">Template Type</label>
                           <select x-model="option.template" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
