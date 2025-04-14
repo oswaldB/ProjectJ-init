@@ -8,6 +8,9 @@
     form: { id: '', name: '', fields: [] },
     preview: true,
     async init() {
+      this.$watch('form', () => {
+        this.saveForm();
+      }, { deep: true });
       const formId = window.location.pathname.split('/').pop();
       if (formId !== 'new') {
         const userEmail = localStorage.getItem('user_email');
