@@ -43,6 +43,7 @@ function jaffarQuestionsStudio() {
      question.name=""
      question.template=""
      question.key=""
+     question.keyUnlocked=true
      question.options=[]
      this.jaffarConfigs.push(question)
      },

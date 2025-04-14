@@ -141,6 +141,23 @@
                                     </div>
                                     <div class="space-y-2" x-show="index==jaffarConfigsSelectedQuestion">
                                         <div>
+                                            <label class="block text-sm font-medium text-gray-50">Key</label>
+                                            <small class="text-white">L'identifiant unique de la question</small>
+                                            <div class="relative">
+                                                <input type="text" 
+                                                       x-model="question.key"
+                                                       @input="if(!question.keyUnlocked) question.key = question.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                                                       :disabled="question.key && !question.keyUnlocked"
+                                                       class="mt-1 w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-white focus:border-red-500 focus:ring-red-500"/>
+                                                <button x-show="question.key" 
+                                                        @click="question.keyUnlocked = !question.keyUnlocked"
+                                                        class="absolute right-2 top-4">
+                                                    <span x-show="!question.keyUnlocked">🔒</span>
+                                                    <span x-show="question.keyUnlocked">🔓</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div>
                                             <label class="block text-sm font-medium text-gray-50">Question</label>
                                             <small class="text-white">The question as it will be displayed</small>
                                             <input
@@ -174,17 +191,6 @@
                                                 <option value="list">List
                                                 </option>
                                             </select>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-50">Key</label>
-                                            <small class="text-white">The identifier is the name of the column in
-                                                the
-                                                excel file
-                                                for
-                                                example</small>
-                                            <input
-                                                    class="mt-1 w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-white focus:border-red-500 focus:ring-red-500"
-                                                    x-model="question.key"/>
                                         </div>
                                         <div>
                                             <label class="block text-sm font-medium text-gray-50">Required</label>
@@ -517,7 +523,7 @@
                     </div>
 
 
-                    <template x-for="(question,index) in jaffarConfigs">
+                    <template                    x-for="(question,index) in jaffarConfigs">
                         <div class="p-2 py-10 mx-2 bg-gray-800 text-white space-y-2"
                              x-show="index==jaffarConfigsSelectedQuestion || jaffarConfigsSelectedQuestion == 'showAll'">
                             <!-- Search Single select: to show if more than 6 options -->
@@ -577,7 +583,7 @@
                             <!--conditionnal template-->
                             <div class="space-y-2" x-data="{'selected':''}" x-show="question.template=='conditionnal'">
                                 <p @click="selected='',selected2=''"
-                    class="place-self-end text-white underline underline-offset-2 cursor-pointer">reset</p>
+                                   class="place-self-end text-white underline underline-offset-2 cursor-pointer">reset</p>
                                 <label class="block mt-1 font-medium text-xl" for="pc-function" x-text="question.name">PC
                                     Function</label>
                                 <div class="text-gray-300" x-text="question.description"></div>
@@ -686,6 +692,7 @@
                                                                         <label class="ml-2 text-sm font-medium"
                                                                                x-text="option.name">ALCM</label>
                                                                     </div>
+                                                                </div>
                                                             </template>
                                                         </div>
                                                         <div class="w-1/2">
@@ -845,6 +852,7 @@
                                                                                     <label class="ml-2 text-sm font-medium"
                                                                                            x-text="option.name">ALCM</label>
                                                                                 </div>
+                                                                            </div>
                                                                         </template>
                                                                     </div>
                                                                     <div class="w-1/2">
@@ -987,6 +995,7 @@
                                                             <label class="ml-2 text-sm font-medium"
                                                                    x-text="option.name">ALCM</label>
                                                         </div>
+                                                    </div>
                                                 </template>
                                             </div>
                                             <div class="w-1/2">
@@ -1040,9 +1049,9 @@
                     <h2 class="mb-3 text-xl font-medium text-white ">Import the escalation config file</h2>
                     <div>
                         <div>
-                        <textarea
-                                class=" min-h-[85vh] mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500 text-white"
-                                row="20" type="textarea" x-model="importConfig"></textarea>
+                            <textarea
+                                    class=" min-h-[85vh] mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500 text-white"
+                                    row="20" type="textarea" x-model="importConfig"></textarea>
                         </div>
                     </div>
                 </div>
@@ -1055,7 +1064,7 @@
                         </li>
                         <li> 2. Copy and paste the config into the left panel.</li>
                         <li> 3. Click on load config.</li>
-                                    <button :disabled="importConfig.length==0" @click.prevent="loadConfigJaffar()"
+                        <button :disabled="importConfig.length==0" @click.prevent="loadConfigJaffar()"
                                 class="place-self-end bg-red-600 hover:bg-red-500 text-white px-4 py-2 text-sm font-medium rounded-lg focus:z-10 focus:ring-2 hover:text-black">
                             Load
                             config
@@ -1090,9 +1099,9 @@
                     <h2 class="mb-3 text-xl font-medium text-white ">Export the Jaffar config file</h2>
                     <div>
                         <div>
-                        <textarea
-                                class=" min-h-[85vh] mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500 text-white"
-                                disabled row="20" type="textarea" x-model="jaffarConfigExport"></textarea>
+                            <textarea
+                                    class=" min-h-[85vh] mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500 text-white"
+                                    disabled row="20" type="textarea" x-model="jaffarConfigExport"></textarea>
                         </div>
                     </div>
                 </div>
@@ -1125,10 +1134,11 @@
                 src="https://stash.hk.hsbc/projects/STRATPCJAFFAR/repos/pc-sultan/raw/apps/pc_sultan/assets/mask-alpine.js"></script>
         <script defer
                 src="https://stash.hk.hsbc/projects/STRATPCJAFFAR/repos/pc-sultan/raw/apps/pc_sultan/assets/alpine.js"></script>
-                
 
 
     </div>
+
+</div>
 
 </body>
 
