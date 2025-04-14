@@ -63,7 +63,7 @@
     </div>
 
     <div class="space-y-4">
-      <input type="text" x-model="form.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Form Name">
+      <input type="text" x-model.debounce.500ms="form.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Form Name">
 
       <div class="space-y-4">
         <template x-for="(field, index) in form.fields" :key="index">
@@ -84,13 +84,13 @@
 
             <div class="space-y-2">
               <label class="block text-sm font-medium text-gray-300">Question Title</label>
-              <input type="text" x-model="field.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question title">
+              <input type="text" x-model.debounce.500ms="field.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question title">
             </div>
 
             <div class="mt-4 space-y-2">
               <label class="block text-sm font-medium text-gray-300">Question Description</label>
               <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
-              <textarea x-model="field.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question description" rows="3"></textarea>
+              <textarea x-model.debounce.500ms="field.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question description" rows="3"></textarea>
             </div>
 
             <label class="flex items-center space-x-2 text-white mt-4">
@@ -116,7 +116,7 @@
                   <div class="space-y-2 p-2 border border-gray-600 rounded">
                     <div class="flex space-x-2">
                       <div class="flex-1 space-y-2">
-                        <input type="text" x-model="option.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                        <input type="text" x-model.debounce.500ms="option.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
                       </div>
                       <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
                     </div>
