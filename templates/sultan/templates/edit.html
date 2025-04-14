@@ -101,6 +101,7 @@
           ['unorderedList', 'orderedList'],
           ['table'],
           ['foreColor', 'backColor'],
+          ['mention'],
           ['removeformat']
         ],
         plugins: {
@@ -114,7 +115,16 @@
             ]
           },
           mention: {
-            source: []
+            source: this.formFields.map(field => ({
+              login: field.key,
+              name: field.label
+            })),
+            formatDropdownItem: function (item) {
+              return item.name;
+            },
+            formatResult: function (item) {
+              return "{{" + item.login + "}}";
+            }
           }
         }
       });
