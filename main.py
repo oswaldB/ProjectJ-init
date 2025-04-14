@@ -10,7 +10,6 @@ import re
 import pandas as pd
 
 app = Flask(__name__)
-app.config['JSON_AS_ASCII'] = False
 logger = logging.getLogger(__name__)
 client = Client()
 
@@ -62,7 +61,7 @@ def process_issue_data(issue_data):
 
 
 def save_in_global_db(key, obj):
-    json_object = json.dumps(obj, separators=(',', ':'), ensure_ascii=False)
+    json_object = json.dumps(obj, separators=(',', ':'))
     client.upload_from_text(key, json_object)
     return
 
@@ -265,11 +264,16 @@ def api_forms_list():
 
     return jsonify(forms)
 
+
 @app.route('/api/sultan/forms/<form_id>')
 def api_form_get(form_id):
+    email = request.args.get('email')
+    if not email:
+        return jsonify({"error": "Email required"}), 400
+
     try:
         content = client.download_from_text(
-            f'sultan/configs/draft/forms/{form_id}.json')
+            f'sultan/configs/draft/{email}/forms/{form_id}.json')
         return jsonify(json.loads(content))
     except Exception as e:
         logger.error(f"Failed to load form {form_id}: {e}")
@@ -278,27 +282,28 @@ def api_form_get(form_id):
 
 @app.route('/api/sultan/forms/save', methods=['POST'])
 def api_form_save():
-    data = request.get_json(force=True)
+    data = request.json
     form = data.get('form')
 
     if not form:
         return jsonify({"error": "Form required"}), 400
 
     try:
-        # Ensure user_email is set
-        if 'user_email' not in form:
-            form['user_email'] = data.get('email', 'unknown')
-
         # Ensure directory structure exists
         form_path = f'sultan/configs/draft/forms/{form["id"]}.json'
 
-        # Ensure UTF-8 encoding for JSON
-        json_content = json.dumps(form, indent=2, ensure_ascii=False)
-        client.upload_from_text(form_path, json_content, encoding='utf-8')
+        client.upload_from_text(form_path,
+                                ensure_ascii=False,
+                                json.dumps(form, indent=2))
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save form: {e}")
         return jsonify({"error": "Failed to save form"}), 500
+
+
+@app.route('/questions/url-upload')
+def url_upload():
+    return render_template('sultan/questions/url_upload.html')
 
 
 if __name__ == '__main__':
