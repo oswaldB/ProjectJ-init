@@ -55,8 +55,8 @@
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold text-white">Form Editor</h1>
       <div class="space-x-4">
-        <button @click="saveForm()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Save</button>
-        <button @click="preview = !preview" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" x-text="preview ? 'Hide Preview' : 'Show Preview'"></button>
+        <button @click="saveForm()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Save</button>
+        <button @click="preview = !preview" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600" x-text="preview ? 'Hide Preview' : 'Show Preview'"></button>
       </div>
     </div>
 
@@ -221,7 +221,7 @@
         </template>
       </div>
 
-      <button @click="addField()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Add Field</button>
+      <button @click="addField()" class="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Add Field</button>
     </div>
   </div>
 
