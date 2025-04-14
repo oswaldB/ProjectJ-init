@@ -190,8 +190,8 @@
                                     <textarea x-model="nestedOption.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Description" rows="3"></textarea>
                                   </div>
                                   <div class="mb-2">
-                                    <label class="block text-sm font-medium text-gray-300">Key</label>
-                                    <div class="relative">
+                                    <label class="block text-sm font-medium text-gray-300">Question Key</label>
+                                    <div class="relative flex items-center">
                                       <input type="text" x-model="nestedOption.key"
                                              @input="if(!nestedOption.keyUnlocked) nestedOption.key = nestedOption.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
                                              :disabled="nestedOption.key && !nestedOption.keyUnlocked"
@@ -199,9 +199,10 @@
                                              placeholder="Question Key">
                                       <button x-show="nestedOption.key"
                                               @click="nestedOption.keyUnlocked = !nestedOption.keyUnlocked"
-                                              class="absolute right-2 top-2">
-                                        <span x-show="!nestedOption.keyUnlocked">🔒</span>
-                                        <span x-show="nestedOption.keyUnlocked">🔓</span>
+                                              class="absolute right-2 text-lg cursor-pointer hover:text-yellow-500"
+                                              type="button">
+                                        <span x-show="!nestedOption.keyUnlocked" class="text-gray-400">🔒</span>
+                                        <span x-show="nestedOption.keyUnlocked" class="text-yellow-500">🔓</span>
                                       </button>
                                     </div>
                                   </div>
