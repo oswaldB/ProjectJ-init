@@ -223,16 +223,6 @@
                                               <div x-data="{ question: nestedQ }" class="space-y-4">
                                                 <!-- Recursively include the same question fields -->
                                                 <div class="space-y-2">
-                                                  <select x-model="question.type" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                                    <option value="text_input">Text Input</option>
-                                                    <option value="number">Number</option>
-                                                    <option value="single_select">Single Select</option>
-                                                    <option value="multiple_checkbox">Multiple Checkbox</option>
-                                                    <option value="textarea">Long Text</option>
-                                                    <option value="date">Date</option>
-                                                    <option value="conditional">Conditional</option>
-                                                  </select>
-
                                                   <input type="text" x-model="question.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Label">
 
                                                   <div class="relative">
@@ -243,8 +233,8 @@
                                                            placeholder="Question Key (slug format)">
                                                   </div>
 
-                                                  <!-- Recursively handle nested options and conditional questions -->
-                                                  <template x-if="['single_select', 'multiple_checkbox'].includes(question.type)">
+                                                  <!-- Only allow nesting up to 4 levels -->
+                                                  <template x-if="opt.questions && opt.questions.length > 0 && Object.keys(nestedQ).length <= 4">
                                                     <div class="mt-2 space-y-2">
                                                       <button @click="question.options = question.options || []; question.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
                                                       <template x-for="(opt, optIdx) in question.options" :key="optIdx">
@@ -269,8 +259,7 @@
                                                             </div>
                                                             
                                                             <div class="mt-4">
-                                                              <button @click="opt.questions = opt.questions || []; opt.questions.push({type: 'text_input', key: '', label: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Nested Question</button>
-                                                              <!-- Continue nesting pattern recursively -->
+                                                              <button x-show="Object.keys(nestedQ).length <= 4" @click="opt.questions = opt.questions || []; opt.questions.push({type: 'text_input', key: '', label: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Nested Question</button>
                                                             </div>
                                                           </div>
                                                         </template>
