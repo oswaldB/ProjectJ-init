@@ -4,24 +4,28 @@
 <head>
     <meta charset="utf-8">
 
+    <div id="notification-container" class="fixed top-4 right-4 z-50"></div>
     <script>
         function showNotification(message, type = 'info') {
+            const container = document.getElementById('notification-container');
             const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white transition-opacity duration-500 opacity-0 ${
+            notification.className = `p-4 mb-2 rounded-lg text-white transform translate-x-full transition-all duration-300 ${
                 type === 'error' ? 'bg-red-500' : 
                 type === 'success' ? 'bg-green-500' : 
                 'bg-blue-500'
             }`;
             notification.textContent = message;
-            document.body.appendChild(notification);
+            container.appendChild(notification);
             
             // Fade in
-            setTimeout(() => notification.classList.add('opacity-100'), 100);
+            requestAnimationFrame(() => {
+                notification.classList.remove('translate-x-full');
+            });
             
             // Fade out and remove
             setTimeout(() => {
-                notification.classList.remove('opacity-100');
-                setTimeout(() => notification.remove(), 500);
+                notification.classList.add('translate-x-full');
+                setTimeout(() => notification.remove(), 300);
             }, 3000);
         }
     </script>

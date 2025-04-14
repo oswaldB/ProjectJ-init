@@ -19,8 +19,8 @@
           const response = await fetch(`/api/sultan/forms/${formId}?email=${userEmail}`);
           const data = await response.json();
           if (!response.ok) {
-            alert('Form not found');
-            window.location.href = '/sultan/forms/list';
+            showNotification('Form not found', 'error');
+            setTimeout(() => window.location.href = '/sultan/forms/list', 1000);
             return;
           }
           this.form = data;
