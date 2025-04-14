@@ -38,6 +38,7 @@
       this.form.fields.push({
         type: 'text',
         label: '',
+        description: '', // Added description field
         required: false,
         options: []
       });
@@ -77,6 +78,7 @@
             </div>
 
             <input type="text" x-model="field.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 mb-2" placeholder="Field Label">
+            <textarea x-model="field.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 mb-2" placeholder="Field Description" rows="3"></textarea>
 
             <label class="flex items-center space-x-2 text-white">
               <input type="checkbox" x-model="field.required" class="bg-gray-800 border-gray-600">
@@ -85,12 +87,15 @@
 
             <template x-if="field.type === 'single_select'">
               <div class="mt-4 space-y-2">
-                <button @click="field.options = field.options || []; field.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                <button @click="field.options = field.options || []; field.options.push({name: '', description: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
                 <template x-for="(option, optIndex) in field.options" :key="optIndex">
                   <div class="space-y-2 p-2 border border-gray-600 rounded">
                     <div class="flex space-x-2">
                       <input type="text" x-model="option.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
                       <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
+                    </div>
+                    <div class="mt-2">
+                      <textarea x-model="option.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Description" rows="3"></textarea>
                     </div>
                   </div>
                 </template>
@@ -99,12 +104,15 @@
 
             <template x-if="['select', 'conditional', 'multiple_checkbox'].includes(field.type)">
               <div class="mt-2 space-y-2">
-                <button @click="field.options = field.options || []; field.options.push({name: '', show: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                <button @click="field.options = field.options || []; field.options.push({name: '', description:'', show: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
                 <template x-for="(option, optIndex) in field.options" :key="optIndex">
                   <div class="space-y-2 p-2 border border-gray-600 rounded">
                     <div class="flex space-x-2">
                       <input type="text" x-model="option.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
                       <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
+                    </div>
+                    <div class="mt-2">
+                      <textarea x-model="option.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Description" rows="3"></textarea>
                     </div>
 
                     <template x-if="field.type === 'conditional'">
@@ -127,18 +135,21 @@
 
                         <template x-if="option.template === 'conditional'">
                           <div class="mt-4 pl-4 border-l-2 border-gray-600">
-                            <button @click="option.options = option.options || []; option.options.push({name: '', show: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                            <button @click="option.options = option.options || []; option.options.push({name: '', description:'', show: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
                             <template x-for="(nestedOption, nestedIndex) in option.options" :key="nestedIndex">
                               <div class="mt-2 p-2 border border-gray-600 rounded">
                                 <div class="flex space-x-2">
                                   <input type="text" x-model="nestedOption.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
                                   <button @click="option.options.splice(nestedIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
                                 </div>
+                                <div class="mt-2">
+                                  <textarea x-model="nestedOption.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Description" rows="3"></textarea>
+                                </div>
                               </div>
                             </template>
                           </div>
                           <div class="mt-4 pl-4 border-l-2 border-gray-600">
-                            <button @click="option.nested_options = option.nested_options || []; option.nested_options.push({name: '', show: ''})" class="text-blue-400 hover:text-blue-300">Add Nested Option</button>
+                            <button @click="option.nested_options = option.nested_options || []; option.nested_options.push({name: '', description:'', show: ''})" class="text-blue-400 hover:text-blue-300">Add Nested Option</button>
 
                             <template x-for="(nestedOption, nestedIndex) in option.nested_options" :key="nestedIndex">
                               <div class="mt-2 p-2 border border-gray-600 rounded">
@@ -146,7 +157,9 @@
                                   <input type="text" x-model="nestedOption.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Nested Option Name">
                                   <button @click="option.nested_options.splice(nestedIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
                                 </div>
-
+                                <div class="mt-2">
+                                  <textarea x-model="nestedOption.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Nested Option Description" rows="3"></textarea>
+                                </div>
                                 <div class="mt-2">
                                   <input type="text" x-model="nestedOption.show" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Show When">
                                   <select x-model="nestedOption.template" class="mt-2 w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
@@ -161,12 +174,15 @@
 
                                     <template x-if="nestedOption.template === 'conditional'">
                                       <div class="mt-4 pl-4 border-l-2 border-gray-600">
-                                        <button @click="nestedOption.options = nestedOption.options || []; nestedOption.options.push({name: '', show: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                                        <button @click="nestedOption.options = nestedOption.options || []; nestedOption.options.push({name: '', description:'', show: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
                                         <template x-for="(nestedOption2, nestedIndex2) in nestedOption.options" :key="nestedIndex2">
                                           <div class="mt-2 p-2 border border-gray-600 rounded">
                                             <div class="flex space-x-2">
                                               <input type="text" x-model="nestedOption2.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
                                               <button @click="nestedOption.options.splice(nestedIndex2, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                            </div>
+                                            <div class="mt-2">
+                                              <textarea x-model="nestedOption2.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Description" rows="3"></textarea>
                                             </div>
                                             <div class="mt-2">
                                               <select x-model="nestedOption2.template" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
@@ -181,12 +197,15 @@
 
                                                 <template x-if="nestedOption2.template === 'conditional'">
                                                   <div class="mt-4 pl-4 border-l-2 border-gray-600">
-                                                    <button @click="nestedOption2.options = nestedOption2.options || []; nestedOption2.options.push({name: '', show: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                                                    <button @click="nestedOption2.options = nestedOption2.options || []; nestedOption2.options.push({name: '', description:'', show: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
                                                     <template x-for="(nestedOption3, nestedIndex3) in nestedOption2.options" :key="nestedIndex3">
                                                       <div class="mt-2 p-2 border border-gray-600 rounded">
                                                         <div class="flex space-x-2">
                                                           <input type="text" x-model="nestedOption3.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
                                                           <button @click="nestedOption2.options.splice(nestedIndex3, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                        </div>
+                                                        <div class="mt-2">
+                                                          <textarea x-model="nestedOption3.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Description" rows="3"></textarea>
                                                         </div>
                                                         <div class="mt-2">
                                                           <select x-model="nestedOption3.template" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
@@ -238,6 +257,7 @@
               <span x-text="field.label"></span>
               <span x-show="field.required" class="text-red-500">*</span>
             </label>
+            <p x-text="field.description"></p>
 
             <template x-if="field.type === 'single_select' || field.type === 'conditional'">
               <select :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
@@ -265,6 +285,7 @@
                     <div class="flex items-center" x-show="!filter || option.name.toLowerCase().includes(filter.toLowerCase())">
                       <input type="checkbox" class="bg-gray-800 border-gray-600">
                       <label class="ml-2 text-sm font-medium text-white" x-text="option.name"></label>
+                      <p x-text="option.description"></p>
                     </div>
                   </template>
                 </div>
