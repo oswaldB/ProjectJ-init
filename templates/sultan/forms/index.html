@@ -28,8 +28,8 @@
   <div class="space-y-6">
     <!-- Actions -->
     <div class="flex justify-end space-x-4">
-      <a href="/sultan/forms/edit/new" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Create New Form</a>
-      <button @click="page='import-form'" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Import Form</button>
+      <a href="/sultan/forms/edit/new" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Create New Form</a>
+      <button @click="page='import-form'" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Import Form</button>
     </div>
 
     <!-- Forms List -->
@@ -56,8 +56,8 @@
               </div>
             </div>
             <div class="space-x-2">
-              <a :href="'/sultan/forms/edit/' + form.id" class="text-blue-400 hover:text-blue-300">Edit</a>
-              <button @click="deleteForm(form.id)" class="text-red-400 hover:text-red-300">Delete</button>
+              <a :href="'/sultan/forms/edit/' + form.id" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Edit</a>
+              <button @click="deleteForm(form.id)" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
             </div>
           </div>
         </div>
