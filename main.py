@@ -312,6 +312,14 @@ def forms_list():
 def form_edit(form_id):
     return render_template('sultan/forms/edit.html')
 
+@app.route('/sultan/templates/list')
+def templates_list():
+    return render_template('sultan/templates/index.html')
+
+@app.route('/sultan/templates/edit/<template_id>')
+def template_edit(template_id):
+    return render_template('sultan/templates/edit.html')
+
 
 @app.route('/api/sultan/forms/list')
 def api_forms_list():
