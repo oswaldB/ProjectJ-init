@@ -278,13 +278,12 @@ def api_form_get(form_id):
 
 @app.route('/api/sultan/forms/save', methods=['POST'])
 def api_form_save():
-    data = request.json
+    data = request.get_json(force=True)
     form = data.get('form')
 
     if not form:
         return jsonify({"error": "Form required"}), 400
 
-    request.charset = 'utf-8'
     try:
         # Ensure user_email is set
         if 'user_email' not in form:
@@ -293,7 +292,9 @@ def api_form_save():
         # Ensure directory structure exists
         form_path = f'sultan/configs/draft/forms/{form["id"]}.json'
 
-        client.upload_from_text(form_path, json.dumps(form, indent=2))
+        # Ensure UTF-8 encoding for JSON
+        json_content = json.dumps(form, indent=2, ensure_ascii=False)
+        client.upload_from_text(form_path, json_content, encoding='utf-8')
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save form: {e}")
