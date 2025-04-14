@@ -10,6 +10,7 @@ import re
 import pandas as pd
 
 app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False
 logger = logging.getLogger(__name__)
 client = Client()
 
@@ -61,7 +62,7 @@ def process_issue_data(issue_data):
 
 
 def save_in_global_db(key, obj):
-    json_object = json.dumps(obj, separators=(',', ':'))
+    json_object = json.dumps(obj, separators=(',', ':'), ensure_ascii=False)
     client.upload_from_text(key, json_object)
     return
 
@@ -283,6 +284,7 @@ def api_form_save():
     if not form:
         return jsonify({"error": "Form required"}), 400
 
+    request.charset = 'utf-8'
     try:
         # Ensure user_email is set
         if 'user_email' not in form:
