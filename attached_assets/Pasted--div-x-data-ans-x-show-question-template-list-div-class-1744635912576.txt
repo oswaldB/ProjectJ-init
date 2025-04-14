@@ -1,0 +1,38 @@
+<div x-data="{'ans':[]}" x-show="question.template=='list'">
+                            <div class="space-y-2">
+                                <label
+                                        class="block font-medium text-xl"
+                                        for="pc-function"
+                                        x-text="question.name"
+                                >Title of the Issue</label
+                                >
+                                <div
+                                        class="text-gray-300"
+                                        x-html="question.description"
+                                ></div>
+
+                                <template x-for="(i,index) in ans">
+                                    <div class="flex space-x-2">
+                                        <input
+                                                :required="question.required"
+                                                class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-red-500 focus:border-red-500"
+                                                type="text"
+                                                x-model.debounce="ans[index]"
+                                        />
+                                        <div
+                                                @click.prevent="ans.splice(index,1)"
+                                                class="bg-red-600 text-white font-medium w-6 h-6 rounded px-2 mt-3 cursor-pointer place-self-center"
+                                        >
+                                            -
+                                        </div>
+                                    </div>
+                                </template>
+                                <div
+                                        @click.prevent="ans.push('1C-0000')"
+                                        class="ml-1 float-end px-2 rounded bg-green-600 text-white font-medium cursor-pointer"
+                                >
+                                    +
+                                </div>
+                            </div>
+                            <input x-model.debounce="answers[question.key]=ans" x-show="false"/>
+                        </div>
