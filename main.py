@@ -8,7 +8,7 @@ import json
 import re
 import pandas as pd
 import boto3
-from moto.s3.mock_s3 import mock_s3
+from moto import mock_s3
 import os
 
 app = Flask(__name__)
@@ -97,7 +97,8 @@ def get_one_from_global_db(key):
 def get_max_from_global_db(key):
     files = []
     try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix='jaffar/configs/')
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME,
+                                      Prefix='jaffar/configs/')
         for obj in response.get('Contents', []):
             files.append(obj['Key'])
 
@@ -123,7 +124,8 @@ def get_max_from_global_db(key):
 def get_max_filename_from_global_db(key):
     files = []
     try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix='jaffar/configs/')
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME,
+                                      Prefix='jaffar/configs/')
         for obj in response.get('Contents', []):
             files.append(obj['Key'])
 
@@ -144,7 +146,6 @@ def get_max_filename_from_global_db(key):
     except Exception as e:
         logger.error(f"Error in get_max_filename_from_global_db: {e}")
         return None
-
 
 
 def delete(key):
@@ -314,7 +315,10 @@ def api_forms_list():
 @app.route('/api/sultan/forms/<form_id>')
 def api_form_get(form_id):
     try:
-        content = s3.get_object(Bucket=BUCKET_NAME, Key=f'sultan/configs/draft//forms/{form_id}.json')['Body'].read().decode('utf-8')
+        content = s3.get_object(
+            Bucket=BUCKET_NAME,
+            Key=f'sultan/configs/draft//forms/{form_id}.json')['Body'].read(
+            ).decode('utf-8')
         return jsonify(json.loads(content))
     except Exception as e:
         logger.error(f"Failed to load form {form_id}: {e}")
