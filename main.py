@@ -14,9 +14,15 @@ app = Flask(__name__)
 logger = logging.getLogger(__name__)
 #client = Client() #Removed
 
-# Replace with your S3 bucket name
-bucket_name = "your-s3-bucket-name" #Add this line.  Replace your-s3-bucket-name with your actual bucket name.
-s3 = boto3.client('s3')
+# Configuration pour Replit Storage
+bucket_name = "replit-objstore-8f06b167-ee2e-4911-8d12-71ad8c05d333"
+s3 = boto3.client(
+    's3',
+    endpoint_url='https://bucket.replit.com',
+    aws_access_key_id='REPLIT',
+    aws_secret_access_key='REPLIT',
+    region_name='us-east-1'
+)
 
 
 class Email:
