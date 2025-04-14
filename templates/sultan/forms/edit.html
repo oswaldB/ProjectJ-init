@@ -86,6 +86,20 @@
               <span>Required</span>
             </label>
 
+            <template x-if="field.type === 'single_select'">
+              <div class="mt-4 space-y-2">
+                <button @click="field.options = field.options || []; field.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                <template x-for="(option, optIndex) in field.options" :key="optIndex">
+                  <div class="space-y-2 p-2 border border-gray-600 rounded">
+                    <div class="flex space-x-2">
+                      <input type="text" x-model="option.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                      <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </template>
+
             <template x-if="['select', 'conditional'].includes(field.type)">
               <div class="mt-2 space-y-2">
                 <button @click="field.options = field.options || []; field.options.push({name: '', show: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
@@ -178,20 +192,6 @@
                   <option x-text="option.name" :value="option.name"></option>
                 </template>
               </select>
-            </template>
-
-            <template x-if="field.type === 'single_select'">
-              <div class="mt-2 space-y-2">
-                <button @click="field.options = field.options || []; field.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
-                <template x-for="(option, optIndex) in field.options" :key="optIndex">
-                  <div class="space-y-2 p-2 border border-gray-600 rounded">
-                    <div class="flex space-x-2">
-                      <input type="text" x-model="option.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
-                      <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
-                    </div>
-                  </div>
-                </template>
-              </div>
             </template>
 
             <template x-if="field.type !== 'select' && field.type !== 'checkbox' && field.type !== 'conditional' && field.type !== 'single_select'">
