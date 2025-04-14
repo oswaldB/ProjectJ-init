@@ -209,11 +209,18 @@ def upload_config_from_url():
 @app.route('/api/questions', methods=['GET', 'POST'])
 def api_questions():
     if request.method == 'GET':
-        # Placeholder:  Replace with actual question retrieval
-        return jsonify({"questions": []}) 
+        try:
+            latest_config = get_max_from_global_db('jaffarConfig')
+            return jsonify(latest_config)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
     else:
-        # Placeholder: Replace with actual question saving
-        return jsonify({"status": "success"})
+        try:
+            config_data = request.json
+            save_in_global_db('jaffarConfig', config_data)
+            return jsonify({"status": "success"})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
 @app.route('/upload-config', methods=['POST'])
 def upload_config():

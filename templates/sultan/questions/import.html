@@ -6,23 +6,49 @@
 {% block alpine_component %}questionsImport(){% endblock %}
 
 {% block content %}
-<div class="w-screen p-4 ml-[260px]" x-show="page=='import'">
+<div class="w-screen p-4 ml-[260px]" x-data="{ importConfig: '', status: '' }">
     <div class="flex justify-between">
         <h1 class="text-white text-2xl h-4 p-2 ml-4">Questions Import</h1>
-        <div class="inline-flex rounded-md shadow-sm justify-end">
-            <a @click="page='studio'" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 text-sm font-medium rounded-lg">
-                Return to Studio
-            </a>
-        </div>
     </div>
-    <div class="grid grid-cols-3 gap-10">
-        <div class="m-4 h-screen col-span-2 w-full overflow-y-auto bg-gray-800 p-8">
-            <textarea x-model="importConfig" class="min-h-[85vh] w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg"></textarea>
+    <div class="grid grid-cols-2 gap-10">
+        <!-- Left column - JSON textarea -->
+        <div class="m-4 h-screen w-full overflow-y-auto bg-gray-800 p-8">
+            <textarea 
+                x-model="importConfig" 
+                class="min-h-[85vh] w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white"
+                placeholder="Paste your JSON configuration here"></textarea>
         </div>
+        
+        <!-- Right column - Instructions and actions -->
         <div class="m-4 h-screen w-full overflow-y-auto bg-gray-800 p-8 text-white">
-            <button @click="loadConfig()" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg">
-                Load Configuration
-            </button>
+            <h2 class="text-xl mb-6">Import Process</h2>
+            
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg mb-2">Instructions</h3>
+                    <p class="mb-4">1. You can paste your JSON configuration in the left panel</p>
+                    <p class="mb-4">2. Click "Load Latest Config" to get the latest version</p>
+                    <p class="mb-4">3. Click "Save to Browser" to store in PouchDB</p>
+                </div>
+
+                <div class="space-y-4">
+                    <button 
+                        @click="fetch('/api/questions').then(r => r.json()).then(data => importConfig = JSON.stringify(data, null, 2))"
+                        class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg w-full">
+                        Load Latest Config
+                    </button>
+                    
+                    <button 
+                        @click="let db = new PouchDB('questionsDB'); db.put({_id: 'config', data: JSON.parse(importConfig)})"
+                        class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-lg w-full">
+                        Save to Browser
+                    </button>
+                </div>
+
+                <div x-show="status" class="mt-4 p-4 rounded" :class="{'bg-green-700': status.includes('Success'), 'bg-red-700': status.includes('Error')}">
+                    <p x-text="status"></p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
