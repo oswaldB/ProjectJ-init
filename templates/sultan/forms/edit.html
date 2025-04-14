@@ -26,7 +26,7 @@
           this.form = data;
         } catch (error) {
           console.error('Failed to load form:', error);
-          alert('Form not found');
+          showNotification('Form not found', 'error');
           window.location.href = '/sultan/forms/list';
         }
       }

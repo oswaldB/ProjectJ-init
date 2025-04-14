@@ -3,6 +3,29 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
+
+    <script>
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white transition-opacity duration-500 opacity-0 ${
+                type === 'error' ? 'bg-red-500' : 
+                type === 'success' ? 'bg-green-500' : 
+                'bg-blue-500'
+            }`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Fade in
+            setTimeout(() => notification.classList.add('opacity-100'), 100);
+            
+            // Fade out and remove
+            setTimeout(() => {
+                notification.classList.remove('opacity-100');
+                setTimeout(() => notification.remove(), 500);
+            }, 3000);
+        }
+    </script>
+
     <meta content="IE=edge" http-equiv="X-UA-Compatible">
     <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
     <title>Jaffar - {% block title %}{% endblock %}</title>
