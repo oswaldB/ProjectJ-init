@@ -1,5 +1,5 @@
 
-{% extends 'base.html' %}
+{% extends 'jaffar/base.html' %}
 
 {% block title %}Login{% endblock %}
 
@@ -28,8 +28,10 @@
 function login() {
     const email = document.getElementById('author-email').value;
     if (email && email.length > 0) {
-        localStorage.setItem('author', email);
-        window.location.href = '/';
+        localStorage.setItem('user_email', email);
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirect = urlParams.get('redirect') || '/';
+        window.location.href = redirect;
     }
 }
 </script>

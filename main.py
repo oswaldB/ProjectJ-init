@@ -159,7 +159,20 @@ def sendConfirmationEmail(email_address, subject, issue):
 def login():
     return render_template('jaffar/login.html')
 
+def require_auth(f):
+    from functools import wraps
+    from flask import request, redirect, url_for
+    
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'X-Replit-User-Name' not in request.headers:
+            current_path = request.path
+            return redirect(f'/login?redirect={current_path}')
+        return f(*args, **kwargs)
+    return decorated
+
 @app.route('/')
+@require_auth
 def index():
     return render_template('jaffar/index.html')
 
