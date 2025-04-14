@@ -1,0 +1,59 @@
+
+{% extends "sultan/base.html" %}
+
+{% block title %}Forms List{% endblock %}
+
+{% block alpine_component %}
+  {
+    page: 'forms-list',
+    forms: [],
+    async init() {
+      const userEmail = localStorage.getItem('user_email');
+      try {
+        const response = await fetch(`/api/sultan/forms/list?email=${userEmail}`);
+        this.forms = await response.json();
+      } catch (error) {
+        console.error('Failed to load forms:', error);
+        this.forms = [];
+      }
+    }
+  }
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-white">Forms</h1>
+    <div class="space-x-4">
+      <a href="/sultan/forms/edit/new" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Create New Form</a>
+      <button @click="page='import-form'" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Import Form</button>
+    </div>
+  </div>
+
+  <div class="grid gap-4">
+    <template x-for="form in forms" :key="form.id">
+      <div class="bg-gray-800 p-4 rounded-lg">
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-semibold" x-text="form.name"></h3>
+          <div class="space-x-2">
+            <a :href="'/sultan/forms/edit/' + form.id" class="text-blue-400 hover:text-blue-300">Edit</a>
+            <button @click="deleteForm(form.id)" class="text-red-400 hover:text-red-300">Delete</button>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- Import Form Dialog -->
+  <div x-show="page === 'import-form'" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-gray-800 p-6 rounded-lg w-2/3">
+      <h2 class="text-xl font-bold mb-4">Import Form</h2>
+      <textarea x-model="importJson" class="w-full h-64 bg-gray-700 text-white p-4 rounded" placeholder="Paste form JSON here"></textarea>
+      <div class="flex justify-end mt-4 space-x-4">
+        <button @click="page='forms-list'" class="bg-gray-600 text-white px-4 py-2 rounded">Cancel</button>
+        <button @click="importForm()" class="bg-blue-600 text-white px-4 py-2 rounded">Import</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

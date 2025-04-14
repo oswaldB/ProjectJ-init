@@ -187,6 +187,64 @@ def questions_import():
 def questions_export():
     return render_template('components/questions/export.html')
 
+@app.route('/sultan/forms/list')
+def forms_list():
+    return render_template('sultan/forms/list.html')
+
+@app.route('/sultan/forms/edit/<form_id>')
+def form_edit(form_id):
+    return render_template('sultan/forms/edit.html')
+
+@app.route('/api/sultan/forms/list')
+def api_forms_list():
+    email = request.args.get('email')
+    if not email:
+        return jsonify([])
+    
+    forms = []
+    files = client.list(prefix=f'sultan/configs/draft/{email}/forms/')
+    for file in files:
+        try:
+            content = client.download_from_text(file)
+            form = json.loads(content)
+            forms.append(form)
+        except Exception as e:
+            logger.error(f"Failed to load form {file}: {e}")
+    
+    return jsonify(forms)
+
+@app.route('/api/sultan/forms/<form_id>')
+def api_form_get(form_id):
+    email = request.args.get('email')
+    if not email:
+        return jsonify({"error": "Email required"}), 400
+    
+    try:
+        content = client.download_from_text(f'sultan/configs/draft/{email}/forms/{form_id}.json')
+        return jsonify(json.loads(content))
+    except Exception as e:
+        logger.error(f"Failed to load form {form_id}: {e}")
+        return jsonify({"error": "Form not found"}), 404
+
+@app.route('/api/sultan/forms/save', methods=['POST'])
+def api_form_save():
+    data = request.json
+    email = data.get('email')
+    form = data.get('form')
+    
+    if not email or not form:
+        return jsonify({"error": "Email and form required"}), 400
+    
+    try:
+        client.upload_from_text(
+            f'sultan/configs/draft/{email}/forms/{form["id"]}.json',
+            json.dumps(form)
+        )
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to save form: {e}")
+        return jsonify({"error": "Failed to save form"}), 500
+
 @app.route('/questions/url-upload')
 def url_upload():
     return render_template('sultan/questions/url_upload.html')
