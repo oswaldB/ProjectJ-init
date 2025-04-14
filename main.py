@@ -20,6 +20,18 @@ BUCKET_NAME = "jaffar-bucket"
 os.makedirs(LOCAL_BUCKET_DIR, exist_ok=True)
 
 # Initialize mocked AWS
+def restore_local_to_s3():
+    for root, _, files in os.walk(LOCAL_BUCKET_DIR):
+        for file in files:
+            local_path = os.path.join(root, file)
+            s3_key = os.path.relpath(local_path, LOCAL_BUCKET_DIR)
+            with open(local_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                try:
+                    s3.put_object(Bucket=BUCKET_NAME, Key=s3_key, Body=content)
+                except Exception as e:
+                    logger.error(f"Failed to restore {s3_key} to S3: {e}")
+
 mock = mock_aws()
 mock.start()
 
@@ -29,6 +41,8 @@ try:
     s3.create_bucket(Bucket=BUCKET_NAME)
 except:
     pass  # Bucket may already exist
+
+restore_local_to_s3()
 
 
 class Email:
