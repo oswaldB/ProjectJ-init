@@ -32,6 +32,49 @@
         this.availableForms = [];
       }
     },
+    extractFormFields(form) {
+      const fields = [];
+      const extract = (items, prefix = '') => {
+        items.forEach(item => {
+          if (item.key) {
+            fields.push({
+              key: prefix + item.key,
+              label: item.label || item.key
+            });
+          }
+          if (item.options) {
+            item.options.forEach(option => {
+              if (option.questions) {
+                extract(option.questions, prefix + item.key + '.');
+              }
+            });
+          }
+          if (item.fields) {
+            extract(item.fields, prefix);
+          }
+        });
+      };
+      
+      if (form.fields) {
+        extract(form.fields);
+      }
+      return fields;
+    },
+    async loadFormFields() {
+      if (!this.template.selectedForm) {
+        this.formFields = [];
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/sultan/forms/${this.template.selectedForm}`);
+        const form = await response.json();
+        this.formFields = this.extractFormFields(form);
+      } catch (error) {
+        console.error('Failed to load form fields:', error);
+        this.formFields = [];
+      }
+    },
     async loadTemplate(templateId, userEmail) {
       if (templateId === 'new') return;
       
