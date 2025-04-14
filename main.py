@@ -254,11 +254,13 @@ def api_form_save():
         return jsonify({"error": "Email and form required"}), 400
     
     try:
-        form['user_email'] = email
-        client.upload_from_text(
-            f'sultan/configs/draft/forms/{form["id"]}.json',
-            json.dumps(form)
-        )
+        if 'user_email' not in form:
+            form['user_email'] = email
+        
+        # Ensure directory structure exists
+        form_path = f'sultan/configs/draft/forms/{form["id"]}.json'
+        
+        client.upload_from_text(form_path, json.dumps(form, indent=2))
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save form: {e}")

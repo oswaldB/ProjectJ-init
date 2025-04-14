@@ -27,6 +27,10 @@
         this.form.id = `forms-${Date.now()}`;
       }
       const userEmail = localStorage.getItem('user_email');
+      if (!userEmail) {
+        console.error('User email not found');
+        return;
+      }
       this.form.user_email = userEmail;
       try {
         await fetch('/api/sultan/forms/save', {
