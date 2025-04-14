@@ -8,6 +8,18 @@
     <title>Jaffar - {% block title %}{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script>
+  function jaffar() {
+    return {
+      page: 'main',
+      version: '1.0.0',
+      demoMode: false,
+      showFormPage() {
+        this.page = 'form';
+      }
+    }
+  }
+</script>
 </head>
 <body class="bg-black">
     <div class="mx-auto flex min-h-screen min-w-screen" x-data="{% block alpine_component %}{% endblock %}">
