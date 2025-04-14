@@ -292,9 +292,8 @@ def api_form_save():
         # Ensure directory structure exists
         form_path = f'sultan/configs/draft/forms/{form["id"]}.json'
 
-        client.upload_from_text(form_path,
-                                ensure_ascii=False,
-                                json.dumps(form, indent=2))
+        json_data = json.dumps(form, indent=2, ensure_ascii=False)
+        client.upload_from_text(form_path, json_data)
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save form: {e}")
