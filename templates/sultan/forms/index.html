@@ -8,7 +8,7 @@
     page: 'forms-list',
     forms: [],
     searchQuery: '',
-    statuses: ['Dev', 'Prod', 'Old version', 'Draft'],
+    statuses: ['Draft', 'Prod', 'Old version'],
     filteredForms() {
       return this.forms.filter(form => 
         form.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
@@ -127,7 +127,7 @@
                             'border-gray-600 text-gray-100': form.status === 'Draft'
                           }">
                     <template x-for="status in statuses">
-                      <option :value="status" x-text="status"></option>
+                      <option :value="status" :selected="form.status == status" x-text="status"></option>
                     </template>
                   </select>
                 </div>
