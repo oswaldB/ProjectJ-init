@@ -431,6 +431,38 @@ def api_escalation_save():
         logger.error(f"Failed to save escalation: {e}")
         return jsonify({"error": "Failed to save escalation"}), 500
 
+@app.route('/api/sultan/emailgroups/<emailgroup_id>')
+def api_emailgroup_get(emailgroup_id):
+    try:
+        if emailgroup_id.endswith('.json'):
+            key = f'sultan/emailgroups/{emailgroup_id}'
+        else:
+            key = f'sultan/emailgroups/{emailgroup_id}.json'
+            
+        content = s3.get_object(
+            Bucket=BUCKET_NAME,
+            Key=key)['Body'].read().decode('utf-8')
+        return jsonify(json.loads(content))
+    except Exception as e:
+        logger.error(f"Failed to load email group {emailgroup_id}: {e}")
+        return jsonify({"error": "Email group not found"}), 404
+
+@app.route('/api/sultan/emailgroups/save', methods=['POST'])
+def api_emailgroup_save():
+    data = request.json
+    emailgroup = data.get('emailgroup')
+
+    if not emailgroup:
+        return jsonify({"error": "Email group required"}), 400
+
+    try:
+        emailgroup_path = f'sultan/emailgroups/{emailgroup["id"]}.json'
+        save_in_global_db(emailgroup_path, emailgroup)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to save email group: {e}")
+        return jsonify({"error": "Failed to save email group"}), 500
+
 @app.route('/sultan/templates/list')
 def templates_list():
     return render_template('sultan/templates/index.html')
