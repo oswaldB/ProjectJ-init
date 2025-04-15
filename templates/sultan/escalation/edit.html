@@ -321,13 +321,6 @@
         class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
         Add Block
       </button>
-      <button @click="escalation.blocks.push({
-        ...escalation.blocks[0],
-        triggers: escalation.blocks[0].triggers.map(t => ({...t}))
-      })" 
-        class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-        Duplicate Block
-      </button>
       <button @click="save()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Save</button>
       <a href="/sultan/escalation" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Cancel</a>
     </div>
