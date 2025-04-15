@@ -92,15 +92,16 @@
 
       <div class="space-y-4" x-data="{ draggedIndex: null }">
         <template x-for="(field, index) in form.fields" :key="index">
-          <div class="bg-gray-800 p-4 rounded-lg border border-gray-600 cursor-move relative group"
-               @mousedown="$event.preventDefault(); draggedIndex = index"
+          <div class="bg-gray-800 rounded-lg border border-gray-600 relative group"
+               @mousedown="$event.preventDefault()"
                draggable="true"
-               @dragstart="draggedIndex = index"
-               @dragenter.prevent="if(draggedIndex !== index) $el.classList.add('border-blue-500')"
-               @dragleave.prevent="$el.classList.remove('border-blue-500')"
+               @dragstart="draggedIndex = index; $el.classList.add('opacity-50')"
+               @dragend="$el.classList.remove('opacity-50')"
+               @dragenter.prevent="if(draggedIndex !== index) $el.classList.add('border-blue-500', 'border-2')"
+               @dragleave.prevent="$el.classList.remove('border-blue-500', 'border-2')"
                @dragover.prevent
                @drop="
-                 $el.classList.remove('border-blue-500');
+                 $el.classList.remove('border-blue-500', 'border-2');
                  if(draggedIndex === index) return;
                  const items = [...form.fields];
                  const draggedItem = items[draggedIndex];
@@ -109,6 +110,13 @@
                  form.fields = items;
                  draggedIndex = null
                ">
+            <div class="bg-gray-700 p-2 flex items-center rounded-t-lg cursor-move">
+              <svg class="w-6 h-6 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+              </svg>
+              <span class="text-sm text-gray-300">Drag to reorder</span>
+            </div>
+            <div class="p-4">
             <div class="absolute left-0 top-0 h-full w-1 cursor-move bg-gray-600 group-hover:bg-blue-500"></div>
             <div class="flex justify-between items-center mb-2">
               <div class="flex items-center space-x-4">
@@ -322,6 +330,7 @@
                 </div>
               </template>
             </div>
+          </div>
           </div>
         </template>
       </div>
