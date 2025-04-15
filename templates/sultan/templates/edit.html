@@ -229,13 +229,20 @@
       <!-- Variables Panel -->
       <div x-show="formFields.length > 0" class="bg-gray-800 p-4 rounded-lg border border-gray-600">
         <h3 class="text-lg font-medium text-white mb-2">Available Variables</h3>
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-1 gap-2">
           <template x-for="(field, index) in formFields">
-            <button @click="$refs.editor.trumbowyg('execCmd', {cmd: 'insertHTML', param: '{{' + field.key + '}}'});" 
-                    class="text-left px-2 py-1 bg-gray-700 rounded hover:bg-gray-600 text-sm">
-              <span x-text="field.label"></span>
-              <span class="text-gray-400" x-text="'{{' + field.key + '}}'"></span>
-            </button>
+            <div class="flex justify-between items-center px-3 py-2 bg-gray-700 rounded hover:bg-gray-600">
+              <div class="flex-1">
+                <span class="text-white" x-text="field.label"></span>
+              </div>
+              <button @click="navigator.clipboard.writeText('{{' + field.key + '}}')"
+                      class="ml-2 text-gray-400 hover:text-white"
+                      title="Copy variable">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+              </button>
+            </div>
           </template>
         </div>
       </div>
