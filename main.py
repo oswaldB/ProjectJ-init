@@ -385,7 +385,7 @@ def template_edit(template_id):
 @app.route('/api/sultan/forms/list')
 def api_forms_list():
     forms = []
-    draft_prefix = 'sultan/configs/draft/forms/'
+    draft_prefix = 'sultan/configs/forms/draft/'
 
     try:
         response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=draft_prefix)
@@ -471,7 +471,7 @@ def api_form_save():
         }
         
         status_dir = status_map.get(status, 'draft')
-        form_path = f'sultan/configs/{status_dir}/forms/{form["id"]}.json'
+        form_path = f'sultan/configs/forms/{status_dir}/{form["id"]}.json'
 
         # Save form as JSON
         save_in_global_db(form_path, form)
@@ -485,7 +485,7 @@ def api_form_save():
 @app.route('/api/sultan/templates/list')
 def api_templates_list():
     templates = []
-    draft_prefix = 'sultan/configs/draft/templates/'
+    draft_prefix = 'sultan/configs/templates/draft/'
 
     try:
         response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=draft_prefix)
