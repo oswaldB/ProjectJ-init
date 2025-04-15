@@ -385,39 +385,24 @@ def template_edit(template_id):
 @app.route('/api/sultan/forms/list')
 def api_forms_list():
     forms = []
-    draft_prefix = 'sultan/configs/forms/'
+    prefix = 'sultan/configs/forms/'
 
     try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=draft_prefix, Delimiter='/')
-        for prefix in response.get('CommonPrefixes', []):
-            subfolder_prefix = prefix.get('Prefix')
-            subfolder_response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=subfolder_prefix)
-            for obj in subfolder_response.get('Contents', []):
-                try:
-                    response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                    content = response['Body'].read().decode('utf-8')
-                    form = json.loads(content)
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        for obj in response.get('Contents', []):
+            try:
+                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                content = response['Body'].read().decode('utf-8')
+                form = json.loads(content)
 
-                    # Map stored status to display status
-                    status_display_map = {
-                        'draft': 'Draft',
-                        'prod': 'Prod',
-                        'archive': 'Old version'
-                    }
-                    
-                    # Add or correct status
-                    path_parts = obj['Key'].split('/')
-                    stored_status = path_parts[-2]  # Gets status from path
-                    form['status'] = status_display_map.get(stored_status, 'Draft')
+                # Add last_modified if not present
+                metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                if 'last_modified' not in form:
+                    form['last_modified'] = metadata['LastModified']
 
-                    # Add last_modified if not present
-                    metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                    if 'last_modified' not in form:
-                        form['last_modified'] = metadata['LastModified']
-
-                    forms.append(form)
-                except Exception as e:
-                    logger.error(f"Failed to load form {obj['Key']}: {e}")
+                forms.append(form)
+            except Exception as e:
+                logger.error(f"Failed to load form {obj['Key']}: {e}")
     except Exception as e:
         logger.error(f"Failed to list forms: {e}")
         return jsonify({"error": str(e)}), 500
@@ -429,9 +414,9 @@ def api_forms_list():
 def api_form_get(form_id):
     try:
         if form_id.endswith('.json'):
-            key = f'sultan/configs/forms/draft/{form_id}'
+            key = f'sultan/configs/forms/{form_id}'
         else:
-            key = f'sultan/configs/forms/draft/{form_id}.json'
+            key = f'sultan/configs/forms/{form_id}.json'
             
         content = s3.get_object(
             Bucket=BUCKET_NAME,
@@ -448,7 +433,7 @@ def api_form_get(form_id):
 @app.route('/api/sultan/forms/delete/<form_id>', methods=['DELETE'])
 def api_form_delete(form_id):
     try:
-        form_path = f'sultan/configs/draft/forms/{form_id}.json'
+        form_path = f'sultan/configs/forms/{form_id}.json'
         delete(form_path)
         return jsonify({"status": "success"})
     except Exception as e:
@@ -459,43 +444,13 @@ def api_form_delete(form_id):
 def api_form_save():
     data = request.json
     form = data.get('form')
-    status = form.get('status', 'Draft')
 
     if not form:
         return jsonify({"error": "Form required"}), 400
 
     try:
-        # Delete old file if it exists
-        old_path = f'sultan/configs/draft/forms/{form["id"]}.json'
-        try:
-            delete(old_path)
-        except:
-            pass
-
-        # Determine new path based on status
-        status_map = {
-            'Draft': 'draft',
-            'Prod': 'prod',
-            'Old version': 'archive'
-        }
-        
-        status_dir = status_map.get(status, 'draft')
-        new_form_path = f'sultan/configs/forms/{status_dir}/{form["id"]}.json'
-
-        # Update form status in JSON
-        form['status'] = status
-
-        # Delete form from old status location if exists
-        for old_status in ['draft', 'prod', 'archive']:
-            old_path = f'sultan/configs/forms/{old_status}/{form["id"]}.json'
-            try:
-                delete(old_path)
-            except:
-                pass
-
-        # Save updated form in new status location
-        save_in_global_db(new_form_path, form)
-
+        form_path = f'sultan/configs/forms/{form["id"]}.json'
+        save_in_global_db(form_path, form)
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save form: {e}")
@@ -505,35 +460,23 @@ def api_form_save():
 @app.route('/api/sultan/templates/list')
 def api_templates_list():
     templates = []
-    statuses = ['draft', 'prod']
+    prefix = 'sultan/configs/templates/'
 
     try:
-        for status in statuses:
-            prefix = f'sultan/configs/templates/{status}/'
-            response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-            
-            for obj in response.get('Contents', []):
-                try:
-                    response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                    content = response['Body'].read().decode('utf-8')
-                    template = json.loads(content)
-                    
-                    # Map stored status to display status
-                    status_display_map = {
-                        'draft': 'Draft',
-                        'prod': 'Prod'
-                    }
-                    
-                    # Set status based on folder
-                    template['status'] = status_display_map.get(status, 'Draft')
-                    
-                    # Add last_modified from metadata
-                    metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                    template['last_modified'] = metadata['LastModified']
-                    
-                    templates.append(template)
-                except Exception as e:
-                    logger.error(f"Failed to load template {obj['Key']}: {e}")
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        for obj in response.get('Contents', []):
+            try:
+                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                content = response['Body'].read().decode('utf-8')
+                template = json.loads(content)
+                
+                # Add last_modified from metadata
+                metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                template['last_modified'] = metadata['LastModified']
+                
+                templates.append(template)
+            except Exception as e:
+                logger.error(f"Failed to load template {obj['Key']}: {e}")
     except Exception as e:
         logger.error(f"Failed to list templates: {e}")
         return jsonify({"error": str(e)}), 500
@@ -544,11 +487,10 @@ def api_templates_list():
 @app.route('/api/sultan/templates/<template_id>')
 def api_template_get(template_id):
     try:
-        status = request.args.get('status', 'draft')
         if template_id.endswith('.json'):
-            key = f'sultan/configs/templates/{status}/{template_id}'
+            key = f'sultan/configs/templates/{template_id}'
         else:
-            key = f'sultan/configs/templates/{status}/{template_id}.json'
+            key = f'sultan/configs/templates/{template_id}.json'
             
         content = s3.get_object(
             Bucket=BUCKET_NAME,
@@ -565,13 +507,8 @@ def api_template_get(template_id):
 @app.route('/api/sultan/templates/delete/<template_id>', methods=['DELETE'])
 def api_template_delete(template_id):
     try:
-        # Delete from both draft and prod if exists
-        for status in ['draft', 'prod']:
-            try:
-                key = f'sultan/configs/templates/{status}/{template_id}.json'
-                delete(key)
-            except:
-                pass
+        key = f'sultan/configs/templates/{template_id}.json'
+        delete(key)
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to delete template: {e}")
@@ -582,32 +519,13 @@ def api_template_delete(template_id):
 def api_template_save():
     data = request.json
     template = data.get('template')
-    status = template.get('status', 'Draft')
 
     if not template:
         return jsonify({"error": "Template required"}), 400
 
     try:
-        # Map display status to storage status
-        status_map = {
-            'Draft': 'draft',
-            'Prod': 'prod',
-            'Old version': 'archive'
-        }
-        storage_status = status_map.get(status, 'draft')
-        
-        # Delete old versions if they exist
-        for old_status in ['draft', 'prod']:
-            try:
-                old_key = f'sultan/configs/templates/{old_status}/{template["id"]}.json'
-                delete(old_key)
-            except:
-                pass
-
-        # Save template in new location
-        template_path = f'sultan/configs/templates/{storage_status}/{template["id"]}.json'
+        template_path = f'sultan/configs/templates/{template["id"]}.json'
         save_in_global_db(template_path, template)
-
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save template: {e}")
