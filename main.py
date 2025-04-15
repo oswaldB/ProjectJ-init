@@ -282,35 +282,38 @@ def api_acknowledge():
     data = request.json
     issue_id = data.get('issueId')
     email = data.get('email')
-    
-    try:
-        # Try to get the issue directly from S3
-        s3_key = f'jaffar/issues/draft/{issue_id}.json'
+
+    # Try both draft and new folders in S3
+    for folder in ['draft', 'new']:
+        s3_key = f'jaffar/issues/{folder}/{issue_id}.json'
         try:
             response = s3.get_object(Bucket=BUCKET_NAME, Key=s3_key)
             issue = json.loads(response['Body'].read().decode('utf-8'))
-        except:
-            # Try in the new folder if not found in draft
-            s3_key = f'jaffar/issues/new/{issue_id}.json'
-            response = s3.get_object(Bucket=BUCKET_NAME, Key=s3_key)
-            issue = json.loads(response['Body'].read().decode('utf-8'))
-        
-        # Add or update acknowledgeEscalation array
-        if 'acknowledgeEscalation' not in issue:
-            issue['acknowledgeEscalation'] = []
-        
-        issue['acknowledgeEscalation'].append({
-            'email': email,
-            'date': datetime.datetime.now().isoformat()
-        })
-        
-        # Save back to S3
-        s3.put_object(Bucket=BUCKET_NAME, Key=s3_key, Body=json.dumps(issue))
-        return jsonify({'status': 'success'})
-        
-    except Exception as e:
-        logger.error(f"Error processing acknowledgement: {e}")
-        return jsonify({'error': 'Issue not found'}), 404
+
+            # Add or update acknowledgeEscalation array
+            if 'acknowledgeEscalation' not in issue:
+                issue['acknowledgeEscalation'] = []
+
+            issue['acknowledgeEscalation'].append({
+                'email': email,
+                'date': datetime.datetime.now().isoformat()
+            })
+
+            # Save directly back to S3
+            s3.put_object(
+                Bucket=BUCKET_NAME,
+                Key=s3_key,
+                Body=json.dumps(issue)
+            )
+            return jsonify({'status': 'success'})
+
+        except s3.exceptions.NoSuchKey:
+            continue
+        except Exception as e:
+            logger.error(f"Error processing acknowledgement: {e}")
+            return jsonify({'error': str(e)}), 500
+
+    return jsonify({'error': 'Issue not found'}), 404
 
 
 @app.route('/sultan/login')
@@ -459,20 +462,20 @@ def api_escalation_get(escalation_id):
 def api_escalation_duplicate():
     data = request.json
     escalation_id = data.get('id')
-    
+
     try:
         # Get original escalation
         escalation = get_one_from_global_db(f'sultan/configs/draft/escalations/{escalation_id}.json')
-        
+
         # Create new escalation with unique ID
         import uuid
         new_escalation = escalation.copy()
         new_escalation['id'] = f'escalation-{str(uuid.uuid4())}'
         new_escalation['name'] = f'{escalation["name"]} (Copy)'
-        
+
         # Save new escalation
         save_in_global_db(f'sultan/configs/draft/escalations/{new_escalation["id"]}.json', new_escalation)
-        
+
         return jsonify(new_escalation)
     except Exception as e:
         logger.error(f"Failed to duplicate escalation: {e}")
@@ -566,7 +569,7 @@ def api_site_get(site_id):
 def api_site_save():
     data = request.json
     site = data.get('site')
-    
+
     if not site:
         return jsonify({"error": "Site required"}), 400
 
@@ -752,20 +755,20 @@ def api_template_save():
 def api_template_duplicate():
     data = request.json
     template_id = data.get('id')
-    
+
     try:
         # Get original template
         template = get_one_from_global_db(f'sultan/templates/{template_id}.json')
-        
+
         # Create new template with unique ID using uuid
         import uuid
         new_template = template.copy()
         new_template['id'] = f'templates-{str(uuid.uuid4())}'
         new_template['name'] = f'{template["name"]} (Copy)'
-        
+
         # Save new template
         save_in_global_db(f'sultan/templates/{new_template["id"]}.json', new_template)
-        
+
         return jsonify(new_template)
     except Exception as e:
         logger.error(f"Failed to duplicate template: {e}")
