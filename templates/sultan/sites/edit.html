@@ -25,6 +25,11 @@
       await this.loadSite(id);
     }
     await this.loadForms();
+    
+    // Watch for changes and autosave
+    this.$watch('site', async () => {
+      await this.save();
+    }, { deep: true });
   },
   async loadSite(id) {
     try {
@@ -112,8 +117,7 @@
   <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
     <h1 class="text-2xl font-bold text-white">Site Editor</h1>
     <div class="flex space-x-4">
-      <button @click="save()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Save</button>
-      <a href="/sultan/sites" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Cancel</a>
+      <a href="/sultan/sites" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Back</a>
     </div>
   </div>
 
