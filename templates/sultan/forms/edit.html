@@ -321,6 +321,11 @@
                                          placeholder="Question Key (slug format)">
                                 </div>
 
+                                <label class="flex items-center space-x-2 text-white">
+                                  <input type="checkbox" x-model="question.required" class="bg-gray-800 border-gray-600">
+                                  <span>Required</span>
+                                </label>
+
                                 <!-- Options for select/multiple choice questions -->
                                 <template x-if="['single_select', 'multiple_checkbox'].includes(question.type)">
                                   <div class="mt-2 space-y-2">
