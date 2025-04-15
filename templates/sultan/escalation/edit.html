@@ -419,7 +419,7 @@
             <!-- Email Group Selection -->
             <div class="space-y-2">
               <label class="block text-sm font-medium text-gray-300">Import from Email Group</label>
-              <div x-data="{ selectedGroup: '' }" class="space-y-2">
+              <div x-data="{ selectedGroup: '', newGroupName: '' }" class="space-y-2">
                 <select x-model="selectedGroup"
                         @change="if(selectedGroup) {
                           const group = emailGroups.find(g => g.id === selectedGroup);
@@ -439,6 +439,35 @@
                     <option :value="group.id" x-text="group.name"></option>
                   </template>
                 </select>
+
+                <!-- Save as Email Group Button -->
+                <div class="mt-4 flex space-x-2">
+                  <input type="text" 
+                         x-model="newGroupName" 
+                         placeholder="New group name" 
+                         class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600">
+                  <button @click="if(newGroupName && escalation.triggers[selectedTriggerIndex].emailList?.length) {
+                            const newGroup = {
+                              id: `emailgroups-${Date.now()}`,
+                              name: newGroupName,
+                              description: `Created from escalation ${escalation.name}`,
+                              emails: escalation.triggers[selectedTriggerIndex].emailList,
+                              status: 'draft'
+                            };
+                            fetch('/api/sultan/emailgroups/save', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ emailgroup: newGroup })
+                            }).then(() => {
+                              newGroupName = '';
+                              loadEmailGroups();
+                              alert('Email group created successfully!');
+                            });
+                          }" 
+                          class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                    Save as Group
+                  </button>
+                </div>
               </div>
             </div>
           </div>
