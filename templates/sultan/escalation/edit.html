@@ -28,7 +28,28 @@
   },
   templates: [],
   issuesFamilies: ['Valuation', 'Data Quality', 'System', 'Process', 'People'],
-  keys: ['rag', 'impact-breach-severity', 'materiality-bs', 'materiality-pl'],
+  keys: [],
+  extractKeys(fields) {
+    const keys = [];
+    fields.forEach(field => {
+      if (field.key) {
+        keys.push(field.key);
+      }
+      // Check for nested questions in options
+      if (field.options) {
+        field.options.forEach(option => {
+          if (option.questions) {
+            option.questions.forEach(question => {
+              if (question.key) {
+                keys.push(question.key);
+              }
+            });
+          }
+        });
+      }
+    });
+    return keys;
+  },
   assets: ['Rates', 'FX', 'Credit', 'Equity', 'Commodity'],
   entities: ['Entity1', 'Entity2', 'Entity3'],
   locations: ['Location1', 'Location2', 'Location3'],
@@ -97,6 +118,7 @@
     if (!formId) {
       this.issuesFamilies = [];
       this.assets = [];
+      this.keys = [];
       return;
     }
     try {
@@ -112,6 +134,9 @@
       if (assetClassField && assetClassField.options) {
         this.assets = assetClassField.options.map(opt => opt.name);
       }
+      
+      // Extract all keys from form fields
+      this.keys = this.extractKeys(formData.fields);
     } catch (error) {
       console.error('Failed to load form data:', error);
     }
