@@ -310,12 +310,12 @@
   </div>
 
   <!-- Main Content -->
-  <div class="p-6 space-y-6">
+  <div class="p-4 space-y-3">
     <!-- Form Selection -->
-    <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
+    <div class="bg-gray-800 p-2 rounded-lg border border-gray-700 mb-2">
       <div>
-        <label class="block text-sm font-medium text-gray-300">Form</label>
-        <select x-model="escalation.form" @change="loadFormData($event.target.value)" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+        <label class="block text-xs font-medium text-gray-300">Form</label>
+        <select x-model="escalation.form" @change="loadFormData($event.target.value)" class="mt-0.5 w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-sm">
           <option value="">Select a form</option>
           <template x-for="form in forms.filter(f => f.status === 'PROD')" :key="form.id">
             <option :value="form.id" x-text="form.name"></option>
@@ -361,9 +361,9 @@
     </div>
 
     <!-- Triggers -->
-    <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Triggers</h2>
+    <div class="bg-gray-800 p-2 rounded-lg border border-gray-700">
+      <div class="flex justify-between items-center mb-2">
+        <h2 class="text-lg font-semibold">Triggers</h2>
         <button @click="escalation.triggers.push({
                   issueFamily:'',
                   comparisonKey:'',
@@ -383,9 +383,9 @@
         </button>
       </div>
 
-      <div class="space-y-4">
+      <div class="space-y-2">
         <template x-for="(trigger, index) in escalation.triggers" :key="index">
-          <div class="bg-gray-700 p-4 rounded">
+          <div class="bg-gray-700 p-2 rounded">
             <div class="grid grid-cols-6 gap-2">
               <div>
                 <label class="block text-xs font-medium text-gray-300">Issue Family</label>
