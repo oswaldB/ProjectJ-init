@@ -64,6 +64,7 @@
           <tr>
             <th class="px-4 py-2 text-left">Name</th>
             <th class="px-4 py-2 text-left">Description</th>
+            <th class="px-4 py-2 text-left">Emails</th>
             <th class="px-4 py-2 text-left">Modified</th>
             <th class="px-4 py-2 text-left">Actions</th>
           </tr>
@@ -73,6 +74,13 @@
             <tr class="border-b border-gray-700 hover:bg-gray-800">
               <td class="px-4 py-2" x-text="group.name"></td>
               <td class="px-4 py-2" x-text="group.description"></td>
+              <td class="px-4 py-2">
+                <div class="flex flex-col gap-1">
+                  <template x-for="email in group.emails" :key="email">
+                    <span class="text-sm bg-gray-700 px-2 py-1 rounded" x-text="email"></span>
+                  </template>
+                </div>
+              </td>
               <td class="px-4 py-2" x-text="new Date(group.modified).toLocaleString()"></td>
               <td class="px-4 py-2">
                 <div class="flex space-x-2">
