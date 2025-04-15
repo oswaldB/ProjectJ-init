@@ -75,7 +75,7 @@
       const matchesIssueFamily = !this.filters.issueFamily || block.triggers.some(t => 
         t.issueFamily === this.filters.issueFamily
       );
-      
+
       return matchesEmail && matchesName && matchesLevel && matchesSite && matchesIssueFamily;
     });
   },
@@ -102,7 +102,7 @@
     await this.loadSites();
     await this.loadForms();
     await this.loadEmailGroups();
-    
+
     this.$watch('escalation', async (value) => {
       try {
         await fetch('/api/sultan/escalation/save', {
@@ -338,27 +338,21 @@
 {% block content %}
 <div class="h-screen bg-gray-900 text-white">
   <!-- Top Bar -->
-  <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
-    <h1 class="text-2xl font-bold text-white">Escalation Editor</h1>
-    <div class="flex space-x-4">
-      <button @click="escalation.blocks.push({
-        form: '',
-        status: 'draft',
-        triggers: [{
-          issueFamily: '',
-          comparisonKey: '',
-          operator: '',
-          value: '',
-          when: '',
-          template: ''
-        }]
-      })" 
-        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-        Add Block
-      </button>
-      <button @click="save()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Save</button>
-      <a href="/sultan/escalation" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Cancel</a>
-    </div>
+  <div class="p-4">
+    <button @click="escalation.blocks.push({
+      form: '',
+      status: 'draft',
+      triggers: [{
+        issueFamily: '',
+        comparisonKey: '',
+        operator: '',
+        value: '',
+        when: '',
+        template: ''
+      }]
+    })" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+      Add a rule
+    </button>
   </div>
 
   <!-- Main Content -->
@@ -456,7 +450,7 @@
               </button>
             </div>
           </div>
-          
+
 
         <!-- Basic Info and Triggers -->
         <div class="bg-gray-800 p-2 rounded-lg border border-gray-700 mt-4">
