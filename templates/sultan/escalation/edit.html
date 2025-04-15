@@ -8,7 +8,7 @@
   escalation: {
     id: null,
     name: '',
-    role: '',
+    level: '',
     email: '',
     assetClass: '',
     site: {
@@ -118,17 +118,12 @@
           <input type="text" x-model="escalation.name" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-300">Role</label>
-          <select x-model="escalation.role" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-            <option>Head of Site PC</option>
-            <option>Core PC Asset Class Lead</option>
-            <option>Valuations Control Lead</option>
-            <option>RHU Lead</option>
-            <option>Regional Head of PC</option>
-            <option>Global Business Lead</option>
-            <option>Control Pillar Lead</option>
-            <option>2LOD</option>
-            <option>Global Head of PC</option>
+          <label class="block text-sm font-medium text-gray-300">Level</label>
+          <select x-model="escalation.level" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+            <option>L1</option>
+            <option>L2</option>
+            <option>L3</option>
+            <option>L4</option>
           </select>
         </div>
         <div>
