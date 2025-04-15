@@ -417,10 +417,11 @@ def api_forms_list():
 @app.route('/api/sultan/forms/<form_id>')
 def api_form_get(form_id):
     try:
+        status = request.args.get('status', 'draft')
         if form_id.endswith('.json'):
-            key = f'sultan/configs/draft/forms/{form_id}'
+            key = f'sultan/configs/forms/{status}/{form_id}'
         else:
-            key = f'sultan/configs/draft/forms/{form_id}.json'
+            key = f'sultan/configs/forms/{status}/{form_id}.json'
             
         content = s3.get_object(
             Bucket=BUCKET_NAME,
@@ -517,10 +518,11 @@ def api_templates_list():
 @app.route('/api/sultan/templates/<template_id>')
 def api_template_get(template_id):
     try:
+        status = request.args.get('status', 'draft')
         if template_id.endswith('.json'):
-            key = f'sultan/configs/draft/templates/{template_id}'
+            key = f'sultan/configs/templates/{status}/{template_id}'
         else:
-            key = f'sultan/configs/draft/templates/{template_id}.json'
+            key = f'sultan/configs/templates/{status}/{template_id}.json'
             
         content = s3.get_object(
             Bucket=BUCKET_NAME,
