@@ -342,23 +342,11 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-300">Asset Class</label>
-          <div x-data="{ showAssetFilter: false, assetFilter: '' }" @click.away="showAssetFilter = false" class="relative">
-            <button @click="showAssetFilter = !showAssetFilter" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600 text-left">
-              <span x-text="escalation.assetClass || 'Select Asset Class'"></span>
-            </button>
-            <div x-show="showAssetFilter" class="absolute z-50 w-full mt-1 bg-gray-700 rounded shadow-lg">
-              <template x-if="assets.length > 5">
-                <div class="p-2">
-                  <input x-model="assetFilter" class="w-full bg-gray-600 text-white p-2 rounded border border-gray-600" placeholder="Filter...">
-                </div>
-              </template>
-              <div class="max-h-60 overflow-y-auto">
-                <template x-for="asset in assets.filter(a => !assetFilter || a.toLowerCase().includes(assetFilter.toLowerCase()))" :key="asset">
-                  <div @click="escalation.assetClass = asset; showAssetFilter = false" class="p-2 hover:bg-gray-600 cursor-pointer" x-text="asset"></div>
-                </template>
-              </div>
-            </div>
-          </div>
+          <select x-model="escalation.assetClass" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+            <template x-for="asset in assets">
+              <option :value="asset" x-text="asset"></option>
+            </template>
+          </select>
         </div>
         <div class="col-span-2">
           <label class="block text-sm font-medium text-gray-300">Site</label>
@@ -399,45 +387,23 @@
         <template x-for="(trigger, index) in escalation.triggers" :key="index">
           <div class="bg-gray-700 p-4 rounded">
             <div class="grid grid-cols-3 gap-4">
-              <div x-data="{ showIssueFilter: false, issueFilter: '' }">
+              <div>
                 <label class="block text-sm font-medium text-gray-300">Issue Family</label>
-                <div @click.away="showIssueFilter = false" class="relative">
-                  <button @click="showIssueFilter = !showIssueFilter" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600 text-left">
-                    <span x-text="trigger.issueFamily || 'Select Issue Family'"></span>
-                  </button>
-                  <div x-show="showIssueFilter" class="absolute z-50 w-full mt-1 bg-gray-700 rounded shadow-lg">
-                    <template x-if="issuesFamilies.length > 5">
-                      <div class="p-2">
-                        <input x-model="issueFilter" class="w-full bg-gray-600 text-white p-2 rounded border border-gray-600" placeholder="Filter...">
-                      </div>
-                    </template>
-                    <div class="max-h-60 overflow-y-auto">
-                      <template x-for="family in issuesFamilies.filter(f => !issueFilter || f.toLowerCase().includes(issueFilter.toLowerCase()))" :key="family">
-                        <div @click="trigger.issueFamily = family; showIssueFilter = false" class="p-2 hover:bg-gray-600 cursor-pointer" x-text="family"></div>
-                      </template>
-                    </div>
-                  </div>
-                </div>
+                <select x-model="trigger.issueFamily" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+                  <option value="">Select Issue Family</option>
+                  <template x-for="family in issuesFamilies">
+                    <option :value="family" x-text="family"></option>
+                  </template>
+                </select>
               </div>
-              <div x-data="{ showKeyFilter: false, keyFilter: '' }">
+              <div>
                 <label class="block text-sm font-medium text-gray-300">Comparison Key</label>
-                <div @click.away="showKeyFilter = false" class="relative">
-                  <button @click="showKeyFilter = !showKeyFilter" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600 text-left">
-                    <span x-text="trigger.comparisonKey || 'Select Key'"></span>
-                  </button>
-                  <div x-show="showKeyFilter" class="absolute z-50 w-full mt-1 bg-gray-700 rounded shadow-lg">
-                    <template x-if="keys.length > 5">
-                      <div class="p-2">
-                        <input x-model="keyFilter" class="w-full bg-gray-600 text-white p-2 rounded border border-gray-600" placeholder="Filter...">
-                      </div>
-                    </template>
-                    <div class="max-h-60 overflow-y-auto">
-                      <template x-for="key in keys.filter(k => !keyFilter || k.toLowerCase().includes(keyFilter.toLowerCase()))" :key="key">
-                        <div @click="trigger.comparisonKey = key; showKeyFilter = false" class="p-2 hover:bg-gray-600 cursor-pointer" x-text="key"></div>
-                      </template>
-                    </div>
-                  </div>
-                </div>
+                <select x-model="trigger.comparisonKey" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+                  <option value="">Select Key</option>
+                  <template x-for="key in keys">
+                    <option :value="key" x-text="key"></option>
+                  </template>
+                </select>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-300">Operator</label>
