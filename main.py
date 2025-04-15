@@ -303,7 +303,7 @@ def questions_export():
     return render_template('components/questions/export.html')
 
 
-@app.route('/sultan/forms/list')
+@app.route('/sultan/forms')
 def forms_list():
     return render_template('sultan/forms/index.html')
 
@@ -505,7 +505,7 @@ def api_site_delete(site_id):
         logger.error(f"Failed to delete site: {e}")
         return jsonify({"error": "Failed to delete site"}), 500
 
-@app.route('/sultan/templates/list')
+@app.route('/sultan/templates')
 def templates_list():
     return render_template('sultan/templates/index.html')
 

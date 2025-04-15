@@ -1,11 +1,10 @@
-
 {% extends "sultan/base.html" %}
 
 {% block title %}Templates{% endblock %}
 
 {% block alpine_component %}
   {
-    page: 'templates-list',
+    page: 'templates',
     templates: [],
     searchQuery: '',
     statuses: ['draft', 'prod', 'old version'],
@@ -27,7 +26,7 @@
       const userEmail = localStorage.getItem('user_email');
       try {
         this.state.loading = true;
-        const response = await fetch(`/api/sultan/templates/list?email=${userEmail}`);
+        const response = await fetch(`/api/sultan/templates?email=${userEmail}`);
         if (!response.ok) throw new Error('Failed to load templates');
         this.templates = await response.json();
       } catch (error) {
