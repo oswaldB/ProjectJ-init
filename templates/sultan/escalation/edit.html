@@ -315,51 +315,75 @@
                 <input type="text" x-model="trigger.value" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-300">Email Configuration</label>
-                <div class="flex items-center space-x-2 mb-4">
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" x-model="trigger.emailType" class="sr-only peer" :value="trigger.emailType === 'group'">
-                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
-                    <span class="ms-3">Use Email Group</span>
-                  </label>
-                </div>
-                
-                <!-- Manual Email Input -->
-                <div x-show="!trigger.emailType" class="space-y-2">
-                  <div class="flex space-x-2">
-                    <input type="email" x-model="trigger.tempEmail" @keyup.enter="if(trigger.tempEmail) { trigger.emailList = trigger.emailList || []; trigger.emailList.push(trigger.tempEmail); trigger.email = trigger.emailList.join(','); trigger.tempEmail = ''; }" class="flex-1 bg-gray-600 text-white p-2 rounded border border-gray-600" placeholder="Enter an email address">
-                    <button @click="if(trigger.tempEmail) { trigger.emailList = trigger.emailList || []; trigger.emailList.push(trigger.tempEmail); trigger.email = trigger.emailList.join(','); trigger.tempEmail = ''; }" class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div class="flex flex-wrap gap-2 mt-2">
-                    <template x-for="(email, index) in (trigger.emailList || [])" :key="index">
-                      <div class="bg-gray-700 text-white px-3 py-1 rounded-full flex items-center gap-2">
-                        <span x-text="email"></span>
-                        <button @click="trigger.emailList.splice(index, 1); trigger.email = trigger.emailList.join(',')" class="hover:text-red-400">×</button>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Email Configuration</label>
+                <div class="space-y-4">
+                  <template x-for="(_, emailIndex) in [0,1,2]" :key="emailIndex">
+                    <div class="space-y-2">
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-400">Email Input <span x-text="emailIndex + 1"></span></span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                          <input type="checkbox" x-model="trigger.emailTypes" :value="emailIndex" class="sr-only peer">
+                          <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                          <span class="ms-3">Use Group</span>
+                        </label>
                       </div>
-                    </template>
-                  </div>
-                </div>
+                
+                <!-- Individual Email Input -->
+                      <div x-show="!trigger.emailTypes?.includes(emailIndex)" class="space-y-2">
+                        <div class="flex space-x-2">
+                          <input type="email" 
+                                 x-model="trigger.tempEmails[emailIndex]" 
+                                 @keyup.enter="if(trigger.tempEmails[emailIndex]) { 
+                                   trigger.emailLists = trigger.emailLists || {}; 
+                                   trigger.emailLists[emailIndex] = trigger.emailLists[emailIndex] || [];
+                                   trigger.emailLists[emailIndex].push(trigger.tempEmails[emailIndex]); 
+                                   trigger.tempEmails[emailIndex] = ''; 
+                                 }" 
+                                 class="flex-1 bg-gray-600 text-white p-2 rounded border border-gray-600" 
+                                 placeholder="Enter an email address">
+                          <button @click="if(trigger.tempEmails[emailIndex]) { 
+                                    trigger.emailLists = trigger.emailLists || {}; 
+                                    trigger.emailLists[emailIndex] = trigger.emailLists[emailIndex] || [];
+                                    trigger.emailLists[emailIndex].push(trigger.tempEmails[emailIndex]); 
+                                    trigger.tempEmails[emailIndex] = ''; 
+                                  }" 
+                                  class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                          <template x-for="(email, index) in (trigger.emailLists?.[emailIndex] || [])" :key="index">
+                            <div class="bg-gray-700 text-white px-3 py-1 rounded-full flex items-center gap-2">
+                              <span x-text="email"></span>
+                              <button @click="trigger.emailLists[emailIndex].splice(index, 1)" class="hover:text-red-400">×</button>
+                            </div>
+                          </template>
+                        </div>
+                      </div>
 
-                <!-- Email Group Selection -->
-                <div x-show="trigger.emailType" class="space-y-2">
-                  <select x-model="trigger.selectedGroup" @change="loadEmailGroupDetails($event.target.value)" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
-                    <option value="">Select an email group</option>
-                    <template x-for="group in emailGroups" :key="group.id">
-                      <option :value="group.id" x-text="group.name"></option>
-                    </template>
-                  </select>
-                  <div x-show="trigger.selectedGroup" class="mt-2 p-2 bg-gray-700 rounded">
-                    <div class="text-sm text-gray-300">Emails in group:</div>
-                    <div x-show="selectedGroupEmails.length" class="mt-1">
-                      <template x-for="email in selectedGroupEmails" :key="email">
-                        <div class="text-sm text-gray-400" x-text="email"></div>
-                      </template>
+                      <!-- Email Group Selection -->
+                      <div x-show="trigger.emailTypes?.includes(emailIndex)" class="space-y-2">
+                        <select x-model="trigger.selectedGroups[emailIndex]" 
+                                @change="loadEmailGroupDetails($event.target.value)" 
+                                class="w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+                          <option value="">Select an email group</option>
+                          <template x-for="group in emailGroups" :key="group.id">
+                            <option :value="group.id" x-text="group.name"></option>
+                          </template>
+                        </select>
+                        <div x-show="trigger.selectedGroups[emailIndex]" class="mt-2 p-2 bg-gray-700 rounded">
+                          <div class="text-sm text-gray-300">Emails in group:</div>
+                          <div x-show="selectedGroupEmails.length" class="mt-1">
+                            <template x-for="email in selectedGroupEmails" :key="email">
+                              <div class="text-sm text-gray-400" x-text="email"></div>
+                            </template>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </template>
                 </div>
               </div>
               <div>
