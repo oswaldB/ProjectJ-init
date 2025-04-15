@@ -102,10 +102,10 @@
     try {
       const response = await fetch(`/api/sultan/forms/${formId}`);
       const formData = await response.json();
-      
+
       const locationField = formData.fields.find(f => f.key === 'location');
       const entityField = formData.fields.find(f => f.key === 'entity');
-      
+
       if (locationField) {
         this.locations = locationField.options.map(opt => opt.name);
         this.newSite.locations = [];
@@ -216,7 +216,46 @@
     } else {
       this.escalation.site.locations.splice(index, 1);
     }
-  }
+  },
+  selectedTriggerIndex: null,
+  selectedTab: 'form',
+  newEmail: '',
+  newEmailGroup: '',
+  createEmailGroup() {
+    const trigger = this.escalation.triggers[this.selectedTriggerIndex];
+    if (!trigger || !trigger.emailList || trigger.emailList.length === 0) {
+      alert('Please add some emails first');
+      return;
+    }
+    const name = prompt('Enter a name for the email group');
+    if (!name) return;
+
+    const newGroup = {
+      id: `emailgroups-${Date.now()}`,
+      name: name,
+      description: 'Created from escalation ',
+      emails: trigger.emailList,
+      status: 'draft'
+    };
+
+    fetch('/api/sultan/emailgroups/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emailgroup: newGroup })
+    })
+    .then(response => {
+      if (response.ok) {
+        alert('Email group created successfully');
+        this.loadEmailGroups();
+      } else {
+        throw new Error('Failed to create email group');
+      }
+    })
+    .catch(error => {
+      console.error('Error creating email group:', error);
+      alert('Failed to create email group');
+    });
+  },
 }
 {% endblock %}
 
@@ -332,21 +371,35 @@
                 <div class="space-y-4 bg-gray-800 p-4 rounded-lg">
                   <!-- Individual Email Input -->
                   <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                      <label class="block text-sm font-medium text-gray-300">Add Individual Emails</label>
+                      <button 
+                        @click="createEmailGroup"
+                        class="text-gray-300 hover:text-red-500 flex items-center gap-1"
+                        title="Create email group from selected emails"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+                        </svg>
+                        <span class="text-sm">Save as Group</span>
+                      </button>
+                    </div>
                     <div class="flex space-x-2">
-                      <input type="email" 
-                             x-model="trigger.tempEmail" 
-                             @keyup.enter="if(trigger.tempEmail) { 
-                               if(!trigger.emailList) trigger.emailList = [];
-                               trigger.emailList.push(trigger.tempEmail); 
-                               trigger.tempEmail = ''; 
-                             }" 
-                             class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600" 
-                             placeholder="Enter an email address">
+                      <input 
+                        type="email" 
+                        x-model="trigger.tempEmail"
+                        @keyup.enter="if(trigger.tempEmail) { 
+                                 if(!trigger.emailList) trigger.emailList = [];
+                                 trigger.emailList.push(trigger.tempEmail); 
+                                 trigger.tempEmail = ''; 
+                               }" 
+                        class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600" 
+                        placeholder="Enter an email address">
                       <button @click="if(trigger.tempEmail) { 
-                                if(!trigger.emailList) trigger.emailList = [];
-                                trigger.emailList.push(trigger.tempEmail); 
-                                trigger.tempEmail = ''; 
-                              }" 
+                                 if(!trigger.emailList) trigger.emailList = [];
+                                 trigger.emailList.push(trigger.tempEmail); 
+                                 trigger.tempEmail = ''; 
+                               }" 
                               class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -421,7 +474,7 @@
     </div>
   </div>
 
-  
+
 
   <!-- Site Configuration Drawer -->
   <div x-show="selectedDrawer === 0" 
