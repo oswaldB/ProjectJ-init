@@ -340,14 +340,16 @@
             <option>L4</option>
           </select>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-300">Asset Class</label>
-          <select x-model="escalation.assetClass" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-            <template x-for="asset in assets">
-              <option :value="asset" x-text="asset"></option>
-            </template>
-          </select>
-        </div>
+        <template x-if="selectedForm">
+          <div>
+            <label class="block text-sm font-medium text-gray-300">Asset Class</label>
+            <select x-model="escalation.assetClass" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+              <template x-for="asset in assets">
+                <option :value="asset" x-text="asset"></option>
+              </template>
+            </select>
+          </div>
+        </template>
         <div class="col-span-2">
           <label class="block text-sm font-medium text-gray-300">Site</label>
           <div class="flex space-x-2">
@@ -384,8 +386,9 @@
       </div>
 
       <div class="space-y-4">
-        <template x-for="(trigger, index) in escalation.triggers" :key="index">
-          <div class="bg-gray-700 p-4 rounded">
+        <template x-if="selectedForm">
+          <template x-for="(trigger, index) in escalation.triggers" :key="index">
+            <div class="bg-gray-700 p-4 rounded">
             <div class="grid grid-cols-3 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-300">Issue Family</label>
