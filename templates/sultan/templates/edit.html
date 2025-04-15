@@ -15,6 +15,7 @@
     preview: true,
     formFields: [],
     availableForms: [],
+    debouncedSave: null,
     async init() {
       const templateId = window.location.pathname.split('/').pop();
       const userEmail = localStorage.getItem('user_email');
@@ -134,26 +135,30 @@
         this.saveTemplate();
       });
     },
-    async saveTemplate() {
-      if (!this.template.id) {
-        this.template.id = `templates-${Date.now()}`;
-      }
+    saveTemplate() {
+      if (this.debouncedSave) clearTimeout(this.debouncedSave);
 
-      const userEmail = localStorage.getItem('user_email');
-      if (!userEmail) return;
+      this.debouncedSave = setTimeout(async () => {
+        if (!this.template.id) {
+          this.template.id = `templates-${Date.now()}`;
+        }
 
-      try {
-        await fetch('/api/sultan/templates/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            email: userEmail, 
-            template: { ...this.template, user_email: userEmail }
-          })
-        });
-      } catch (error) {
-        console.error('Failed to save template:', error);
-      }
+        const userEmail = localStorage.getItem('user_email');
+        if (!userEmail) return;
+
+        try {
+          await fetch('/api/sultan/templates/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              email: userEmail, 
+              template: { ...this.template, user_email: userEmail }
+            })
+          });
+        } catch (error) {
+          console.error('Failed to save template:', error);
+        }
+      }, 1000); // 1 second delay
     }
   }
 {% endblock %}
