@@ -436,7 +436,10 @@
         </template>
       </div>
 
-      <button @click="addField()" class="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Add Field</button>
+      <div class="flex gap-2">
+        <button @click="addField()" class="flex-1 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Add Field</button>
+        <button @click="form.fields.forEach(field => field.open = false)" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-500">Close All</button>
+      </div>
     </div>
   </div>
 
