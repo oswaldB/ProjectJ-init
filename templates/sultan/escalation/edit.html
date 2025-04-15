@@ -221,19 +221,25 @@
   selectedTab: 'form',
   newEmail: '',
   newEmailGroup: '',
+  showNewGroupModal: false,
+  newGroupName: '',
   createEmailGroup() {
     const trigger = this.escalation.triggers[this.selectedTriggerIndex];
     if (!trigger || !trigger.emailList || trigger.emailList.length === 0) {
       alert('Please add some emails first');
       return;
     }
-    const name = prompt('Enter a name for the email group');
-    if (!name) return;
+    this.newGroupName = '';
+    this.showNewGroupModal = true;
+  },
+  saveNewEmailGroup() {
+    const trigger = this.escalation.triggers[this.selectedTriggerIndex];
+    if (!this.newGroupName) return;
 
     const newGroup = {
       id: `emailgroups-${Date.now()}`,
-      name: name,
-      description: 'Created from escalation ',
+      name: this.newGroupName,
+      description: 'Created from escalation',
       emails: trigger.emailList,
       status: 'draft'
     };
@@ -245,7 +251,7 @@
     })
     .then(response => {
       if (response.ok) {
-        alert('Email group created successfully');
+        this.showNewGroupModal = false;
         this.loadEmailGroups();
       } else {
         throw new Error('Failed to create email group');
@@ -621,6 +627,51 @@
           </button>
           <button @click="createSite()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
             Create Site
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Email Group Modal -->
+  <div x-show="showNewGroupModal" 
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-2/3 max-w-2xl">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-semibold text-white">Create New Email Group</h2>
+        <button @click="showNewGroupModal = false" class="text-gray-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Group Name</label>
+          <input type="text" 
+                 x-model="newGroupName" 
+                 class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
+                 placeholder="Enter group name">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Selected Emails</label>
+          <div class="bg-gray-700 p-4 rounded border border-gray-600 max-h-48 overflow-y-auto">
+            <template x-for="email in escalation.triggers[selectedTriggerIndex].emailList" :key="email">
+              <div class="text-white py-1" x-text="email"></div>
+            </template>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+          <button @click="showNewGroupModal = false" 
+                  class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+            Cancel
+          </button>
+          <button @click="saveNewEmailGroup()" 
+                  class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+            Create Group
           </button>
         </div>
       </div>
