@@ -381,10 +381,10 @@ def api_sites_list():
 @app.route('/api/sultan/escalation/list')
 def api_escalation_list():
     escalations = []
-    draft_prefix = 'sultan/configs/draft/escalations/'
+    prefix = 'sultan/escalations/'
 
     try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=draft_prefix)
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
         for obj in response.get('Contents', []):
             try:
                 response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
@@ -403,9 +403,9 @@ def api_escalation_list():
 def api_escalation_get(escalation_id):
     try:
         if escalation_id.endswith('.json'):
-            key = f'sultan/configs/draft/escalations/{escalation_id}'
+            key = f'sultan/escalations/{escalation_id}'
         else:
-            key = f'sultan/configs/draft/escalations/{escalation_id}.json'
+            key = f'sultan/escalations/{escalation_id}.json'
 
         content = s3.get_object(
             Bucket=BUCKET_NAME,
@@ -457,7 +457,7 @@ def api_escalation_save():
         return jsonify({"error": "Escalation required"}), 400
 
     try:
-        escalation_path = f'sultan/configs/draft/escalations/{escalation["id"]}.json'
+        escalation_path = f'sultan/escalations/{escalation["id"]}.json'
         save_in_global_db(escalation_path, escalation)
         return jsonify({"status": "success"})
     except Exception as e:
