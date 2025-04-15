@@ -15,7 +15,8 @@
   forms: [],
   entities: [],
   locations: [],
-  filter: '',
+  entityFilter: '',
+  locationFilter: '',
   async init() {
     const id = window.location.pathname.split('/').pop();
     if (id === 'new') {
@@ -142,11 +143,11 @@
       <!-- Entities -->
       <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
         <h3 class="text-lg font-medium mb-4">Entities</h3>
-        <input type="text" x-model="filter" placeholder="Search entities..." class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 mb-4">
+        <input type="text" x-model="entityFilter" placeholder="Search entities..." class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 mb-4">
         
         <div class="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
           <template x-for="entity in entities" :key="entity">
-            <div x-show="!filter || entity.toLowerCase().includes(filter.toLowerCase())" class="flex items-center">
+            <div x-show="!entityFilter || entity.toLowerCase().includes(entityFilter.toLowerCase())" class="flex items-center">
               <input type="checkbox" 
                      :checked="site.entities?.includes(entity)"
                      @click="saveEntities(entity)"
@@ -160,11 +161,11 @@
       <!-- Locations -->
       <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
         <h3 class="text-lg font-medium mb-4">Locations</h3>
-        <input type="text" x-model="filter" placeholder="Search locations..." class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 mb-4">
+        <input type="text" x-model="locationFilter" placeholder="Search locations..." class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 mb-4">
         
         <div class="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
           <template x-for="location in locations" :key="location">
-            <div x-show="!filter || location.toLowerCase().includes(filter.toLowerCase())" class="flex items-center">
+            <div x-show="!locationFilter || location.toLowerCase().includes(locationFilter.toLowerCase())" class="flex items-center">
               <input type="checkbox" 
                      :checked="site.locations?.includes(location)"
                      @click="saveLocations(location)"
