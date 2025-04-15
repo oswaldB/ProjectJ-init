@@ -20,7 +20,7 @@
     async init() {
       const userEmail = localStorage.getItem('user_email');
       try {
-        const response = await fetch(`/api/sultan/forms/list?email=${userEmail}`);
+        const response = await fetch(`/api/sultan/forms/list?email=${userEmail}&status=${this.form?.status || 'Draft'}`);
         this.forms = await response.json();
       } catch (error) {
         console.error('Failed to load forms:', error);
