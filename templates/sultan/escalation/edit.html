@@ -10,25 +10,29 @@
     name: '',
     template: '',
     form: '',
-    rules: []
+    rules: [],
+    site: {
+      name: '',
+      entities: [],
+      locations: []
+    }
   },
   templates: [],
   forms: [],
-  newRule: {
-    condition: '',
-    action: '',
-    target: ''
-  },
-  selectedCell: null,
-  init() {
+  preview: true,
+  entities: ['Entity1', 'Entity2', 'Entity3'], // Replace with your entities
+  locations: ['Location1', 'Location2', 'Location3'], // Replace with your locations
+  selectedDrawer: -1,
+  filter: '',
+  async init() {
     const id = window.location.pathname.split('/').pop();
     if (id === 'new') {
       this.escalation.id = `escalation-${Date.now()}`;
     } else {
-      this.loadEscalation(id);
+      await this.loadEscalation(id);
     }
-    this.loadTemplates();
-    this.loadForms();
+    await this.loadTemplates();
+    await this.loadForms();
   },
   async loadEscalation(id) {
     try {
@@ -54,15 +58,6 @@
       console.error('Failed to load forms:', error);
     }
   },
-  addRule() {
-    if (this.newRule.condition || this.newRule.action || this.newRule.target) {
-      this.escalation.rules.push({...this.newRule});
-      this.newRule = {condition: '', action: '', target: ''};
-    }
-  },
-  removeRule(index) {
-    this.escalation.rules.splice(index, 1);
-  },
   async save() {
     try {
       const response = await fetch('/api/sultan/escalation/save', {
@@ -77,8 +72,27 @@
       console.error('Failed to save escalation:', error);
     }
   },
-  selectCell(rowIndex, colIndex) {
-    this.selectedCell = `${rowIndex}-${colIndex}`;
+  saveEntities(entity) {
+    if (!this.escalation.site.entities) {
+      this.escalation.site.entities = [];
+    }
+    const index = this.escalation.site.entities.indexOf(entity);
+    if (index === -1) {
+      this.escalation.site.entities.push(entity);
+    } else {
+      this.escalation.site.entities.splice(index, 1);
+    }
+  },
+  saveLocations(location) {
+    if (!this.escalation.site.locations) {
+      this.escalation.site.locations = [];
+    }
+    const index = this.escalation.site.locations.indexOf(location);
+    if (index === -1) {
+      this.escalation.site.locations.push(location);
+    } else {
+      this.escalation.site.locations.splice(index, 1);
+    }
   }
 }
 {% endblock %}
@@ -86,129 +100,124 @@
 {% block content %}
 <div class="h-screen bg-gray-900 text-white">
   <!-- Top Bar -->
-  <div class="border-b border-gray-700 p-2 flex items-center justify-between bg-gray-800">
-    <div class="flex items-center space-x-4">
-      <input 
-        type="text" 
-        x-model="escalation.name" 
-        placeholder="Escalation Name"
-        class="bg-gray-900 text-white px-3 py-1 rounded border border-gray-600 focus:outline-none focus:border-red-500"
-      >
-      <select 
-        x-model="escalation.template"
-        class="bg-gray-900 text-white px-3 py-1 rounded border border-gray-600 focus:outline-none focus:border-red-500"
-      >
-        <option value="">Select Template</option>
-        <template x-for="template in templates" :key="template.id">
-          <option :value="template.id" x-text="template.name"></option>
-        </template>
-      </select>
-      <select 
-        x-model="escalation.form"
-        class="bg-gray-900 text-white px-3 py-1 rounded border border-gray-600 focus:outline-none focus:border-red-500"
-      >
-        <option value="">Select Form</option>
-        <template x-for="form in forms" :key="form.id">
-          <option :value="form.id" x-text="form.name"></option>
-        </template>
-      </select>
+  <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
+    <h1 class="text-2xl font-bold text-white">Escalation Editor</h1>
+    <div class="flex space-x-4">
+      <button @click="save()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Save</button>
+      <a href="/sultan/escalation" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Cancel</a>
     </div>
-    <button @click="save()" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">Save</button>
   </div>
 
-  <!-- Excel-like Grid -->
-  <div class="overflow-auto h-[calc(100vh-8rem)]">
-    <table class="w-full border-collapse">
-      <!-- Headers -->
-      <thead class="sticky top-0 bg-gray-800">
-        <tr>
-          <th class="border-b border-r border-gray-600 px-4 py-2 text-left font-medium w-10">#</th>
-          <th class="border-b border-r border-gray-600 px-4 py-2 text-left font-medium">Condition</th>
-          <th class="border-b border-r border-gray-600 px-4 py-2 text-left font-medium">Action</th>
-          <th class="border-b border-r border-gray-600 px-4 py-2 text-left font-medium">Target</th>
-          <th class="border-b border-gray-600 px-4 py-2 text-center font-medium w-20">Actions</th>
-        </tr>
-      </thead>
-      
-      <!-- Body -->
-      <tbody>
-        <template x-for="(rule, index) in escalation.rules" :key="index">
-          <tr class="hover:bg-gray-800">
-            <td class="border-r border-gray-600 px-4 py-2 text-gray-400" x-text="index + 1"></td>
-            <td class="border-r border-gray-600 px-4 py-2">
-              <input 
-                type="text" 
-                x-model="rule.condition"
-                @focus="selectCell(index, 0)"
-                :class="{'bg-gray-700': selectedCell === `${index}-0`}"
-                class="w-full bg-transparent border-none focus:outline-none px-1"
-              >
-            </td>
-            <td class="border-r border-gray-600 px-4 py-2">
-              <input 
-                type="text" 
-                x-model="rule.action"
-                @focus="selectCell(index, 1)"
-                :class="{'bg-gray-700': selectedCell === `${index}-1`}"
-                class="w-full bg-transparent border-none focus:outline-none px-1"
-              >
-            </td>
-            <td class="border-r border-gray-600 px-4 py-2">
-              <input 
-                type="text" 
-                x-model="rule.target"
-                @focus="selectCell(index, 2)"
-                :class="{'bg-gray-700': selectedCell === `${index}-2`}"
-                class="w-full bg-transparent border-none focus:outline-none px-1"
-              >
-            </td>
-            <td class="border-gray-600 px-4 py-2 text-center">
-              <button @click="removeRule(index)" class="text-red-400 hover:text-red-300">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            </td>
-          </tr>
-        </template>
-        
-        <!-- New Rule Row -->
-        <tr class="hover:bg-gray-800">
-          <td class="border-r border-gray-600 px-4 py-2 text-gray-400" x-text="escalation.rules.length + 1"></td>
-          <td class="border-r border-gray-600 px-4 py-2">
-            <input 
-              type="text" 
-              x-model="newRule.condition"
-              placeholder="Enter condition"
-              class="w-full bg-transparent border-none focus:outline-none px-1"
-            >
-          </td>
-          <td class="border-r border-gray-600 px-4 py-2">
-            <input 
-              type="text" 
-              x-model="newRule.action"
-              placeholder="Enter action"
-              class="w-full bg-transparent border-none focus:outline-none px-1"
-            >
-          </td>
-          <td class="border-r border-gray-600 px-4 py-2">
-            <input 
-              type="text" 
-              x-model="newRule.target"
-              placeholder="Enter target"
-              class="w-full bg-transparent border-none focus:outline-none px-1"
-            >
-          </td>
-          <td class="border-gray-600 px-4 py-2 text-center">
-            <button @click="addRule()" class="text-green-400 hover:text-green-300">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
+  <!-- Main Content -->
+  <div class="p-6 space-y-6">
+    <!-- Basic Info -->
+    <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300">Name</label>
+          <input type="text" x-model="escalation.name" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300">Site Name</label>
+          <div class="flex space-x-2">
+            <input type="text" x-model="escalation.site.name" class="mt-1 flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600">
+            <button @click="selectedDrawer = 0" class="mt-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+              Configure Site
             </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rules -->
+    <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Rules</h2>
+        <button @click="escalation.rules.push({})" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+          Add Rule
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <template x-for="(rule, index) in escalation.rules" :key="index">
+          <div class="bg-gray-700 p-4 rounded">
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-300">Template</label>
+                <select x-model="rule.template" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+                  <option value="">Select Template</option>
+                  <template x-for="template in templates" :key="template.id">
+                    <option :value="template.id" x-text="template.name"></option>
+                  </template>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300">Form</label>
+                <select x-model="rule.form" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+                  <option value="">Select Form</option>
+                  <template x-for="form in forms" :key="form.id">
+                    <option :value="form.id" x-text="form.name"></option>
+                  </template>
+                </select>
+              </div>
+              <div class="flex items-end">
+                <button @click="escalation.rules.splice(index, 1)" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                  Remove Rule
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Site Configuration Drawer -->
+  <div x-show="selectedDrawer >= 0" class="fixed inset-y-0 right-0 w-1/3 bg-gray-900 border-l border-gray-700 p-6 overflow-y-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-semibold">Site Configuration</h2>
+      <button @click="selectedDrawer = -1" class="text-gray-400 hover:text-white">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Entities -->
+    <div class="mb-6">
+      <h3 class="text-lg font-medium mb-4">Entities</h3>
+      <input type="text" x-model="filter" placeholder="Search entities..." class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 mb-4">
+      
+      <div class="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
+        <template x-for="entity in entities" :key="entity">
+          <div x-show="!filter || entity.toLowerCase().includes(filter.toLowerCase())" class="flex items-center">
+            <input type="checkbox" 
+                   :checked="escalation.site.entities?.includes(entity)"
+                   @click="saveEntities(entity)"
+                   class="mr-2">
+            <span x-text="entity"></span>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Locations -->
+    <div>
+      <h3 class="text-lg font-medium mb-4">Locations</h3>
+      <input type="text" x-model="filter" placeholder="Search locations..." class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 mb-4">
+      
+      <div class="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
+        <template x-for="location in locations" :key="location">
+          <div x-show="!filter || location.toLowerCase().includes(filter.toLowerCase())" class="flex items-center">
+            <input type="checkbox" 
+                   :checked="escalation.site.locations?.includes(location)"
+                   @click="saveLocations(location)"
+                   class="mr-2">
+            <span x-text="location"></span>
+          </div>
+        </template>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
