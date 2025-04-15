@@ -1,0 +1,89 @@
+
+{% extends "sultan/base.html" %}
+
+{% block title %}Escalation Studio{% endblock %}
+
+{% block alpine_component %}
+  {
+    page: 'escalation-list',
+    escalations: [],
+    searchQuery: '',
+    statuses: ['Draft', 'Active', 'Archived'],
+    async init() {
+      const userEmail = localStorage.getItem('user_email');
+      try {
+        const response = await fetch(`/api/sultan/escalation/list?email=${userEmail}`);
+        this.escalations = await response.json();
+      } catch (error) {
+        console.error('Failed to load escalations:', error);
+        this.escalations = [];
+      }
+    }
+  }
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+  <h1 class="text-2xl font-bold text-white mb-6">Escalation Studio</h1>
+  
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <div class="relative w-64">
+        <input 
+          type="text" 
+          x-model="searchQuery" 
+          placeholder="Search..." 
+          class="w-full bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-red-500"
+        >
+      </div>
+      <a href="/sultan/escalation/edit/new" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">New Escalation</a>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-white">
+        <thead class="bg-gray-800">
+          <tr>
+            <th class="px-4 py-2 text-left">Name</th>
+            <th class="px-4 py-2 text-left">Template</th>
+            <th class="px-4 py-2 text-left">Form</th>
+            <th class="px-4 py-2 text-left">Status</th>
+            <th class="px-4 py-2 text-left">Modified</th>
+            <th class="px-4 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="escalation in escalations" :key="escalation.id">
+            <tr class="border-b border-gray-700 hover:bg-gray-800">
+              <td class="px-4 py-2" x-text="escalation.name"></td>
+              <td class="px-4 py-2" x-text="escalation.template"></td>
+              <td class="px-4 py-2" x-text="escalation.form"></td>
+              <td class="px-4 py-2">
+                <span class="px-2 py-1 rounded-full text-xs" 
+                      :class="{
+                        'bg-gray-600': escalation.status === 'Draft',
+                        'bg-green-600': escalation.status === 'Active',
+                        'bg-red-600': escalation.status === 'Archived'
+                      }"
+                      x-text="escalation.status">
+                </span>
+              </td>
+              <td class="px-4 py-2" x-text="new Date(escalation.modified).toLocaleString()"></td>
+              <td class="px-4 py-2">
+                <div class="flex space-x-2">
+                  <a :href="'/sultan/escalation/edit/' + escalation.id" class="text-blue-400 hover:text-blue-300">Edit</a>
+                  <button @click="fetch('/api/sultan/escalation/delete/' + escalation.id, {method: 'DELETE'}).then(() => init())" class="text-red-400 hover:text-red-300">Delete</button>
+                  <button @click="fetch('/api/sultan/escalation/duplicate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id: escalation.id})
+                  }).then(() => init())" class="text-green-400 hover:text-green-300">Duplicate</button>
+                </div>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
