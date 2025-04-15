@@ -1,3 +1,4 @@
+
 {% extends "sultan/base.html" %}
 
 {% block title %}Escalation Editor{% endblock %}
@@ -7,20 +8,29 @@
   escalation: {
     id: null,
     name: '',
-    template: '',
-    form: '',
-    rules: [],
+    role: '',
+    email: '',
+    assetClass: '',
     site: {
       name: '',
       entities: [],
       locations: []
-    }
+    },
+    triggers: [{
+      issueFamily: '',
+      comparisonKey: '',
+      operator: '',
+      value: '',
+      when: '',
+      template: ''
+    }]
   },
   templates: [],
-  forms: [],
-  preview: true,
-  entities: ['Entity1', 'Entity2', 'Entity3'], // Replace with your entities
-  locations: ['Location1', 'Location2', 'Location3'], // Replace with your locations
+  issuesFamilies: ['Valuation', 'Data Quality', 'System', 'Process', 'People'],
+  keys: ['rag', 'impact-breach-severity', 'materiality-bs', 'materiality-pl'],
+  assets: ['Rates', 'FX', 'Credit', 'Equity', 'Commodity'],
+  entities: ['Entity1', 'Entity2', 'Entity3'],
+  locations: ['Location1', 'Location2', 'Location3'],
   selectedDrawer: -1,
   filter: '',
   async init() {
@@ -31,7 +41,6 @@
       await this.loadEscalation(id);
     }
     await this.loadTemplates();
-    await this.loadForms();
   },
   async loadEscalation(id) {
     try {
@@ -47,14 +56,6 @@
       this.templates = await response.json();
     } catch (error) {
       console.error('Failed to load templates:', error);
-    }
-  },
-  async loadForms() {
-    try {
-      const response = await fetch('/api/sultan/forms/list');
-      this.forms = await response.json();
-    } catch (error) {
-      console.error('Failed to load forms:', error);
     }
   },
   async save() {
@@ -102,7 +103,6 @@
   <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
     <h1 class="text-2xl font-bold text-white">Escalation Editor</h1>
     <div class="flex space-x-4">
-      <a href="/sultan/escalation" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Back</a>
       <button @click="save()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Save</button>
       <a href="/sultan/escalation" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Cancel</a>
     </div>
@@ -118,7 +118,36 @@
           <input type="text" x-model="escalation.name" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-300">Site Name</label>
+          <label class="block text-sm font-medium text-gray-300">Role</label>
+          <select x-model="escalation.role" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+            <option>Head of Site PC</option>
+            <option>Core PC Asset Class Lead</option>
+            <option>Valuations Control Lead</option>
+            <option>RHU Lead</option>
+            <option>Regional Head of PC</option>
+            <option>Global Business Lead</option>
+            <option>Control Pillar Lead</option>
+            <option>2LOD</option>
+            <option>Global Head of PC</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300">Asset Class</label>
+          <select x-model="escalation.assetClass" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+            <template x-for="asset in assets">
+              <option :value="asset" x-text="asset"></option>
+            </template>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300">Email</label>
+          <div class="flex space-x-2">
+            <input type="email" x-model="escalation.email" class="mt-1 flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600">
+          </div>
+          <span class="text-xs text-gray-400">You can add several emails, just put a "," as a separator</span>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-300">Site</label>
           <div class="flex space-x-2">
             <input type="text" x-model="escalation.site.name" class="mt-1 flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600">
             <button @click="selectedDrawer = 0" class="mt-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
@@ -129,41 +158,78 @@
       </div>
     </div>
 
-    <!-- Rules -->
+    <!-- Triggers -->
     <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Rules</h2>
-        <button @click="escalation.rules.push({})" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-          Add Rule
+        <h2 class="text-xl font-semibold">Triggers</h2>
+        <button @click="escalation.triggers.push({issueFamily:'',comparisonKey:'',operator:'',value:'',when:'',template:''})" 
+                class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+          Add Trigger
         </button>
       </div>
 
       <div class="space-y-4">
-        <template x-for="(rule, index) in escalation.rules" :key="index">
+        <template x-for="(trigger, index) in escalation.triggers" :key="index">
           <div class="bg-gray-700 p-4 rounded">
             <div class="grid grid-cols-3 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-300">Template</label>
-                <select x-model="rule.template" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
-                  <option value="">Select Template</option>
-                  <template x-for="template in templates" :key="template.id">
-                    <option :value="template.id" x-text="template.name"></option>
+                <label class="block text-sm font-medium text-gray-300">Issue Family</label>
+                <select x-model="trigger.issueFamily" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+                  <option value="">Select Issue Family</option>
+                  <template x-for="family in issuesFamilies">
+                    <option :value="family" x-text="family"></option>
                   </template>
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-300">Form</label>
-                <select x-model="rule.form" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
-                  <option value="">Select Form</option>
-                  <template x-for="form in forms" :key="form.id">
-                    <option :value="form.id" x-text="form.name"></option>
+                <label class="block text-sm font-medium text-gray-300">Comparison Key</label>
+                <select x-model="trigger.comparisonKey" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+                  <option value="">Select Key</option>
+                  <template x-for="key in keys">
+                    <option :value="key" x-text="key"></option>
                   </template>
                 </select>
               </div>
-              <div class="flex items-end">
-                <button @click="escalation.rules.splice(index, 1)" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                  Remove Rule
-                </button>
+              <div>
+                <label class="block text-sm font-medium text-gray-300">Operator</label>
+                <select x-model="trigger.operator" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+                  <option value="">Select Operator</option>
+                  <option value="equals">Equals</option>
+                  <option value="bigger">Bigger</option>
+                  <option value="smaller">Smaller</option>
+                  <option value="contains">Contains</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300">Value</label>
+                <input type="text" x-model="trigger.value" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300">When</label>
+                <select x-model="trigger.when" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+                  <option value="">Select Time</option>
+                  <option value="now">now</option>
+                  <option value="now+5">now+5</option>
+                  <option value="now+10">now+10</option>
+                  <option value="now+15">now+15</option>
+                  <option value="now+30">now+30</option>
+                  <option value="now+60">now+60</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300">Template</label>
+                <div class="flex space-x-2">
+                  <select x-model="trigger.template" class="mt-1 flex-1 bg-gray-600 text-white p-2 rounded border border-gray-600">
+                    <option value="">Select Template</option>
+                    <template x-for="template in templates">
+                      <option :value="template.id" x-text="template.name"></option>
+                    </template>
+                  </select>
+                  <button @click="escalation.triggers.splice(index, 1)" 
+                          class="mt-1 bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">
+                    Remove
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -173,7 +239,8 @@
   </div>
 
   <!-- Site Configuration Drawer -->
-  <div x-show="selectedDrawer >= 0" class="fixed inset-y-0 right-0 w-1/3 bg-gray-900 border-l border-gray-700 p-6 overflow-y-auto">
+  <div x-show="selectedDrawer >= 0" 
+       class="fixed inset-y-0 right-0 w-1/3 bg-gray-900 border-l border-gray-700 p-6 overflow-y-auto">
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-xl font-semibold">Site Configuration</h2>
       <button @click="selectedDrawer = -1" class="text-gray-400 hover:text-white">
@@ -186,7 +253,8 @@
     <!-- Entities -->
     <div class="mb-6">
       <h3 class="text-lg font-medium mb-4">Entities</h3>
-      <input type="text" x-model="filter" placeholder="Search entities..." class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 mb-4">
+      <input type="text" x-model="filter" placeholder="Search entities..." 
+             class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 mb-4">
 
       <div class="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
         <template x-for="entity in entities" :key="entity">
@@ -204,7 +272,8 @@
     <!-- Locations -->
     <div>
       <h3 class="text-lg font-medium mb-4">Locations</h3>
-      <input type="text" x-model="filter" placeholder="Search locations..." class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 mb-4">
+      <input type="text" x-model="filter" placeholder="Search locations..." 
+             class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 mb-4">
 
       <div class="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
         <template x-for="location in locations" :key="location">
