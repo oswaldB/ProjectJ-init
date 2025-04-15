@@ -18,7 +18,7 @@
     async init() {
       const templateId = window.location.pathname.split('/').pop();
       const userEmail = localStorage.getItem('user_email');
-      
+
       await this.loadForms();
       await this.loadTemplate(templateId, userEmail);
       this.initTrumbowyg();
@@ -54,7 +54,7 @@
           }
         });
       };
-      
+
       if (form.fields) {
         extract(form.fields);
       }
@@ -65,7 +65,7 @@
         this.formFields = [];
         return;
       }
-      
+
       try {
         const response = await fetch(`/api/sultan/forms/${this.template.selectedForm}`);
         const form = await response.json();
@@ -77,7 +77,7 @@
     },
     async loadTemplate(templateId, userEmail) {
       if (templateId === 'new') return;
-      
+
       try {
         const response = await fetch(`/api/sultan/templates/${templateId}?email=${userEmail}`);
         const data = await response.json();
@@ -128,7 +128,7 @@
           }
         }
       });
-      
+
       $('#emailEditor').on('tbwchange', () => {
         this.template.body = $('#emailEditor').trumbowyg('html');
         this.saveTemplate();
@@ -138,7 +138,7 @@
       if (!this.template.id) {
         this.template.id = `templates-${Date.now()}`;
       }
-      
+
       const userEmail = localStorage.getItem('user_email');
       if (!userEmail) return;
 
