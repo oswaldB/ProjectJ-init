@@ -540,9 +540,9 @@
                     <input type="search" x-model.debounce="filter" class="pl-10 w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Filter options...">
                   </div>
                 </template>
-                <div class="max-h-60 overflow-y-auto">
+                <div class="space-y-2 max-h-[50vh] overflow-y-auto pr-2">
                   <template x-for="option in field.options" :key="option.name">
-                    <div class="flex items-center" x-show="!filter || option.name.toLowerCase().includes(filter.toLowerCase())">
+                    <div class="flex items-center py-1" x-show="!filter || option.name.toLowerCase().includes(filter.toLowerCase())">
                       <input type="checkbox" class="bg-gray-800 border-gray-600">
                       <label class="ml-2 text-sm font-medium text-white" x-text="option.name"></label>
                       <p x-text="option.description"></p>
