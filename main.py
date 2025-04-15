@@ -398,9 +398,17 @@ def api_forms_list():
                     content = response['Body'].read().decode('utf-8')
                     form = json.loads(content)
 
-                    # Add status if not present
-                    if 'status' not in form:
-                        form['status'] = 'Draft'
+                    # Map stored status to display status
+                    status_display_map = {
+                        'draft': 'Draft',
+                        'prod': 'Prod',
+                        'archive': 'Old version'
+                    }
+                    
+                    # Add or correct status
+                    path_parts = obj['Key'].split('/')
+                    stored_status = path_parts[-2]  # Gets status from path
+                    form['status'] = status_display_map.get(stored_status, 'Draft')
 
                     # Add last_modified if not present
                     metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
