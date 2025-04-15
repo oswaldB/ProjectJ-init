@@ -45,8 +45,6 @@
             <th class="px-4 py-2 text-left">Location</th>
             <th class="px-4 py-2 text-left">Entity</th>
             <th class="px-4 py-2 text-left">Status</th>
-            <th class="px-4 py-2 text-left">Tags</th>
-            <th class="px-4 py-2 text-left">Modified</th>
             <th class="px-4 py-2 text-left">Actions</th>
           </tr>
         </thead>
@@ -79,14 +77,6 @@
                   x-text="site.status">
                 </span>
               </td>
-              <td class="px-4 py-2">
-                <div class="flex flex-wrap gap-1">
-                  <template x-for="tag in site.tags" :key="tag">
-                    <span class="bg-blue-500 text-xs px-2 py-1 rounded-full" x-text="tag"></span>
-                  </template>
-                </div>
-              </td>
-              <td class="px-4 py-2" x-text="site.modified ? new Date(site.modified).toLocaleString() : ''"></td>
               <td class="px-4 py-2">
                 <div class="flex space-x-2">
                   <a :href="'/sultan/sites/edit/' + site.id" class="text-blue-400 hover:text-blue-300">Edit</a>
