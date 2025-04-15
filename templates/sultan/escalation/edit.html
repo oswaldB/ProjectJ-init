@@ -139,13 +139,6 @@
             </template>
           </select>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-300">Email</label>
-          <div class="flex space-x-2">
-            <input type="email" x-model="escalation.email" class="mt-1 flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600">
-          </div>
-          <span class="text-xs text-gray-400">You can add several emails, just put a "," as a separator</span>
-        </div>
         <div class="col-span-2">
           <label class="block text-sm font-medium text-gray-300">Site</label>
           <div class="flex space-x-2">
@@ -203,6 +196,13 @@
               <div>
                 <label class="block text-sm font-medium text-gray-300">Value</label>
                 <input type="text" x-model="trigger.value" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300">Email</label>
+                <div class="flex space-x-2">
+                  <input type="email" x-model="trigger.email" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+                </div>
+                <span class="text-xs text-gray-400">You can add several emails, just put a "," as a separator</span>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-300">When</label>
