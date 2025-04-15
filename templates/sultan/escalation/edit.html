@@ -325,15 +325,15 @@
     </div>
 
     <!-- Basic Info -->
-    <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-      <div class="grid grid-cols-2 gap-4">
-        <div>
+    <div class="bg-gray-800 p-3 rounded-lg border border-gray-700">
+      <div class="grid grid-cols-4 gap-3">
+        <div class="col-span-2">
           <label class="block text-sm font-medium text-gray-300">Name</label>
-          <input type="text" x-model="escalation.name" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+          <input type="text" x-model="escalation.name" class="mt-1 w-full bg-gray-700 text-white p-1.5 rounded border border-gray-600">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-300">Level</label>
-          <select x-model="escalation.level" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+          <select x-model="escalation.level" class="mt-1 w-full bg-gray-700 text-white p-1.5 rounded border border-gray-600">
             <option>L1</option>
             <option>L2</option>
             <option>L3</option>
@@ -342,13 +342,13 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-300">Asset Class</label>
-          <select x-model="escalation.assetClass" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+          <select x-model="escalation.assetClass" class="mt-1 w-full bg-gray-700 text-white p-1.5 rounded border border-gray-600">
             <template x-for="asset in assets">
               <option :value="asset" x-text="asset"></option>
             </template>
           </select>
         </div>
-        <div class="col-span-2">
+        <div class="col-span-4">
           <label class="block text-sm font-medium text-gray-300">Site</label>
           <div class="flex space-x-2">
             <input type="text" x-model="escalation.site.name" class="mt-1 flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600">
@@ -386,10 +386,10 @@
       <div class="space-y-4">
         <template x-for="(trigger, index) in escalation.triggers" :key="index">
           <div class="bg-gray-700 p-4 rounded">
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-4 gap-3">
               <div>
                 <label class="block text-sm font-medium text-gray-300">Issue Family</label>
-                <select x-model="trigger.issueFamily" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+                <select x-model="trigger.issueFamily" class="mt-1 w-full bg-gray-600 text-white p-1.5 rounded border border-gray-600">
                   <option value="">Select Issue Family</option>
                   <template x-for="family in issuesFamilies">
                     <option :value="family" x-text="family"></option>
@@ -419,9 +419,9 @@
                 <label class="block text-sm font-medium text-gray-300">Value</label>
                 <input type="text" x-model="trigger.value" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
               </div>
-              <div class="col-span-3">
-                <label class="block text-sm font-medium text-gray-300 mb-2">Email Configuration</label>
-                <div class="space-y-4 bg-gray-800 p-4 rounded-lg">
+              <div class="col-span-4">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Email Configuration</label>
+                <div class="space-y-2 bg-gray-800 p-3 rounded-lg">
                   <!-- Individual Email Input -->
                   <div class="space-y-2">
                     <div class="flex justify-between items-center">
