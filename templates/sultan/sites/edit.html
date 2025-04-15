@@ -122,9 +122,31 @@
     <!-- Basic Info -->
     <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
       <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-300">Site Name</label>
-          <input type="text" x-model="site.name" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300">Site Name</label>
+            <input type="text" x-model="site.name" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+          </div>
+          
+          <!-- Selected Entities Tags -->
+          <div class="flex flex-wrap gap-2" x-show="site.entities?.length">
+            <template x-for="entity in site.entities" :key="entity">
+              <div class="bg-red-500 text-white px-3 py-1 rounded-full flex items-center gap-2">
+                <span x-text="entity"></span>
+                <button @click="saveEntities(entity)" class="hover:text-gray-200">×</button>
+              </div>
+            </template>
+          </div>
+          
+          <!-- Selected Locations Tags -->
+          <div class="flex flex-wrap gap-2" x-show="site.locations?.length">
+            <template x-for="location in site.locations" :key="location">
+              <div class="bg-blue-500 text-white px-3 py-1 rounded-full flex items-center gap-2">
+                <span x-text="location"></span>
+                <button @click="saveLocations(location)" class="hover:text-gray-200">×</button>
+              </div>
+            </template>
+          </div>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-300">Form</label>
