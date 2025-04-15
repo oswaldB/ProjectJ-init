@@ -514,7 +514,8 @@ def template_edit(template_id):
     return render_template('sultan/templates/edit.html')
 
 
-@app.route('/api/sultan/forms/list')
+@app.route('/api/sultan/forms')
+@app.route('/api/sultan/forms/list')  # Keep old route for backward compatibility
 def api_forms_list():
     forms = []
     prefix = 'sultan/forms/'
