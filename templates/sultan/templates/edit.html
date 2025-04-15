@@ -170,16 +170,6 @@
     </div>
 
     <div class="space-y-4">
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-gray-300">Form for Variables</label>
-        <select x-model="template.selectedForm" @change="loadFormFields()" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-          <option value="">Select a form</option>
-          <template x-for="form in availableForms" :key="form.id">
-            <option :value="form.id" x-text="form.name"></option>
-          </template>
-        </select>
-      </div>
-
       <input type="text" x-model="template.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Template Name">
 
       <div class="space-y-2">
@@ -211,6 +201,17 @@
         <div x-init="initTrumbowyg()" class="bg-gray-800 rounded-lg">
           <textarea id="emailEditor" x-ref="editor"></textarea>
         </div>
+      </div>
+
+      <!-- Form Selection -->
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-300">Form for Variables</label>
+        <select x-model="template.selectedForm" @change="loadFormFields()" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+          <option value="">Select a form</option>
+          <template x-for="form in availableForms" :key="form.id">
+            <option :value="form.id" x-text="form.name"></option>
+          </template>
+        </select>
       </div>
 
       <!-- Variables Panel -->
