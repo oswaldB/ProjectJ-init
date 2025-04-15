@@ -387,7 +387,7 @@
         <template x-for="(trigger, index) in escalation.triggers" :key="index">
           <div class="bg-gray-700 p-2 rounded">
             <div class="grid grid-cols-12 gap-2">
-              <div class="col-span-3">
+              <div class="col-span-2">
                 <label class="block text-xs font-medium text-gray-300">Issue Family</label>
                 <select x-model="trigger.issueFamily" class="mt-0.5 w-full bg-gray-600 text-white p-1 rounded border border-gray-600">
                   <option value="">Select Issue Family</option>
@@ -396,7 +396,7 @@
                   </template>
                 </select>
               </div>
-              <div class="col-span-3">
+              <div class="col-span-4">
                 <label class="block text-xs font-medium text-gray-300">Comparison Key</label>
                 <select x-model="trigger.comparisonKey" class="mt-0.5 w-full bg-gray-600 text-white p-1 rounded border border-gray-600">
                   <option value="">Select Key</option>
@@ -405,7 +405,7 @@
                   </template>
                 </select>
               </div>
-              <div class="col-span-3">
+              <div class="col-span-2">
                 <label class="block text-xs font-medium text-gray-300">Operator</label>
                 <select x-model="trigger.operator" class="mt-0.5 w-full bg-gray-600 text-white p-1 rounded border border-gray-600">
                   <option value="">Select Operator</option>
@@ -415,7 +415,7 @@
                   <option value="contains">Contains</option>
                 </select>
               </div>
-              <div class="col-span-3">
+              <div class="col-span-4">
                 <label class="block text-xs font-medium text-gray-300">Value</label>
                 <input type="text" x-model="trigger.value" class="mt-0.5 w-full bg-gray-600 text-white p-1 rounded border border-gray-600">
               </div>
