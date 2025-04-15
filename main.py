@@ -385,7 +385,7 @@ def template_edit(template_id):
 @app.route('/api/sultan/forms/list')
 def api_forms_list():
     forms = []
-    prefix = 'sultan/configs/forms/'
+    prefix = 'sultan/forms/'
 
     try:
         response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
@@ -414,9 +414,9 @@ def api_forms_list():
 def api_form_get(form_id):
     try:
         if form_id.endswith('.json'):
-            key = f'sultan/configs/forms/{form_id}'
+            key = f'sultan/forms/{form_id}'
         else:
-            key = f'sultan/configs/forms/{form_id}.json'
+            key = f'sultan/forms/{form_id}.json'
             
         content = s3.get_object(
             Bucket=BUCKET_NAME,
@@ -433,7 +433,7 @@ def api_form_get(form_id):
 @app.route('/api/sultan/forms/delete/<form_id>', methods=['DELETE'])
 def api_form_delete(form_id):
     try:
-        form_path = f'sultan/configs/forms/{form_id}.json'
+        form_path = f'sultan/forms/{form_id}.json'
         delete(form_path)
         return jsonify({"status": "success"})
     except Exception as e:
@@ -449,7 +449,7 @@ def api_form_save():
         return jsonify({"error": "Form required"}), 400
 
     try:
-        form_path = f'sultan/configs/forms/{form["id"]}.json'
+        form_path = f'sultan/forms/{form["id"]}.json'
         save_in_global_db(form_path, form)
         return jsonify({"status": "success"})
     except Exception as e:
@@ -460,7 +460,7 @@ def api_form_save():
 @app.route('/api/sultan/templates/list')
 def api_templates_list():
     templates = []
-    prefix = 'sultan/configs/templates/'
+    prefix = 'sultan/templates/'
 
     try:
         response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
@@ -488,9 +488,9 @@ def api_templates_list():
 def api_template_get(template_id):
     try:
         if template_id.endswith('.json'):
-            key = f'sultan/configs/templates/{template_id}'
+            key = f'sultan/templates/{template_id}'
         else:
-            key = f'sultan/configs/templates/{template_id}.json'
+            key = f'sultan/templates/{template_id}.json'
             
         content = s3.get_object(
             Bucket=BUCKET_NAME,
@@ -507,7 +507,7 @@ def api_template_get(template_id):
 @app.route('/api/sultan/templates/delete/<template_id>', methods=['DELETE'])
 def api_template_delete(template_id):
     try:
-        key = f'sultan/configs/templates/{template_id}.json'
+        key = f'sultan/templates/{template_id}.json'
         delete(key)
         return jsonify({"status": "success"})
     except Exception as e:
@@ -524,7 +524,7 @@ def api_template_save():
         return jsonify({"error": "Template required"}), 400
 
     try:
-        template_path = f'sultan/configs/templates/{template["id"]}.json'
+        template_path = f'sultan/templates/{template["id"]}.json'
         save_in_global_db(template_path, template)
         return jsonify({"status": "success"})
     except Exception as e:
