@@ -316,21 +316,22 @@
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-300">Email Configuration</label>
-                <div class="flex space-x-2 mb-2">
-                  <select x-model="trigger.emailType" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
-                    <option value="manual">Manual Email Entry</option>
-                    <option value="group">Email Group</option>
-                  </select>
+                <div class="flex items-center space-x-2 mb-4">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" x-model="trigger.emailType" class="sr-only peer" :value="trigger.emailType === 'group'">
+                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                    <span class="ms-3">Use Email Group</span>
+                  </label>
                 </div>
                 
                 <!-- Manual Email Input -->
-                <div x-show="trigger.emailType === 'manual'" class="space-y-2">
+                <div x-show="!trigger.emailType" class="space-y-2">
                   <input type="email" x-model="trigger.email" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600" placeholder="Enter email addresses">
                   <span class="text-xs text-gray-400">You can add several emails, just put a "," as a separator</span>
                 </div>
 
                 <!-- Email Group Selection -->
-                <div x-show="trigger.emailType === 'group'" class="space-y-2">
+                <div x-show="trigger.emailType" class="space-y-2">
                   <select x-model="trigger.selectedGroup" @change="loadEmailGroupDetails($event.target.value)" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
                     <option value="">Select an email group</option>
                     <template x-for="group in emailGroups" :key="group.id">
