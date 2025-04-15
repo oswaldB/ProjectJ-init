@@ -448,12 +448,14 @@
         <!-- Basic Info and Triggers -->
         <div class="bg-gray-800 p-2 rounded-lg border border-gray-700 mt-4">
       <!-- Basic Info Section -->
-      <div class="grid grid-cols-12 gap-2 mb-4">
-        <div class="col-span-4">
+      <div class="space-y-4 mb-4">
+        <!-- Name -->
+        <div>
           <label class="block text-xs font-medium text-gray-300">Name</label>
           <input type="text" x-model="escalation.name" class="mt-0.5 w-full bg-gray-700 text-white p-1 rounded border border-gray-600">
         </div>
         
+        <!-- Asset Class -->
         <div>
           <label class="block text-sm font-medium text-gray-300">Asset Class</label>
           <select x-model="escalation.assetClass" class="mt-1 w-full bg-gray-700 text-white p-1.5 rounded border border-gray-600">
@@ -462,7 +464,9 @@
             </template>
           </select>
         </div>
-        <div class="col-span-5">
+
+        <!-- Site -->
+        <div>
           <label class="block text-sm font-medium text-gray-300">Site</label>
           <div class="flex space-x-2">
             <input type="text" x-model="escalation.site.name" class="mt-1 flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600">
