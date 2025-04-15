@@ -6,7 +6,15 @@
 {% block alpine_component %}
 {
   page: 'acknowledge',
-  issueId: new URLSearchParams(window.location.search).get('issueId') || ''
+  email: localStorage.getItem('user_email') || '',
+  issueId: new URLSearchParams(window.location.search).get('issueId') || '',
+  async submitAcknowledge() {
+    // Add form submission logic here
+    console.log('Submitting acknowledge:', {
+      email: this.email,
+      issueId: this.issueId
+    });
+  }
 }
 {% endblock %}
 
