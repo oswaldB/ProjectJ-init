@@ -1,0 +1,70 @@
+
+{% extends "sultan/base.html" %}
+
+{% block title %}Email Groups{% endblock %}
+
+{% block alpine_component %}
+  {
+    page: 'emailgroups-list',
+    emailgroups: [],
+    searchQuery: '',
+    async init() {
+      const userEmail = localStorage.getItem('user_email');
+      try {
+        const response = await fetch(`/api/sultan/emailgroups/list?email=${userEmail}`);
+        this.emailgroups = await response.json();
+      } catch (error) {
+        console.error('Failed to load email groups:', error);
+        this.emailgroups = [];
+      }
+    }
+  }
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+  <h1 class="text-2xl font-bold text-white mb-6">Email Groups</h1>
+  
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <div class="relative w-64">
+        <input 
+          type="text" 
+          x-model="searchQuery" 
+          placeholder="Search..." 
+          class="w-full bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-red-500"
+        >
+      </div>
+      <a href="/sultan/emailgroups/edit/new" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">New Email Group</a>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-white">
+        <thead class="bg-gray-800">
+          <tr>
+            <th class="px-4 py-2 text-left">Name</th>
+            <th class="px-4 py-2 text-left">Description</th>
+            <th class="px-4 py-2 text-left">Modified</th>
+            <th class="px-4 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="group in emailgroups" :key="group.id">
+            <tr class="border-b border-gray-700 hover:bg-gray-800">
+              <td class="px-4 py-2" x-text="group.name"></td>
+              <td class="px-4 py-2" x-text="group.description"></td>
+              <td class="px-4 py-2" x-text="new Date(group.modified).toLocaleString()"></td>
+              <td class="px-4 py-2">
+                <div class="flex space-x-2">
+                  <a :href="'/sultan/emailgroups/edit/' + group.id" class="text-blue-400 hover:text-blue-300">Edit</a>
+                  <button class="text-red-400 hover:text-red-300">Delete</button>
+                </div>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

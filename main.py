@@ -320,6 +320,64 @@ def escalation_list():
 def escalation_edit(escalation_id):
     return render_template('sultan/escalation/edit.html')
 
+@app.route('/sultan/emailgroups')
+def emailgroups_list():
+    return render_template('sultan/emailgroups/index.html')
+
+@app.route('/sultan/emailgroups/edit/<emailgroup_id>')
+def emailgroup_edit(emailgroup_id):
+    return render_template('sultan/emailgroups/edit.html')
+
+@app.route('/sultan/sites')
+def sites_list():
+    return render_template('sultan/sites/index.html')
+
+@app.route('/sultan/sites/edit/<site_id>')
+def site_edit(site_id):
+    return render_template('sultan/sites/edit.html')
+
+@app.route('/api/sultan/emailgroups/list')
+def api_emailgroups_list():
+    emailgroups = []
+    prefix = 'sultan/emailgroups/'
+
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        for obj in response.get('Contents', []):
+            try:
+                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                content = response['Body'].read().decode('utf-8')
+                emailgroup = json.loads(content)
+                emailgroups.append(emailgroup)
+            except Exception as e:
+                logger.error(f"Failed to load emailgroup {obj['Key']}: {e}")
+    except Exception as e:
+        logger.error(f"Failed to list emailgroups: {e}")
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify(emailgroups)
+
+@app.route('/api/sultan/sites/list')
+def api_sites_list():
+    sites = []
+    prefix = 'sultan/sites/'
+
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        for obj in response.get('Contents', []):
+            try:
+                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                content = response['Body'].read().decode('utf-8')
+                site = json.loads(content)
+                sites.append(site)
+            except Exception as e:
+                logger.error(f"Failed to load site {obj['Key']}: {e}")
+    except Exception as e:
+        logger.error(f"Failed to list sites: {e}")
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify(sites)
+
 @app.route('/api/sultan/escalation/list')
 def api_escalation_list():
     escalations = []
