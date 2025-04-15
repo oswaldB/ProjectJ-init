@@ -83,6 +83,13 @@
         const response = await fetch(`/api/sultan/templates/${templateId}?email=${userEmail}`);
         const data = await response.json();
         this.template = data;
+        
+        // Set email body content after template is loaded
+        if (this.template.body) {
+          setTimeout(() => {
+            $('#emailEditor').trumbowyg('html', this.template.body);
+          }, 100);
+        }
       } catch (error) {
         console.error('Failed to load template:', error);
         window.location.href = '/sultan/templates/list';
