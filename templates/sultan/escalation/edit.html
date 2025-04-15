@@ -379,16 +379,7 @@
     </div>
 
     <div class="space-y-6">
-      <template x-for="(_, emailIndex) in [0,1,2]" :key="emailIndex">
-        <div class="bg-gray-800 p-4 rounded-lg">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-lg font-medium">Email Configuration <span x-text="emailIndex + 1"></span></span>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" x-model="escalation.triggers[selectedTriggerIndex].emailType_[emailIndex]" class="sr-only peer">
-              <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
-              <span class="ms-3">Use Group</span>
-            </label>
-          </div>
+      <div class="bg-gray-800 p-4 rounded-lg">
 
           <div class="space-y-4">
             <!-- Individual Email Input -->
@@ -396,20 +387,18 @@
               <label class="block text-sm font-medium text-gray-300">Add Individual Emails</label>
               <div class="flex space-x-2">
                 <input type="email" 
-                       x-model="escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex]" 
-                       @keyup.enter="if(escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex]) { 
-                         if(!escalation.triggers[selectedTriggerIndex].emailLists) escalation.triggers[selectedTriggerIndex].emailLists = {};
-                         if(!escalation.triggers[selectedTriggerIndex].emailLists[emailIndex]) escalation.triggers[selectedTriggerIndex].emailLists[emailIndex] = [];
-                         escalation.triggers[selectedTriggerIndex].emailLists[emailIndex].push(escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex]); 
-                         escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex] = ''; 
+                       x-model="escalation.triggers[selectedTriggerIndex].tempEmail" 
+                       @keyup.enter="if(escalation.triggers[selectedTriggerIndex].tempEmail) { 
+                         if(!escalation.triggers[selectedTriggerIndex].emailList) escalation.triggers[selectedTriggerIndex].emailList = [];
+                         escalation.triggers[selectedTriggerIndex].emailList.push(escalation.triggers[selectedTriggerIndex].tempEmail); 
+                         escalation.triggers[selectedTriggerIndex].tempEmail = ''; 
                        }" 
                        class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600" 
                        placeholder="Enter an email address">
-                <button @click="if(escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex]) { 
-                          if(!escalation.triggers[selectedTriggerIndex].emailLists) escalation.triggers[selectedTriggerIndex].emailLists = {};
-                          if(!escalation.triggers[selectedTriggerIndex].emailLists[emailIndex]) escalation.triggers[selectedTriggerIndex].emailLists[emailIndex] = [];
-                          escalation.triggers[selectedTriggerIndex].emailLists[emailIndex].push(escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex]); 
-                          escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex] = ''; 
+                <button @click="if(escalation.triggers[selectedTriggerIndex].tempEmail) { 
+                          if(!escalation.triggers[selectedTriggerIndex].emailList) escalation.triggers[selectedTriggerIndex].emailList = [];
+                          escalation.triggers[selectedTriggerIndex].emailList.push(escalation.triggers[selectedTriggerIndex].tempEmail); 
+                          escalation.triggers[selectedTriggerIndex].tempEmail = ''; 
                         }" 
                         class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -418,10 +407,10 @@
                 </button>
               </div>
               <div class="flex flex-wrap gap-2">
-                <template x-for="(email, index) in (escalation.triggers[selectedTriggerIndex].emailLists?.[emailIndex] || [])" :key="index">
+                <template x-for="(email, index) in (escalation.triggers[selectedTriggerIndex].emailList || [])" :key="index">
                   <div class="bg-gray-700 text-white px-3 py-1 rounded-full flex items-center gap-2">
                     <span x-text="email"></span>
-                    <button @click="escalation.triggers[selectedTriggerIndex].emailLists[emailIndex].splice(index, 1)" class="hover:text-red-400">×</button>
+                    <button @click="escalation.triggers[selectedTriggerIndex].emailList.splice(index, 1)" class="hover:text-red-400">×</button>
                   </div>
                 </template>
               </div>
@@ -429,36 +418,31 @@
 
             <!-- Email Group Selection -->
             <div class="space-y-2">
-              <label class="block text-sm font-medium text-gray-300">Add Email Groups</label>
+              <label class="block text-sm font-medium text-gray-300">Import from Email Group</label>
               <div x-data="{ selectedGroup: '' }" class="space-y-2">
                 <select x-model="selectedGroup"
                         @change="if(selectedGroup) {
-                          if(!escalation.triggers[selectedTriggerIndex].selectedGroups) escalation.triggers[selectedTriggerIndex].selectedGroups = {};
-                          if(!escalation.triggers[selectedTriggerIndex].selectedGroups[emailIndex]) escalation.triggers[selectedTriggerIndex].selectedGroups[emailIndex] = [];
-                          if(!escalation.triggers[selectedTriggerIndex].selectedGroups[emailIndex].includes(selectedGroup)) {
-                            escalation.triggers[selectedTriggerIndex].selectedGroups[emailIndex].push(selectedGroup);
+                          const group = emailGroups.find(g => g.id === selectedGroup);
+                          if(group && group.emails) {
+                            if(!escalation.triggers[selectedTriggerIndex].emailList) escalation.triggers[selectedTriggerIndex].emailList = [];
+                            group.emails.forEach(email => {
+                              if(!escalation.triggers[selectedTriggerIndex].emailList.includes(email)) {
+                                escalation.triggers[selectedTriggerIndex].emailList.push(email);
+                              }
+                            });
                           }
                           selectedGroup = '';
                         }"
                         class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-                  <option value="">Select an email group</option>
+                  <option value="">Select an email group to import</option>
                   <template x-for="group in emailGroups" :key="group.id">
                     <option :value="group.id" x-text="group.name"></option>
                   </template>
                 </select>
-                <div class="flex flex-wrap gap-2">
-                  <template x-for="groupId in (escalation.triggers[selectedTriggerIndex].selectedGroups?.[emailIndex] || [])" :key="groupId">
-                    <div class="bg-gray-600 text-white px-3 py-1 rounded-full flex items-center gap-2">
-                      <span x-text="emailGroups.find(g => g.id === groupId)?.name"></span>
-                      <button @click="escalation.triggers[selectedTriggerIndex].selectedGroups[emailIndex] = escalation.triggers[selectedTriggerIndex].selectedGroups[emailIndex].filter(g => g !== groupId)" class="hover:text-red-400">×</button>
-                    </div>
-                  </template>
-                </div>
               </div>
             </div>
           </div>
         </div>
-      </template>
     </div>
   </div>
 
