@@ -593,7 +593,8 @@ def api_template_save():
         # Map display status to storage status
         status_map = {
             'Draft': 'draft',
-            'Prod': 'prod'
+            'Prod': 'prod',
+            'Old version': 'archive'
         }
         storage_status = status_map.get(status, 'draft')
         
