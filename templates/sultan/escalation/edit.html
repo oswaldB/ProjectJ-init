@@ -51,6 +51,62 @@
     }
     await this.loadTemplates();
     await this.loadSites();
+    await this.loadForms();
+  },
+  async loadForms() {
+    try {
+      const response = await fetch('/api/sultan/forms/list');
+      this.forms = await response.json();
+    } catch (error) {
+      console.error('Failed to load forms:', error);
+    }
+  },
+  async loadFormDataForNewSite(formId) {
+    if (!formId) {
+      this.locations = [];
+      this.entities = [];
+      return;
+    }
+    try {
+      const response = await fetch(`/api/sultan/forms/${formId}`);
+      const formData = await response.json();
+      
+      const locationField = formData.fields.find(f => f.key === 'location');
+      const entityField = formData.fields.find(f => f.key === 'entity');
+      
+      if (locationField) {
+        this.locations = locationField.options.map(opt => opt.name);
+        this.newSite.locations = [];
+      }
+      if (entityField) {
+        this.entities = entityField.options.map(opt => opt.name);
+        this.newSite.entities = [];
+      }
+    } catch (error) {
+      console.error('Failed to load form data:', error);
+    }
+  },
+  saveEntitiesForNewSite(entity) {
+    if (!this.newSite.entities) {
+      this.newSite.entities = [];
+    }
+    const index = this.newSite.entities.indexOf(entity);
+    if (index === -1) {
+      this.newSite.entities.push(entity);
+    } else {
+      this.newSite.entities.splice(index, 1);
+    }
+  },
+  saveLocationsForNewSite(location) {
+    if (!this.newSite.locations) {
+      this.newSite.locations = [];
+    }
+    const index = this.newSite.locations.indexOf(location);
+    if (index === -1) {
+      this.newSite.locations.push(location);
+    } else {
+      this.newSite.locations.splice(index, 1);
+    }
   },
   async loadEscalation(id) {
     try {
@@ -317,8 +373,8 @@
   </div>
 
   <!-- New Site Modal -->
-  <div x-show="showNewSiteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-1/2">
+  <div x-show="showNewSiteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-3/4 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold text-white">Create New Site</h2>
         <button @click="showNewSiteModal = false" class="text-gray-400 hover:text-white">
@@ -328,32 +384,86 @@
         </button>
       </div>
 
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-300">Site Name</label>
-          <input type="text" x-model="newSite.name" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+      <div class="space-y-6">
+        <!-- Basic Info -->
+        <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-300">Site Name</label>
+              <input type="text" x-model="newSite.name" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-300">Status</label>
+              <select x-model="newSite.status" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                <option value="draft">Draft</option>
+                <option value="prod">Prod</option>
+                <option value="old version">Old version</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-300">Form</label>
+              <select x-model="newSite.form" @change="loadFormDataForNewSite($event.target.value)" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                <option value="">Select a form</option>
+                <template x-for="form in forms" :key="form.id">
+                  <option :value="form.id" x-text="form.name"></option>
+                </template>
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-300">Form</label>
-          <select x-model="newSite.form" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-            <option value="">Select a form</option>
-            <template x-for="form in forms" :key="form.id">
-              <option :value="form.id" x-text="form.name"></option>
-            </template>
-          </select>
+        <!-- Entities and Locations -->
+        <div class="grid grid-cols-2 gap-6">
+          <!-- Entities -->
+          <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
+            <h3 class="text-lg font-medium mb-4">Entities</h3>
+            <div class="flex flex-wrap gap-2 mb-4" x-show="newSite.entities?.length">
+              <template x-for="entity in newSite.entities" :key="entity">
+                <div class="bg-red-500 text-white px-3 py-1 rounded-full flex items-center gap-2">
+                  <span x-text="entity"></span>
+                  <button type="button" @click="saveEntitiesForNewSite(entity)" class="hover:text-gray-200">×</button>
+                </div>
+              </template>
+            </div>
+            <div class="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
+              <template x-for="entity in entities" :key="entity">
+                <div class="flex items-center">
+                  <input type="checkbox" 
+                         :checked="newSite.entities?.includes(entity)"
+                         @click="saveEntitiesForNewSite(entity)"
+                         class="mr-2">
+                  <span x-text="entity"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Locations -->
+          <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
+            <h3 class="text-lg font-medium mb-4">Locations</h3>
+            <div class="flex flex-wrap gap-2 mb-4" x-show="newSite.locations?.length">
+              <template x-for="location in newSite.locations" :key="location">
+                <div class="bg-gray-600 text-white px-3 py-1 rounded-full flex items-center gap-2">
+                  <span x-text="location"></span>
+                  <button type="button" @click="saveLocationsForNewSite(location)" class="hover:text-gray-200">×</button>
+                </div>
+              </template>
+            </div>
+            <div class="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
+              <template x-for="location in locations" :key="location">
+                <div class="flex items-center">
+                  <input type="checkbox" 
+                         :checked="newSite.locations?.includes(location)"
+                         @click="saveLocationsForNewSite(location)"
+                         class="mr-2">
+                  <span x-text="location"></span>
+                </div>
+              </template>
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-300">Status</label>
-          <select x-model="newSite.status" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-            <option value="draft">Draft</option>
-            <option value="prod">Prod</option>
-            <option value="old version">Old version</option>
-          </select>
-        </div>
-
-        <div class="mt-6 flex justify-end space-x-3">
+        <div class="flex justify-end space-x-3 pt-4">
           <button @click="showNewSiteModal = false" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
             Cancel
           </button>
