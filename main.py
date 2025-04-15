@@ -96,7 +96,7 @@ def save_in_global_db(key, obj):
     try:
         # S3 save
         s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_object)
-        
+
         # Local save
         full_path = os.path.join(LOCAL_BUCKET_DIR, key)
         directory = os.path.dirname(full_path)
@@ -406,7 +406,7 @@ def api_escalation_get(escalation_id):
             key = f'sultan/configs/draft/escalations/{escalation_id}'
         else:
             key = f'sultan/configs/draft/escalations/{escalation_id}.json'
-            
+
         content = s3.get_object(
             Bucket=BUCKET_NAME,
             Key=key)['Body'].read().decode('utf-8')
@@ -438,7 +438,7 @@ def api_emailgroup_get(emailgroup_id):
             key = f'sultan/emailgroups/{emailgroup_id}'
         else:
             key = f'sultan/emailgroups/{emailgroup_id}.json'
-            
+
         content = s3.get_object(
             Bucket=BUCKET_NAME,
             Key=key)['Body'].read().decode('utf-8')
@@ -507,7 +507,7 @@ def api_form_get(form_id):
             key = f'sultan/forms/{form_id}'
         else:
             key = f'sultan/forms/{form_id}.json'
-            
+
         content = s3.get_object(
             Bucket=BUCKET_NAME,
             Key=key)['Body'].read().decode('utf-8')
@@ -559,11 +559,11 @@ def api_templates_list():
                 response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
                 content = response['Body'].read().decode('utf-8')
                 template = json.loads(content)
-                
+
                 # Add last_modified from metadata
                 metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
                 template['last_modified'] = metadata['LastModified']
-                
+
                 templates.append(template)
             except Exception as e:
                 logger.error(f"Failed to load template {obj['Key']}: {e}")
@@ -581,7 +581,7 @@ def api_template_get(template_id):
             key = f'sultan/templates/{template_id}'
         else:
             key = f'sultan/templates/{template_id}.json'
-            
+
         content = s3.get_object(
             Bucket=BUCKET_NAME,
             Key=key)['Body'].read().decode('utf-8')
