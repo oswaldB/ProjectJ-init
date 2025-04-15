@@ -400,7 +400,7 @@
       <div class="border-t border-gray-700 pt-4">
       <div class="flex justify-between items-center mb-2">
         <h2 class="text-lg font-semibold">Triggers</h2>
-        <button @click="escalation.triggers.push({
+        <button @click="block.triggers.push({
                   issueFamily:'',
                   comparisonKey:'',
                   operator:'',
@@ -420,7 +420,7 @@
       </div>
 
       <div class="space-y-2">
-        <template x-for="(trigger, index) in escalation.triggers" :key="index">
+        <template x-for="(trigger, index) in block.triggers" :key="index">
           <div class="bg-gray-700 p-2 rounded">
             <div class="grid grid-cols-12 gap-2">
               <div class="col-span-2">
@@ -551,11 +551,11 @@
                     </template>
                   </select>
                   <div class="flex space-x-2">
-                    <button @click="escalation.triggers.push({...trigger})"
+                    <button @click="block.triggers.push({...trigger})"
                             class="mt-0.5 bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-sm">
                       Duplicate
                     </button>
-                    <button @click="escalation.triggers.splice(index, 1)" 
+                    <button @click="block.triggers.splice(index, 1)" 
                             class="mt-0.5 bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
                       Remove
                     </button>
