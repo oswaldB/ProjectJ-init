@@ -12,7 +12,8 @@
       const userEmail = localStorage.getItem('user_email');
       try {
         const response = await fetch(`/api/sultan/sites/list?email=${userEmail}`);
-        this.sites = await response.json();
+        const allSites = await response.json();
+        this.sites = allSites.filter(site => site.status === 'prod');
       } catch (error) {
         console.error('Failed to load sites:', error);
         this.sites = [];
