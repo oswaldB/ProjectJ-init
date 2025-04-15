@@ -283,40 +283,34 @@ def api_acknowledge():
     issue_id = data.get('issueId')
     email = data.get('email')
     
-    # Find the issue file in any subdirectory
-    issue_found = False
-    for root, _, files in os.walk(os.path.join(LOCAL_BUCKET_DIR, 'jaffar/issues')):
-        for file in files:
-            if file == f"{issue_id}.json":
-                file_path = os.path.join(root, file)
-                try:
-                    with open(file_path, 'r') as f:
-                        issue = json.load(f)
-                    
-                    # Add or update acknowledgeEscalation array
-                    if 'acknowledgeEscalation' not in issue:
-                        issue['acknowledgeEscalation'] = []
-                    
-                    issue['acknowledgeEscalation'].append({
-                        'email': email,
-                        'date': datetime.datetime.now().isoformat()
-                    })
-                    
-                    # Save back to file and S3
-                    s3_key = os.path.relpath(file_path, LOCAL_BUCKET_DIR)
-                    save_in_global_db(s3_key, issue)
-                    issue_found = True
-                    break
-                except Exception as e:
-                    logger.error(f"Error updating issue: {e}")
-                    return jsonify({'error': str(e)}), 500
-        if issue_found:
-            break
-            
-    if not issue_found:
-        return jsonify({'error': 'Issue not found'}), 404
+    try:
+        # Try to get the issue directly from S3
+        s3_key = f'jaffar/issues/draft/{issue_id}.json'
+        try:
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=s3_key)
+            issue = json.loads(response['Body'].read().decode('utf-8'))
+        except:
+            # Try in the new folder if not found in draft
+            s3_key = f'jaffar/issues/new/{issue_id}.json'
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=s3_key)
+            issue = json.loads(response['Body'].read().decode('utf-8'))
         
-    return jsonify({'status': 'success'})
+        # Add or update acknowledgeEscalation array
+        if 'acknowledgeEscalation' not in issue:
+            issue['acknowledgeEscalation'] = []
+        
+        issue['acknowledgeEscalation'].append({
+            'email': email,
+            'date': datetime.datetime.now().isoformat()
+        })
+        
+        # Save back to S3
+        s3.put_object(Bucket=BUCKET_NAME, Key=s3_key, Body=json.dumps(issue))
+        return jsonify({'status': 'success'})
+        
+    except Exception as e:
+        logger.error(f"Error processing acknowledgement: {e}")
+        return jsonify({'error': 'Issue not found'}), 404
 
 
 @app.route('/sultan/login')
