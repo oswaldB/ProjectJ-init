@@ -217,7 +217,7 @@
       this.escalation.site.locations.splice(index, 1);
     }
   },
-  selectedTriggerIndex: null,
+  selectedTriggerIndex: 0,
   selectedTab: 'form',
   newEmail: '',
   newEmailGroup: '',
@@ -225,10 +225,20 @@
   newGroupName: '',
   createEmailGroup() {
     const trigger = this.escalation.triggers[this.selectedTriggerIndex];
-    if (!trigger || !trigger.emailList || trigger.emailList.length === 0) {
+    if (!trigger) {
+      alert('Please select a trigger first');
+      return;
+    }
+    
+    if (!trigger.emailList) {
+      trigger.emailList = [];
+    }
+    
+    if (trigger.emailList.length === 0) {
       alert('Please add some emails first');
       return;
     }
+    
     this.newGroupName = '';
     this.showNewGroupModal = true;
   },
