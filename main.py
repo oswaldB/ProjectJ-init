@@ -684,9 +684,10 @@ def api_template_duplicate():
         # Get original template
         template = get_one_from_global_db(f'sultan/templates/{template_id}.json')
         
-        # Create new template with unique ID
+        # Create new template with unique ID using uuid
+        import uuid
         new_template = template.copy()
-        new_template['id'] = f'templates-{int(time.time() * 1000)}'
+        new_template['id'] = f'templates-{str(uuid.uuid4())}'
         new_template['name'] = f'{template["name"]} (Copy)'
         
         # Save new template
