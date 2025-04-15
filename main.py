@@ -314,7 +314,7 @@ def form_edit(form_id):
 
 @app.route('/sultan/escalation')
 def escalation_list():
-    return render_template('sultan/escalation/index.html')
+    return redirect('/sultan/escalation/edit/new')
 
 @app.route('/sultan/escalation/edit/<escalation_id>')
 def escalation_edit(escalation_id):
