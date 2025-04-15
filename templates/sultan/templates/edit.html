@@ -165,12 +165,12 @@
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold text-white">Email Template Editor</h1>
       <div>
-        <button @click="saveTemplate()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Save</button>
+        <span class="text-gray-400 text-sm">Changes are saved automatically</span>
       </div>
     </div>
 
     <div class="space-y-4">
-      <input type="text" x-model="template.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Template Name">
+      <input type="text" x-model.debounce.500ms="template.name" @input="saveTemplate()" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Template Name">
 
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-300">Status</label>
@@ -191,7 +191,7 @@
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-300">Email Subject</label>
         <div class="relative">
-          <input type="text" x-model="template.subject" @focus="currentFocus='subject'" x-ref="subject"
+          <input type="text" x-model.debounce.500ms="template.subject" @input="saveTemplate()" @focus="currentFocus='subject'" x-ref="subject"
                  class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Sujet de l'email">
         </div>
       </div>
