@@ -20,7 +20,7 @@
           if (!response.ok) {
             showNotification('Form not found', 'error');
             setTimeout(() => {
-              window.location.href = '/sultan/forms/list';
+              window.location.href = '/sultan/forms';
             }, 2000);
             return;
           }
@@ -28,7 +28,7 @@
         } catch (error) {
           console.error('Failed to load form:', error);
           showNotification('Form not found', 'error');
-          window.location.href = '/sultan/forms/list';
+          window.location.href = '/sultan/forms';
         }
       }
     },
@@ -75,7 +75,7 @@
   <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
     <h1 class="text-2xl font-bold text-white">Form Editor</h1>
     <div class="flex space-x-4">
-      <a href="/sultan/forms/list" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Back</a>
+      <a href="/sultan/forms" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Back</a>
     </div>
   </div>
 
@@ -96,7 +96,7 @@
           if (!response.ok) {
             showNotification('Form not found', 'error');
             setTimeout(() => {
-              window.location.href = '/sultan/forms/list';
+              window.location.href = '/sultan/forms';
             }, 2000);
             return;
           }
@@ -104,7 +104,7 @@
         } catch (error) {
           console.error('Failed to load form:', error);
           showNotification('Form not found', 'error');
-          window.location.href = '/sultan/forms/list';
+          window.location.href = '/sultan/forms';
         }
       }
     },
