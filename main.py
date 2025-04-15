@@ -293,11 +293,11 @@ def api_acknowledge():
                     with open(file_path, 'r') as f:
                         issue = json.load(f)
                     
-                    # Add or update knowledgeEscalation array
-                    if 'knowledgeEscalation' not in issue:
-                        issue['knowledgeEscalation'] = []
+                    # Add or update acknowledgeEscalation array
+                    if 'acknowledgeEscalation' not in issue:
+                        issue['acknowledgeEscalation'] = []
                     
-                    issue['knowledgeEscalation'].append({
+                    issue['acknowledgeEscalation'].append({
                         'email': email,
                         'date': datetime.datetime.now().isoformat()
                     })
