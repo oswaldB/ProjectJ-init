@@ -42,10 +42,7 @@
     {% block head %}{% endblock %}
 </head>
 <body class="bg-gray-900 text-white">
-    <div class="min-h-screen flex" x-data="{ page: 'main', ...({
-  ...jaffar(),
-  {% block alpine_component %}{% endblock %}
-}) }">
+    <div class="min-h-screen flex" x-data="{ page: 'main', ...({% block alpine_component %}{% endblock %}) }">
         <!-- Sidebar -->
         <div class="w-64 min-h-screen bg-gray-800 fixed left-0 top-0">
             {% include 'sultan/menu.html' %}
