@@ -15,7 +15,62 @@
   forms: [],
   entities: [],
   locations: [],
-  filter: '',
+  globalFilter: '',
+  get entityGroups() {
+    return this.entities.reduce((groups, entity) => {
+      const letter = entity.charAt(0).toUpperCase();
+      const group = groups.find(g => g.letter === letter);
+      if (group) {
+        group.items.push(entity);
+      } else {
+        groups.push({ letter, items: [entity] });
+      }
+      return groups.sort((a, b) => a.letter.localeCompare(b.letter));
+    }, []);
+  },
+  get locationRegions() {
+    const regions = {
+      'Europe': ['France', 'Germany', 'UK', 'Spain', 'Italy', 'Switzerland'],
+      'Asia': ['China', 'Japan', 'Singapore', 'Hong Kong', 'India'],
+      'Americas': ['US', 'Mexico', 'Brazil', 'Argentina'],
+      'Middle East': ['UAE', 'Qatar', 'Kuwait', 'Saudi Arabia'],
+      'Africa': ['South Africa', 'Egypt', 'Morocco'],
+      'Oceania': ['Australia', 'New Zealand']
+    };
+    
+    return Object.entries(regions).map(([name, countries]) => ({
+      name,
+      items: this.locations.filter(loc => countries.some(c => loc.includes(c)))
+    })).filter(region => region.items.length > 0);
+  },
+  toggleEntityGroup(letter) {
+    const group = this.entityGroups.find(g => g.letter === letter);
+    if (!group) return;
+    
+    const allSelected = group.items.every(entity => this.site.entities?.includes(entity));
+    group.items.forEach(entity => {
+      if (allSelected) {
+        const index = this.site.entities.indexOf(entity);
+        if (index !== -1) this.site.entities.splice(index, 1);
+      } else if (!this.site.entities?.includes(entity)) {
+        this.site.entities.push(entity);
+      }
+    });
+  },
+  toggleLocationRegion(regionName) {
+    const region = this.locationRegions.find(r => r.name === regionName);
+    if (!region) return;
+    
+    const allSelected = region.items.every(loc => this.site.locations?.includes(loc));
+    region.items.forEach(location => {
+      if (allSelected) {
+        const index = this.site.locations.indexOf(location);
+        if (index !== -1) this.site.locations.splice(index, 1);
+      } else if (!this.site.locations?.includes(location)) {
+        this.site.locations.push(location);
+      }
+    });
+  },
   async init() {
     const id = window.location.pathname.split('/').pop();
     if (id === 'new') {
@@ -139,19 +194,45 @@
 
     <!-- Entities and Locations -->
     <div class="grid grid-cols-2 gap-6">
+      <!-- Global Search -->
+      <div class="col-span-2 mb-4">
+        <input type="text" 
+               x-model="globalFilter" 
+               placeholder="Search entities or locations..." 
+               class="w-full bg-gray-700 text-white p-3 rounded-lg border border-gray-600">
+      </div>
+
       <!-- Entities -->
       <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-        <h3 class="text-lg font-medium mb-4">Entities</h3>
-        <input type="text" x-model="filter" placeholder="Search entities..." class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 mb-4">
+        <div class="mb-4 flex justify-between items-center">
+          <h3 class="text-lg font-medium">Entities</h3>
+          <span class="text-sm text-gray-400" x-text="site.entities?.length + ' selected'"></span>
+        </div>
         
-        <div class="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
-          <template x-for="entity in entities" :key="entity">
-            <div x-show="!filter || entity.toLowerCase().includes(filter.toLowerCase())" class="flex items-center">
-              <input type="checkbox" 
-                     :checked="site.entities?.includes(entity)"
-                     @click="saveEntities(entity)"
-                     class="mr-2">
-              <span x-text="entity"></span>
+        <div class="space-y-4 max-h-[60vh] overflow-y-auto">
+          <!-- Group by first letter -->
+          <template x-for="group in entityGroups" :key="group.letter">
+            <div x-show="group.items.some(entity => !globalFilter || entity.toLowerCase().includes(globalFilter.toLowerCase()))"
+                 class="border-b border-gray-700 pb-2">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-sm font-medium text-gray-400" x-text="group.letter"></h4>
+                <button @click="toggleEntityGroup(group.letter)" 
+                        class="text-xs text-blue-400 hover:text-blue-300">
+                  Select All
+                </button>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <template x-for="entity in group.items" :key="entity">
+                  <div x-show="!globalFilter || entity.toLowerCase().includes(globalFilter.toLowerCase())" 
+                       class="flex items-center">
+                    <input type="checkbox" 
+                           :checked="site.entities?.includes(entity)"
+                           @click="saveEntities(entity)"
+                           class="mr-2">
+                    <span x-text="entity" class="text-sm"></span>
+                  </div>
+                </template>
+              </div>
             </div>
           </template>
         </div>
@@ -159,17 +240,35 @@
 
       <!-- Locations -->
       <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-        <h3 class="text-lg font-medium mb-4">Locations</h3>
-        <input type="text" x-model="filter" placeholder="Search locations..." class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 mb-4">
+        <div class="mb-4 flex justify-between items-center">
+          <h3 class="text-lg font-medium">Locations</h3>
+          <span class="text-sm text-gray-400" x-text="site.locations?.length + ' selected'"></span>
+        </div>
         
-        <div class="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
-          <template x-for="location in locations" :key="location">
-            <div x-show="!filter || location.toLowerCase().includes(filter.toLowerCase())" class="flex items-center">
-              <input type="checkbox" 
-                     :checked="site.locations?.includes(location)"
-                     @click="saveLocations(location)"
-                     class="mr-2">
-              <span x-text="location"></span>
+        <div class="space-y-4 max-h-[60vh] overflow-y-auto">
+          <!-- Group by region -->
+          <template x-for="region in locationRegions" :key="region.name">
+            <div x-show="region.items.some(loc => !globalFilter || loc.toLowerCase().includes(globalFilter.toLowerCase()))"
+                 class="border-b border-gray-700 pb-2">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-sm font-medium text-gray-400" x-text="region.name"></h4>
+                <button @click="toggleLocationRegion(region.name)" 
+                        class="text-xs text-blue-400 hover:text-blue-300">
+                  Select All
+                </button>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <template x-for="location in region.items" :key="location">
+                  <div x-show="!globalFilter || location.toLowerCase().includes(globalFilter.toLowerCase())" 
+                       class="flex items-center">
+                    <input type="checkbox" 
+                           :checked="site.locations?.includes(location)"
+                           @click="saveLocations(location)"
+                           class="mr-2">
+                    <span x-text="location" class="text-sm"></span>
+                  </div>
+                </template>
+              </div>
             </div>
           </template>
         </div>
