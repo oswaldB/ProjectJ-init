@@ -428,19 +428,10 @@ def api_forms_list():
 @app.route('/api/sultan/forms/<form_id>')
 def api_form_get(form_id):
     try:
-        status = request.args.get('status', 'draft')
-        # Get form from the correct path structure 
-        status_map = {
-            'DRAFT': 'draft',
-            'PROD': 'prod', 
-            'OLD VERSION': 'archive'
-        }
-        storage_status = status_map.get(status, 'draft')
-        
         if form_id.endswith('.json'):
-            key = f'sultan/configs/forms/{storage_status}/{form_id}'
+            key = f'sultan/configs/forms/draft/{form_id}'
         else:
-            key = f'sultan/configs/forms/{storage_status}/{form_id}.json'
+            key = f'sultan/configs/forms/draft/{form_id}.json'
             
         content = s3.get_object(
             Bucket=BUCKET_NAME,
