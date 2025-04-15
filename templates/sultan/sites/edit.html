@@ -79,8 +79,8 @@
           site: this.site
         })
       });
-      if (response.ok) {
-        window.location.href = '/sultan/sites';
+      if (!response.ok) {
+        console.error('Failed to save site');
       }
     } catch (error) {
       console.error('Failed to save site:', error);
