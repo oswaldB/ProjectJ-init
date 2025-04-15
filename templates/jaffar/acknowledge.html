@@ -13,11 +13,28 @@
     <div x-data="{ 
       email: localStorage.getItem('user_email') || '',
       issueId: new URLSearchParams(window.location.search).get('issueId') || '',
-      submitAcknowledge() {
-        console.log('Submitting acknowledge:', {
-          email: this.email,
-          issueId: this.issueId
-        });
+      async submitAcknowledge() {
+        try {
+          const response = await fetch('/api/acknowledge', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              email: this.email,
+              issueId: this.issueId
+            })
+          });
+          
+          if (response.ok) {
+            alert('Acknowledgment saved successfully');
+          } else {
+            alert('Error saving acknowledgment');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Error saving acknowledgment');
+        }
       }
     }">
         <div class="container mx-auto px-4 py-8">
