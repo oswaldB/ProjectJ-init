@@ -560,7 +560,7 @@
             </template>
 
             <template x-if="field.type === 'date'">
-              <input type="text" x-mask="9999/99/99" placeholder="YYYY/MM/DD" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+              <input type="date" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
             </template>
 
             <template x-if="field.type === 'list'">
