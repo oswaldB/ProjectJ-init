@@ -414,16 +414,6 @@
                   </button>
                 </div>
               </div>
-              
-              <!-- Display Selected Emails -->
-              <div class="col-span-3 mt-4" x-show="trigger.emailList?.length">
-                <label class="block text-sm font-medium text-gray-300 mb-2">Selected Emails:</label>
-                <div class="flex flex-wrap gap-2">
-                  <template x-for="email in trigger.emailList" :key="email">
-                    <span class="bg-gray-700 text-white px-3 py-1 rounded-full text-sm" x-text="email"></span>
-                  </template>
-                </div>
-              </div>
             </div>
           </div>
         </template>
