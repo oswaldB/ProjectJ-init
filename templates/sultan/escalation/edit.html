@@ -32,6 +32,7 @@
   locations: ['Location1', 'Location2', 'Location3'],
   sites: [],
   selectedDrawer: -1,
+  showNewSiteModal: false, // Added for the new modal
   filter: '',
   async init() {
     const id = window.location.pathname.split('/').pop();
@@ -151,6 +152,9 @@
             <input type="text" x-model="escalation.site.name" class="mt-1 flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600">
             <button @click="selectedDrawer = 0" class="mt-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
               Configure Site
+            </button>
+            <button @click="showNewSiteModal = true" class="mt-1 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+              New Site
             </button>
           </div>
         </div>
@@ -284,6 +288,19 @@
           </div>
         </template>
       </div>
+    </div>
+  </div>
+
+  <!-- New Site Modal -->
+  <div x-show="showNewSiteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+      <h2 class="text-xl font-semibold mb-4">Create New Site</h2>
+      <form>
+        <!-- Add site creation form fields here -->
+        <button @click="showNewSiteModal = false" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          Create
+        </button>
+      </form>
     </div>
   </div>
 </div>
