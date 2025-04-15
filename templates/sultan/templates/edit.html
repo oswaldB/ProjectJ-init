@@ -42,10 +42,11 @@
       const extract = (items, prefix = '') => {
         items.forEach(item => {
           if (item.key) {
+            const fullKey = prefix + item.key;
             fields.push({
-              key: prefix + item.key,
+              key: fullKey,
               label: item.label || item.key,
-              readyToUseVar: '{{' + prefix + item.key + '}}'
+              readyToUseVar: `{{${fullKey}}}`
             });
           }
           if (item.options) {
