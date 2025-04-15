@@ -117,7 +117,7 @@
 
     <!-- Templates Grid -->
     <div class="grid gap-4" x-show="!state.loading">
-      <template x-for="template in filteredTemplates()" :key="template.id">
+      <template x-for="template in filteredTemplates()">
         <div class="bg-gray-800 p-4 rounded-lg hover:bg-gray-750 transition">
           <div class="flex justify-between items-start">
             <div class="flex-1">
