@@ -322,14 +322,14 @@
                       <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-400">Email Input <span x-text="emailIndex + 1"></span></span>
                         <label class="relative inline-flex items-center cursor-pointer">
-                          <input type="checkbox" x-model="trigger.emailTypes" :value="emailIndex" class="sr-only peer">
+                          <input type="checkbox" x-model="trigger.emailType_[emailIndex]" class="sr-only peer">
                           <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
                           <span class="ms-3">Use Group</span>
                         </label>
                       </div>
                 
                 <!-- Individual Email Input -->
-                      <div x-show="!trigger.emailTypes?.includes(emailIndex)" class="space-y-2">
+                      <div x-show="!trigger.emailType_[emailIndex]" class="space-y-2">
                         <div class="flex space-x-2">
                           <input type="email" 
                                  x-model="trigger.tempEmails[emailIndex]" 
@@ -364,7 +364,7 @@
                       </div>
 
                       <!-- Email Group Selection -->
-                      <div x-show="trigger.emailTypes?.includes(emailIndex)" class="space-y-2">
+                      <div x-show="trigger.emailType_[emailIndex]" class="space-y-2">
                         <select x-model="trigger.selectedGroups[emailIndex]" 
                                 @change="loadEmailGroupDetails($event.target.value)" 
                                 class="w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
