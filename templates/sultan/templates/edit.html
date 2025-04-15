@@ -160,7 +160,11 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
               email: userEmail, 
-              template: { ...this.template, user_email: userEmail }
+              template: { 
+                ...this.template, 
+                user_email: userEmail,
+                formFields: this.formFields 
+              }
             })
           });
         } catch (error) {
