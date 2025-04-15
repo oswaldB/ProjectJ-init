@@ -334,16 +334,16 @@
                           <input type="email" 
                                  x-model="trigger.tempEmails[emailIndex]" 
                                  @keyup.enter="if(trigger.tempEmails[emailIndex]) { 
-                                   trigger.emailLists = trigger.emailLists || {}; 
-                                   trigger.emailLists[emailIndex] = trigger.emailLists[emailIndex] || [];
+                                   if(!trigger.emailLists) trigger.emailLists = {};
+                                   if(!trigger.emailLists[emailIndex]) trigger.emailLists[emailIndex] = [];
                                    trigger.emailLists[emailIndex].push(trigger.tempEmails[emailIndex]); 
                                    trigger.tempEmails[emailIndex] = ''; 
                                  }" 
                                  class="flex-1 bg-gray-600 text-white p-2 rounded border border-gray-600" 
                                  placeholder="Enter an email address">
                           <button @click="if(trigger.tempEmails[emailIndex]) { 
-                                    trigger.emailLists = trigger.emailLists || {}; 
-                                    trigger.emailLists[emailIndex] = trigger.emailLists[emailIndex] || [];
+                                    if(!trigger.emailLists) trigger.emailLists = {};
+                                    if(!trigger.emailLists[emailIndex]) trigger.emailLists[emailIndex] = [];
                                     trigger.emailLists[emailIndex].push(trigger.tempEmails[emailIndex]); 
                                     trigger.tempEmails[emailIndex] = ''; 
                                   }" 
