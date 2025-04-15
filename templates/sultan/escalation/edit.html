@@ -80,6 +80,18 @@
     await this.loadSites();
     await this.loadForms();
     await this.loadEmailGroups();
+    
+    this.$watch('escalation', async (value) => {
+      try {
+        await fetch('/api/sultan/escalation/save', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({escalation: value})
+        });
+      } catch (error) {
+        console.error('Failed to auto-save escalation:', error);
+      }
+    }, { deep: true });
   },
   async loadEmailGroups() {
     try {
