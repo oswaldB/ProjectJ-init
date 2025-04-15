@@ -4,6 +4,8 @@
 
 {% block alpine_component %}
 {
+  emailGroups: [],
+  selectedGroupEmails: [],
   escalation: {
     id: null,
     name: '',
@@ -52,6 +54,35 @@
     await this.loadTemplates();
     await this.loadSites();
     await this.loadForms();
+    await this.loadEmailGroups();
+  },
+  async loadEmailGroups() {
+    try {
+      const response = await fetch('/api/sultan/emailgroups/list');
+      this.emailGroups = await response.json();
+    } catch (error) {
+      console.error('Failed to load email groups:', error);
+      this.emailGroups = [];
+    }
+  },
+  async loadEmailGroupDetails(groupId) {
+    if (!groupId) {
+      this.selectedGroupEmails = [];
+      return;
+    }
+    try {
+      const response = await fetch(`/api/sultan/emailgroups/${groupId}`);
+      const group = await response.json();
+      this.selectedGroupEmails = group.emails || [];
+      // Update the trigger email field with the group's emails
+      const selectedTrigger = this.escalation.triggers.find(t => t.selectedGroup === groupId);
+      if (selectedTrigger) {
+        selectedTrigger.email = this.selectedGroupEmails.join(',');
+      }
+    } catch (error) {
+      console.error('Failed to load email group details:', error);
+      this.selectedGroupEmails = [];
+    }
   },
   async loadForms() {
     try {
@@ -284,11 +315,37 @@
                 <input type="text" x-model="trigger.value" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-300">Email</label>
-                <div class="flex space-x-2">
-                  <input type="email" x-model="trigger.email" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+                <label class="block text-sm font-medium text-gray-300">Email Configuration</label>
+                <div class="flex space-x-2 mb-2">
+                  <select x-model="trigger.emailType" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+                    <option value="manual">Manual Email Entry</option>
+                    <option value="group">Email Group</option>
+                  </select>
                 </div>
-                <span class="text-xs text-gray-400">You can add several emails, just put a "," as a separator</span>
+                
+                <!-- Manual Email Input -->
+                <div x-show="trigger.emailType === 'manual'" class="space-y-2">
+                  <input type="email" x-model="trigger.email" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600" placeholder="Enter email addresses">
+                  <span class="text-xs text-gray-400">You can add several emails, just put a "," as a separator</span>
+                </div>
+
+                <!-- Email Group Selection -->
+                <div x-show="trigger.emailType === 'group'" class="space-y-2">
+                  <select x-model="trigger.selectedGroup" @change="loadEmailGroupDetails($event.target.value)" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
+                    <option value="">Select an email group</option>
+                    <template x-for="group in emailGroups" :key="group.id">
+                      <option :value="group.id" x-text="group.name"></option>
+                    </template>
+                  </select>
+                  <div x-show="trigger.selectedGroup" class="mt-2 p-2 bg-gray-700 rounded">
+                    <div class="text-sm text-gray-300">Emails in group:</div>
+                    <div x-show="selectedGroupEmails.length" class="mt-1">
+                      <template x-for="email in selectedGroupEmails" :key="email">
+                        <div class="text-sm text-gray-400" x-text="email"></div>
+                      </template>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-300">When</label>
