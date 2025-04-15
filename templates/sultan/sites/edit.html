@@ -137,7 +137,7 @@
             <template x-for="entity in site.entities" :key="entity">
               <div class="bg-red-500 text-white px-3 py-1 rounded-full flex items-center gap-2">
                 <span x-text="entity"></span>
-                <button @click="saveEntities(entity)" class="hover:text-gray-200">×</button>
+                <button type="button" @click.prevent.stop="saveEntities(entity)" class="hover:text-gray-200">×</button>
               </div>
             </template>
           </div>
@@ -147,7 +147,7 @@
             <template x-for="location in site.locations" :key="location">
               <div class="bg-blue-500 text-white px-3 py-1 rounded-full flex items-center gap-2">
                 <span x-text="location"></span>
-                <button @click="saveLocations(location)" class="hover:text-gray-200">×</button>
+                <button type="button" @click.prevent.stop="saveLocations(location)" class="hover:text-gray-200">×</button>
               </div>
             </template>
           </div>
