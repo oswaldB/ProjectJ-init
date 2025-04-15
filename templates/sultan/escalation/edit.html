@@ -364,66 +364,33 @@
   </div>
   
   <!-- Content Layout -->
-  <div class="h-full">
+  <div class="flex h-full">
     <!-- Escalation List -->
-    <div class="p-4 space-y-4">
-      <template x-for="esc in escalations" :key="esc.id">
-        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-          <div class="flex flex-col space-y-4">
-            <!-- Header with actions -->
-            <div class="flex justify-between items-start">
-              <div @click="loadEscalation(esc.id)" class="flex-1 cursor-pointer">
-                <h3 class="text-lg font-semibold" x-text="esc.name || 'Unnamed Escalation'"></h3>
+    <div class="w-64 border-r border-gray-700 p-4 bg-gray-800 overflow-y-auto">
+      <div class="space-y-2">
+        <template x-for="esc in escalations" :key="esc.id">
+          <div class="p-2 rounded hover:bg-gray-700 cursor-pointer" :class="{'bg-gray-700': esc.id === escalation.id}">
+            <div class="flex justify-between items-center">
+              <div @click="loadEscalation(esc.id)" class="flex-1">
+                <span x-text="esc.name || 'Unnamed Escalation'" class="block text-sm"></span>
+                <span x-text="esc.level" class="text-xs text-gray-400"></span>
               </div>
-              <div class="flex space-x-2">
-                <button @click="duplicateEscalation(esc.id)" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div class="flex space-x-1">
+                <button @click="duplicateEscalation(esc.id)" class="text-blue-400 hover:text-blue-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
                   </svg>
-                  Duplicate
                 </button>
-                <button @click="deleteEscalation(esc.id)" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <button @click="deleteEscalation(esc.id)" class="text-red-400 hover:text-red-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  Delete
                 </button>
               </div>
             </div>
-            
-            <!-- Key Information -->
-            <div class="grid grid-cols-3 gap-4 text-sm">
-              <div>
-                <span class="text-gray-400">Level:</span>
-                <span class="ml-2 px-2 py-0.5 bg-gray-700 rounded" x-text="esc.level || 'Not set'"></span>
-              </div>
-              <div>
-                <span class="text-gray-400">Asset Class:</span>
-                <span class="ml-2" x-text="esc.assetClass || 'Not set'"></span>
-              </div>
-              <div>
-                <span class="text-gray-400">Site:</span>
-                <span class="ml-2" x-text="esc.site?.name || 'Not set'"></span>
-              </div>
-            </div>
-
-            <!-- Triggers Summary -->
-            <div class="text-sm">
-              <span class="text-gray-400">Triggers:</span>
-              <span class="ml-2" x-text="esc.triggers?.length || 0"></span>
-              <template x-if="esc.triggers?.length > 0">
-                <div class="mt-2 flex flex-wrap gap-2">
-                  <template x-for="trigger in esc.triggers" :key="trigger.issueFamily">
-                    <span class="px-2 py-1 bg-gray-700 rounded-full text-xs">
-                      <span x-text="trigger.issueFamily || 'Unknown'"></span>
-                    </span>
-                  </template>
-                </div>
-              </template>
-            </div>
           </div>
-        </div>
-      </template>
+        </template>
+      </div>
     </div>
 
   <!-- Main Content -->
