@@ -155,13 +155,11 @@
               class="bg-transparent text-sm font-medium px-3 py-1.5 rounded-full border"
               :class="{
                 'border-green-600 text-green-100': site.status === 'prod',
-                'border-gray-600 text-gray-100': site.status === 'dev',
                 'border-gray-600 text-gray-100': site.status === 'draft',
                 'border-yellow-600 text-yellow-100': site.status === 'old version'
               }"
             >
               <option value="draft">Draft</option>
-              <option value="dev">Dev</option>
               <option value="prod">Prod</option>
               <option value="old version">Old version</option>
             </select>
