@@ -327,11 +327,65 @@
                 <label class="block text-sm font-medium text-gray-300">Value</label>
                 <input type="text" x-model="trigger.value" class="mt-1 w-full bg-gray-600 text-white p-2 rounded border border-gray-600">
               </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-300">Email Configuration</label>
-                <button @click="selectedDrawer = 1; selectedTriggerIndex = index" class="mt-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                  Configure Emails
-                </button>
+              <div class="col-span-3">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Email Configuration</label>
+                <div class="space-y-4 bg-gray-800 p-4 rounded-lg">
+                  <!-- Individual Email Input -->
+                  <div class="space-y-2">
+                    <div class="flex space-x-2">
+                      <input type="email" 
+                             x-model="trigger.tempEmail" 
+                             @keyup.enter="if(trigger.tempEmail) { 
+                               if(!trigger.emailList) trigger.emailList = [];
+                               trigger.emailList.push(trigger.tempEmail); 
+                               trigger.tempEmail = ''; 
+                             }" 
+                             class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600" 
+                             placeholder="Enter an email address">
+                      <button @click="if(trigger.tempEmail) { 
+                                if(!trigger.emailList) trigger.emailList = [];
+                                trigger.emailList.push(trigger.tempEmail); 
+                                trigger.tempEmail = ''; 
+                              }" 
+                              class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                    <!-- Email Group Selection -->
+                    <div x-data="{ selectedGroup: '' }" class="flex space-x-2">
+                      <select x-model="selectedGroup"
+                              @change="if(selectedGroup) {
+                                const group = emailGroups.find(g => g.id === selectedGroup);
+                                if(group && group.emails) {
+                                  if(!trigger.emailList) trigger.emailList = [];
+                                  group.emails.forEach(email => {
+                                    if(!trigger.emailList.includes(email)) {
+                                      trigger.emailList.push(email);
+                                    }
+                                  });
+                                }
+                                selectedGroup = '';
+                              }"
+                              class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600">
+                        <option value="">Select an email group to import</option>
+                        <template x-for="group in emailGroups" :key="group.id">
+                          <option :value="group.id" x-text="group.name"></option>
+                        </template>
+                      </select>
+                    </div>
+                  </div>
+                  <!-- Display Selected Emails -->
+                  <div class="flex flex-wrap gap-2">
+                    <template x-for="(email, index) in (trigger.emailList || [])" :key="index">
+                      <div class="bg-gray-700 text-white px-3 py-1 rounded-full flex items-center gap-2">
+                        <span x-text="email"></span>
+                        <button @click="trigger.emailList.splice(index, 1)" class="hover:text-red-400">×</button>
+                      </div>
+                    </template>
+                  </div>
+                </div>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-300">When</label>
@@ -377,114 +431,7 @@
     </div>
   </div>
 
-  <!-- Email Configuration Drawer -->
-  <div x-show="selectedDrawer === 1" 
-       class="fixed inset-y-0 right-0 w-1/3 bg-gray-900 border-l border-gray-700 p-6 overflow-y-auto z-[9999]">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-xl font-semibold">Email Configuration</h2>
-      <button @click="selectedDrawer = -1" class="text-gray-400 hover:text-white">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-
-    <div class="space-y-6">
-      <div class="bg-gray-800 p-4 rounded-lg">
-
-          <div class="space-y-4">
-            <!-- Individual Email Input -->
-            <div class="space-y-2">
-              <label class="block text-sm font-medium text-gray-300">Add Individual Emails</label>
-              <div class="flex space-x-2">
-                <input type="email" 
-                       x-model="escalation.triggers[selectedTriggerIndex].tempEmail" 
-                       @keyup.enter="if(escalation.triggers[selectedTriggerIndex].tempEmail) { 
-                         if(!escalation.triggers[selectedTriggerIndex].emailList) escalation.triggers[selectedTriggerIndex].emailList = [];
-                         escalation.triggers[selectedTriggerIndex].emailList.push(escalation.triggers[selectedTriggerIndex].tempEmail); 
-                         escalation.triggers[selectedTriggerIndex].tempEmail = ''; 
-                       }" 
-                       class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600" 
-                       placeholder="Enter an email address">
-                <button @click="if(escalation.triggers[selectedTriggerIndex].tempEmail) { 
-                          if(!escalation.triggers[selectedTriggerIndex].emailList) escalation.triggers[selectedTriggerIndex].emailList = [];
-                          escalation.triggers[selectedTriggerIndex].emailList.push(escalation.triggers[selectedTriggerIndex].tempEmail); 
-                          escalation.triggers[selectedTriggerIndex].tempEmail = ''; 
-                        }" 
-                        class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-              <div class="flex flex-wrap gap-2">
-                <template x-for="(email, index) in (escalation.triggers[selectedTriggerIndex].emailList || [])" :key="index">
-                  <div class="bg-gray-700 text-white px-3 py-1 rounded-full flex items-center gap-2">
-                    <span x-text="email"></span>
-                    <button @click="escalation.triggers[selectedTriggerIndex].emailList.splice(index, 1)" class="hover:text-red-400">×</button>
-                  </div>
-                </template>
-              </div>
-            </div>
-
-            <!-- Email Group Selection -->
-            <div class="space-y-2">
-              <label class="block text-sm font-medium text-gray-300">Import from Email Group</label>
-              <div x-data="{ selectedGroup: '', newGroupName: '' }" class="space-y-2">
-                <select x-model="selectedGroup"
-                        @change="if(selectedGroup) {
-                          const group = emailGroups.find(g => g.id === selectedGroup);
-                          if(group && group.emails) {
-                            if(!escalation.triggers[selectedTriggerIndex].emailList) escalation.triggers[selectedTriggerIndex].emailList = [];
-                            group.emails.forEach(email => {
-                              if(!escalation.triggers[selectedTriggerIndex].emailList.includes(email)) {
-                                escalation.triggers[selectedTriggerIndex].emailList.push(email);
-                              }
-                            });
-                          }
-                          selectedGroup = '';
-                        }"
-                        class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-                  <option value="">Select an email group to import</option>
-                  <template x-for="group in emailGroups" :key="group.id">
-                    <option :value="group.id" x-text="group.name"></option>
-                  </template>
-                </select>
-
-                <!-- Save as Email Group Button -->
-                <div class="mt-4 flex space-x-2">
-                  <input type="text" 
-                         x-model="newGroupName" 
-                         placeholder="New group name" 
-                         class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600">
-                  <button @click="if(newGroupName && escalation.triggers[selectedTriggerIndex].emailList?.length) {
-                            const newGroup = {
-                              id: `emailgroups-${Date.now()}`,
-                              name: newGroupName,
-                              description: `Created from escalation ${escalation.name}`,
-                              emails: escalation.triggers[selectedTriggerIndex].emailList,
-                              status: 'draft'
-                            };
-                            fetch('/api/sultan/emailgroups/save', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ emailgroup: newGroup })
-                            }).then(() => {
-                              newGroupName = '';
-                              loadEmailGroups();
-                              alert('Email group created successfully!');
-                            });
-                          }" 
-                          class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                    Save as Group
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-    </div>
-  </div>
+  
 
   <!-- Site Configuration Drawer -->
   <div x-show="selectedDrawer === 0" 
