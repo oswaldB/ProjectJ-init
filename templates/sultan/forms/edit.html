@@ -145,7 +145,6 @@
           <option value="Old version">Old version</option>
         </select>
         <button @click="saveForm()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Save</button>
-        <button @click="preview = !preview" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600" x-text="preview ? 'Hide Preview' : 'Show Preview'"></button>
       </div>
     </div>
 
@@ -405,7 +404,7 @@
   </div>
 
   <!-- Preview -->
-  <div class="w-1/2" x-show="preview">
+  <div class="w-1/2">
     <h2 class="text-xl font-bold mb-6 text-white">Preview</h2>
     <div class="bg-gray-800 p-6 rounded-lg border border-gray-600">
       <h3 class="text-xl font-bold text-white mb-4" x-text="form.name"></h3>
