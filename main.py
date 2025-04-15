@@ -431,9 +431,9 @@ def api_form_get(form_id):
         status = request.args.get('status', 'draft')
         # Get form from the correct path structure 
         status_map = {
-            'Draft': 'draft',
-            'Prod': 'prod', 
-            'Old version': 'archive'
+            'DRAFT': 'draft',
+            'PROD': 'prod', 
+            'OLD VERSION': 'archive'
         }
         storage_status = status_map.get(status, 'draft')
         

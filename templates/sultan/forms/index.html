@@ -9,6 +9,7 @@
     forms: [],
     searchQuery: '',
     statuses: ['Draft', 'Prod', 'Old version'],
+    statuses: ['DRAFT', 'PROD', 'OLD VERSION'],
     filteredForms() {
       return this.forms.filter(form => 
         form.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
