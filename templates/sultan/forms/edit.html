@@ -276,7 +276,23 @@
                       <button @click="field.options = field.options || []; field.options.push({name: '', show: '', questions: []})" class="text-blue-400 hover:text-blue-300">Add Option</button>
                       <template x-for="(option, optIndex) in field.options" :key="optIndex">
                         <div class="p-2 border border-gray-600 rounded">
-                          <div class="flex space-x-2">
+                          <div class="flex space-x-2 items-center">
+                            <div class="flex flex-col space-y-1">
+                              <button @click="if(optIndex > 0) { const items = [...field.options]; const item = items[optIndex]; items.splice(optIndex, 1); items.splice(optIndex - 1, 0, item); field.options = items; }"
+                                      class="text-gray-400 hover:text-white"
+                                      :class="{ 'opacity-50 cursor-not-allowed': optIndex === 0 }">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                                </svg>
+                              </button>
+                              <button @click="if(optIndex < field.options.length - 1) { const items = [...field.options]; const item = items[optIndex]; items.splice(optIndex, 1); items.splice(optIndex + 1, 0, item); field.options = items; }"
+                                      class="text-gray-400 hover:text-white"
+                                      :class="{ 'opacity-50 cursor-not-allowed': optIndex === field.options.length - 1 }">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                              </button>
+                            </div>
                             <input type="text" x-model="option.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
                             <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
                           </div>
