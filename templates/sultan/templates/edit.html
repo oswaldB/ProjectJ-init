@@ -184,15 +184,18 @@
 {% endblock %}
 
 {% block content %}
-<div class="p-6">
-  <!-- Editor -->
-  <div class="w-full">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-white">Email Template Editor</h1>
-      <div>
-        <span class="text-gray-400 text-sm">Changes are saved automatically</span>
-      </div>
+<div class="h-screen bg-gray-900 text-white">
+  <!-- Top Bar -->
+  <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
+    <h1 class="text-2xl font-bold text-white">Email Template Editor</h1>
+    <div class="flex space-x-4">
+      <a href="/sultan/templates" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Back</a>
     </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="p-6">
+    <div class="w-full">
 
     <div class="space-y-4">
       <input type="text" x-model.debounce.500ms="template.name" @input="saveTemplate()" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Template Name">
