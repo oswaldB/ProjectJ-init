@@ -6,6 +6,7 @@
 {
   emailGroups: [],
   selectedGroupEmails: [],
+  selectedForm: '',
   escalation: {
     id: null,
     name: '',
@@ -363,50 +364,37 @@
     </div>
   </div>
   
-  <!-- Content Layout -->
-  <div class="flex h-full">
-    <!-- Escalation List -->
-    <div class="w-64 border-r border-gray-700 p-4 bg-gray-800 overflow-y-auto">
-      <div class="space-y-2">
-        <template x-for="esc in escalations" :key="esc.id">
-          <div class="p-2 rounded hover:bg-gray-700 cursor-pointer" :class="{'bg-gray-700': esc.id === escalation.id}">
-            <div class="flex justify-between items-center">
-              <div @click="loadEscalation(esc.id)" class="flex-1">
-                <span x-text="esc.name || 'Unnamed Escalation'" class="block text-sm"></span>
-                <span x-text="esc.level" class="text-xs text-gray-400"></span>
-              </div>
-              <div class="flex space-x-1">
-                <button @click="duplicateEscalation(esc.id)" class="text-blue-400 hover:text-blue-300">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                  </svg>
-                </button>
-                <button @click="deleteEscalation(esc.id)" class="text-red-400 hover:text-red-300">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
+  <!-- Form Selection -->
+  <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">Global Form Selection</label>
+      <select x-model="selectedForm" @change="loadFormData($event.target.value); escalations.forEach(esc => esc.form = $event.target.value)" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+        <option value="">Select a form for all escalations</option>
+        <template x-for="form in forms.filter(f => f.status === 'PROD')" :key="form.id">
+          <option :value="form.id" x-text="form.name"></option>
         </template>
-      </div>
+      </select>
+    </div>
+  </div>
+
+  <!-- Content Layout -->
+  <div class="space-y-6">
+    <!-- Navigation Links -->
+    <div class="flex flex-wrap gap-4 mb-4">
+      <template x-for="esc in escalations" :key="esc.id">
+        <a :href="'#' + esc.id" 
+           class="px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
+           :class="{'ring-2 ring-red-500': esc.id === escalation.id}">
+          <span x-text="esc.name || 'Unnamed Escalation'" class="text-sm"></span>
+          <span x-text="esc.level" class="text-xs text-gray-400 ml-2"></span>
+        </a>
+      </template>
     </div>
 
-  <!-- Main Content -->
-  <div class="p-4 space-y-3">
-    <!-- Form Selection -->
-    <div class="bg-gray-800 p-2 rounded-lg border border-gray-700 mb-2">
-      <div>
-        <label class="block text-xs font-medium text-gray-300">Form</label>
-        <select x-model="escalation.form" @change="loadFormData($event.target.value)" class="mt-0.5 w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-sm">
-          <option value="">Select a form</option>
-          <template x-for="form in forms.filter(f => f.status === 'PROD')" :key="form.id">
-            <option :value="form.id" x-text="form.name"></option>
-          </template>
-        </select>
-      </div>
-    </div>
+    <!-- Escalations List -->
+    <div class="space-y-8">
+      <template x-for="esc in escalations" :key="esc.id">
+        <div :id="esc.id" class="bg-gray-800 p-4 rounded-lg border border-gray-700">
 
     <!-- Basic Info -->
     <div class="bg-gray-800 p-2 rounded-lg border border-gray-700">
