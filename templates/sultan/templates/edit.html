@@ -191,7 +191,7 @@
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-300">Email Subject</label>
         <div class="relative">
-          <input type="text" x-model.debounce.500ms="template.subject" @input="saveTemplate()" @focus="currentFocus='subject'" x-ref="subject"
+          <input type="text" x-model.debounce="template.subject" @input="saveTemplate()" @focus="currentFocus='subject'" x-ref="subject"
                  class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Sujet de l'email">
         </div>
       </div>
