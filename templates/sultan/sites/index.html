@@ -8,13 +8,58 @@
     page: 'sites-list',
     sites: [],
     searchQuery: '',
+    showNewSiteModal: false,
+    newSite: {
+      id: null,
+      name: '',
+      form: '',
+      status: 'draft',
+      entities: [],
+      locations: []
+    },
+    forms: [],
     async init() {
       try {
         const response = await fetch('/api/sultan/sites/list');
         this.sites = await response.json();
+        await this.loadForms();
       } catch (error) {
         console.error('Failed to load sites:', error);
         this.sites = [];
+      }
+    },
+    async loadForms() {
+      try {
+        const response = await fetch('/api/sultan/forms/list');
+        this.forms = await response.json();
+      } catch (error) {
+        console.error('Failed to load forms:', error);
+      }
+    },
+    createNewSite() {
+      this.newSite = {
+        id: `sites-${Date.now()}`,
+        name: '',
+        form: '',
+        status: 'draft',
+        entities: [],
+        locations: []
+      };
+      this.showNewSiteModal = true;
+    },
+    async saveSite() {
+      try {
+        const response = await fetch('/api/sultan/sites/save', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({site: this.newSite})
+        });
+        if (response.ok) {
+          this.showNewSiteModal = false;
+          this.sites.push(this.newSite);
+        }
+      } catch (error) {
+        console.error('Failed to save site:', error);
       }
     }
   }
@@ -34,7 +79,49 @@
           class="w-full bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-red-500"
         >
       </div>
-      <a href="/sultan/sites/edit/new" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">New Site</a>
+      <button @click="createNewSite()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">New Site</button>
+    </div>
+
+    <!-- New Site Modal -->
+    <div x-show="showNewSiteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <div class="bg-gray-800 p-6 rounded-lg w-1/2">
+        <h2 class="text-xl font-bold mb-4">Create New Site</h2>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300">Site Name</label>
+            <input type="text" x-model="newSite.name" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300">Form</label>
+            <select x-model="newSite.form" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+              <option value="">Select a form</option>
+              <template x-for="form in forms" :key="form.id">
+                <option :value="form.id" x-text="form.name"></option>
+              </template>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300">Status</label>
+            <select x-model="newSite.status" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+              <option value="draft">Draft</option>
+              <option value="prod">Prod</option>
+              <option value="old version">Old version</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-end space-x-3">
+          <button @click="showNewSiteModal = false" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+            Cancel
+          </button>
+          <button @click="saveSite()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+            Create Site
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="overflow-x-auto">
