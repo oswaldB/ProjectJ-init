@@ -52,11 +52,10 @@
         if (!userEmail) return;
 
         try {
-          await fetch('/api/sultan/emailgroups/save', {
+          const response = await fetch('/api/sultan/emailgroups/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-              email: userEmail, 
               emailgroup: {
                 ...this.emailgroup,
                 user_email: userEmail,
@@ -64,8 +63,13 @@
               }
             })
           });
+
+          if (!response.ok) {
+            throw new Error('Failed to save email group');
+          }
         } catch (error) {
           console.error('Failed to save email group:', error);
+          alert('Failed to save email group');
         }
       }, 500);
     }

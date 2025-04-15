@@ -8,14 +8,34 @@
     page: 'emailgroups-list',
     emailgroups: [],
     searchQuery: '',
+    filteredGroups() {
+      return this.emailgroups.filter(group => 
+        group.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        group.description?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        group.id?.toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
+    },
     async init() {
       const userEmail = localStorage.getItem('user_email');
       try {
-        const response = await fetch(`/api/sultan/emailgroups/list?email=${userEmail}`);
+        const response = await fetch('/api/sultan/emailgroups/list');
         this.emailgroups = await response.json();
       } catch (error) {
         console.error('Failed to load email groups:', error);
         this.emailgroups = [];
+      }
+    },
+    async deleteGroup(groupId) {
+      if (!confirm('Are you sure you want to delete this email group?')) return;
+      try {
+        const response = await fetch(`/api/sultan/emailgroups/${groupId}`, {
+          method: 'DELETE'
+        });
+        if (response.ok) {
+          this.emailgroups = this.emailgroups.filter(group => group.id !== groupId);
+        }
+      } catch (error) {
+        console.error('Failed to delete email group:', error);
       }
     }
   }
@@ -49,7 +69,7 @@
           </tr>
         </thead>
         <tbody>
-          <template x-for="group in emailgroups" :key="group.id">
+          <template x-for="group in filteredGroups()" :key="group.id">
             <tr class="border-b border-gray-700 hover:bg-gray-800">
               <td class="px-4 py-2" x-text="group.name"></td>
               <td class="px-4 py-2" x-text="group.description"></td>
