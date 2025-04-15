@@ -16,7 +16,8 @@
         const userEmail = localStorage.getItem('user_email');
         try {
           const isFilename = formId.endsWith('.json');
-          const response = await fetch(`/api/sultan/forms/${formId}?email=${userEmail}`);
+          const status = this.form.status || 'Draft';
+          const response = await fetch(`/api/sultan/forms/${formId}?email=${userEmail}&status=${status}`);
           const data = await response.json();
           if (!response.ok) {
             showNotification('Form not found', 'error');
