@@ -589,7 +589,8 @@ def api_form_save():
         return jsonify({"error": "Failed to save form"}), 500
 
 
-@app.route('/api/sultan/templates/list')
+@app.route('/api/sultan/templates')
+@app.route('/api/sultan/templates/list')  # Keep old route for backward compatibility
 def api_templates_list():
     templates = []
     prefix = 'sultan/templates/'
