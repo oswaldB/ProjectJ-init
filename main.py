@@ -385,28 +385,31 @@ def template_edit(template_id):
 @app.route('/api/sultan/forms/list')
 def api_forms_list():
     forms = []
-    draft_prefix = 'sultan/configs/forms/draft/'
+    draft_prefix = 'sultan/configs/forms/'
 
     try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=draft_prefix)
-        for obj in response.get('Contents', []):
-            try:
-                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                content = response['Body'].read().decode('utf-8')
-                form = json.loads(content)
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=draft_prefix, Delimiter='/')
+        for prefix in response.get('CommonPrefixes', []):
+            subfolder_prefix = prefix.get('Prefix')
+            subfolder_response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=subfolder_prefix)
+            for obj in subfolder_response.get('Contents', []):
+                try:
+                    response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                    content = response['Body'].read().decode('utf-8')
+                    form = json.loads(content)
 
-                # Add status if not present
-                if 'status' not in form:
-                    form['status'] = 'Draft'
+                    # Add status if not present
+                    if 'status' not in form:
+                        form['status'] = 'Draft'
 
-                # Add last_modified if not present
-                metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                if 'last_modified' not in form:
-                    form['last_modified'] = metadata['LastModified']
+                    # Add last_modified if not present
+                    metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                    if 'last_modified' not in form:
+                        form['last_modified'] = metadata['LastModified']
 
-                forms.append(form)
-            except Exception as e:
-                logger.error(f"Failed to load form {obj['Key']}: {e}")
+                    forms.append(form)
+                except Exception as e:
+                    logger.error(f"Failed to load form {obj['Key']}: {e}")
     except Exception as e:
         logger.error(f"Failed to list forms: {e}")
         return jsonify({"error": str(e)}), 500
