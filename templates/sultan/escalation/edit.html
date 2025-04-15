@@ -296,6 +296,15 @@
           <input type="text" x-model="escalation.name" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
         </div>
         <div>
+          <label class="block text-sm font-medium text-gray-300">Form</label>
+          <select x-model="escalation.form" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+            <option value="">Select a form</option>
+            <template x-for="form in forms.filter(f => f.status === 'PROD')" :key="form.id">
+              <option :value="form.id" x-text="form.name"></option>
+            </template>
+          </select>
+        </div>
+        <div>
           <label class="block text-sm font-medium text-gray-300">Level</label>
           <select x-model="escalation.level" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
             <option>L1</option>
