@@ -476,15 +476,18 @@ def api_form_save():
         status_dir = status_map.get(status, 'draft')
         new_form_path = f'sultan/configs/forms/{status_dir}/{form["id"]}.json'
 
+        # Update form status in JSON
+        form['status'] = status
+
         # Delete form from old status location if exists
-        for old_status in ['draft', 'dev', 'prod', 'archive']:
+        for old_status in ['draft', 'prod', 'archive']:
             old_path = f'sultan/configs/forms/{old_status}/{form["id"]}.json'
             try:
                 delete(old_path)
             except:
                 pass
 
-        # Save form in new status location
+        # Save updated form in new status location
         save_in_global_db(new_form_path, form)
 
         return jsonify({"status": "success"})
