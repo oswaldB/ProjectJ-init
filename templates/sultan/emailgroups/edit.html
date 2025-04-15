@@ -11,9 +11,11 @@
       name: '',
       description: '',
       emails: [],
+      emailGroups: [],
       status: 'draft'
     },
     newEmail: '',
+    newEmailGroup: '',
     debouncedSave: null,
     async init() {
       const groupId = window.location.pathname.split('/').pop();
@@ -38,6 +40,17 @@
     },
     removeEmail(email) {
       this.emailgroup.emails = this.emailgroup.emails.filter(e => e !== email);
+      this.saveEmailGroup();
+    },
+    addEmailGroup() {
+      if (this.newEmailGroup && !this.emailgroup.emailGroups.includes(this.newEmailGroup)) {
+        this.emailgroup.emailGroups.push(this.newEmailGroup);
+        this.newEmailGroup = '';
+        this.saveEmailGroup();
+      }
+    },
+    removeEmailGroup(group) {
+      this.emailgroup.emailGroups = this.emailgroup.emailGroups.filter(g => g !== group);
       this.saveEmailGroup();
     },
     async saveEmailGroup() {
@@ -135,36 +148,74 @@
         </select>
       </div>
 
-      <!-- Email List -->
-      <div class="space-y-4">
-        <div class="flex space-x-2">
-          <input 
-            type="email" 
-            x-model="newEmail"
-            @keyup.enter="addEmail()"
-            class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" 
-            placeholder="Add email address"
-          >
-          <button 
-            @click="addEmail()"
-            class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-          >
-            Add
-          </button>
+      <!-- Email Groups and Individual Emails -->
+      <div class="space-y-6">
+        <!-- Email Groups Section -->
+        <div class="space-y-4">
+          <h3 class="text-lg font-medium text-white">Email Groups</h3>
+          <div class="flex space-x-2">
+            <input 
+              type="text" 
+              x-model="newEmailGroup"
+              @keyup.enter="addEmailGroup()"
+              class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" 
+              placeholder="Add email group (e.g. PC-Support)"
+            >
+            <button 
+              @click="addEmailGroup()"
+              class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            >
+              Add Group
+            </button>
+          </div>
+
+          <div class="space-y-2">
+            <template x-for="group in emailgroup.emailGroups" :key="group">
+              <div class="flex justify-between items-center bg-gray-800 p-2 rounded">
+                <span x-text="group" class="text-white"></span>
+                <button 
+                  @click="removeEmailGroup(group)"
+                  class="text-red-500 hover:text-red-600"
+                >
+                  Remove
+                </button>
+              </div>
+            </template>
+          </div>
         </div>
 
-        <div class="space-y-2">
-          <template x-for="email in emailgroup.emails" :key="email">
-            <div class="flex justify-between items-center bg-gray-800 p-2 rounded">
-              <span x-text="email" class="text-white"></span>
-              <button 
-                @click="removeEmail(email)"
-                class="text-red-500 hover:text-red-600"
-              >
-                Remove
-              </button>
-            </div>
-          </template>
+        <!-- Individual Emails Section -->
+        <div class="space-y-4">
+          <h3 class="text-lg font-medium text-white">Individual Emails</h3>
+          <div class="flex space-x-2">
+            <input 
+              type="email" 
+              x-model="newEmail"
+              @keyup.enter="addEmail()"
+              class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" 
+              placeholder="Add individual email address"
+            >
+            <button 
+              @click="addEmail()"
+              class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            >
+              Add Email
+            </button>
+          </div>
+
+          <div class="space-y-2">
+            <template x-for="email in emailgroup.emails" :key="email">
+              <div class="flex justify-between items-center bg-gray-800 p-2 rounded">
+                <span x-text="email" class="text-white"></span>
+                <button 
+                  @click="removeEmail(email)"
+                  class="text-red-500 hover:text-red-600"
+                >
+                  Remove
+                </button>
+              </div>
+            </template>
+          </div>
         </div>
       </div>
     </div>
