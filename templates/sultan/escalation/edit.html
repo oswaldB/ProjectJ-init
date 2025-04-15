@@ -6,26 +6,25 @@
 {
   emailGroups: [],
   selectedGroupEmails: [],
-  selectedForm: '',
-  escalations: [],
-  async init() {
-    this.escalations.push({
-      id: `escalation-${Date.now()}`,
+  escalation: {
+    id: null,
+    name: '',
+    level: '',
+    email: '',
+    assetClass: '',
+    site: {
       name: '',
-      level: 'L1',
-      assetClass: '',
-      site: {
-        name: '',
-        entities: [],
-        locations: []
-      },
-      form: '',
-      triggers: []
-    });
-    await this.loadTemplates();
-    await this.loadSites();
-    await this.loadForms();
-    await this.loadEmailGroups();
+      entities: [],
+      locations: []
+    },
+    triggers: [{
+      issueFamily: '',
+      comparisonKey: '',
+      operator: '',
+      value: '',
+      when: '',
+      template: ''
+    }]
   },
   templates: [],
   issuesFamilies: ['Valuation', 'Data Quality', 'System', 'Process', 'People'],
@@ -67,6 +66,18 @@
     locations: []
   },
   filter: '',
+  async init() {
+    const id = window.location.pathname.split('/').pop();
+    if (id === 'new') {
+      this.escalation.id = `escalation-${Date.now()}`;
+    } else {
+      await this.loadEscalation(id);
+    }
+    await this.loadTemplates();
+    await this.loadSites();
+    await this.loadForms();
+    await this.loadEmailGroups();
+  },
   async loadEmailGroups() {
     try {
       const response = await fetch('/api/sultan/emailgroups/list');
@@ -671,7 +682,7 @@
 
   <!-- New Email Group Modal -->
   <div x-show="showNewGroupModal" 
-       class="fixed inset0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
     <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-2/3 max-w-2xl">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-xl font-semibold text-white">Create New Email Group</h2>
