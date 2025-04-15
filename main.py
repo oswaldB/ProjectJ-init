@@ -468,10 +468,9 @@ def api_form_save():
 
         # Determine new path based on status
         status_map = {
-            'Dev': 'dev',
+            'Draft': 'draft',
             'Prod': 'prod',
-            'Old version': 'archive',
-            'Draft': 'draft'
+            'Old version': 'archive'
         }
         
         status_dir = status_map.get(status, 'draft')
