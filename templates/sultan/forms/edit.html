@@ -101,7 +101,10 @@
             <div class="flex justify-between items-center mb-2">
               <div class="flex items-center space-x-4">
                 <button @click="toggleField(index)" class="text-blue-400 hover:text-blue-300" x-text="field.open ? 'Close' : 'Open'"></button>
-                <span class="text-white font-medium" x-text="field.label || 'Nouvelle question'"></span>
+                <div class="flex flex-col">
+                  <span class="text-white font-medium" x-text="field.label || 'Nouvelle question'"></span>
+                  <span class="text-gray-400 text-xs" x-text="field.key || ''"></span>
+                </div>
               </div>
               <button @click="form.fields.splice(index, 1)" class="text-red-400 hover:text-red-300">Remove</button>
             </div>
