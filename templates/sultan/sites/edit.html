@@ -36,6 +36,7 @@
     try {
       const response = await fetch(`/api/sultan/sites/${id}`);
       this.site = await response.json();
+      await this.loadForms();
       if (this.site.form) {
         await this.loadFormData(this.site.form);
       }
