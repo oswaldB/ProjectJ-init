@@ -415,6 +415,39 @@ def api_escalation_get(escalation_id):
         logger.error(f"Failed to load escalation {escalation_id}: {e}")
         return jsonify({"error": "Escalation not found"}), 404
 
+@app.route('/api/sultan/escalation/duplicate', methods=['POST'])
+def api_escalation_duplicate():
+    data = request.json
+    escalation_id = data.get('id')
+    
+    try:
+        # Get original escalation
+        escalation = get_one_from_global_db(f'sultan/configs/draft/escalations/{escalation_id}.json')
+        
+        # Create new escalation with unique ID
+        import uuid
+        new_escalation = escalation.copy()
+        new_escalation['id'] = f'escalation-{str(uuid.uuid4())}'
+        new_escalation['name'] = f'{escalation["name"]} (Copy)'
+        
+        # Save new escalation
+        save_in_global_db(f'sultan/configs/draft/escalations/{new_escalation["id"]}.json', new_escalation)
+        
+        return jsonify(new_escalation)
+    except Exception as e:
+        logger.error(f"Failed to duplicate escalation: {e}")
+        return jsonify({"error": "Failed to duplicate escalation"}), 500
+
+@app.route('/api/sultan/escalation/delete/<escalation_id>', methods=['DELETE'])
+def api_escalation_delete(escalation_id):
+    try:
+        key = f'sultan/configs/draft/escalations/{escalation_id}.json'
+        delete(key)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to delete escalation: {e}")
+        return jsonify({"error": "Failed to delete escalation"}), 500
+
 @app.route('/api/sultan/escalation/save', methods=['POST'])
 def api_escalation_save():
     data = request.json
