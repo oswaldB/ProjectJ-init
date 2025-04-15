@@ -37,6 +37,28 @@
       } catch (error) {
         console.error('Failed to delete email group:', error);
       }
+    },
+    async updateGroupStatus(group) {
+      const userEmail = localStorage.getItem('user_email');
+      try {
+        const response = await fetch('/api/sultan/emailgroups/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            emailgroup: {
+              ...group,
+              user_email: userEmail,
+              modified: new Date().toISOString()
+            }
+          })
+        });
+        if (!response.ok) {
+          throw new Error('Failed to update email group status');
+        }
+      } catch (error) {
+        console.error('Failed to update email group status:', error);
+        alert('Failed to update email group status');
+      }
     }
   }
 {% endblock %}
@@ -65,6 +87,7 @@
             <th class="px-4 py-2 text-left">Name</th>
             <th class="px-4 py-2 text-left">Description</th>
             <th class="px-4 py-2 text-left">Emails</th>
+            <th class="px-4 py-2 text-left">Status</th>
             <th class="px-4 py-2 text-left">Modified</th>
             <th class="px-4 py-2 text-left">Actions</th>
           </tr>
@@ -81,11 +104,27 @@
                   </template>
                 </div>
               </td>
+              <td class="px-4 py-2">
+                <select 
+                  x-model="group.status" 
+                  @change="updateGroupStatus(group)"
+                  class="bg-transparent text-sm font-medium px-3 py-1.5 rounded-full border"
+                  :class="{
+                    'border-green-600 text-green-100': group.status === 'prod',
+                    'border-gray-600 text-gray-100': group.status === 'draft',
+                    'border-yellow-600 text-yellow-100': group.status === 'old version'
+                  }"
+                >
+                  <option value="draft">Draft</option>
+                  <option value="prod">Prod</option>
+                  <option value="old version">Old version</option>
+                </select>
+              </td>
               <td class="px-4 py-2" x-text="new Date(group.modified).toLocaleString()"></td>
               <td class="px-4 py-2">
                 <div class="flex space-x-2">
                   <a :href="'/sultan/emailgroups/edit/' + group.id" class="text-blue-400 hover:text-blue-300">Edit</a>
-                  <button class="text-red-400 hover:text-red-300">Delete</button>
+                  <button class="text-red-400 hover:text-red-300" @click="deleteGroup(group.id)">Delete</button>
                 </div>
               </td>
             </tr>
