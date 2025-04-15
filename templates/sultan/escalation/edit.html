@@ -280,6 +280,7 @@
                   value:'',
                   when:'',
                   template:'',
+                  status: 'draft',
                   emailType_: [false, false, false],
                   tempEmails: [],
                   emailLists: {},
@@ -382,6 +383,24 @@
       <div class="bg-gray-800 p-4 rounded-lg">
 
           <div class="space-y-4">
+            <!-- Status Toggle -->
+            <div class="flex items-center justify-between mb-4">
+              <label class="text-sm font-medium text-gray-300">Status</label>
+              <select 
+                x-model="escalation.triggers[selectedTriggerIndex].status" 
+                class="bg-transparent text-sm font-medium px-3 py-1.5 rounded-full border"
+                :class="{
+                  'border-green-600 text-green-100': escalation.triggers[selectedTriggerIndex].status === 'prod',
+                  'border-gray-600 text-gray-100': escalation.triggers[selectedTriggerIndex].status === 'draft',
+                  'border-yellow-600 text-yellow-100': escalation.triggers[selectedTriggerIndex].status === 'old version'
+                }"
+              >
+                <option value="draft">Draft</option>
+                <option value="prod">Prod</option>
+                <option value="old version">Old version</option>
+              </select>
+            </div>
+
             <!-- Individual Email Input -->
             <div class="space-y-2">
               <label class="block text-sm font-medium text-gray-300">Add Individual Emails</label>
