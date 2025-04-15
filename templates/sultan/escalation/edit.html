@@ -390,57 +390,70 @@
             </label>
           </div>
 
-          <!-- Individual Email Input -->
-          <div x-show="!escalation.triggers[selectedTriggerIndex].emailType_[emailIndex]" class="space-y-4">
-            <div class="flex space-x-2">
-              <input type="email" 
-                     x-model="escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex]" 
-                     @keyup.enter="if(escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex]) { 
-                       if(!escalation.triggers[selectedTriggerIndex].emailLists) escalation.triggers[selectedTriggerIndex].emailLists = {};
-                       if(!escalation.triggers[selectedTriggerIndex].emailLists[emailIndex]) escalation.triggers[selectedTriggerIndex].emailLists[emailIndex] = [];
-                       escalation.triggers[selectedTriggerIndex].emailLists[emailIndex].push(escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex]); 
-                       escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex] = ''; 
-                     }" 
-                     class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600" 
-                     placeholder="Enter an email address">
-              <button @click="if(escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex]) { 
-                        if(!escalation.triggers[selectedTriggerIndex].emailLists) escalation.triggers[selectedTriggerIndex].emailLists = {};
-                        if(!escalation.triggers[selectedTriggerIndex].emailLists[emailIndex]) escalation.triggers[selectedTriggerIndex].emailLists[emailIndex] = [];
-                        escalation.triggers[selectedTriggerIndex].emailLists[emailIndex].push(escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex]); 
-                        escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex] = ''; 
-                      }" 
-                      class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                </svg>
-              </button>
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <template x-for="(email, index) in (escalation.triggers[selectedTriggerIndex].emailLists?.[emailIndex] || [])" :key="index">
-                <div class="bg-gray-700 text-white px-3 py-1 rounded-full flex items-center gap-2">
-                  <span x-text="email"></span>
-                  <button @click="escalation.triggers[selectedTriggerIndex].emailLists[emailIndex].splice(index, 1)" class="hover:text-red-400">×</button>
-                </div>
-              </template>
-            </div>
-          </div>
-
-          <!-- Email Group Selection -->
-          <div x-show="escalation.triggers[selectedTriggerIndex].emailType_[emailIndex]" class="space-y-4">
-            <select x-model="escalation.triggers[selectedTriggerIndex].selectedGroups[emailIndex]" 
-                    @change="loadEmailGroupDetails($event.target.value)" 
-                    class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-              <option value="">Select an email group</option>
-              <template x-for="group in emailGroups" :key="group.id">
-                <option :value="group.id" x-text="group.name"></option>
-              </template>
-            </select>
-            <div x-show="escalation.triggers[selectedTriggerIndex].selectedGroups[emailIndex]" class="p-3 bg-gray-700 rounded">
-              <div class="text-sm text-gray-300">Emails in group:</div>
-              <div x-show="selectedGroupEmails.length" class="mt-2">
-                <template x-for="email in selectedGroupEmails" :key="email">
-                  <div class="text-sm text-gray-400" x-text="email"></div>
+          <div class="space-y-4">
+            <!-- Individual Email Input -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-300">Add Individual Emails</label>
+              <div class="flex space-x-2">
+                <input type="email" 
+                       x-model="escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex]" 
+                       @keyup.enter="if(escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex]) { 
+                         if(!escalation.triggers[selectedTriggerIndex].emailLists) escalation.triggers[selectedTriggerIndex].emailLists = {};
+                         if(!escalation.triggers[selectedTriggerIndex].emailLists[emailIndex]) escalation.triggers[selectedTriggerIndex].emailLists[emailIndex] = [];
+                         escalation.triggers[selectedTriggerIndex].emailLists[emailIndex].push(escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex]); 
+                         escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex] = ''; 
+                       }" 
+                       class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600" 
+                       placeholder="Enter an email address">
+                <button @click="if(escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex]) { 
+                          if(!escalation.triggers[selectedTriggerIndex].emailLists) escalation.triggers[selectedTriggerIndex].emailLists = {};
+                          if(!escalation.triggers[selectedTriggerIndex].emailLists[emailIndex]) escalation.triggers[selectedTriggerIndex].emailLists[emailIndex] = [];
+                          escalation.triggers[selectedTriggerIndex].emailLists[emailIndex].push(escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex]); 
+                          escalation.triggers[selectedTriggerIndex].tempEmails[emailIndex] = ''; 
+                        }" 
+                        class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <template x-for="(email, index) in (escalation.triggers[selectedTriggerIndex].emailLists?.[emailIndex] || [])" :key="index">
+                  <div class="bg-gray-700 text-white px-3 py-1 rounded-full flex items-center gap-2">
+                    <span x-text="email"></span>
+                    <button @click="escalation.triggers[selectedTriggerIndex].emailLists[emailIndex].splice(index, 1)" class="hover:text-red-400">×</button>
+                  </div>
                 </template>
+              </div>
+            </div>
+
+            <!-- Email Group Selection -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-300">Add Email Groups</label>
+              <div x-data="{ selectedGroup: '' }" class="space-y-2">
+                <select x-model="selectedGroup"
+                        @change="if(selectedGroup) {
+                          if(!escalation.triggers[selectedTriggerIndex].selectedGroups) escalation.triggers[selectedTriggerIndex].selectedGroups = {};
+                          if(!escalation.triggers[selectedTriggerIndex].selectedGroups[emailIndex]) escalation.triggers[selectedTriggerIndex].selectedGroups[emailIndex] = [];
+                          if(!escalation.triggers[selectedTriggerIndex].selectedGroups[emailIndex].includes(selectedGroup)) {
+                            escalation.triggers[selectedTriggerIndex].selectedGroups[emailIndex].push(selectedGroup);
+                          }
+                          selectedGroup = '';
+                        }"
+                        class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                  <option value="">Select an email group</option>
+                  <template x-for="group in emailGroups" :key="group.id">
+                    <option :value="group.id" x-text="group.name"></option>
+                  </template>
+                </select>
+                <div class="flex flex-wrap gap-2">
+                  <template x-for="groupId in (escalation.triggers[selectedTriggerIndex].selectedGroups?.[emailIndex] || [])" :key="groupId">
+                    <div class="bg-gray-600 text-white px-3 py-1 rounded-full flex items-center gap-2">
+                      <span x-text="emailGroups.find(g => g.id === groupId)?.name"></span>
+                      <button @click="escalation.triggers[selectedTriggerIndex].selectedGroups[emailIndex] = escalation.triggers[selectedTriggerIndex].selectedGroups[emailIndex].filter(g => g !== groupId)" class="hover:text-red-400">×</button>
+                    </div>
+                  </template>
+                </div>
               </div>
             </div>
           </div>
