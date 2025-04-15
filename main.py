@@ -675,6 +675,28 @@ def api_template_save():
         logger.error(f"Failed to save template: {e}")
         return jsonify({"error": "Failed to save template"}), 500
 
+@app.route('/api/sultan/templates/duplicate', methods=['POST'])
+def api_template_duplicate():
+    data = request.json
+    template_id = data.get('id')
+    
+    try:
+        # Get original template
+        template = get_one_from_global_db(f'sultan/templates/{template_id}.json')
+        
+        # Create new template with unique ID
+        new_template = template.copy()
+        new_template['id'] = f'templates-{int(time.time() * 1000)}'
+        new_template['name'] = f'{template["name"]} (Copy)'
+        
+        # Save new template
+        save_in_global_db(f'sultan/templates/{new_template["id"]}.json', new_template)
+        
+        return jsonify(new_template)
+    except Exception as e:
+        logger.error(f"Failed to duplicate template: {e}")
+        return jsonify({"error": "Failed to duplicate template"}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
