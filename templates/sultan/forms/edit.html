@@ -457,7 +457,7 @@
             <template x-if="field.type === 'single_select'">
               <select :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
                 <option value="">Select an option</option>
-                <template x-for="option in field.options" :key="option.name">
+                <template x-for="(option, optIndex) in field.options" :key="optIndex">
                   <option x-text="option.name" :value="option.name"></option>
                 </template>
               </select>
@@ -467,7 +467,7 @@
               <div class="space-y-4" x-data="{ selected: '' }">
                 <select :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="selected">
                   <option value="">Select an option</option>
-                  <template x-for="option in field.options" :key="option.name">
+                  <template x-for="(option, optIndex) in field.options" :key="optIndex">
                     <option x-text="option.name" :value="option.name"></option>
                   </template>
                 </select>
@@ -493,7 +493,7 @@
                           <div class="space-y-4" x-data="{ nestedSelected: '' }">
                             <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="nestedSelected">
                               <option value="">Select an option</option>
-                              <template x-for="nestedOption in question.options" :key="nestedOption.name">
+                              <template x-for="(nestedOption, nestedOptIndex) in question.options" :key="nestedOptIndex">
                                 <option x-text="nestedOption.name" :value="nestedOption.name"></option>
                               </template>
                             </select>
@@ -525,73 +525,73 @@
                     </template>
                   </div>
                 </template>
-              </div>
-            </template>
 
-            <template x-if="field.type === 'multiple_checkbox'">
-              <div class="space-y-2" x-data="{ filter: '' }">
-                <template x-if="field.options.length > 5">
-                  <div class="mb-4 relative">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0014 0z" />
-                      </svg>
+                <template x-if="field.type === 'multiple_checkbox'">
+                  <div class="space-y-2" x-data="{ filter: '' }">
+                    <template x-if="field.options.length > 5">
+                      <div class="mb-4 relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                          <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0014 0z" />
+                          </svg>
+                        </div>
+                        <input type="search" x-model.debounce="filter" class="pl-10 w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Filter options...">
+                      </div>
+                    </template>
+                    <div class="space-y-2 max-h-[50vh] overflow-y-auto pr-2">
+                      <template x-for="(option, optIndex) in field.options" :key="optIndex">
+                        <div class="flex items-center py-1" x-show="!filter || option.name.toLowerCase().includes(filter.toLowerCase())">
+                          <input type="checkbox" class="bg-gray-800 border-gray-600">
+                          <label class="ml-2 text-sm font-medium text-white" x-text="option.name"></label>
+                          <p x-text="option.description"></p>
+                        </div>
+                      </template>
                     </div>
-                    <input type="search" x-model.debounce="filter" class="pl-10 w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Filter options...">
                   </div>
                 </template>
-                <div class="space-y-2 max-h-[50vh] overflow-y-auto pr-2">
-                  <template x-for="option in field.options" :key="option.name">
-                    <div class="flex items-center py-1" x-show="!filter || option.name.toLowerCase().includes(filter.toLowerCase())">
-                      <input type="checkbox" class="bg-gray-800 border-gray-600">
-                      <label class="ml-2 text-sm font-medium text-white" x-text="option.name"></label>
-                      <p x-text="option.description"></p>
-                    </div>
-                  </template>
-                </div>
-              </div>
-            </template>
 
-            <template x-if="field.type === 'textarea'">
-              <textarea :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 min-h-[100px]"></textarea>
-            </template>
+                <template x-if="field.type === 'textarea'">
+                  <textarea :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 min-h-[100px]"></textarea>
+                </template>
 
-            <template x-if="field.type === 'date'">
-              <input type="text" x-mask="9999/99/99" placeholder="YYYY/MM/DD" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-            </template>
+                <template x-if="field.type === 'date'">
+                  <input type="text" x-mask="9999/99/99" placeholder="YYYY/MM/DD" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                </template>
 
-            <template x-if="field.type === 'list'">
-              <div x-data="{ values: [''] }" class="space-y-2">
-                <template x-for="(value, index) in values" :key="index">
-                  <div class="flex space-x-2">
-                    <input type="text" 
-                           x-model="values[index]"
-                           :required="field.required"
-                           class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                    <button @click="values.splice(index, 1)"
-                            class="bg-red-600 text-white w-8 h-8 rounded flex items-center justify-center">
-                      -
+                <template x-if="field.type === 'list'">
+                  <div x-data="{ values: [''] }" class="space-y-2">
+                    <template x-for="(value, index) in values" :key="index">
+                      <div class="flex space-x-2">
+                        <input type="text" 
+                               x-model="values[index]"
+                               :required="field.required"
+                               class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                        <button @click="values.splice(index, 1)"
+                                class="bg-red-600 text-white w-8 h-8 rounded flex items-center justify-center">
+                          -
+                        </button>
+                      </div>
+                    </template>
+                    <button @click.prevent="values.push('')" 
+                            type="button"
+                            class="bg-green-600 text-white px-3 py-1 rounded">
+                      +
                     </button>
                   </div>
                 </template>
-                <button @click.prevent="values.push('')" 
-                        type="button"
-                        class="bg-green-600 text-white px-3 py-1 rounded">
-                  +
-                </button>
+
+                <template x-if="field.type !== 'select' && field.type !== 'checkbox' && field.type !== 'conditional' && field.type !== 'single_select' && field.type !== 'multiple_checkbox' && field.type !== 'textarea' && field.type !== 'date' && field.type !== 'list'">
+                  <input :type="field.type" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                </template>
+
+                <template x-if="field.type === 'checkbox'">
+                  <input type="checkbox" :required="field.required" class="bg-gray-800 border-gray-600">
+                </template>
               </div>
             </template>
-
-            <template x-if="field.type !== 'select' && field.type !== 'checkbox' && field.type !== 'conditional' && field.type !== 'single_select' && field.type !== 'multiple_checkbox' && field.type !== 'textarea' && field.type !== 'date' && field.type !== 'list'">
-              <input :type="field.type" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-            </template>
-
-            <template x-if="field.type === 'checkbox'">
-              <input type="checkbox" :required="field.required" class="bg-gray-800 border-gray-600">
-            </template>
-          </div>
-        </template>
-      </form>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </div>
