@@ -463,6 +463,48 @@ def api_emailgroup_save():
         logger.error(f"Failed to save email group: {e}")
         return jsonify({"error": "Failed to save email group"}), 500
 
+@app.route('/api/sultan/sites/<site_id>')
+def api_site_get(site_id):
+    try:
+        if site_id.endswith('.json'):
+            key = f'sultan/sites/{site_id}'
+        else:
+            key = f'sultan/sites/{site_id}.json'
+
+        content = s3.get_object(
+            Bucket=BUCKET_NAME,
+            Key=key)['Body'].read().decode('utf-8')
+        return jsonify(json.loads(content))
+    except Exception as e:
+        logger.error(f"Failed to load site {site_id}: {e}")
+        return jsonify({"error": "Site not found"}), 404
+
+@app.route('/api/sultan/sites/save', methods=['POST'])
+def api_site_save():
+    data = request.json
+    site = data.get('site')
+    
+    if not site:
+        return jsonify({"error": "Site required"}), 400
+
+    try:
+        site_path = f'sultan/sites/{site["id"]}.json'
+        save_in_global_db(site_path, site)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to save site: {e}")
+        return jsonify({"error": "Failed to save site"}), 500
+
+@app.route('/api/sultan/sites/delete/<site_id>', methods=['DELETE'])
+def api_site_delete(site_id):
+    try:
+        key = f'sultan/sites/{site_id}.json'
+        delete(key)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to delete site: {e}")
+        return jsonify({"error": "Failed to delete site"}), 500
+
 @app.route('/sultan/templates/list')
 def templates_list():
     return render_template('sultan/templates/index.html')
