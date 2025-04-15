@@ -507,28 +507,35 @@ def api_form_save():
 @app.route('/api/sultan/templates/list')
 def api_templates_list():
     templates = []
-    draft_prefix = 'sultan/configs/templates/draft/'
+    statuses = ['draft', 'prod']
 
     try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=draft_prefix)
-        for obj in response.get('Contents', []):
-            try:
-                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                content = response['Body'].read().decode('utf-8')
-                template = json.loads(content)
-
-                # Add status if not present
-                if 'status' not in template:
-                    template['status'] = 'Draft'
-
-                # Add last_modified if not present
-                metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                if 'last_modified' not in template:
+        for status in statuses:
+            prefix = f'sultan/configs/templates/{status}/'
+            response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+            
+            for obj in response.get('Contents', []):
+                try:
+                    response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                    content = response['Body'].read().decode('utf-8')
+                    template = json.loads(content)
+                    
+                    # Map stored status to display status
+                    status_display_map = {
+                        'draft': 'Draft',
+                        'prod': 'Prod'
+                    }
+                    
+                    # Set status based on folder
+                    template['status'] = status_display_map.get(status, 'Draft')
+                    
+                    # Add last_modified from metadata
+                    metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
                     template['last_modified'] = metadata['LastModified']
-
-                templates.append(template)
-            except Exception as e:
-                logger.error(f"Failed to load template {obj['Key']}: {e}")
+                    
+                    templates.append(template)
+                except Exception as e:
+                    logger.error(f"Failed to load template {obj['Key']}: {e}")
     except Exception as e:
         logger.error(f"Failed to list templates: {e}")
         return jsonify({"error": str(e)}), 500
@@ -560,8 +567,13 @@ def api_template_get(template_id):
 @app.route('/api/sultan/templates/delete/<template_id>', methods=['DELETE'])
 def api_template_delete(template_id):
     try:
-        template_path = f'sultan/configs/draft/templates/{template_id}.json'
-        delete(template_path)
+        # Delete from both draft and prod if exists
+        for status in ['draft', 'prod']:
+            try:
+                key = f'sultan/configs/templates/{status}/{template_id}.json'
+                delete(key)
+            except:
+                pass
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to delete template: {e}")
@@ -572,15 +584,29 @@ def api_template_delete(template_id):
 def api_template_save():
     data = request.json
     template = data.get('template')
+    status = template.get('status', 'Draft')
 
     if not template:
         return jsonify({"error": "Template required"}), 400
 
     try:
-        # Ensure directory structure exists
-        template_path = f'sultan/configs/draft/templates/{template["id"]}.json'
+        # Map display status to storage status
+        status_map = {
+            'Draft': 'draft',
+            'Prod': 'prod'
+        }
+        storage_status = status_map.get(status, 'draft')
+        
+        # Delete old versions if they exist
+        for old_status in ['draft', 'prod']:
+            try:
+                old_key = f'sultan/configs/templates/{old_status}/{template["id"]}.json'
+                delete(old_key)
+            except:
+                pass
 
-        # Save template as JSON
+        # Save template in new location
+        template_path = f'sultan/configs/templates/{storage_status}/{template["id"]}.json'
         save_in_global_db(template_path, template)
 
         return jsonify({"status": "success"})
