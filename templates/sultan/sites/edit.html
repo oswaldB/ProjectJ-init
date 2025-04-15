@@ -8,11 +8,13 @@
   site: {
     id: null,
     name: '',
+    form: '',
     entities: [],
     locations: []
   },
-  entities: ['Entity1', 'Entity2', 'Entity3'], // Replace with your entities
-  locations: ['Location1', 'Location2', 'Location3'], // Replace with your locations
+  forms: [],
+  entities: [],
+  locations: [],
   filter: '',
   async init() {
     const id = window.location.pathname.split('/').pop();
@@ -21,13 +23,44 @@
     } else {
       await this.loadSite(id);
     }
+    await this.loadForms();
   },
   async loadSite(id) {
     try {
       const response = await fetch(`/api/sultan/sites/${id}`);
       this.site = await response.json();
+      if (this.site.form) {
+        await this.loadFormData(this.site.form);
+      }
     } catch (error) {
       console.error('Failed to load site:', error);
+    }
+  },
+  async loadForms() {
+    try {
+      const response = await fetch('/api/sultan/forms/list');
+      this.forms = await response.json();
+    } catch (error) {
+      console.error('Failed to load forms:', error);
+    }
+  },
+  async loadFormData(formId) {
+    try {
+      const response = await fetch(`/api/sultan/forms/${formId}`);
+      const formData = await response.json();
+      
+      // Find location and entity fields
+      const locationField = formData.fields.find(f => f.key === 'location');
+      const entityField = formData.fields.find(f => f.key === 'entity');
+      
+      if (locationField) {
+        this.locations = locationField.options.map(opt => opt.name);
+      }
+      if (entityField) {
+        this.entities = entityField.options.map(opt => opt.name);
+      }
+    } catch (error) {
+      console.error('Failed to load form data:', error);
     }
   },
   async save() {
@@ -87,9 +120,20 @@
   <div class="p-6 space-y-6">
     <!-- Basic Info -->
     <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-      <div>
-        <label class="block text-sm font-medium text-gray-300">Site Name</label>
-        <input type="text" x-model="site.name" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300">Site Name</label>
+          <input type="text" x-model="site.name" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300">Form</label>
+          <select x-model="site.form" @change="loadFormData($event.target.value)" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+            <option value="">Select a form</option>
+            <template x-for="form in forms" :key="form.id">
+              <option :value="form.id" x-text="form.name"></option>
+            </template>
+          </select>
+        </div>
       </div>
     </div>
 
