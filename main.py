@@ -272,6 +272,10 @@ def require_auth(f):
 def index():
     return render_template('jaffar/index.html')
 
+@app.route('/acknowledge')
+def acknowledge():
+    return render_template('jaffar/acknowledge.html')
+
 
 @app.route('/sultan/login')
 def sultan_login():
