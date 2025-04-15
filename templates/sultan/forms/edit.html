@@ -70,7 +70,69 @@
 {% endblock %}
 
 {% block content %}
-<div class="p-6 flex gap-6" x-data="{ ...$parent.$data }">
+<div class="p-6 flex gap-6" x-data="{
+    page: 'form-editor',
+    form: { id: '', name: '', fields: [], status: 'Draft' },
+    preview: true,
+    async init() {
+      this.$watch('form', () => {
+        this.saveForm();
+      }, { deep: true });
+      const formId = window.location.pathname.split('/').pop();
+      if (formId !== 'new') {
+        try {
+          const response = await fetch(`/api/sultan/forms/${formId}`);
+          const data = await response.json();
+          if (!response.ok) {
+            showNotification('Form not found', 'error');
+            setTimeout(() => {
+              window.location.href = '/sultan/forms/list';
+            }, 2000);
+            return;
+          }
+          this.form = data;
+        } catch (error) {
+          console.error('Failed to load form:', error);
+          showNotification('Form not found', 'error');
+          window.location.href = '/sultan/forms/list';
+        }
+      }
+    },
+    async saveForm() {
+      if (!this.form.id) {
+        this.form.id = `forms-${Date.now()}`;
+      }
+      const userEmail = localStorage.getItem('user_email');
+      if (!userEmail) {
+        console.error('User email not found');
+        return;
+      }
+      this.form.user_email = userEmail;
+      try {
+        await fetch('/api/sultan/forms/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: userEmail, form: this.form })
+        });
+      } catch (error) {
+        console.error('Failed to save form:', error);
+      }
+    },
+    addField() {
+      this.form.fields.push({
+        type: 'text',
+        label: '',
+        description: '',
+        required: false,
+        key: '',
+        options: [],
+        open: true
+      });
+    },
+    toggleField(index) {
+      this.form.fields[index].open = !this.form.fields[index].open;
+    }
+  }">
   <!-- Editor -->
   <div class="w-1/2">
     <div class="flex justify-between items-center mb-6">
