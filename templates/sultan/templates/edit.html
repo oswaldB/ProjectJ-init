@@ -23,6 +23,9 @@
 
       await this.loadForms();
       await this.loadTemplate(templateId, userEmail);
+      if (this.template.selectedForm) {
+        await this.loadFormFields();
+      }
       this.initTrumbowyg();
     },
     async loadForms() {
