@@ -59,14 +59,18 @@
         description: '',
         required: false,
         key: '',
-        options: []
+        options: [],
+        open: true // Added: Initially open
       });
+    },
+    toggleField(index) {
+      this.form.fields[index].open = !this.form.fields[index].open;
     }
   }
 {% endblock %}
 
 {% block content %}
-<div class="p-6 flex gap-6">
+<div class="p-6 flex gap-6" x-data="{ ...$parent.$data }">
   <!-- Editor -->
   <div class="w-1/2">
     <div class="flex justify-between items-center mb-6">
@@ -86,242 +90,220 @@
     <div class="space-y-4">
       <input type="text" x-model.debounce.500ms="form.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Form Name">
 
-      <div class="space-y-4">
+      <div class="space-y-4" x-data="{ draggedIndex: null }">
         <template x-for="(field, index) in form.fields" :key="index">
-          <div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
-            <div class="flex justify-between mb-4">
-              <select x-model="field.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
-                <option value="text_input">Text Input</option>
-                <option value="number">Number</option>
-                <option value="single_select">Single Select</option>
-                <option value="multiple_checkbox">Multiple Checkbox</option>
-                <option value="textarea">Long Text</option>
-                <option value="date">Date</option>
-                <option value="list">List</option>
-                <option value="conditional">Conditional</option>
-              </select>
+          <div class="bg-gray-800 p-4 rounded-lg border border-gray-600"
+               @mousedown="$event.preventDefault(); draggedIndex = index"
+               draggable="true"
+               @dragstart="draggedIndex = index"
+               @dragover.prevent
+               @drop="form.fields = [ ...form.fields.slice(0, index), ...form.fields.slice(index + 1), form.fields[draggedIndex] ].filter((e) => e) ; form.fields.splice(draggedIndex, 1); draggedIndex = null">
+            <div class="flex justify-between items-center mb-2">
+              <button @click="toggleField(index)" class="text-blue-400 hover:text-blue-300" x-text="field.open ? 'Close' : 'Open'"></button>
               <button @click="form.fields.splice(index, 1)" class="text-red-400 hover:text-red-300">Remove</button>
             </div>
-
-            <div class="space-y-2">
-              <label class="block text-sm font-medium text-gray-300">Question Title</label>
-              <input type="text" x-model.debounce.500ms="field.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question title">
-            </div>
-
-            <div class="mt-4 space-y-2">
-              <label class="block text-sm font-medium text-gray-300">Question Description</label>
-              <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
-              <textarea x-model.debounce.500ms="field.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question description" rows="3"></textarea>
-            </div>
-
-            <label class="flex items-center space-x-2 text-white mt-4">
-              <input type="checkbox" x-model="field.required" class="bg-gray-800 border-gray-600">
-              <span>Required</span>
-            </label>
-
-            <div class="mb-2">
-              <label class="block text-sm font-medium text-gray-300">Question Key</label>
-              <div class="relative">
-                <input type="text" x-model="field.key"
-                       @input="field.key = field.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
-                       class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
-                       placeholder="Question Key (slug format)">
+            <div class="space-y-2" x-show="field.open">
+              <div>
+                <select x-model="field.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
+                  <option value="text_input">Text Input</option>
+                  <option value="number">Number</option>
+                  <option value="single_select">Single Select</option>
+                  <option value="multiple_checkbox">Multiple Checkbox</option>
+                  <option value="textarea">Long Text</option>
+                  <option value="date">Date</option>
+                  <option value="list">List</option>
+                  <option value="conditional">Conditional</option>
+                </select>
               </div>
-            </div>
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-300">Question Title</label>
+                <input type="text" x-model.debounce.500ms="field.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question title">
+              </div>
 
-
-            <template x-if="field.type === 'single_select'">
               <div class="mt-4 space-y-2">
-                <button @click="field.options = field.options || []; field.options.push({name: '', description: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
-                <template x-for="(option, optIndex) in field.options" :key="optIndex">
-                  <div class="space-y-2 p-2 border border-gray-600 rounded">
-                    <div class="flex space-x-2">
-                      <div class="flex-1 space-y-2">
-                        <input type="text" x-model.debounce.500ms="option.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
-                      </div>
-                      <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
-                    </div>
-                    <div class="mt-2">
-                      <textarea x-model="option.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Description" rows="3"></textarea>
-                    </div>
-                  </div>
-                </template>
+                <label class="block text-sm font-medium text-gray-300">Question Description</label>
+                <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
+                <textarea x-model.debounce.500ms="field.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question description" rows="3"></textarea>
               </div>
-            </template>
 
-            <template x-if="['select', 'conditional', 'multiple_checkbox'].includes(field.type)">
-              <div class="mt-2 space-y-4">
-                <!-- Options Section -->
-                <div class="border-b border-gray-600 pb-4">
-                  <h3 class="text-lg font-medium text-white mb-2">Options</h3>
-                  <div class="space-y-2">
-                    <button @click="field.options = field.options || []; field.options.push({name: '', show: '', questions: []})" class="text-blue-400 hover:text-blue-300">Add Option</button>
-                    <template x-for="(option, optIndex) in field.options" :key="optIndex">
-                      <div class="p-2 border border-gray-600 rounded">
-                        <div class="flex space-x-2">
-                          <input type="text" x-model="option.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
-                          <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
-                        </div>
-                      </div>
-                    </template>
-                  </div>
+              <label class="flex items-center space-x-2 text-white mt-4">
+                <input type="checkbox" x-model="field.required" class="bg-gray-800 border-gray-600">
+                <span>Required</span>
+              </label>
+
+              <div class="mb-2">
+                <label class="block text-sm font-medium text-gray-300">Question Key</label>
+                <div class="relative">
+                  <input type="text" x-model="field.key"
+                         @input="field.key = field.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                         class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                         placeholder="Question Key (slug format)">
                 </div>
+              </div>
 
-                <!-- Conditional Questions Section -->
-                <template x-if="field.type === 'conditional' && field.options && field.options.length > 0">
-                  <div class="space-y-4">
-                    <h3 class="text-lg font-medium text-white">Conditional Questions</h3>
-                    <template x-for="(option, optIndex) in field.options" :key="optIndex">
-                      <div class="p-4 border border-gray-600 rounded">
-                        <h4 class="text-white mb-2" x-text="'Questions for: ' + option.name"></h4>
-                        <button @click="option.questions = option.questions || []; option.questions.push({key: '', type: 'text_input', label: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Question</button>
 
-                        <template x-for="(question, qIndex) in option.questions" :key="qIndex">
-                          <div class="mt-2 p-2 border border-gray-600 rounded">
-                            <div class="flex justify-between mb-2">
-                              <select x-model="question.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                <option value="text_input">Text Input</option>
-                                <option value="number">Number</option>
-                                <option value="single_select">Single Select</option>
-                                <option value="multiple_checkbox">Multiple Checkbox</option>
-                                <option value="textarea">Long Text</option>
-                                <option value="date">Date</option>
-                                <option value="list">List</option>
-                                <option value="conditional">Conditional</option>
-                              </select>
-                              <button @click="option.questions.splice(qIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
-                            </div>
+              <template x-if="field.type === 'single_select'">
+                <div class="mt-4 space-y-2">
+                  <button @click="field.options = field.options || []; field.options.push({name: '', description: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                  <template x-for="(option, optIndex) in field.options" :key="optIndex">
+                    <div class="space-y-2 p-2 border border-gray-600 rounded">
+                      <div class="flex space-x-2">
+                        <div class="flex-1 space-y-2">
+                          <input type="text" x-model.debounce.500ms="option.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                        </div>
+                        <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
+                      </div>
+                      <div class="mt-2">
+                        <textarea x-model="option.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Description" rows="3"></textarea>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </template>
 
-                            <div class="space-y-2">
-                              <input type="text" x-model="question.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Label">
+              <template x-if="['select', 'conditional', 'multiple_checkbox'].includes(field.type)">
+                <div class="mt-2 space-y-4">
+                  <!-- Options Section -->
+                  <div class="border-b border-gray-600 pb-4">
+                    <h3 class="text-lg font-medium text-white mb-2">Options</h3>
+                    <div class="space-y-2">
+                      <button @click="field.options = field.options || []; field.options.push({name: '', show: '', questions: []})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                      <template x-for="(option, optIndex) in field.options" :key="optIndex">
+                        <div class="p-2 border border-gray-600 rounded">
+                          <div class="flex space-x-2">
+                            <input type="text" x-model="option.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                            <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
 
-                              <div class="relative">
-                                <input type="text" 
-                                       x-model="question.key"
-                                       @input="question.key = question.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
-                                       class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
-                                       placeholder="Question Key (slug format)">
+                  <!-- Conditional Questions Section -->
+                  <template x-if="field.type === 'conditional' && field.options && field.options.length > 0">
+                    <div class="space-y-4">
+                      <h3 class="text-lg font-medium text-white">Conditional Questions</h3>
+                      <template x-for="(option, optIndex) in field.options" :key="optIndex">
+                        <div class="p-4 border border-gray-600 rounded">
+                          <h4 class="text-white mb-2" x-text="'Questions for: ' + option.name"></h4>
+                          <button @click="option.questions = option.questions || []; option.questions.push({key: '', type: 'text_input', label: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Question</button>
+
+                          <template x-for="(question, qIndex) in option.questions" :key="qIndex">
+                            <div class="mt-2 p-2 border border-gray-600 rounded">
+                              <div class="flex justify-between mb-2">
+                                <select x-model="question.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                  <option value="text_input">Text Input</option>
+                                  <option value="number">Number</option>
+                                  <option value="single_select">Single Select</option>
+                                  <option value="multiple_checkbox">Multiple Checkbox</option>
+                                  <option value="textarea">Long Text</option>
+                                  <option value="date">Date</option>
+                                  <option value="list">List</option>
+                                  <option value="conditional">Conditional</option>
+                                </select>
+                                <button @click="option.questions.splice(qIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
                               </div>
 
-                              <!-- Options for select/multiple choice questions -->
-                              <template x-if="['single_select', 'multiple_checkbox'].includes(question.type)">
-                                <div class="mt-2 space-y-2">
-                                  <button @click="question.options = question.options || []; question.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
-                                  <template x-for="(opt, optIdx) in question.options" :key="optIdx">
-                                    <div class="flex space-x-2">
-                                      <input type="text" x-model="opt.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
-                                      <button @click="question.options.splice(optIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
-                                    </div>
-                                  </template>
+                              <div class="space-y-2">
+                                <input type="text" x-model="question.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Label">
+
+                                <div class="relative">
+                                  <input type="text" 
+                                         x-model="question.key"
+                                         @input="question.key = question.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                                         class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                                         placeholder="Question Key (slug format)">
                                 </div>
-                              </template>
 
-
-                              <template x-if="question.type === 'conditional'">
-                                <div class="space-y-4" x-data="{ nestedSelected: '' }">
-                                  <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="nestedSelected">
-                                    <option value="">Select an option</option>
-                                    <template x-for="nestedOption in question.options" :key="nestedOption.name">
-                                      <option x-text="nestedOption.name" :value="nestedOption.name"></option>
+                                <!-- Options for select/multiple choice questions -->
+                                <template x-if="['single_select', 'multiple_checkbox'].includes(question.type)">
+                                  <div class="mt-2 space-y-2">
+                                    <button @click="question.options = question.options || []; question.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                                    <template x-for="(opt, optIdx) in question.options" :key="optIdx">
+                                      <div class="flex space-x-2">
+                                        <input type="text" x-model="opt.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                                        <button @click="question.options.splice(optIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                      </div>
                                     </template>
-                                  </select>
+                                  </div>
+                                </template>
 
-                                  <template x-for="nestedOption in question.options" :key="nestedOption.name">
-                                    <div x-show="nestedSelected === nestedOption.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
-                                      <template x-for="nestedQuestion in nestedOption.questions" :key="nestedQuestion.key">
-                                        <div class="space-y-2" x-data="{ thirdLevelSelected: '' }">
-                                          <label class="block">
-                                            <span class="text-lg font-medium text-white" x-text="nestedQuestion.label"></span>
-                                          </label>
 
-                                          <template x-if="nestedQuestion.type === 'text_input'">
-                                            <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                          </template>
-                                          <template x-if="nestedQuestion.type === 'number'">
-                                            <input type="number" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                          </template>
-                                          <template x-if="nestedQuestion.type === 'textarea'">
-                                            <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
-                                          </template>
-                                          <template x-if="nestedQuestion.type === 'conditional'">
-                                            <div class="space-y-4">
-                                              <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="thirdLevelSelected">
-                                                <option value="">Select an option</option>
-                                                <template x-for="thirdOption in nestedQuestion.options" :key="thirdOption.name">
-                                                  <option x-text="thirdOption.name" :value="thirdOption.name"></option>
-                                                </template>
-                                              </select>
-
-                                              <template x-for="thirdOption in nestedQuestion.options" :key="thirdOption.name">
-                                                <div x-show="thirdLevelSelected === thirdOption.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
-                                                  <template x-for="thirdQuestion in thirdOption.questions" :key="thirdQuestion.key">
-                                                    <div class="space-y-2">
-                                                      <label class="block">
-                                                        <span class="text-lg font-medium text-white" x-text="thirdQuestion.label"></span>
-                                                      </label>
-                                                      <template x-if="thirdQuestion.type === 'text_input'">
-                                                        <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                                      </template>
-                                                      <template x-if="thirdQuestion.type === 'number'">
-                                                        <input type="number" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                                      </template>
-                                                      <template x-if="thirdQuestion.type === 'textarea'">
-                                                        <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
-                                                      </template>
-                                                      <template x-if="thirdQuestion.type === 'conditional'">
-                                                        <div class="space-y-4">
-                                                          <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="fourthLevelSelected">
-                                                            <option value="">Select an option</option>
-                                                            <template x-for="fourthOption in thirdQuestion.options" :key="fourthOption.name">
-                                                              <option x-text="fourthOption.name" :value="fourthOption.name"></option>
-                                                            </template>
-                                                          </select>
-
-                                                          <template x-for="fourthOption in thirdQuestion.options" :key="fourthOption.name">
-                                                            <div x-show="fourthLevelSelected === fourthOption.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
-                                                              <template x-for="fourthQuestion in fourthOption.questions" :key="fourthQuestion.key">
-                                                                <div class="space-y-2">
-                                                                  <label class="block">
-                                                                    <span class="text-lg font-medium text-white" x-text="fourthQuestion.label"></span>
-                                                                  </label>
-                                                                  <template x-if="fourthQuestion.type === 'text_input'">
-                                                                    <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                                                  </template>
-                                                                  <template x-if="fourthQuestion.type === 'number'">
-                                                                    <input type="number" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                                                  </template>
-                                                                  <template x-if="fourthQuestion.type === 'textarea'">
-                                                                    <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
-                                                                  </template>
-                                                                </div>
-                                                              </template>
-                                                            </div>
-                                                          </template>
-                                                        </div>
-                                                      </template>
-                                                    </div>
-                                                  </template>
-                                                </div>
-                                              </template>
-                                            </div>
-                                          </template>
-                                        </div>
+                                <template x-if="question.type === 'conditional'">
+                                  <div class="space-y-4" x-data="{ nestedSelected: '' }">
+                                    <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="nestedSelected">
+                                      <option value="">Select an option</option>
+                                      <template x-for="nestedOption in question.options" :key="nestedOption.name">
+                                        <option x-text="nestedOption.name" :value="nestedOption.name"></option>
                                       </template>
-                                    </div>
-                                  </template>
-                                </div>
-                              </template>
+                                    </select>
+
+                                    <template x-for="nestedOption in question.options" :key="nestedOption.name">
+                                      <div x-show="nestedSelected === nestedOption.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
+                                        <template x-for="nestedQuestion in nestedOption.questions" :key="nestedQuestion.key">
+                                          <div class="space-y-2" x-data="{ thirdLevelSelected: '' }">
+                                            <label class="block">
+                                              <span class="text-lg font-medium text-white" x-text="nestedQuestion.label"></span>
+                                            </label>
+
+                                            <template x-if="nestedQuestion.type === 'text_input'">
+                                              <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                            </template>
+                                            <template x-if="nestedQuestion.type === 'number'">
+                                              <input type="number" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                            </template>
+                                            <template x-if="nestedQuestion.type === 'textarea'">
+                                              <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
+                                            </template>
+                                            <template x-if="nestedQuestion.type === 'conditional'">
+                                              <div class="space-y-4">
+                                                <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="thirdLevelSelected">
+                                                  <option value="">Select an option</option>
+                                                  <template x-for="thirdOption in nestedQuestion.options" :key="thirdOption.name">
+                                                    <option x-text="thirdOption.name" :value="thirdOption.name"></option>
+                                                  </template>
+                                                </select>
+
+                                                <template x-for="thirdOption in nestedQuestion.options" :key="thirdOption.name">
+                                                  <div x-show="thirdLevelSelected === thirdOption.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
+                                                    <template x-for="thirdQuestion in thirdOption.questions" :key="thirdQuestion.key">
+                                                      <div class="space-y-2">
+                                                        <label class="block">
+                                                          <span class="text-lg font-medium text-white" x-text="thirdQuestion.label"></span>
+                                                        </label>
+                                                        <template x-if="thirdQuestion.type === 'text_input'">
+                                                          <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                                        </template>
+                                                        <template x-if="thirdQuestion.type === 'number'">
+                                                          <input type="number" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                                        </template>
+                                                        <template x-if="thirdQuestion.type === 'textarea'">
+                                                          <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
+                                                        </template>
+                                                      </div>
+                                                    </template>
+                                                  </div>
+                                                </template>
+                                              </div>
+                                            </template>
+                                          </div>
+                                        </template>
+                                      </div>
+                                    </template>
+                                  </div>
+                                </template>
 
 
+                              </div>
                             </div>
-                          </div>
-                        </template>
-                      </div>
-                    </template>
-                  </div>
-                </template>
-              </div>
-            </template>
+                          </template>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                </div>
+              </template>
+            </div>
           </div>
         </template>
       </div>
@@ -405,104 +387,11 @@
                                     <template x-if="nestedQuestion.type === 'textarea'">
                                       <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
                                     </template>
-                                    <template x-if="nestedQuestion.type === 'conditional'">
-                                      <div class="space-y-4">
-                                        <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="thirdLevelSelected">
-                                          <option value="">Select an option</option>
-                                          <template x-for="thirdOption in nestedQuestion.options" :key="thirdOption.name">
-                                            <option x-text="thirdOption.name" :value="thirdOption.name"></option>
-                                          </template>
-                                        </select>
-
-                                        <template x-for="thirdOption in nestedQuestion.options" :key="thirdOption.name">
-                                          <div x-show="thirdLevelSelected === thirdOption.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
-                                            <template x-for="thirdQuestion in thirdOption.questions" :key="thirdQuestion.key">
-                                              <div class="space-y-2">
-                                                <label class="block">
-                                                  <span class="text-lg font-medium text-white" x-text="thirdQuestion.label"></span>
-                                                </label>
-                                                <template x-if="thirdQuestion.type === 'text_input'">
-                                                  <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                                </template>
-                                                <template x-if="thirdQuestion.type === 'number'">
-                                                  <input type="number" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                                </template>
-                                                <template x-if="thirdQuestion.type === 'textarea'">
-                                                  <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
-                                                </template>
-                                              </div>
-                                            </template>
-                                          </div>
-                                        </template>
-                                      </div>
-                                    </template>
                                   </div>
                                 </template>
                               </div>
                             </template>
                           </div>
-                        </template>
-
-                        <template x-if="question.type === 'multiple_checkbox'">
-                          <div class="space-y-2" x-data="{ filter: '' }">
-                            <template x-if="question.options.length > 5">
-                              <div class="mb-4 relative">
-                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                  <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0014 0z" />
-                                  </svg>
-                                </div>
-                                <input type="search" x-model.debounce="filter" class="pl-10 w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Filter options...">
-                              </div>
-                            </template>
-                            <div class="max-h-60 overflow-y-auto">
-                              <template x-for="option in question.options" :key="option.name">
-                                <div class="flex items-center" x-show="!filter || option.name.toLowerCase().includes(filter.toLowerCase())">
-                                  <input type="checkbox" class="bg-gray-800 border-gray-600">
-                                  <label class="ml-2 text-sm font-medium text-white" x-text="option.name"></label>
-                                  <p x-text="option.description"></p>
-                                </div>
-                              </template>
-                            </div>
-                          </div>
-                        </template>
-
-                        <template x-if="question.type === 'textarea'">
-                          <textarea :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 min-h-[100px]"></textarea>
-                        </template>
-
-                        <template x-if="question.type === 'date'">
-                          <input type="text" x-mask="9999/99/99" placeholder="YYYY/MM/DD" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                        </template>
-
-                        <template x-if="question.type === 'list'">
-                          <div x-data="{ values: [''] }" class="space-y-2">
-                            <template x-for="(value, index) in values" :key="index">
-                              <div class="flex space-x-2">
-                                <input type="text" 
-                                       x-model="values[index]"
-                                       :required="field.required"
-                                       class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                <button @click="values.splice(index, 1)"
-                                        class="bg-red-600 text-white w-8 h-8 rounded flex items-center justify-center">
-                                  -
-                                </button>
-                              </div>
-                            </template>
-                            <button @click.prevent="values.push('')" 
-                                    type="button"
-                                    class="bg-green-600 text-white px-3 py-1 rounded">
-                              +
-                            </button>
-                          </div>
-                        </template>
-
-                        <template x-if="question.type !== 'select' && question.type !== 'checkbox' && question.type !== 'conditional' && question.type !== 'single_select' && question.type !== 'multiple_checkbox' && question.type !== 'textarea' && question.type !== 'date' && question.type !== 'list'">
-                          <input :type="question.type" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                        </template>
-
-                        <template x-if="question.type === 'checkbox'">
-                          <input type="checkbox" :required="field.required" class="bg-gray-800 border-gray-600">
                         </template>
                       </div>
                     </template>
@@ -529,7 +418,7 @@
                       <input type="checkbox" class="bg-gray-800 border-gray-600">
                       <label class="ml-2 text-sm font-medium text-white" x-text="option.name"></label>
                       <p x-text="option.description"></p>
-                    </</div>
+                    </div>
                   </template>
                 </div>
               </div>
