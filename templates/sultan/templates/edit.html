@@ -44,7 +44,8 @@
           if (item.key) {
             fields.push({
               key: prefix + item.key,
-              label: item.label || item.key
+              label: item.label || item.key,
+              readyToUseVar: '{{' + prefix + item.key + '}}'
             });
           }
           if (item.options) {
@@ -254,7 +255,7 @@
               <div class="flex-1">
                 <span class="text-white" x-text="field.label"></span>
               </div>
-              <button @click="navigator.clipboard.writeText('{{' + field.key + '}}')"
+              <button @click="navigator.clipboard.writeText(field.readyToUseVar)"
                       class="ml-2 text-gray-400 hover:text-white"
                       title="Copy variable">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
