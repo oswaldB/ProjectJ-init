@@ -93,26 +93,24 @@
       console.error('Failed to load forms:', error);
     }
   },
-  async loadFormDataForNewSite(formId) {
+  async loadFormData(formId) {
     if (!formId) {
-      this.locations = [];
-      this.entities = [];
+      this.issuesFamilies = [];
+      this.assets = [];
       return;
     }
     try {
       const response = await fetch(`/api/sultan/forms/${formId}`);
       const formData = await response.json();
 
-      const locationField = formData.fields.find(f => f.key === 'location');
-      const entityField = formData.fields.find(f => f.key === 'entity');
+      const issueFamilyField = formData.fields.find(f => f.key === 'issue-family');
+      const assetClassField = formData.fields.find(f => f.key === 'asset-class');
 
-      if (locationField) {
-        this.locations = locationField.options.map(opt => opt.name);
-        this.newSite.locations = [];
+      if (issueFamilyField && issueFamilyField.options) {
+        this.issuesFamilies = issueFamilyField.options.map(opt => opt.name);
       }
-      if (entityField) {
-        this.entities = entityField.options.map(opt => opt.name);
-        this.newSite.entities = [];
+      if (assetClassField && assetClassField.options) {
+        this.assets = assetClassField.options.map(opt => opt.name);
       }
     } catch (error) {
       console.error('Failed to load form data:', error);
@@ -292,7 +290,7 @@
     <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
       <div>
         <label class="block text-sm font-medium text-gray-300">Form</label>
-        <select x-model="escalation.form" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+        <select x-model="escalation.form" @change="loadFormData($event.target.value)" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
           <option value="">Select a form</option>
           <template x-for="form in forms.filter(f => f.status === 'PROD')" :key="form.id">
             <option :value="form.id" x-text="form.name"></option>
