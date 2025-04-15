@@ -40,12 +40,13 @@
     async deleteTemplate(id) {
       if (!confirm('Are you sure you want to delete this template?')) return;
       try {
-        const response = await fetch(`/api/sultan/templates/${id}`, { method: 'DELETE' });
+        const response = await fetch(`/api/sultan/templates/delete/${id}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Failed to delete template');
         this.templates = this.templates.filter(t => t.id !== id);
+        showNotification('Template deleted successfully', 'success');
       } catch (error) {
         console.error('Failed to delete template:', error);
-        alert('Failed to delete template');
+        showNotification('Failed to delete template', 'error');
       }
     },
     async duplicateTemplate(template) {
