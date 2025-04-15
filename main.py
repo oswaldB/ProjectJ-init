@@ -463,6 +463,16 @@ def api_emailgroup_save():
         logger.error(f"Failed to save email group: {e}")
         return jsonify({"error": "Failed to save email group"}), 500
 
+@app.route('/api/sultan/emailgroups/delete/<emailgroup_id>', methods=['DELETE'])
+def api_emailgroup_delete(emailgroup_id):
+    try:
+        key = f'sultan/emailgroups/{emailgroup_id}.json'
+        delete(key)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to delete email group: {e}")
+        return jsonify({"error": "Failed to delete email group"}), 500
+
 @app.route('/api/sultan/sites/<site_id>')
 def api_site_get(site_id):
     try:
