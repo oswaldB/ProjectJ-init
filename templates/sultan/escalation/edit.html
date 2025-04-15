@@ -308,6 +308,20 @@
     <h1 class="text-2xl font-bold text-white">Escalation Editor</h1>
     <div class="flex space-x-4">
       <button @click="escalation.blocks.push({
+        form: '',
+        triggers: [{
+          issueFamily: '',
+          comparisonKey: '',
+          operator: '',
+          value: '',
+          when: '',
+          template: ''
+        }]
+      })" 
+        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+        Add Block
+      </button>
+      <button @click="escalation.blocks.push({
         ...escalation.blocks[0],
         triggers: escalation.blocks[0].triggers.map(t => ({...t}))
       })" 
