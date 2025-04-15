@@ -39,25 +39,28 @@
     },
     extractFormFields(form) {
       const fields = [];
-      const extract = (items, prefix = '') => {
+      const extract = (items) => {
         items.forEach(item => {
           if (item.key) {
-            const fullKey = prefix + item.key;
+            const fullKey = item.key;
+            console.log('fullKey', fullKey);
+            const keyForTemplate = '\{\{'+item.key+'\}\}';
+            console.log('keyForTemplate', keyForTemplate);
             fields.push({
-              key: fullKey,
+              key: item.key,
               label: item.label || item.key,
-              keyForTemplate: `{{${fullKey}}}`
+              keyForTemplate: keyForTemplate
             });
           }
           if (item.options) {
             item.options.forEach(option => {
               if (option.questions) {
-                extract(option.questions, prefix + item.key + '.');
+                extract(option.questions, item.key);
               }
             });
           }
           if (item.fields) {
-            extract(item.fields, prefix);
+            extract(item.fields);
           }
         });
       };
