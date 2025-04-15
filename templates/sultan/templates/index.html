@@ -12,7 +12,7 @@
       loading: true,
       error: null
     },
-    get filteredTemplates() {
+    filteredTemplates() {
       return this.templates.filter(template => 
         template.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
         template.id?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
@@ -103,7 +103,7 @@
 
     <!-- Templates Grid -->
     <div class="grid gap-4" x-show="!state.loading">
-      <template x-for="template in filteredTemplates()" :key="template.id">
+      <template x-for="template in filteredTemplates" :key="template.id">
         <div class="bg-gray-800 p-4 rounded-lg hover:bg-gray-750 transition">
           <div class="flex justify-between items-start">
             <div class="flex-1">
