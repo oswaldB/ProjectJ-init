@@ -1,0 +1,159 @@
+
+{% extends "sultan/base.html" %}
+
+{% block title %}Email Group Editor{% endblock %}
+
+{% block alpine_component %}
+  {
+    page: 'emailgroup-editor',
+    emailgroup: { 
+      id: '', 
+      name: '',
+      description: '',
+      emails: [],
+      status: 'draft'
+    },
+    newEmail: '',
+    debouncedSave: null,
+    async init() {
+      const groupId = window.location.pathname.split('/').pop();
+      const userEmail = localStorage.getItem('user_email');
+
+      if (groupId !== 'new') {
+        try {
+          const response = await fetch(`/api/sultan/emailgroups/${groupId}?email=${userEmail}`);
+          this.emailgroup = await response.json();
+        } catch (error) {
+          console.error('Failed to load email group:', error);
+          window.location.href = '/sultan/emailgroups';
+        }
+      }
+    },
+    addEmail() {
+      if (this.newEmail && !this.emailgroup.emails.includes(this.newEmail)) {
+        this.emailgroup.emails.push(this.newEmail);
+        this.newEmail = '';
+        this.saveEmailGroup();
+      }
+    },
+    removeEmail(email) {
+      this.emailgroup.emails = this.emailgroup.emails.filter(e => e !== email);
+      this.saveEmailGroup();
+    },
+    async saveEmailGroup() {
+      if (this.debouncedSave) clearTimeout(this.debouncedSave);
+
+      this.debouncedSave = setTimeout(async () => {
+        if (!this.emailgroup.id) {
+          this.emailgroup.id = `emailgroups-${Date.now()}`;
+        }
+
+        const userEmail = localStorage.getItem('user_email');
+        if (!userEmail) return;
+
+        try {
+          await fetch('/api/sultan/emailgroups/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              email: userEmail, 
+              emailgroup: {
+                ...this.emailgroup,
+                user_email: userEmail,
+                modified: new Date().toISOString()
+              }
+            })
+          });
+        } catch (error) {
+          console.error('Failed to save email group:', error);
+        }
+      }, 500);
+    }
+  }
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+  <div class="w-full">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-white">Email Group Editor</h1>
+      <div>
+        <span class="text-gray-400 text-sm">Changes are saved automatically</span>
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      <!-- Basic Info -->
+      <div class="space-y-4">
+        <input 
+          type="text" 
+          x-model="emailgroup.name" 
+          @input="saveEmailGroup()" 
+          class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" 
+          placeholder="Group Name"
+        >
+        
+        <textarea 
+          x-model="emailgroup.description" 
+          @input="saveEmailGroup()" 
+          class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" 
+          placeholder="Description"
+          rows="3"
+        ></textarea>
+      </div>
+
+      <!-- Status -->
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-300">Status</label>
+        <select 
+          x-model="emailgroup.status" 
+          @change="emailgroup.status = emailgroup.status.toLowerCase(); saveEmailGroup()"
+          class="bg-transparent text-sm font-medium px-3 py-1.5 rounded-full border"
+          :class="{
+            'border-green-600 text-green-100': emailgroup.status === 'prod',
+            'border-gray-600 text-gray-100': emailgroup.status === 'draft',
+            'border-yellow-600 text-yellow-100': emailgroup.status === 'old version'
+          }"
+        >
+          <option value="draft">Draft</option>
+          <option value="prod">Prod</option>
+          <option value="old version">Old version</option>
+        </select>
+      </div>
+
+      <!-- Email List -->
+      <div class="space-y-4">
+        <div class="flex space-x-2">
+          <input 
+            type="email" 
+            x-model="newEmail"
+            @keyup.enter="addEmail()"
+            class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" 
+            placeholder="Add email address"
+          >
+          <button 
+            @click="addEmail()"
+            class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          >
+            Add
+          </button>
+        </div>
+
+        <div class="space-y-2">
+          <template x-for="email in emailgroup.emails" :key="email">
+            <div class="flex justify-between items-center bg-gray-800 p-2 rounded">
+              <span x-text="email" class="text-white"></span>
+              <button 
+                @click="removeEmail(email)"
+                class="text-red-500 hover:text-red-600"
+              >
+                Remove
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
