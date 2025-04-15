@@ -59,12 +59,26 @@
       const locationField = formData.fields.find(f => f.key === 'location');
       const entityField = formData.fields.find(f => f.key === 'entity');
       
+      // Mise à jour des locations
       if (locationField) {
         this.locations = locationField.options.map(opt => opt.name);
+        // Garde uniquement les locations existantes
+        this.site.locations = this.site.locations?.filter(loc => this.locations.includes(loc)) || [];
+      } else {
+        this.site.locations = [];
       }
+
+      // Mise à jour des entities  
       if (entityField) {
         this.entities = entityField.options.map(opt => opt.name);
+        // Garde uniquement les entities existantes
+        this.site.entities = this.site.entities?.filter(ent => this.entities.includes(ent)) || [];
+      } else {
+        this.site.entities = [];
       }
+      
+      // Sauvegarde automatique après mise à jour
+      await this.save();
     } catch (error) {
       console.error('Failed to load form data:', error);
     }
