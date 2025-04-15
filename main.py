@@ -452,7 +452,6 @@ def api_form_get(form_id):
             "error": "Form not found",
             "redirect": "/sultan/forms/list"
         }), 404
-        return jsonify({"error": "Form not found"}), 404
 
 
 @app.route('/api/sultan/forms/delete/<form_id>', methods=['DELETE'])
