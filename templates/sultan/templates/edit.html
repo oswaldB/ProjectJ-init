@@ -183,6 +183,22 @@
       <input type="text" x-model="template.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Template Name">
 
       <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-300">Status</label>
+        <select x-model="template.status" 
+                @change="saveTemplate()"
+                class="bg-transparent text-sm font-medium px-3 py-1.5 rounded-full border"
+                :class="{
+                  'border-green-600 text-green-100': template.status === 'Prod',
+                  'border-gray-600 text-gray-100': template.status === 'Draft',
+                  'border-yellow-600 text-yellow-100': template.status === 'Old version'
+                }">
+          <option value="Draft">Draft</option>
+          <option value="Prod">Prod</option>
+          <option value="Old version">Old version</option>
+        </select>
+      </div>
+
+      <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-300">Email Subject</label>
         <div class="relative">
           <input type="text" x-model="template.subject" @focus="currentFocus='subject'" x-ref="subject"
