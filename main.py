@@ -414,6 +414,8 @@ def download_excel(filename):
             download_name=filename,
             as_attachment=True
         )
+    except s3.exceptions.NoSuchKey:
+        return jsonify({'error': 'File not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
