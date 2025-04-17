@@ -395,10 +395,15 @@ def list_excels():
         files = []
         for obj in response.get('Contents', []):
             if obj['Key'].endswith(('.xlsx', '.xls')):
+                # Get metadata for each file
+                metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                status = metadata.get('Metadata', {}).get('status', 'draft')
+                
                 files.append({
                     'name': obj['Key'].split('/')[-1],
                     'size': obj['Size'],
-                    'modified': obj['LastModified']
+                    'modified': obj['LastModified'],
+                    'status': status
                 })
         return jsonify(files)
     except Exception as e:
