@@ -52,13 +52,19 @@
   },
 
   getAllFormKeys(form) {
+    if (!form || !form.questions) return [];
+    
     const keys = [];
     const extractKeys = (questions) => {
+      if (!Array.isArray(questions)) return;
+      
       for (const q of questions) {
-        keys.push(q.key);
-        if (q.type === 'conditional') {
+        if (q.key) {
+          keys.push(q.key);
+        }
+        if (q.type === 'conditional' && Array.isArray(q.options)) {
           for (const option of q.options) {
-            if (option.questions) {
+            if (option && option.questions) {
               extractKeys(option.questions);
             }
           }
