@@ -342,7 +342,7 @@
                       </template>
                     </datalist>
                   </template>
-                  
+
                   <template x-if="column.type === 'customlist'">
                     <datalist :id="'list-' + column.id">
                       <template x-for="value in customLists[column.source] || []" :key="value">
@@ -356,6 +356,8 @@
           </template>
         </tbody>
       </table>
+      </div>
+      </div>
     </div>
   </div>
 </div>
