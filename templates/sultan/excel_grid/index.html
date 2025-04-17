@@ -18,12 +18,16 @@
     await this.loadForms();
   },
 
+  newListName: '',
+  showNewListForm: false,
+
   createCustomList() {
-    const listName = prompt('Enter list name:');
-    if (listName) {
-      this.customLists[listName] = [];
-      this.editingList = listName;
+    if (this.newListName.trim()) {
+      this.customLists[this.newListName] = [];
+      this.editingList = this.newListName;
       this.newListValues = '';
+      this.newListName = '';
+      this.showNewListForm = false;
     }
   },
 
@@ -90,11 +94,29 @@
     
     <!-- Custom Lists Management -->
     <div class="bg-gray-800 p-4 rounded-lg mb-4">
-      <div class="flex justify-between mb-4">
-        <h2 class="text-lg font-semibold">Custom Lists</h2>
-        <button @click="createCustomList()" class="bg-green-600 px-4 py-2 rounded hover:bg-green-700">
-          Create List
-        </button>
+      <div class="space-y-4 mb-4">
+        <div class="flex justify-between">
+          <h2 class="text-lg font-semibold">Custom Lists</h2>
+          <button @click="showNewListForm = true" class="bg-green-600 px-4 py-2 rounded hover:bg-green-700">
+            Create List
+          </button>
+        </div>
+        
+        <div x-show="showNewListForm" class="flex gap-2">
+          <input
+            type="text"
+            x-model="newListName"
+            placeholder="Enter list name"
+            class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600"
+            @keyup.enter="createCustomList()"
+          >
+          <button @click="createCustomList()" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">
+            Add
+          </button>
+          <button @click="showNewListForm = false" class="bg-gray-600 px-4 py-2 rounded hover:bg-gray-700">
+            Cancel
+          </button>
+        </div>
       </div>
       
       <div class="space-y-4">
