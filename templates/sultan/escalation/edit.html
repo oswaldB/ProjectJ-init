@@ -725,7 +725,7 @@
       <!-- Triggers Section -->
       <div class="border-t border-gray-700 pt-4">
       <div class="flex justify-between items-center mb-2">
-        <h2 class`text-lg font-semibold">Triggers</h2>
+        <h2 class`text-lgfont-semibold">Triggers</h2>
         <button @click="block.triggers.push({
                   issueFamily:'',
                   comparisonKey:'',
@@ -822,19 +822,19 @@
                     <div class="flex space-x-2">
                       <input 
                         type="email" 
-                        x-model="trigger.tempEmail"
-                        @keyup.enter="if(trigger.tempEmail) { 
+                        x-model='trigger.tempEmail'
+                        @keyup.enter='if(trigger.tempEmail) { 
                                  if(!trigger.emailList) trigger.emailList = [];
                                  trigger.emailList.push(trigger.tempEmail); 
-                                 trigger.tempEmail = ''; 
-                               }" 
+                                 trigger.tempEmail = ""; 
+                               }' 
                         class="w-64 bg-gray-700 text-white p-1 text-sm rounded border border-gray-600" 
                         placeholder="Enter an email address">
-                      <button @click="if(trigger.tempEmail) { 
+                      <button @click='if(trigger.tempEmail) { 
                                  if(!trigger.emailList) trigger.emailList = [];
                                  trigger.emailList.push(trigger.tempEmail); 
-                                 trigger.tempEmail = ''; 
-                               }" 
+                                 trigger.tempEmail = ""; 
+                               }' 
                               class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -909,12 +909,12 @@
                 </div>
               </div>
             </div>
-          </div>
-        </template>
+          </template>
+        </div>
       </div>
-      </div>
-    </template>
-  </div>
+    </div>
+  </template>
+</div>
 
   <!-- Site Configuration Drawer -->
   <div x-show="selectedDrawer === 0" 
