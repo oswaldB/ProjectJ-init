@@ -78,34 +78,43 @@
   async saveExcel() {
     if (!this.workbook) return;
     
-    // Update current sheet data
-    const newData = [this.headers, ...this.data];
-    const newSheet = XLSX.utils.aoa_to_sheet(newData);
-    this.workbook.Sheets[this.currentSheet] = newSheet;
-    
-    const wbout = XLSX.write(this.workbook, {
-      bookType: 'xlsx',
-      type: 'array'
-    });
-
-    const blob = new Blob([wbout], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const formData = new FormData();
-    formData.append('file', blob, this.filename);
-
     try {
+      // Update current sheet data with filtered data
+      const allData = [this.headers, ...this.data];
+      const newSheet = XLSX.utils.aoa_to_sheet(allData);
+      this.workbook.Sheets[this.currentSheet] = newSheet;
+      
+      // Convert workbook to binary array
+      const wbout = XLSX.write(this.workbook, {
+        bookType: 'xlsx',
+        type: 'array'
+      });
+
+      // Create blob with proper Excel MIME type
+      const blob = new Blob([wbout], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+
+      // Create form data with proper filename
+      const formData = new FormData();
+      formData.append('file', new File([blob], this.filename, {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      }));
+
+      // Upload to server
       const response = await fetch('/api/sultan/escalation/excel/upload', {
         method: 'POST',
         body: formData
       });
       
-      if (response.ok) {
-        alert('Excel file saved successfully');
-      } else {
-        throw new Error('Save failed');
+      if (!response.ok) {
+        throw new Error(`Failed to save: ${response.statusText}`);
       }
+      
+      alert('Excel file saved successfully');
     } catch (error) {
       console.error('Failed to save Excel:', error);
-      alert('Failed to save Excel file');
+      alert(`Failed to save Excel file: ${error.message}`);
     }
   }
 }
