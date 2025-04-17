@@ -75,32 +75,9 @@
     return keys;
   },
 
-  async previewExcel() {
+  async uploadAndContinue() {
     if (!this.selectedFile || !this.selectedForm) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, {type: 'array'});
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
-        
-        this.headers = jsonData[0];
-        this.formKeys = this.getAllFormKeys(this.selectedForm);
-        this.invalidKeys = this.headers.filter(key => !this.formKeys.includes(key));
-        this.previewData = jsonData;
-        
-        this.step = 3;
-      } catch (error) {
-        console.error('Error processing Excel:', error);
-      }
-    };
-    reader.readAsArrayBuffer(this.selectedFile);
-  },
-
-  isInvalidKey(key) {
-    return this.invalidKeys.includes(key);
+    await this.uploadFile();
   },
 
   async uploadFile() {
@@ -202,62 +179,9 @@
             Previous
           </button>
           <button 
-            @click="if(selectedForm) previewExcel()" 
+            @click="uploadAndContinue()" 
             :disabled="!selectedForm"
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            Preview
-          </button>
-        </div>
-      </div>
-
-      <!-- Step 3: Preview and Validation -->
-      <div x-show="step === 3">
-        <h3 class="font-medium mb-2">Excel Preview and Validation</h3>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr>
-                <template x-for="header in headers" :key="header">
-                  <th 
-                    class="border border-gray-600 p-2 text-left"
-                    :class="{ 'invalid-key': isInvalidKey(header) }"
-                  >
-                    <span x-text="header"></span>
-                  </th>
-                </template>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="(row, index) in previewData.slice(1, 6)" :key="index">
-                <tr>
-                  <template x-for="(cell, cellIndex) in row" :key="cellIndex">
-                    <td 
-                      class="border border-gray-600 p-2"
-                      x-text="cell"
-                    ></td>
-                  </template>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
-        <div class="mt-4 text-sm">
-          <div x-show="invalidKeys.length > 0" class="text-red-500 mb-2">
-            Invalid keys found: <span x-text="invalidKeys.join(', ')"></span>
-          </div>
-        </div>
-        <div class="flex justify-between mt-4">
-          <button 
-            @click="step--" 
-            class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-          >
-            Previous
-          </button>
-          <button 
-            @click="uploadFile()"
-            :disabled="invalidKeys.length > 0"
-            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
           >
             Upload
           </button>
