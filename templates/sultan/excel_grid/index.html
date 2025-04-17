@@ -14,7 +14,12 @@
   newListValues: '',
 
   async init() {
-    await this.loadForms();
+    await Promise.all([
+      this.loadForms(),
+      this.loadSites(),
+      this.loadTemplates(), 
+      this.loadEmailGroups()
+    ]);
   },
 
   newListName: '',
@@ -50,6 +55,25 @@
   async loadForms() {
     const response = await fetch('/api/sultan/forms/list');
     this.forms = await response.json();
+  },
+
+  sites: [],
+  templates: [],
+  emailGroups: [],
+
+  async loadSites() {
+    const response = await fetch('/api/sultan/sites/list');
+    this.sites = await response.json();
+  },
+
+  async loadTemplates() {
+    const response = await fetch('/api/sultan/templates/list'); 
+    this.templates = await response.json();
+  },
+
+  async loadEmailGroups() {
+    const response = await fetch('/api/sultan/emailgroups/list');
+    this.emailGroups = await response.json();
   },
 
   async loadFormData() {
@@ -250,6 +274,30 @@
                     <datalist :id="'list-' + column.id">
                       <template x-for="value in customLists[column.source] || []" :key="value">
                         <option x-text="value"></option>
+                      </template>
+                    </datalist>
+                  </template>
+                  
+                  <template x-if="column.type === 'sites'">
+                    <datalist :id="'list-' + column.id">
+                      <template x-for="site in sites" :key="site.id">
+                        <option x-text="site.name"></option>
+                      </template>
+                    </datalist>
+                  </template>
+
+                  <template x-if="column.type === 'templates'">
+                    <datalist :id="'list-' + column.id">
+                      <template x-for="template in templates" :key="template.id">
+                        <option x-text="template.name"></option>
+                      </template>
+                    </datalist>
+                  </template>
+
+                  <template x-if="column.type === 'emailgroups'">
+                    <datalist :id="'list-' + column.id">
+                      <template x-for="group in emailGroups" :key="group.id">
+                        <option x-text="group.name"></option>
                       </template>
                     </datalist>
                   </template>
