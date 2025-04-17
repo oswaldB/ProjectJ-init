@@ -332,7 +332,95 @@
       alert('Failed to create email group');
     });
   },
-}
+  exportToExcel() {
+      // Convert blocks data to CSV format
+      let csvContent = "Issue Family,Name,When,Trigger Key,Trigger Operator,Trigger Compare to,Action Type,Action to,Action template\n";
+
+      this.escalation.blocks.forEach(block => {
+        block.triggers.forEach(trigger => {
+          const row = [
+            trigger.issueFamily || '',
+            block.name || '',
+            trigger.when || '',
+            trigger.comparisonKey || '',
+            trigger.operator || '',
+            trigger.value || '',
+            trigger.actionType || '',
+            (trigger.emailList || []).join(';') || '',
+            trigger.template || ''
+          ].map(cell => `"${cell}"`).join(',');
+          csvContent += row + "\n";
+        });
+      });
+
+      // Create and trigger download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "escalation_rules.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
+
+    async importExcel(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target.result;
+        const rows = text.split('\n');
+        // Skip header row
+        rows.shift();
+
+        const newBlocks = [];
+        let currentBlock = null;
+
+        rows.forEach(row => {
+          if (!row.trim()) return;
+
+          // Parse CSV, handling quoted values
+          const values = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)
+            .map(val => val.replace(/^"|"$/g, '').trim());
+
+          if (values.length >= 9) {
+            const [issueFamily, name, when, triggerKey, operator, value, actionType, actionTo, template] = values;
+
+            // Create new block if name changes
+            if (!currentBlock || currentBlock.name !== name) {
+              currentBlock = {
+                name: name,
+                form: this.escalation.form,
+                status: 'draft',
+                triggers: []
+              };
+              newBlocks.push(currentBlock);
+            }
+
+            // Add trigger to current block
+            currentBlock.triggers.push({
+              issueFamily,
+              when,
+              comparisonKey: triggerKey,
+              operator,
+              value,
+              actionType,
+              emailList: actionTo.split(';').filter(e => e),
+              template
+            });
+          }
+        });
+
+        // Update escalation blocks
+        if (newBlocks.length > 0) {
+          this.escalation.blocks = newBlocks;
+        }
+      };
+      reader.readAsText(file);
+    }
+  }
 {% endblock %}
 
 {% block content %}
@@ -352,6 +440,10 @@
       }]
     })" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
       Add a rule
+    </button>
+    <input type="file" @change="importExcel($event)" accept=".csv" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+    <button @click="exportToExcel()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+      Export to Excel
     </button>
   </div>
 
@@ -633,7 +725,7 @@
       <!-- Triggers Section -->
       <div class="border-t border-gray-700 pt-4">
       <div class="flex justify-between items-center mb-2">
-        <h2 class="text-lg font-semibold">Triggers</h2>
+        <h2 class`text-lg font-semibold">Triggers</h2>
         <button @click="block.triggers.push({
                   issueFamily:'',
                   comparisonKey:'',
@@ -721,7 +813,7 @@
                         class="text-gray-300 hover:text-red-500 flex items-center gap-1"
                         title="Create email group from selected emails"
                       >
-                        <svg xmlns="                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
                         </svg>
                         <span class="text-sm">Save as Group</span>
