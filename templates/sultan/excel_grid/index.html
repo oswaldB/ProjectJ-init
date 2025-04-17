@@ -119,6 +119,35 @@
     } else if (type === 'emailgroups') {
       column.source = this.selectedEmailGroup;
     }
+  },
+
+  async createEmailGroup() {
+    // Implement logic to create a new email group here.  This will likely involve
+    // sending a POST request to a backend API endpoint.  For example:
+
+    const groupName = prompt("Enter the name for the new email group:");
+    if (groupName) {
+      try {
+        const response = await fetch('/api/sultan/emailgroups/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name: groupName })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Failed to create email group: ${errorData.message || response.statusText}`);
+        }
+
+        const newEmailGroup = await response.json();
+        this.emailGroups.push(newEmailGroup);
+        alert('Email group created successfully!');
+      } catch (error) {
+        alert(`Error creating email group: ${error.message}`);
+      }
+    }
   }
 }
 {% endblock %}
@@ -189,9 +218,14 @@
     <div class="bg-gray-800 p-4 rounded-lg">
       <div class="flex justify-between mb-4">
         <h2 class="text-lg font-semibold">Columns Configuration</h2>
-        <button @click="addColumn()" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">
-          Add Column
-        </button>
+        <div class="flex gap-2">
+          <button @click="createEmailGroup()" class="bg-green-600 px-4 py-2 rounded hover:bg-green-700">
+            Create Email Group
+          </button>
+          <button @click="addColumn()" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">
+            Add Column
+          </button>
+        </div>
       </div>
 
       <div class="space-y-4">
@@ -356,9 +390,8 @@
           </template>
         </tbody>
       </table>
-      </div>
-      </div>
     </div>
   </div>
+</div>
 </div>
 {% endblock %}
