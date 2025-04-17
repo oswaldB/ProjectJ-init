@@ -1,3 +1,4 @@
+
 {% extends "sultan/base.html" %}
 
 {% block title %}Excel Manager{% endblock %}
@@ -9,66 +10,99 @@
 {% block alpine_component %}
 {
   files: [],
-  workbook: null,
+  showWizard: false,
+  step: 1,
+  selectedFile: null,
+  forms: [],
+  selectedForm: null,
+  validationError: null,
+  
   async init() {
     await this.loadFiles();
+    await this.loadForms();
   },
-  async processExcel(file) {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, {type: 'array'});
-      this.workbook = workbook;
 
-      // Get first sheet
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
-
-      console.log('Excel data:', jsonData);
-      // You can process the data here
-    };
-    reader.readAsArrayBuffer(file);
+  async loadForms() {
+    try {
+      const response = await fetch('/api/sultan/forms/list');
+      this.forms = await response.json();
+    } catch (error) {
+      console.error('Failed to load forms:', error);
+      this.forms = [];
+    }
   },
-  async downloadAsExcel(filename) {
-    if (!this.workbook) return;
 
-    const wbout = XLSX.write(this.workbook, {
-      bookType: 'xlsx',
-      type: 'array'
-    });
-
-    const blob = new Blob([wbout], {type: 'application/octet-stream'});
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename || 'download.xlsx';
-    a.click();
-    window.URL.revokeObjectURL(url);
-  },
   async loadFiles() {
     try {
       const response = await fetch('/api/sultan/escalation/excel/list');
-      const files = await response.json();
-      this.files = files; //removed status initialization
+      this.files = await response.json();
     } catch (error) {
       console.error('Failed to load files:', error);
       this.files = [];
     }
   },
-  async uploadFile(event) {
-    const file = event.target.files[0];
-    if (!file) return;
 
-    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-      alert('Please select an Excel file (.xlsx or .xls)');
-      return;
-    }
+  async validateExcelWithForm() {
+    if (!this.selectedFile || !this.selectedForm) return false;
+
+    const reader = new FileReader();
+    return new Promise((resolve, reject) => {
+      reader.onload = async (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, {type: 'array'});
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+          
+          // Get headers (trigger keys)
+          const headers = jsonData[0];
+          
+          // Get all form keys including nested ones
+          const formKeys = this.getAllFormKeys(this.selectedForm);
+          
+          // Compare keys
+          const missingKeys = formKeys.filter(key => !headers.includes(key));
+          if (missingKeys.length > 0) {
+            this.validationError = `Missing trigger keys in Excel: ${missingKeys.join(', ')}`;
+            resolve(false);
+          } else {
+            this.validationError = null;
+            resolve(true);
+          }
+        } catch (error) {
+          this.validationError = 'Error processing Excel file';
+          reject(error);
+        }
+      };
+      reader.readAsArrayBuffer(this.selectedFile);
+    });
+  },
+
+  getAllFormKeys(form) {
+    const keys = [];
+    const extractKeys = (questions) => {
+      for (const q of questions) {
+        keys.push(q.key);
+        if (q.type === 'conditional') {
+          for (const option of q.options) {
+            if (option.questions) {
+              extractKeys(option.questions);
+            }
+          }
+        }
+      }
+    };
+    extractKeys(form.questions);
+    return keys;
+  },
+
+  async uploadFile() {
+    if (!this.selectedFile || !this.selectedForm) return;
+    
+    const formData = new FormData();
+    formData.append('file', this.selectedFile);
 
     try {
-      // Create form data
-      const formData = new FormData();
-      formData.append('file', file);
-
       const response = await fetch('/api/sultan/escalation/excel/upload', {
         method: 'POST',
         body: formData
@@ -76,42 +110,25 @@
 
       if (response.ok) {
         await this.loadFiles();
+        this.showWizard = false;
+        this.step = 1;
+        this.selectedFile = null;
+        this.selectedForm = null;
       } else {
         throw new Error('Upload failed');
       }
     } catch (error) {
-      console.error('Failed to process/upload file:', error);
-      alert('Failed to process/upload file');
+      console.error('Failed to upload file:', error);
+      alert('Failed to upload file');
     }
   },
+
   async downloadFile(filename) {
     try {
       window.location.href = `/api/sultan/escalation/excel/download/${filename}`;
     } catch (error) {
       console.error('Failed to download file:', error);
       alert('Failed to download file');
-    }
-  },
-
-  async updateFileStatus(file) { //This function remains, although its call is removed
-    try {
-      const response = await fetch('/api/sultan/escalation/excel/status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          filename: file.name,
-          status: file.status
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update status');
-      }
-    } catch (error) {
-      console.error('Failed to update file status:', error);
-      alert('Failed to update file status');
     }
   }
 }
@@ -122,24 +139,89 @@
   <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
     <h1 class="text-2xl font-bold">Excel Manager</h1>
     <div class="flex space-x-4">
+      <button 
+        @click="showWizard = true" 
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        Upload New Excel
+      </button>
       <a href="/sultan/escalation" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Back</a>
     </div>
   </div>
 
-  <div class="p-6">
-    <div class="w-full space-y-6">
-      <!-- Upload Section -->
-      <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
-        <h2 class="text-xl font-semibold mb-4">Upload Excel File</h2>
+  <!-- Wizard Modal -->
+  <div x-show="showWizard" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-gray-800 p-6 rounded-lg w-1/2">
+      <h2 class="text-xl font-semibold mb-4">Upload Excel - Step <span x-text="step"></span></h2>
+      
+      <!-- Step 1: Select Excel -->
+      <div x-show="step === 1">
+        <h3 class="font-medium mb-2">Select Excel File</h3>
         <input 
           type="file" 
-          @change="uploadFile"
+          @change="selectedFile = $event.target.files[0]"
           accept=".xlsx,.xls"
-          class="bg-gray-700 text-white p-2 rounded border border-gray-600"
+          class="bg-gray-700 text-white p-2 rounded border border-gray-600 w-full"
         >
       </div>
 
-      <!-- Files List -->
+      <!-- Step 2: Select Form -->
+      <div x-show="step === 2">
+        <h3 class="font-medium mb-2">Select Configuration Form</h3>
+        <select 
+          x-model="selectedForm"
+          class="bg-gray-700 text-white p-2 rounded border border-gray-600 w-full"
+        >
+          <option value="">Select a form...</option>
+          <template x-for="form in forms">
+            <option :value="form" x-text="form.name"></option>
+          </template>
+        </select>
+      </div>
+
+      <!-- Validation Error -->
+      <div x-show="validationError" class="mt-4 text-red-500" x-text="validationError"></div>
+
+      <!-- Navigation Buttons -->
+      <div class="flex justify-between mt-6">
+        <button 
+          @click="showWizard = false; step = 1" 
+          class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+        >
+          Cancel
+        </button>
+        <div class="space-x-2">
+          <button 
+            x-show="step > 1"
+            @click="step--" 
+            class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+          >
+            Previous
+          </button>
+          <button 
+            x-show="step === 1"
+            @click="if(selectedFile) step++" 
+            :disabled="!selectedFile"
+            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+          >
+            Next
+          </button>
+          <button 
+            x-show="step === 2"
+            @click="async () => { if(await validateExcelWithForm()) uploadFile() }" 
+            :disabled="!selectedForm"
+            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+          >
+            Upload
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Files List -->
+  <div class="p-6">
+    <div class="w-full space-y-6">
       <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
         <h2 class="text-xl font-semibold mb-4">Excel Files</h2>
         <div class="space-y-4">
