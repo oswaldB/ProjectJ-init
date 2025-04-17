@@ -597,7 +597,9 @@
                               class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600">
                         <option value="">Select an email group to import</option>
                         <template x-for="group in emailGroups" :key="group.id">
-                          <option :value="group.id" x-text="group.name"></option>
+                          <option :value="group.id">
+                            <span x-text="group.emails.join(', ')"></span>
+                          </option>
                         </template>
                       </select>
                     </div>
