@@ -334,7 +334,7 @@
   },
   exportToExcel() {
       // Convert blocks data to CSV format
-      let csvContent = "Issue Family,Name,When,Trigger Key,Trigger Operator,Trigger Compare to,Action Type,Action to,Action template\n";
+      let csvContent = 'Issue Family,Name,When,Trigger Key,Trigger Operator,Trigger Compare to,Action Type,Action to,Action template\n';
 
       this.escalation.blocks.forEach(block => {
         block.triggers.forEach(trigger => {
@@ -348,17 +348,17 @@
             trigger.actionType || '',
             (trigger.emailList || []).join(';') || '',
             trigger.template || ''
-          ].map(cell => `"${cell}"`).join(',');
-          csvContent += row + "\n";
+          ].map(cell => `'${cell}'`).join(',');
+          csvContent += row + '\n';
         });
       });
 
       // Create and trigger download
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", "escalation_rules.csv");
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'escalation_rules.csv');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -382,8 +382,8 @@
           if (!row.trim()) return;
 
           // Parse CSV, handling quoted values
-          const values = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)
-            .map(val => val.replace(/^"|"$/g, '').trim());
+          const values = row.match(/('.*?'|[^',]+)(?=\s*,|\s*$)/g)
+            .map(val => val.replace(/^'|'$/g, '').trim());
 
           if (values.length >= 9) {
             const [issueFamily, name, when, triggerKey, operator, value, actionType, actionTo, template] = values;
