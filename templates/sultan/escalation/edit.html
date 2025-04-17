@@ -359,68 +359,98 @@
   <div class="p-4 space-y-3">
     <!-- Combined Excel-like Grid -->
     <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
-      <div class="grid grid-cols-10 gap-0 border border-gray-600">
+      <div class="grid grid-cols-9 gap-0 border border-gray-600">
         <!-- Headers -->
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Block Name</div>
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Select Level</div>
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Status</div>
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Escalation Name</div>
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Asset Class</div>
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Site</div>
         <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Issue Family</div>
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Comparison Key</div>
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Operator</div>
-        <div class="bg-gray-700 p-2 border-b border-gray-600 font-semibold">Value</div>
+        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Name</div>
+        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">When</div>
+        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Trigger Key</div>
+        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Trigger Operator</div>
+        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Trigger Compare to</div>
+        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Action Type</div>
+        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Action to</div>
+        <div class="bg-gray-700 p-2 border-b border-gray-600 font-semibold">Action template</div>
 
         <!-- Input Fields -->
         <template x-for="(trigger, index) in block.triggers" :key="index">
           <div class="contents">
             <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <input type="text" 
-                     x-model="block.name" 
-                     class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none"
-                     @keydown.enter="$event.target.blur()"
-                     @keydown.tab="$event.preventDefault(); $event.target.parentElement.nextElementSibling.querySelector('select').focus()">
-            </div>
-            <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <select x-model="block.level" 
+              <select x-model="trigger.issueFamily" 
                       class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
-                <option value="">Select Level</option>
-                <option>L1</option>
-                <option>L2</option>
-                <option>L3</option>
-                <option>L4</option>
-              </select>
-            </div>
-            <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <select x-model="block.status" 
-                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
-                <option value="draft">Draft</option>
-                <option value="prod">Prod</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
-            <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <input type="text" 
-                     x-model="escalation.name" 
-                     class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
-            </div>
-            <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <select x-model="escalation.assetClass" 
-                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
-                <template x-for="asset in assets">
-                  <option :value="asset" x-text="asset"></option>
+                <option value="">Select Issue Family</option>
+                <template x-for="family in issuesFamilies">
+                  <option :value="family" x-text="family"></option>
                 </template>
               </select>
             </div>
-            <div class="bg-gray-800 p-1 border-r border-gray-600 flex">
+            <div class="bg-gray-800 p-1 border-r border-gray-600">
               <input type="text" 
-                     x-model="escalation.site.name" 
-                     class="flex-1 bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
-              <button @click="selectedDrawer = 0" 
-                      class="bg-red-500 text-white px-2 hover:bg-red-600 ml-1 text-sm">
-                Config
-              </button>
+                     x-model="block.name" 
+                     class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+            </div>
+            <div class="bg-gray-800 p-1 border-r border-gray-600">
+              <select x-model="trigger.when" 
+                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+                <option value="">Select When</option>
+                <option value="now">now</option>
+                <option value="now+5">now+5</option>
+                <option value="now+10">now+10</option>
+                <option value="now+15">now+15</option>
+                <option value="now+30">now+30</option>
+                <option value="now+60">now+60</option>
+              </select>
+            </div>
+            <div class="bg-gray-800 p-1 border-r border-gray-600">
+              <select x-model="trigger.comparisonKey" 
+                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+                <option value="">Select Key</option>
+                <template x-for="key in keys">
+                  <option :value="key" x-text="key"></option>
+                </template>
+              </select>
+            </div>
+            <div class="bg-gray-800 p-1 border-r border-gray-600">
+              <select x-model="trigger.operator" 
+                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+                <option value="">Select Operator</option>
+                <option value="equals">Equals</option>
+                <option value="bigger">Bigger</option>
+                <option value="smaller">Smaller</option>
+                <option value="contains">Contains</option>
+              </select>
+            </div>
+            <div class="bg-gray-800 p-1 border-r border-gray-600">
+              <input type="text" 
+                     x-model="trigger.value" 
+                     class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+            </div>
+            <div class="bg-gray-800 p-1 border-r border-gray-600">
+              <select x-model="trigger.actionType" 
+                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+                <option value="">Select Action</option>
+                <option value="email">Email</option>
+                <option value="notification">Notification</option>
+                <option value="webhook">Webhook</option>
+              </select>
+            </div>
+            <div class="bg-gray-800 p-1 border-r border-gray-600">
+              <select x-model="trigger.selectedGroup" 
+                      @change="loadEmailGroupDetails($event.target.value)"
+                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+                <option value="">Select Email Group</option>
+                <template x-for="group in emailGroups">
+                  <option :value="group.id" x-text="group.name"></option>
+                </template>
+              </select>
+            </div>
+            <div class="bg-gray-800 p-1 border-gray-600">
+              <select x-model="trigger.template" 
+                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+                <option value="">Select Template</option>
+                <template x-for="template in templates">
+                  <option :value="template.id" x-text="template.name"></option>
+                </template>
+              </select>
             </div>
             <div class="bg-gray-800 p-1 border-r border-gray-600">
               <select x-model="trigger.issueFamily" 
