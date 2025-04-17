@@ -12,6 +12,9 @@
   customLists: {},
   editingList: null,
   newListValues: '',
+  selectedSite: null,
+  selectedTemplate: null,
+  selectedEmailGroup: null,
 
   async init() {
     await Promise.all([
@@ -105,6 +108,16 @@
     if (row === this.gridData[this.gridData.length - 1]) {
       const hasData = Object.values(row).some(v => v !== '');
       if (hasData) this.addRow();
+    }
+  },
+
+  handleDataSource(column, type) {
+    if (type === 'sites') {
+      column.source = this.selectedSite;
+    } else if (type === 'templates') {
+      column.source = this.selectedTemplate;
+    } else if (type === 'emailgroups') {
+      column.source = this.selectedEmailGroup;
     }
   }
 }
@@ -236,6 +249,66 @@
                 </select>
               </div>
             </template>
+
+            <template x-if="column.type === 'sites'">
+              <div class="col-span-2 grid grid-cols-2 gap-2">
+                <select 
+                  x-model="selectedSite"
+                  @change="handleDataSource(column, 'sites')"
+                  class="bg-gray-700 text-white p-2 rounded"
+                >
+                  <option value="">Select Site</option>
+                  <template x-for="site in sites" :key="site.id">
+                    <option :value="site" x-text="site.name"></option>
+                  </template>
+                </select>
+                <input 
+                  x-model="column.valuePath"
+                  placeholder="Value Path (e.g. emails)"
+                  class="bg-gray-700 text-white p-2 rounded"
+                >
+              </div>
+            </template>
+
+            <template x-if="column.type === 'templates'">
+              <div class="col-span-2 grid grid-cols-2 gap-2">
+                <select 
+                  x-model="selectedTemplate"
+                  @change="handleDataSource(column, 'templates')"
+                  class="bg-gray-700 text-white p-2 rounded"
+                >
+                  <option value="">Select Template</option>
+                  <template x-for="template in templates" :key="template.id">
+                    <option :value="template" x-text="template.name"></option>
+                  </template>
+                </select>
+                <input 
+                  x-model="column.valuePath"
+                  placeholder="Value Path (e.g. content)"
+                  class="bg-gray-700 text-white p-2 rounded"
+                >
+              </div>
+            </template>
+
+            <template x-if="column.type === 'emailgroups'">
+              <div class="col-span-2 grid grid-cols-2 gap-2">
+                <select 
+                  x-model="selectedEmailGroup"
+                  @change="handleDataSource(column, 'emailgroups')"
+                  class="bg-gray-700 text-white p-2 rounded"
+                >
+                  <option value="">Select Email Group</option>
+                  <template x-for="group in emailGroups" :key="group.id">
+                    <option :value="group" x-text="group.name"></option>
+                  </template>
+                </select>
+                <input 
+                  x-model="column.valuePath"
+                  placeholder="Value Path (e.g. emails)"
+                  class="bg-gray-700 text-white p-2 rounded"
+                >
+              </div>
+            </template>
           </div>
         </template>
       </div>
@@ -277,27 +350,27 @@
                       </template>
                     </datalist>
                   </template>
-                  
+
                   <template x-if="column.type === 'sites'">
                     <datalist :id="'list-' + column.id">
-                      <template x-for="site in sites" :key="site.id">
-                        <option x-text="site.name"></option>
+                      <template x-for="value in (column.source || [])[column.valuePath]" :key="value">
+                        <option x-text="value"></option>
                       </template>
                     </datalist>
                   </template>
 
                   <template x-if="column.type === 'templates'">
                     <datalist :id="'list-' + column.id">
-                      <template x-for="template in templates" :key="template.id">
-                        <option x-text="template.name"></option>
+                      <template x-for="value in (column.source || [])[column.valuePath]" :key="value">
+                        <option x-text="value"></option>
                       </template>
                     </datalist>
                   </template>
 
                   <template x-if="column.type === 'emailgroups'">
                     <datalist :id="'list-' + column.id">
-                      <template x-for="group in emailGroups" :key="group.id">
-                        <option x-text="group.name"></option>
+                      <template x-for="value in (column.source || [])[column.valuePath]" :key="value">
+                        <option x-text="value"></option>
                       </template>
                     </datalist>
                   </template>
