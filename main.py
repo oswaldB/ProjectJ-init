@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, render_template, redirect, send_from_directory, request, jsonify, send_file
+from flask import Flask, Blueprint, render_template, redirect, send_from_directory, request, jsonify
 import json
 import logging
 from email.mime.text import MIMEText
@@ -362,82 +362,6 @@ def escalation_list():
 @app.route('/sultan/escalation/edit/<escalation_id>')
 def escalation_edit(escalation_id):
     return render_template('sultan/escalation/edit.html')
-
-@app.route('/sultan/escalation/excel')
-def escalation_excel():
-    return render_template('sultan/escalation/excel.html')
-
-
-
-@app.route('/api/sultan/escalation/excel/upload', methods=['POST'])
-def upload_excel():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
-    if not file.filename.endswith(('.xlsx', '.xls')):
-        return jsonify({'error': 'File must be an Excel file'}), 400
-
-    try:
-        file_content = file.read()
-        excel_path = f'sultan/escalation/excel/{file.filename}'
-
-        # Save to S3
-        s3.put_object(
-            Bucket=BUCKET_NAME, 
-            Key=excel_path,
-            Body=file_content,
-            ContentType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-
-        # Save locally
-        local_path = os.path.join(LOCAL_BUCKET_DIR, excel_path)
-        os.makedirs(os.path.dirname(local_path), exist_ok=True)
-        with open(local_path, 'wb') as f:
-            f.write(file_content)
-
-        return jsonify({'success': True})
-    except Exception as e:
-        print(f"Upload error: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/sultan/escalation/excel/list')
-def list_excels():
-    try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix='sultan/escalation/excel/')
-        files = []
-        for obj in response.get('Contents', []):
-            if obj['Key'].endswith(('.xlsx', '.xls')):
-                # Get metadata for each file
-                #metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                #status = metadata.get('Metadata', {}).get('status', 'draft')
-
-                files.append({
-                    'name': obj['Key'].split('/')[-1],
-                    'size': obj['Size'],
-                    'modified': obj['LastModified']
-                    #'status': status
-                })
-        return jsonify(files)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/sultan/escalation/excel/download/<filename>')
-def download_excel(filename):
-    try:
-        excel_path = f'sultan/escalation/excel/{filename}'
-        file = s3.get_object(Bucket=BUCKET_NAME, Key=excel_path)
-        return send_file(
-            file['Body'],
-            download_name=filename,
-            as_attachment=True
-        )
-    except s3.exceptions.NoSuchKey:
-        return jsonify({'error': 'File not found'}), 404
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 
 @app.route('/sultan/emailgroups')
 def emailgroups_list():
