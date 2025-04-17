@@ -381,7 +381,7 @@ def upload_excel():
     
     try:
         file_content = file.read()
-        excel_path = f'sultan/escalation/excel/{file.filename}'
+        excel_path = f'sultan/escalations/excel/{file.filename}'
         
         # Save to S3
         s3.put_object(
@@ -405,7 +405,7 @@ def upload_excel():
 @app.route('/api/sultan/escalation/excel/list')
 def list_excels():
     try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix='sultan/escalation/excel/')
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix='sultan/escalations/excel/')
         files = []
         for obj in response.get('Contents', []):
             if obj['Key'].endswith(('.xlsx', '.xls')):
@@ -426,7 +426,7 @@ def list_excels():
 @app.route('/api/sultan/escalation/excel/download/<filename>')
 def download_excel(filename):
     try:
-        excel_path = f'sultan/escalation/excel/{filename}'
+        excel_path = f'sultan/escalations/excel/{filename}'
         file = s3.get_object(Bucket=BUCKET_NAME, Key=excel_path)
         return send_file(
             file['Body'],
@@ -449,7 +449,7 @@ def update_excel_status():
             return jsonify({'error': 'Filename and status required'}), 400
             
         # Update metadata in S3
-        excel_path = f'sultan/escalation/excel/{filename}'
+        excel_path = f'sultan/escalations/excel/{filename}'
         s3.copy_object(
             Bucket=BUCKET_NAME,
             CopySource={'Bucket': BUCKET_NAME, 'Key': excel_path},
