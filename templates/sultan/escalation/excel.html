@@ -70,7 +70,10 @@
     }
 
     try {
-      // Create form data
+      // Process Excel file locally first
+      await this.processExcel(file);
+
+      // Then upload to server
       const formData = new FormData();
       formData.append('file', file);
 

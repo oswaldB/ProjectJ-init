@@ -380,26 +380,10 @@ def upload_excel():
         return jsonify({'error': 'File must be an Excel file'}), 400
     
     try:
-        file_content = file.read()
         excel_path = f'sultan/escalation/excel/{file.filename}'
-        
-        # Save to S3
-        s3.put_object(
-            Bucket=BUCKET_NAME, 
-            Key=excel_path,
-            Body=file_content,
-            ContentType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-        
-        # Save locally
-        local_path = os.path.join(LOCAL_BUCKET_DIR, excel_path)
-        os.makedirs(os.path.dirname(local_path), exist_ok=True)
-        with open(local_path, 'wb') as f:
-            f.write(file_content)
-            
+        s3.put_object(Bucket=BUCKET_NAME, Key=excel_path, Body=file.read())
         return jsonify({'success': True})
     except Exception as e:
-        print(f"Upload error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/sultan/escalation/excel/list')
