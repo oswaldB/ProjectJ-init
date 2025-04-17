@@ -329,13 +329,55 @@
             <tr class="border-b border-gray-700">
               <template x-for="column in columns" :key="column.id">
                 <td class="p-2">
-                  <input 
-                    type="text"
-                    :list="'list-' + column.id"
-                    :value="row[column.id]"
-                    @input="handleInput(row, column, $event.target.value)"
-                    class="bg-gray-700 text-white p-2 rounded w-full"
-                  >
+                  <template x-if="!['sites', 'templates', 'emailgroups'].includes(column.type)">
+                    <input 
+                      type="text"
+                      :list="'list-' + column.id"
+                      :value="row[column.id]"
+                      @input="handleInput(row, column, $event.target.value)"
+                      class="bg-gray-700 text-white p-2 rounded w-full"
+                    >
+                  </template>
+
+                  <template x-if="column.type === 'sites'">
+                    <select 
+                      :value="row[column.id]"
+                      @change="handleInput(row, column, $event.target.value)"
+                      class="bg-gray-700 text-white p-2 rounded w-full"
+                    >
+                      <option value="">Select Site</option>
+                      <template x-for="site in sites" :key="site.id">
+                        <option :value="site.id" x-text="site.name"></option>
+                      </template>
+                    </select>
+                  </template>
+
+                  <template x-if="column.type === 'templates'">
+                    <select 
+                      :value="row[column.id]"
+                      @change="handleInput(row, column, $event.target.value)"
+                      class="bg-gray-700 text-white p-2 rounded w-full"
+                    >
+                      <option value="">Select Template</option>
+                      <template x-for="template in templates" :key="template.id">
+                        <option :value="template.id" x-text="template.name"></option>
+                      </template>
+                    </select>
+                  </template>
+
+                  <template x-if="column.type === 'emailgroups'">
+                    <select 
+                      :value="row[column.id]"
+                      @change="handleInput(row, column, $event.target.value)"
+                      class="bg-gray-700 text-white p-2 rounded w-full"
+                    >
+                      <option value="">Select Email Group</option>
+                      <template x-for="group in emailGroups" :key="group.id">
+                        <option :value="group.id" x-text="group.name"></option>
+                      </template>
+                    </select>
+                  </template>
+
                   <template x-if="column.type === 'list'">
                     <datalist :id="'list-' + column.id">
                       <template x-for="value in getNestedValue(formData, column.valuePath)" :key="value">
@@ -343,33 +385,10 @@
                       </template>
                     </datalist>
                   </template>
+                  
                   <template x-if="column.type === 'customlist'">
                     <datalist :id="'list-' + column.id">
                       <template x-for="value in customLists[column.source] || []" :key="value">
-                        <option x-text="value"></option>
-                      </template>
-                    </datalist>
-                  </template>
-
-                  <template x-if="column.type === 'sites'">
-                    <datalist :id="'list-' + column.id">
-                      <template x-for="value in (column.source || [])[column.valuePath]" :key="value">
-                        <option x-text="value"></option>
-                      </template>
-                    </datalist>
-                  </template>
-
-                  <template x-if="column.type === 'templates'">
-                    <datalist :id="'list-' + column.id">
-                      <template x-for="value in (column.source || [])[column.valuePath]" :key="value">
-                        <option x-text="value"></option>
-                      </template>
-                    </datalist>
-                  </template>
-
-                  <template x-if="column.type === 'emailgroups'">
-                    <datalist :id="'list-' + column.id">
-                      <template x-for="value in (column.source || [])[column.valuePath]" :key="value">
                         <option x-text="value"></option>
                       </template>
                     </datalist>
