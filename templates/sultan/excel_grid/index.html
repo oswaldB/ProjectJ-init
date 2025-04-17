@@ -1,0 +1,151 @@
+
+{% extends "sultan/base.html" %}
+
+{% block title %}Excel Grid{% endblock %}
+
+{% block alpine_component %}
+{
+  columns: [],
+  gridData: [{}],
+  forms: [],
+  selectedForm: null,
+  formData: null,
+  
+  async init() {
+    await this.loadForms();
+  },
+
+  async loadForms() {
+    const response = await fetch('/api/sultan/forms/list');
+    this.forms = await response.json();
+  },
+
+  async loadFormData() {
+    if (!this.selectedForm) return;
+    const response = await fetch(`/api/sultan/forms/${this.selectedForm}`);
+    this.formData = await response.json();
+  },
+
+  addColumn() {
+    this.columns.push({
+      id: Date.now(),
+      name: '',
+      type: 'freetext',
+      source: '',
+      valuePath: ''
+    });
+  },
+
+  addRow() {
+    this.gridData.push({});
+  },
+
+  getNestedValue(obj, path) {
+    return path.split('.').reduce((o, i) => o?.[i], obj);
+  },
+
+  handleInput(row, column, value) {
+    row[column.id] = value;
+    if (row === this.gridData[this.gridData.length - 1]) {
+      const hasData = Object.values(row).some(v => v !== '');
+      if (hasData) this.addRow();
+    }
+  }
+}
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+  <div class="mb-6 space-y-4">
+    <h1 class="text-2xl font-bold text-white">Excel Grid</h1>
+    
+    <!-- Column Configuration -->
+    <div class="bg-gray-800 p-4 rounded-lg">
+      <div class="flex justify-between mb-4">
+        <h2 class="text-lg font-semibold">Columns Configuration</h2>
+        <button @click="addColumn()" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">
+          Add Column
+        </button>
+      </div>
+      
+      <div class="space-y-4">
+        <template x-for="column in columns" :key="column.id">
+          <div class="grid grid-cols-4 gap-4">
+            <input 
+              x-model="column.name" 
+              placeholder="Column Name"
+              class="bg-gray-700 text-white p-2 rounded"
+            >
+            
+            <select 
+              x-model="column.type"
+              class="bg-gray-700 text-white p-2 rounded"
+            >
+              <option value="freetext">Free Text</option>
+              <option value="list">From List</option>
+            </select>
+            
+            <template x-if="column.type === 'list'">
+              <div class="col-span-2 grid grid-cols-2 gap-2">
+                <select 
+                  x-model="column.source"
+                  @change="loadFormData()"
+                  class="bg-gray-700 text-white p-2 rounded"
+                >
+                  <option value="">Select Form</option>
+                  <template x-for="form in forms" :key="form.id">
+                    <option :value="form.id" x-text="form.name"></option>
+                  </template>
+                </select>
+                
+                <input 
+                  x-model="column.valuePath"
+                  placeholder="Value Path (e.g. options.name)"
+                  class="bg-gray-700 text-white p-2 rounded"
+                >
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </div>
+    
+    <!-- Grid -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-white">
+        <thead>
+          <tr class="bg-gray-800">
+            <template x-for="column in columns" :key="column.id">
+              <th class="p-2 text-left" x-text="column.name"></th>
+            </template>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(row, rowIndex) in gridData" :key="rowIndex">
+            <tr class="border-b border-gray-700">
+              <template x-for="column in columns" :key="column.id">
+                <td class="p-2">
+                  <input 
+                    type="text"
+                    :list="'list-' + column.id"
+                    :value="row[column.id]"
+                    @input="handleInput(row, column, $event.target.value)"
+                    class="bg-gray-700 text-white p-2 rounded w-full"
+                  >
+                  <template x-if="column.type === 'list'">
+                    <datalist :id="'list-' + column.id">
+                      <template x-for="value in getNestedValue(formData, column.valuePath)" :key="value">
+                        <option x-text="value"></option>
+                      </template>
+                    </datalist>
+                  </template>
+                </td>
+              </template>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

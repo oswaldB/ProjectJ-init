@@ -363,9 +363,9 @@ def escalation_list():
 def escalation_edit(escalation_id):
     return render_template('sultan/escalation/edit.html')
 
-@app.route('/sultan/escalation/excel')
-def escalation_excel():
-    return render_template('sultan/escalation/excel.html')
+@app.route('/sultan/excel_grid')
+def excel_grid():
+    return render_template('sultan/excel_grid/index.html')
 
 
 
