@@ -1,4 +1,3 @@
-
 {% extends "sultan/base.html" %}
 
 {% block title %}Excel Manager{% endblock %}
@@ -20,11 +19,11 @@
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, {type: 'array'});
       this.workbook = workbook;
-      
+
       // Get first sheet
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
-      
+
       console.log('Excel data:', jsonData);
       // You can process the data here
     };
@@ -32,7 +31,7 @@
   },
   async downloadAsExcel(filename) {
     if (!this.workbook) return;
-    
+
     const wbout = XLSX.write(this.workbook, {
       bookType: 'xlsx',
       type: 'array'
@@ -50,11 +49,7 @@
     try {
       const response = await fetch('/api/sultan/escalation/excel/list');
       const files = await response.json();
-      // Initialize status if not present
-      this.files = files.map(file => ({
-        ...file,
-        status: file.status || 'draft'
-      }));
+      this.files = files; //removed status initialization
     } catch (error) {
       console.error('Failed to load files:', error);
       this.files = [];
@@ -97,8 +92,8 @@
       alert('Failed to download file');
     }
   },
-  
-  async updateFileStatus(file) {
+
+  async updateFileStatus(file) { //This function remains, although its call is removed
     try {
       const response = await fetch('/api/sultan/escalation/excel/status', {
         method: 'POST',
@@ -110,7 +105,7 @@
           status: file.status
         })
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to update status');
       }
@@ -158,16 +153,6 @@
               <div>
                 <div class="flex items-center space-x-4">
                   <span x-text="file.name" class="font-medium"></span>
-                  <select 
-                    x-model="file.status" 
-                    @change="updateFileStatus(file)"
-                    class="bg-gray-600 text-white px-2 py-1 rounded border border-gray-500"
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="review">Review</option>
-                    <option value="approved">Approved</option>
-                    <option value="archived">Archived</option>
-                  </select>
                 </div>
                 <div class="text-sm text-gray-400">
                   <span x-text="new Date(file.modified).toLocaleString()"></span>

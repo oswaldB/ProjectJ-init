@@ -378,11 +378,11 @@ def upload_excel():
         return jsonify({'error': 'No selected file'}), 400
     if not file.filename.endswith(('.xlsx', '.xls')):
         return jsonify({'error': 'File must be an Excel file'}), 400
-    
+
     try:
         file_content = file.read()
         excel_path = f'sultan/escalation/excel/{file.filename}'
-        
+
         # Save to S3
         s3.put_object(
             Bucket=BUCKET_NAME, 
@@ -390,13 +390,13 @@ def upload_excel():
             Body=file_content,
             ContentType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
-        
+
         # Save locally
         local_path = os.path.join(LOCAL_BUCKET_DIR, excel_path)
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
         with open(local_path, 'wb') as f:
             f.write(file_content)
-            
+
         return jsonify({'success': True})
     except Exception as e:
         print(f"Upload error: {str(e)}")
@@ -410,14 +410,14 @@ def list_excels():
         for obj in response.get('Contents', []):
             if obj['Key'].endswith(('.xlsx', '.xls')):
                 # Get metadata for each file
-                metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                status = metadata.get('Metadata', {}).get('status', 'draft')
-                
+                #metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                #status = metadata.get('Metadata', {}).get('status', 'draft')
+
                 files.append({
                     'name': obj['Key'].split('/')[-1],
                     'size': obj['Size'],
-                    'modified': obj['LastModified'],
-                    'status': status
+                    'modified': obj['LastModified']
+                    #'status': status
                 })
         return jsonify(files)
     except Exception as e:
@@ -438,29 +438,6 @@ def download_excel(filename):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/sultan/escalation/excel/status', methods=['POST'])
-def update_excel_status():
-    try:
-        data = request.json
-        filename = data.get('filename')
-        status = data.get('status')
-        
-        if not filename or not status:
-            return jsonify({'error': 'Filename and status required'}), 400
-            
-        # Update metadata in S3
-        excel_path = f'sultan/escalation/excel/{filename}'
-        s3.copy_object(
-            Bucket=BUCKET_NAME,
-            CopySource={'Bucket': BUCKET_NAME, 'Key': excel_path},
-            Key=excel_path,
-            Metadata={'status': status},
-            MetadataDirective='REPLACE'
-        )
-        
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 @app.route('/sultan/emailgroups')
 def emailgroups_list():
