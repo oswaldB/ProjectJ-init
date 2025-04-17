@@ -363,6 +363,56 @@ def escalation_list():
 def escalation_edit(escalation_id):
     return render_template('sultan/escalation/edit.html')
 
+@app.route('/sultan/escalation/excel')
+def escalation_excel():
+    return render_template('sultan/escalation/excel.html')
+
+@app.route('/api/sultan/escalation/excel/upload', methods=['POST'])
+def upload_excel():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        return jsonify({'error': 'File must be an Excel file'}), 400
+    
+    try:
+        excel_path = f'sultan/escalation/excel/{file.filename}'
+        s3.put_object(Bucket=BUCKET_NAME, Key=excel_path, Body=file.read())
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/sultan/escalation/excel/list')
+def list_excels():
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix='sultan/escalation/excel/')
+        files = []
+        for obj in response.get('Contents', []):
+            if obj['Key'].endswith(('.xlsx', '.xls')):
+                files.append({
+                    'name': obj['Key'].split('/')[-1],
+                    'size': obj['Size'],
+                    'modified': obj['LastModified']
+                })
+        return jsonify(files)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/sultan/escalation/excel/download/<filename>')
+def download_excel(filename):
+    try:
+        excel_path = f'sultan/escalation/excel/{filename}'
+        file = s3.get_object(Bucket=BUCKET_NAME, Key=excel_path)
+        return send_file(
+            file['Body'],
+            download_name=filename,
+            as_attachment=True
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/sultan/emailgroups')
 def emailgroups_list():
     return render_template('sultan/emailgroups/index.html')

@@ -1,0 +1,113 @@
+
+{% extends "sultan/base.html" %}
+
+{% block title %}Excel Manager{% endblock %}
+
+{% block alpine_component %}
+{
+  files: [],
+  async init() {
+    await this.loadFiles();
+  },
+  async loadFiles() {
+    try {
+      const response = await fetch('/api/sultan/escalation/excel/list');
+      this.files = await response.json();
+    } catch (error) {
+      console.error('Failed to load files:', error);
+      this.files = [];
+    }
+  },
+  async uploadFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      alert('Please select an Excel file (.xlsx or .xls)');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/sultan/escalation/excel/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        await this.loadFiles();
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Failed to upload file:', error);
+      alert('Failed to upload file');
+    }
+  },
+  async downloadFile(filename) {
+    try {
+      window.location.href = `/api/sultan/escalation/excel/download/${filename}`;
+    } catch (error) {
+      console.error('Failed to download file:', error);
+      alert('Failed to download file');
+    }
+  }
+}
+{% endblock %}
+
+{% block content %}
+<div class="h-screen bg-gray-900 text-white">
+  <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
+    <h1 class="text-2xl font-bold">Excel Manager</h1>
+    <div class="flex space-x-4">
+      <a href="/sultan/escalation" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Back</a>
+    </div>
+  </div>
+
+  <div class="p-6">
+    <div class="w-full space-y-6">
+      <!-- Upload Section -->
+      <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+        <h2 class="text-xl font-semibold mb-4">Upload Excel File</h2>
+        <input 
+          type="file" 
+          @change="uploadFile"
+          accept=".xlsx,.xls"
+          class="bg-gray-700 text-white p-2 rounded border border-gray-600"
+        >
+      </div>
+
+      <!-- Files List -->
+      <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+        <h2 class="text-xl font-semibold mb-4">Excel Files</h2>
+        <div class="space-y-4">
+          <template x-if="files.length === 0">
+            <div class="text-gray-400 text-center py-4">
+              No Excel files uploaded yet
+            </div>
+          </template>
+          <template x-for="file in files" :key="file.name">
+            <div class="flex items-center justify-between bg-gray-700 p-4 rounded-lg">
+              <div>
+                <span x-text="file.name" class="font-medium"></span>
+                <div class="text-sm text-gray-400">
+                  <span x-text="new Date(file.modified).toLocaleString()"></span>
+                  <span x-text="'(' + Math.round(file.size/1024) + ' KB)'"></span>
+                </div>
+              </div>
+              <button 
+                @click="downloadFile(file.name)"
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              >
+                Download
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
