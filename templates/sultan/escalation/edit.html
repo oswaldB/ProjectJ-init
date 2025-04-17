@@ -4,19 +4,7 @@
 
 {% block alpine_component %}
 {
-  emailGroups: [],
-  selectedGroupEmails: [],
   escalation: {
-    id: null,
-    name: '',
-    level: '',
-    email: '',
-    assetClass: '',
-    site: {
-      name: '',
-      entities: [],
-      locations: []
-    },
     blocks: [{
       form: '',
       triggers: [{
@@ -32,181 +20,8 @@
   templates: [],
   issuesFamilies: ['Valuation', 'Data Quality', 'System', 'Process', 'People'],
   keys: [],
-  extractKeys(fields) {
-    const keys = [];
-    fields.forEach(field => {
-      if (field.key) {
-        keys.push(field.key);
-      }
-      // Check for nested questions in options
-      if (field.options) {
-        field.options.forEach(option => {
-          if (option.questions) {
-            option.questions.forEach(question => {
-              if (question.key) {
-                keys.push(question.key);
-              }
-            });
-          }
-        });
-      }
-    });
-    return keys;
-  },
-  assets: ['Rates', 'FX', 'Credit', 'Equity', 'Commodity'],
-  entities: ['Entity1', 'Entity2', 'Entity3'],
-  locations: ['Location1', 'Location2', 'Location3'],
-  sites: [],
-  filters: {
-    email: '',
-    name: '',
-    level: '',
-    site: '',
-    issueFamily: ''
-  },
-  filteredBlocks() {
-    return this.escalation.blocks.filter(block => {
-      const matchesEmail = !this.filters.email || block.triggers.some(t => 
-        t.emailList && t.emailList.some(email => email.toLowerCase().includes(this.filters.email.toLowerCase()))
-      );
-      const matchesName = !this.filters.name || this.escalation.name.toLowerCase().includes(this.filters.name.toLowerCase());
-      const matchesLevel = !this.filters.level || this.escalation.level === this.filters.level;
-      const matchesSite = !this.filters.site || this.escalation.site.name.toLowerCase().includes(this.filters.site.toLowerCase());
-      const matchesIssueFamily = !this.filters.issueFamily || block.triggers.some(t => 
-        t.issueFamily === this.filters.issueFamily
-      );
-
-      return matchesEmail && matchesName && matchesLevel && matchesSite && matchesIssueFamily;
-    });
-  },
-  selectedDrawer: -1,
-  selectedTriggerIndex: 0,
-  showNewSiteModal: false,
-  newSite: {
-    id: null,
-    name: '',
-    form: '',
-    status: 'draft',
-    entities: [],
-    locations: []
-  },
-  filter: '',
   async init() {
-    const id = window.location.pathname.split('/').pop();
-    if (id === 'new') {
-      this.escalation.id = `escalation-${Date.now()}`;
-    } else {
-      await this.loadEscalation(id);
-    }
     await this.loadTemplates();
-    await this.loadSites();
-    await this.loadForms();
-    await this.loadEmailGroups();
-
-    this.$watch('escalation', async (value) => {
-      try {
-        await fetch('/api/sultan/escalation/save', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({escalation: value})
-        });
-      } catch (error) {
-        console.error('Failed to auto-save escalation:', error);
-      }
-    }, { deep: true });
-  },
-  async loadEmailGroups() {
-    try {
-      const response = await fetch('/api/sultan/emailgroups/list');
-      this.emailGroups = await response.json();
-    } catch (error) {
-      console.error('Failed to load email groups:', error);
-      this.emailGroups = [];
-    }
-  },
-  async loadEmailGroupDetails(groupId) {
-    if (!groupId) {
-      this.selectedGroupEmails = [];
-      return;
-    }
-    try {
-      const response = await fetch(`/api/sultan/emailgroups/${groupId}`);
-      const group = await response.json();
-      this.selectedGroupEmails = group.emails || [];
-      // Update the trigger email field with the group's emails
-      const selectedTrigger = this.escalation.triggers.find(t => t.selectedGroup === groupId);
-      if (selectedTrigger) {
-        selectedTrigger.email = this.selectedGroupEmails.join(',');
-      }
-    } catch (error) {
-      console.error('Failed to load email group details:', error);
-      this.selectedGroupEmails = [];
-    }
-  },
-  async loadForms() {
-    try {
-      const response = await fetch('/api/sultan/forms/list');
-      this.forms = await response.json();
-    } catch (error) {
-      console.error('Failed to load forms:', error);
-    }
-  },
-  async loadFormData(formId) {
-    if (!formId) {
-      this.issuesFamilies = [];
-      this.assets = [];
-      this.keys = [];
-      return;
-    }
-    try {
-      const response = await fetch(`/api/sultan/forms/${formId}`);
-      const formData = await response.json();
-
-      const issueFamilyField = formData.fields.find(f => f.key === 'issue-family');
-      const assetClassField = formData.fields.find(f => f.key === 'asset-class');
-
-      if (issueFamilyField && issueFamilyField.options) {
-        this.issuesFamilies = issueFamilyField.options.map(opt => opt.name);
-      }
-      if (assetClassField && assetClassField.options) {
-        this.assets = assetClassField.options.map(opt => opt.name);
-      }
-
-      // Extract all keys from form fields
-      this.keys = this.extractKeys(formData.fields);
-    } catch (error) {
-      console.error('Failed to load form data:', error);
-    }
-  },
-  saveEntitiesForNewSite(entity) {
-    if (!this.newSite.entities) {
-      this.newSite.entities = [];
-    }
-    const index = this.newSite.entities.indexOf(entity);
-    if (index === -1) {
-      this.newSite.entities.push(entity);
-    } else {
-      this.newSite.entities.splice(index, 1);
-    }
-  },
-  saveLocationsForNewSite(location) {
-    if (!this.newSite.locations) {
-      this.newSite.locations = [];
-    }
-    const index = this.newSite.locations.indexOf(location);
-    if (index === -1) {
-      this.newSite.locations.push(location);
-    } else {
-      this.newSite.locations.splice(index, 1);
-    }
-  },
-  async loadEscalation(id) {
-    try {
-      const response = await fetch(`/api/sultan/escalation/${id}`);
-      this.escalation = await response.json();
-    } catch (error) {
-      console.error('Failed to load escalation:', error);
-    }
   },
   async loadTemplates() {
     try {
@@ -216,259 +31,108 @@
       console.error('Failed to load templates:', error);
     }
   },
-  async createSite() {
-    try {
-      const response = await fetch('/api/sultan/sites/save', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({site: this.newSite})
-      });
-      if (response.ok) {
-        this.showNewSiteModal = false;
-        await this.loadSites();
-      }
-    } catch (error) {
-      console.error('Failed to save site:', error);
-    }
-  },
-  async loadSites() {
-    try {
-      const response = await fetch('/api/sultan/sites/list');
-      const allSites = await response.json();
-      this.sites = allSites.filter(site => site.status === 'prod');
-    } catch (error) {
-      console.error('Failed to load sites:', error);
-      this.sites = [];
-    }
-  },
-  async save() {
-    try {
-      const response = await fetch('/api/sultan/escalation/save', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({escalation: this.escalation})
-      });
-      if (response.ok) {
-        window.location.href = '/sultan/escalation';
-      }
-    } catch (error) {
-      console.error('Failed to save escalation:', error);
-    }
-  },
-  saveEntities(entity) {
-    if (!this.escalation.site.entities) {
-      this.escalation.site.entities = [];
-    }
-    const index = this.escalation.site.entities.indexOf(entity);
-    if (index === -1) {
-      this.escalation.site.entities.push(entity);
-    } else {
-      this.escalation.site.entities.splice(index, 1);
-    }
-  },
-  saveLocations(location) {
-    if (!this.escalation.site.locations) {
-      this.escalation.site.locations = [];
-    }
-    const index = this.escalation.site.locations.indexOf(location);
-    if (index === -1) {
-      this.escalation.site.locations.push(location);
-    } else {
-      this.escalation.site.locations.splice(index, 1);
-    }
-  },
-  selectedTriggerIndex: 0,
-  selectedTab: 'form',
-  newEmail: '',
-  newEmailGroup: '',
-  showNewGroupModal: false,
-  newGroupName: '',
-  createEmailGroup() {
-    const trigger = this.escalation.triggers[this.selectedTriggerIndex];
-    if (!trigger) {
-      alert('Please select a trigger first');
-      return;
-    }
-
-    if (!trigger.emailList) {
-      trigger.emailList = [];
-    }
-
-    if (trigger.emailList.length === 0) {
-      alert('Please add some emails first');
-      return;
-    }
-
-    this.newGroupName = '';
-    this.showNewGroupModal = true;
-  },
-  saveNewEmailGroup() {
-    const trigger = this.escalation.triggers[this.selectedTriggerIndex];
-    if (!this.newGroupName) return;
-
-    const newGroup = {
-      id: `emailgroups-${Date.now()}`,
-      name: this.newGroupName,
-      description: 'Created from escalation',
-      emails: trigger.emailList,
-      status: 'draft'
-    };
-
-    fetch('/api/sultan/emailgroups/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emailgroup: newGroup })
-    })
-    .then(response => {
-      if (response.ok) {
-        this.showNewGroupModal = false;
-        this.loadEmailGroups();
-      } else {
-        throw new Error('Failed to create email group');
-      }
-    })
-    .catch(error => {
-      console.error('Error creating email group:', error);
-      alert('Failed to create email group');
-    });
-  },
   exportToExcel() {
-      // Convert blocks data to CSV format
-      let csvContent = 'Issue Family,Name,When,Trigger Key,Trigger Operator,Trigger Compare to,Action Type,Action to,Action template\n';
-
-      this.escalation.blocks.forEach(block => {
-        block.triggers.forEach(trigger => {
-          const row = [
-            trigger.issueFamily || '',
-            block.name || '',
-            trigger.when || '',
-            trigger.comparisonKey || '',
-            trigger.operator || '',
-            trigger.value || '',
-            trigger.actionType || '',
-            (trigger.emailList || []).join(';') || '',
-            trigger.template || ''
-          ].map(cell => `'${cell}'`).join(',');
-          csvContent += row + '\n';
-        });
+    let csvContent = 'Issue Family,Name,When,Trigger Key,Trigger Operator,Trigger Compare to,Action Type,Action to,Action template\n';
+    this.escalation.blocks.forEach(block => {
+      block.triggers.forEach(trigger => {
+        const row = [
+          trigger.issueFamily || '',
+          block.name || '',
+          trigger.when || '',
+          trigger.comparisonKey || '',
+          trigger.operator || '',
+          trigger.value || '',
+          trigger.actionType || '',
+          (trigger.emailList || []).join(';') || '',
+          trigger.template || ''
+        ].map(cell => `"${cell}"`).join(',');
+        csvContent += row + '\n';
       });
-
-      // Create and trigger download
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', 'escalation_rules.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    },
-
-    async importExcel(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target.result;
-        const rows = text.split('\n');
-        // Skip header row
-        rows.shift();
-
-        const newBlocks = [];
-        let currentBlock = null;
-
-        rows.forEach(row => {
-          if (!row.trim()) return;
-
-          // Parse CSV, handling quoted values
-          const values = row.match(/('.*?'|[^',]+)(?=\s*,|\s*$)/g)
-            .map(val => val.replace(/^'|'$/g, '').trim());
-
-          if (values.length >= 9) {
-            const [issueFamily, name, when, triggerKey, operator, value, actionType, actionTo, template] = values;
-
-            // Create new block if name changes
-            if (!currentBlock || currentBlock.name !== name) {
-              currentBlock = {
-                name: name,
-                form: this.escalation.form,
-                status: 'draft',
-                triggers: []
-              };
-              newBlocks.push(currentBlock);
-            }
-
-            // Add trigger to current block
-            currentBlock.triggers.push({
-              issueFamily,
-              when,
-              comparisonKey: triggerKey,
-              operator,
-              value,
-              actionType,
-              emailList: actionTo.split(';').filter(e => e),
-              template
-            });
+    });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'escalation_rules.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  },
+  async importExcel(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const rows = text.split('\n');
+      rows.shift();
+      const newBlocks = [];
+      let currentBlock = null;
+      rows.forEach(row => {
+        if (!row.trim()) return;
+        const values = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)
+          .map(val => val.replace(/^"|"$/g, '').trim());
+        if (values.length >= 9) {
+          const [issueFamily, name, when, triggerKey, operator, value, actionType, actionTo, template] = values;
+          if (!currentBlock || currentBlock.name !== name) {
+            currentBlock = {
+              name: name,
+              form: this.escalation.form,
+              triggers: []
+            };
+            newBlocks.push(currentBlock);
           }
-        });
-
-        // Update escalation blocks
-        if (newBlocks.length > 0) {
-          this.escalation.blocks = newBlocks;
+          currentBlock.triggers.push({
+            issueFamily,
+            when,
+            comparisonKey: triggerKey,
+            operator,
+            value,
+            actionType,
+            emailList: actionTo.split(';').filter(e => e),
+            template
+          });
         }
-      };
-      reader.readAsText(file);
-    }
+      });
+      if (newBlocks.length > 0) {
+        this.escalation.blocks = newBlocks;
+      }
+    };
+    reader.readAsText(file);
   }
+}
 {% endblock %}
 
 {% block content %}
-<div class="h-screen bg-gray-900 text-white">
-  <!-- Top Bar -->
-  <div class="p-4">
-    <button @click="escalation.blocks.push({
-      form: '',
-      status: 'draft',
-      triggers: [{
-        issueFamily: '',
-        comparisonKey: '',
-        operator: '',
-        value: '',
-        when: '',
-        template: ''
-      }]
-    })" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-      Add a rule
-    </button>
+<div class="h-screen bg-gray-900 text-white p-4">
+  <!-- Import/Export Buttons -->
+  <div class="mb-4">
     <input type="file" @change="importExcel($event)" accept=".csv" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-    <button @click="exportToExcel()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+    <button @click="exportToExcel()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 ml-2">
       Export to Excel
     </button>
   </div>
 
-  <!-- Main Content -->
-  <div class="p-4 space-y-3">
-    <!-- Combined Excel-like Grid -->
-    <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
-      <div class="grid grid-cols-9 gap-0 border border-gray-600">
-        <!-- Headers -->
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Issue Family</div>
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Name</div>
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">When</div>
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Trigger Key</div>
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Trigger Operator</div>
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Trigger Compare to</div>
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Action Type</div>
-        <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Action to</div>
-        <div class="bg-gray-700 p-2 border-b border-gray-600 font-semibold">Action template</div>
+  <!-- Excel-like Grid -->
+  <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+    <div class="grid grid-cols-9 gap-0 border border-gray-600">
+      <!-- Headers -->
+      <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Issue Family</div>
+      <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Name</div>
+      <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">When</div>
+      <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Trigger Key</div>
+      <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Trigger Operator</div>
+      <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Trigger Compare to</div>
+      <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Action Type</div>
+      <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Action to</div>
+      <div class="bg-gray-700 p-2 border-b border-gray-600 font-semibold">Action template</div>
 
-        <!-- Input Fields -->
-        <template x-for="(trigger, index) in block.triggers" :key="index">
+      <!-- Grid Rows -->
+      <template x-for="(block, blockIndex) in escalation.blocks" :key="blockIndex">
+        <template x-for="(trigger, triggerIndex) in block.triggers" :key="triggerIndex">
           <div class="contents">
             <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <select x-model="trigger.issueFamily" 
-                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+              <select x-model="trigger.issueFamily" class="w-full bg-transparent text-white p-2 focus:bg-gray-700">
                 <option value="">Select Issue Family</option>
                 <template x-for="family in issuesFamilies">
                   <option :value="family" x-text="family"></option>
@@ -476,13 +140,10 @@
               </select>
             </div>
             <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <input type="text" 
-                     x-model="block.name" 
-                     class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+              <input type="text" x-model="block.name" class="w-full bg-transparent text-white p-2 focus:bg-gray-700">
             </div>
             <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <select x-model="trigger.when" 
-                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+              <select x-model="trigger.when" class="w-full bg-transparent text-white p-2 focus:bg-gray-700">
                 <option value="">Select When</option>
                 <option value="now">now</option>
                 <option value="now+5">now+5</option>
@@ -493,8 +154,7 @@
               </select>
             </div>
             <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <select x-model="trigger.comparisonKey" 
-                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+              <select x-model="trigger.comparisonKey" class="w-full bg-transparent text-white p-2 focus:bg-gray-700">
                 <option value="">Select Key</option>
                 <template x-for="key in keys">
                   <option :value="key" x-text="key"></option>
@@ -502,8 +162,7 @@
               </select>
             </div>
             <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <select x-model="trigger.operator" 
-                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+              <select x-model="trigger.operator" class="w-full bg-transparent text-white p-2 focus:bg-gray-700">
                 <option value="">Select Operator</option>
                 <option value="equals">Equals</option>
                 <option value="bigger">Bigger</option>
@@ -512,13 +171,10 @@
               </select>
             </div>
             <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <input type="text" 
-                     x-model="trigger.value" 
-                     class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+              <input type="text" x-model="trigger.value" class="w-full bg-transparent text-white p-2 focus:bg-gray-700">
             </div>
             <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <select x-model="trigger.actionType" 
-                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+              <select x-model="trigger.actionType" class="w-full bg-transparent text-white p-2 focus:bg-gray-700">
                 <option value="">Select Action</option>
                 <option value="email">Email</option>
                 <option value="notification">Notification</option>
@@ -526,589 +182,19 @@
               </select>
             </div>
             <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <select x-model="trigger.selectedGroup" 
-                      @change="loadEmailGroupDetails($event.target.value)"
-                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
-                <option value="">Select Email Group</option>
-                <template x-for="group in emailGroups">
-                  <option :value="group.id" x-text="group.name"></option>
-                </template>
-              </select>
+              <input type="text" x-model="trigger.emailList" class="w-full bg-transparent text-white p-2 focus:bg-gray-700">
             </div>
             <div class="bg-gray-800 p-1 border-gray-600">
-              <select x-model="trigger.template" 
-                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
+              <select x-model="trigger.template" class="w-full bg-transparent text-white p-2 focus:bg-gray-700">
                 <option value="">Select Template</option>
                 <template x-for="template in templates">
                   <option :value="template.id" x-text="template.name"></option>
                 </template>
               </select>
             </div>
-            <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <select x-model="trigger.issueFamily" 
-                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
-                <option value="">Select Issue Family</option>
-                <template x-for="family in issuesFamilies">
-                  <option :value="family" x-text="family"></option>
-                </template>
-              </select>
-            </div>
-            <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <select x-model="trigger.comparisonKey" 
-                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
-                <option value="">Select Key</option>
-                <template x-for="key in keys">
-                  <option :value="key" x-text="key"></option>
-                </template>
-              </select>
-            </div>
-            <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <select x-model="trigger.operator" 
-                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
-                <option value="">Select Operator</option>
-                <option value="equals">Equals</option>
-                <option value="bigger">Bigger</option>
-                <option value="smaller">Smaller</option>
-                <option value="contains">Contains</option>
-              </select>
-            </div>
-            <div class="bg-gray-800 p-1 border-r border-gray-600">
-              <input type="text" 
-                     x-model="trigger.value" 
-                     class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
-            </div>
-            <div class="bg-gray-800 p-1 border-gray-600 flex">
-              <select x-model="trigger.selectedGroup" 
-                      @change="loadEmailGroupDetails($event.target.value)"
-                      class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none">
-                <option value="">Select Email Group</option>
-                <template x-for="group in emailGroups">
-                  <option :value="group.id" x-text="group.name"></option>
-                </template>
-              </select>
-              <div class="flex">
-                <button @click="block.triggers.push({...trigger})" 
-                        class="bg-green-500 text-white px-2 py-1 text-sm hover:bg-green-600">+</button>
-                <button x-show="block.triggers.length > 1" 
-                        @click="block.triggers.splice(index, 1)" 
-                        class="bg-red-500 text-white px-2 py-1 text-sm hover:bg-red-600 ml-1">-</button>
-              </div>
-            </div>
           </div>
         </template>
-      </div>
-    </div>
-
-      <!-- Form Selection -->
-      <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-300">Form</label>
-          <select x-model="escalation.form" @change="loadFormData($event.target.value); escalation.blocks.forEach(block => block.form = $event.target.value)" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-            <option value="">Select a form</option>
-            <template x-for="form in forms.filter(f => f.status === 'PROD')" :key="form.id">
-              <option :value="form.id" x-text="form.name"></option>
-            </template>
-          </select>
-        </div>
-      </div>
-
-    <!-- Filters -->
-    <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
-      <h3 class="text-lg font-semibold mb-3">Filters</h3>
-      <div class="grid grid-cols-5 gap-4">
-        <div>
-          <label class="block text-xs font-medium text-gray-300">Email</label>
-          <input type="text" x-model="filters.email" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-300">Name</label>
-          <input type="text" x-model="filters.name" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-300">Level</label>
-          <select x-model="filters.level" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-            <option value="">All</option>
-            <option>L1</option>
-            <option>L2</option>
-            <option>L3</option>
-            <option>L4</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-300">Site</label>
-          <input type="text" x-model="filters.site" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-300">Issue Family</label>
-          <select x-model="filters.issueFamily" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-            <option value="">All</option>
-            <template x-for="family in issuesFamilies">
-              <option :value="family" x-text="family"></option>
-            </template>
-          </select>
-        </div>
-      </div>
-    </div>
-
-
-
-    <template x-for="(block, blockIndex) in filteredBlocks()" :key="blockIndex">
-        <div class="relative bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
-          <!-- Block Header -->
-          <div class="flex justify-between items-center mb-4">
-            <div class="flex items-center space-x-4">
-              <div class="flex items-center space-x-4">
-                <div class="flex-1">
-                  <label class="block text-xs font-medium text-gray-300">Block Name</label>
-                  <input type="text" x-model="block.name" class="mt-0.5 w-full bg-gray-700 text-white p-1 rounded border border-gray-600">
-                </div>
-                <select x-model="block.level" class="bg-gray-700 text-white p-1 rounded border border-gray-600 text-sm">
-                  <option value="">Select Level</option>
-                  <option>L1</option>
-                  <option>L2</option>
-                  <option>L3</option>
-                  <option>L4</option>
-                </select>
-                <select x-model="block.status" class="bg-gray-700 text-white p-1 rounded border border-gray-600 text-sm">
-                  <option value="draft">Draft</option>
-                  <option value="prod">Prod</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </div>
-            </div>
-            <div class="flex space-x-2">
-              <button @click="escalation.blocks.push({...block, triggers: block.triggers.map(t => ({...t}))})" 
-                      class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm">
-                Duplicate
-              </button>
-              <button x-show="escalation.blocks.length > 1" 
-                      @click="escalation.blocks.splice(blockIndex, 1)" 
-                      class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
-                Remove
-              </button>
-            </div>
-          </div>
-
-
-        <!-- Basic Info and Triggers -->
-        <div class="bg-gray-800 p-2 rounded-lg border border-gray-700 mt-4">
-      <!-- Basic Info Section -->
-      <div class="space-y-4 mb-4">
-        <!-- Name -->
-        <div>
-          <label class="block text-xs font-medium text-gray-300">Escalation Name</label>
-          <input type="text" x-model="block.name" class="mt-0.5 w-full bg-gray-700 text-white p-1 rounded border border-gray-600">
-        </div>
-
-        <!-- Asset Class -->
-        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
-          <label class="block text-sm font-medium text-gray-300">Asset Class</label>
-          <select x-model="escalation.assetClass" class="mt-1 w-full bg-gray-700 text-white p-1.5 rounded border border-gray-600">
-            <template x-for="asset in assets">
-              <option :value="asset" x-text="asset"></option>
-            </template>
-          </select>
-        </div>
-
-        <!-- Site -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300">Site</label>
-          <div class="flex space-x-2">
-            <input type="text" x-model="escalation.site.name" class="mt-1 flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600">
-            <button @click="selectedDrawer = 0" class="mt-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-              Configure Site
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Triggers Section -->
-      <div class="border-t border-gray-700 pt-4">
-      <div class="flex justify-between items-center mb-2">
-        <h2 class`text-lgfont-semibold">Triggers</h2>
-        <button @click="block.triggers.push({
-                  issueFamily:'',
-                  comparisonKey:'',
-                  operator:'',
-                  value:'',
-                  when:'',
-                  template:'',
-                  status: 'draft',
-                  emailType_: [false, false, false],
-                  tempEmails: [],
-                  emailList: [],
-                  emailLists: {},
-                  selectedGroups: []
-                })" 
-                class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-          Add Trigger
-        </button>
-      </div>
-
-      <div class="space-y-2">
-        <!-- Excel-like Header -->
-        <div class="grid grid-cols-12 gap-0 bg-gray-800 border-b border-gray-600 sticky top-0">
-          <div class="col-span-2 p-2 border-r border-gray-600 font-semibold">Issue Family</div>
-          <div class="col-span-4 p-2 border-r border-gray-600 font-semibold">Comparison Key</div>
-          <div class="col-span-2 p-2 border-r border-gray-600 font-semibold">Operator</div>
-          <div class="col-span-4 p-2 font-semibold">Value</div>
-        </div>
-
-        <!-- Excel-like Grid -->
-        <div class="max-h-96 overflow-y-auto">
-          <template x-for="(trigger, index) in block.triggers" :key="index">
-            <div class="bg-gray-700 hover:bg-gray-650 focus-within:bg-gray-600 border-b border-gray-600"
-                 @keydown.down.prevent="$event.target.closest('.grid').nextElementSibling?.querySelector(`[data-col='${$event.target.dataset.col}']`)?.focus()"
-                 @keydown.up.prevent="$event.target.closest('.grid').previousElementSibling?.querySelector(`[data-col='${$event.target.dataset.col}']`)?.focus()"
-                 @keydown.right.prevent="$event.target.nextElementSibling?.querySelector('input,select')?.focus()"
-                 @keydown.left.prevent="$event.target.previousElementSibling?.querySelector('input,select')?.focus()"
-                 @keydown.enter.prevent="$event.target.blur()">
-              <div class="grid grid-cols-12 gap-0">
-              <div class="col-span-2 p-1 border-r border-gray-600">
-                <select x-model="trigger.issueFamily" 
-                        class="w-full bg-transparent text-white p-1 focus:bg-gray-600 focus:outline-none"
-                        data-col="1">
-                  <option value="">Select Issue Family</option>
-                  <template x-for="family in issuesFamilies">
-                    <option :value="family" x-text="family"></option>
-                  </template>
-                </select>
-              </div>
-              <div class="col-span-4 p-1 border-r border-gray-600">
-                <select x-model="trigger.comparisonKey" 
-                        class="w-full bg-transparent text-white p-1 focus:bg-gray-600 focus:outline-none"
-                        data-col="2">
-                  <option value="">Select Key</option>
-                  <template x-for="key in keys">
-                    <option :value="key" x-text="key"></option>
-                  </template>
-                </select>
-              </div>
-              <div class="col-span-2 p-1 border-r border-gray-600">
-                <select x-model="trigger.operator" 
-                        class="w-full bg-transparent text-white p-1 focus:bg-gray-600 focus:outline-none"
-                        data-col="3">
-                  <option value="">Select Operator</option>
-                  <option value="equals">Equals</option>
-                  <option value="bigger">Bigger</option>
-                  <option value="smaller">Smaller</option>
-                  <option value="contains">Contains</option>
-                </select>
-              </div>
-              <div class="col-span-4 p-1">
-                <input type="text" 
-                       x-model="trigger.value" 
-                       class="w-full bg-transparent text-white p-1 focus:bg-gray-600 focus:outline-none"
-                       data-col="4">
-              </div>
-              <div class="col-span-6">
-                <label class="block text-sm font-medium text-gray-300 mb-1">Email Configuration</label>
-                <div class="space-y-1 bg-gray-800 p-2 rounded-lg">
-                  <!-- Individual Email Input -->
-                  <div class="space-y-1">
-                    <div class="flex justify-between items-center">
-                      <label class="block text-sm font-medium text-gray-300">Add Individual Emails</label>
-                      <button 
-                        @click="createEmailGroup"
-                        class="text-gray-300 hover:text-red-500 flex items-center gap-1"
-                        title="Create email group from selected emails"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
-                        </svg>
-                        <span class="text-sm">Save as Group</span>
-                      </button>
-                    </div>
-                    <div class="flex space-x-2">
-                      <input 
-                        type="email" 
-                        x-model='trigger.tempEmail'
-                        @keyup.enter='if(trigger.tempEmail) { 
-                                 if(!trigger.emailList) trigger.emailList = [];
-                                 trigger.emailList.push(trigger.tempEmail); 
-                                 trigger.tempEmail = ""; 
-                               }' 
-                        class="w-64 bg-gray-700 text-white p-1 text-sm rounded border border-gray-600" 
-                        placeholder="Enter an email address">
-                      <button @click='if(trigger.tempEmail) { 
-                                 if(!trigger.emailList) trigger.emailList = [];
-                                 trigger.emailList.push(trigger.tempEmail); 
-                                 trigger.tempEmail = ""; 
-                               }' 
-                              class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-                    <!-- Email Group Selection -->
-                    <div x-data="{ selectedGroup: '' }" class="flex space-x-2">
-                      <select x-model="selectedGroup"
-                              @change="if(selectedGroup) {
-                                const group = emailGroups.find(g => g.id === selectedGroup);
-                                if(group && group.emails) {
-                                  if(!trigger.emailList) trigger.emailList = [];
-                                  group.emails.forEach(email => {
-                                    if(!trigger.emailList.includes(email)) {
-                                      trigger.emailList.push(email);
-                                    }
-                                  });
-                                }
-                                selectedGroup = '';
-                              }"
-                              class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600">
-                        <option value="">Select an email group to import</option>
-                        <template x-for="group in emailGroups" :key="group.id">
-                          <option :value="group.id" x-text="group.name"></option>
-                        </template>
-                      </select>
-                    </div>
-                  </div>
-                  <!-- Display Selected Emails -->
-                  <div class="flex flex-wrap gap-2">
-                    <template x-for="(email, index) in (trigger.emailList || [])" :key="index">
-                      <div class="bg-gray-700 text-white px-3 py-1 rounded-full flex items-center gap-2">
-                        <span x-text="email"></span>
-                        <button @click="trigger.emailList.splice(index, 1)" class="hover:text-red-400">×</button>
-                      </div>
-                    </template>
-                  </div>
-                </div>
-              </div>
-              <div class="col-span-2">
-                <label class="block text-xs font-medium text-gray-300">When</label>
-                <select x-model="trigger.when" class="mt-0.5 w-full bg-gray-600 text-white p-1 rounded border border-gray-600">
-                  <option value="">Select Time</option>
-                  <option value="now">now</option>
-                  <option value="now+5">now+5</option>
-                  <option value="now+10">now+10</option>
-                  <option value="now+15">now+15</option>
-                  <option value="now+30">now+30</option>
-                  <option value="now+60">now+60</option>
-                </select>
-              </div>
-              <div class="col-span-4">
-                <label class="block text-xs font-medium text-gray-300">Template</label>
-                <div class="flex space-x-2">
-                  <select x-model="trigger.template" class="mt-0.5 flex-1 bg-gray-600 text-white p-1 rounded border border-gray-600 text-sm">
-                    <option value="">Select Template</option>
-                    <template x-for="template in templates">
-                      <option :value="template.id" x-text="template.name"></option>
-                    </template>
-                  </select>
-                  <div class="flex space-x-2">
-                    <button @click="block.triggers.push({...trigger})"
-                            class="mt-0.5 bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-sm">
-                      Duplicate
-                    </button>
-                    <button @click="block.triggers.splice(index, 1)" 
-                            class="mt-0.5 bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
-    </div>
-  </template>
-</div>
-
-  <!-- Site Configuration Drawer -->
-  <div x-show="selectedDrawer === 0" 
-       class="fixed inset-y-0 right-0 w-1/3 bg-gray-900 border-l border-gray-700 p-6 overflow-y-auto z-[9999]">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-xl font-semibold">Site Configuration</h2>
-      <div class="flex space-x-2">
-        <button @click="showNewSiteModal = true" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-          New Site
-        </button>
-        <button @click="selectedDrawer = -1" class="text-gray-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Available Sites -->
-    <div class="mb-6">
-      <h3 class="text-lg font-medium mb-4">Production Sites</h3>
-      <input type="text" x-model="filter" placeholder="Search sites..." 
-             class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 mb-4">
-
-      <div class="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto">
-        <template x-for="site in sites" :key="site.id">
-          <div x-show="!filter || site.name.toLowerCase().includes(filter.toLowerCase())" 
-               class="flex items-center p-2 bg-gray-800 rounded">
-            <input type="radio" 
-                   :checked="escalation.site.name === site.name"
-                   @click="escalation.site = {...site}"
-                   class="mr-2">
-            <div>
-              <span x-text="site.name" class="font-medium"></span>
-              <div class="text-sm text-gray-400 mt-1">
-                <div x-show="site.entities && site.entities.length" class="mb-1">
-                  Entities: <span x-text="site.entities.join(', ')"></span>
-                </div>
-                <div x-show="site.locations && site.locations.length">
-                  Locations: <span x-text="site.locations.join(', ')"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </template>
-      </div>
-    </div>
-  </div>
-
-  <!-- New Site Modal -->
-  <div x-show="showNewSiteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
-    <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-3/4 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold text-white">Create New Site</h2>
-        <button @click="showNewSiteModal = false" class="text-gray-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <div class="space-y-6">
-        <!-- Basic Info -->
-        <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-300">Site Name</label>
-              <input type="text" x-model="newSite.name" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-300">Status</label>
-              <select x-model="newSite.status" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-                <option value="draft">Draft</option>
-                <option value="prod">Prod</option>
-                <option value="old version">Old version</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-300">Form</label>
-              <select x-model="newSite.form" @change="loadFormDataForNewSite($event.target.value)" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-                <option value="">Select a form</option>
-                <template x-for="form in forms" :key="form.id">
-                  <option :value="form.id" x-text="form.name"></option>
-                </template>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Entities and Locations -->
-        <div class="grid grid-cols-2 gap-6">
-          <!-- Entities -->
-          <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
-            <h3 class="text-lg font-medium mb-4">Entities</h3>
-            <div class="flex flex-wrap gap-2 mb-4" x-show="newSite.entities?.length">
-              <template x-for="entity in newSite.entities" :key="entity">
-                <div class="bg-red-500 text-white px-3 py-1 rounded-full flex items-center gap-2">
-                  <span x-text="entity"></span>
-                  <button type="button" @click="saveEntitiesForNewSite(entity)" class="hover:text-gray-200">×</button>
-                </div>
-              </template>
-            </div>
-            <div class="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
-              <template x-for="entity in entities" :key="entity">
-                <div class="flex items-center">
-                  <input type="checkbox" 
-                         :checked="newSite.entities?.includes(entity)"
-                         @click="saveEntitiesForNewSite(entity)"
-                         class="mr-2">
-                  <span x-text="entity"></span>
-                </div>
-              </template>
-            </div>
-          </div>
-
-          <!-- Locations -->
-          <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
-            <h3 class="text-lg font-medium mb-4">Locations</h3>
-            <div class="flex flex-wrap gap-2 mb-4" x-show="newSite.locations?.length">
-              <template x-for="location in newSite.locations" :key="location">
-                <div class="bg-gray-600 text-white px-3 py-1 rounded-full flex items-center gap-2">
-                  <span x-text="location"></span>
-                  <button type="button" @click="saveLocationsForNewSite(location)" class="hover:text-gray-200">×</button>
-                </div>
-              </template>
-            </div>
-            <div class="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
-              <template x-for="location in locations" :key="location">
-                <div class="flex items-center">
-                  <input type="checkbox" 
-                         :checked="newSite.locations?.includes(location)"
-                         @click="saveLocationsForNewSite(location)"
-                         class="mr-2">
-                  <span x-text="location"></span>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex justify-end space-x-3 pt-4">
-          <button @click="showNewSiteModal = false" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
-            Cancel
-          </button>
-          <button @click="createSite()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-            Create Site
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- New Email Group Modal -->
-  <div x-show="showNewGroupModal" 
-       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
-    <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-2/3 max-w-2xl">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl font-semibold text-white">Create New Email Group</h2>
-        <button @click="showNewGroupModal = false" class="text-gray-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Group Name</label>
-          <input type="text" 
-                 x-model="newGroupName" 
-                 class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
-                 placeholder="Enter group name">
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Selected Emails</label>
-          <div class="bg-gray-700 p-4 rounded border border-gray-600 max-h-48 overflow-y-auto">
-            <template x-for="email in escalation.triggers[selectedTriggerIndex].emailList" :key="email">
-              <div class="text-white py-1" x-text="email"></div>
-            </template>
-          </div>
-        </div>
-
-        <div class="flex justify-end space-x-3 pt-4">
-          <button @click="showNewGroupModal = false" 
-                  class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
-            Cancel
-          </button>
-          <button @click="saveNewEmailGroup()" 
-                  class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-            Create Group
-          </button>
-        </div>
-      </div>
+      </template>
     </div>
   </div>
 </div>
