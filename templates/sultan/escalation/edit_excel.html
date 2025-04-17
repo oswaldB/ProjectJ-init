@@ -1,0 +1,115 @@
+
+{% extends "sultan/base.html" %}
+
+{% block title %}Edit Excel{% endblock %}
+
+{% block head %}
+<script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+{% endblock %}
+
+{% block alpine_component %}
+{
+  workbook: null,
+  filename: '',
+  data: [],
+  headers: [],
+  async init() {
+    const urlParams = new URLSearchParams(window.location.search);
+    this.filename = urlParams.get('file');
+    if (this.filename) {
+      await this.loadExcel();
+    }
+  },
+  async loadExcel() {
+    try {
+      const response = await fetch(`/api/sultan/escalation/excel/download/${this.filename}`);
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+      const data = new Uint8Array(arrayBuffer);
+      this.workbook = XLSX.read(data, {type: 'array'});
+      
+      const firstSheet = this.workbook.Sheets[this.workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+      
+      this.headers = jsonData[0] || [];
+      this.data = jsonData.slice(1);
+    } catch (error) {
+      console.error('Failed to load Excel:', error);
+      alert('Failed to load Excel file');
+    }
+  },
+  async saveExcel() {
+    if (!this.workbook) return;
+    
+    // Update workbook data
+    const newData = [this.headers, ...this.data];
+    const newSheet = XLSX.utils.aoa_to_sheet(newData);
+    this.workbook.Sheets[this.workbook.SheetNames[0]] = newSheet;
+    
+    const wbout = XLSX.write(this.workbook, {
+      bookType: 'xlsx',
+      type: 'array'
+    });
+
+    // Upload to server
+    const blob = new Blob([wbout], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const formData = new FormData();
+    formData.append('file', blob, this.filename);
+
+    try {
+      const response = await fetch('/api/sultan/escalation/excel/upload', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (response.ok) {
+        alert('Excel file saved successfully');
+      } else {
+        throw new Error('Save failed');
+      }
+    } catch (error) {
+      console.error('Failed to save Excel:', error);
+      alert('Failed to save Excel file');
+    }
+  }
+}
+{% endblock %}
+
+{% block content %}
+<div class="h-screen bg-gray-900 text-white">
+  <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
+    <h1 class="text-2xl font-bold">Edit Excel - <span x-text="filename"></span></h1>
+    <div class="flex space-x-4">
+      <button @click="saveExcel()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Save</button>
+      <a href="/sultan/escalation/excel" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Back</a>
+    </div>
+  </div>
+
+  <div class="p-6">
+    <div class="overflow-x-auto">
+      <table class="w-full text-white">
+        <thead class="bg-gray-800">
+          <tr>
+            <template x-for="header in headers" :key="header">
+              <th class="px-4 py-2">
+                <input type="text" x-model="header" class="bg-gray-700 text-white p-1 rounded w-full">
+              </th>
+            </template>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(row, rowIndex) in data" :key="rowIndex">
+            <tr class="border-b border-gray-700">
+              <template x-for="(cell, colIndex) in row" :key="colIndex">
+                <td class="px-4 py-2">
+                  <input type="text" x-model="data[rowIndex][colIndex]" class="bg-gray-700 text-white p-1 rounded w-full">
+                </td>
+              </template>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

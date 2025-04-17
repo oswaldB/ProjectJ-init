@@ -367,6 +367,10 @@ def escalation_edit(escalation_id):
 def escalation_excel():
     return render_template('sultan/escalation/excel.html')
 
+@app.route('/sultan/escalation/edit_excel')
+def escalation_edit_excel():
+    return render_template('sultan/escalation/edit_excel.html')
+
 @app.route('/api/sultan/escalation/excel/upload', methods=['POST'])
 def upload_excel():
     if 'file' not in request.files:
