@@ -39,7 +39,7 @@
   },
 
   deleteCustomList(listName) {
-    if (confirm(`Delete list "${listName}"?`)) {
+    if (confirm('Delete list \'' + listName + '\'?')) {
       delete this.customLists[listName];
     }
   },
