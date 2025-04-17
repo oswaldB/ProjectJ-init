@@ -49,7 +49,12 @@
   async loadFiles() {
     try {
       const response = await fetch('/api/sultan/escalation/excel/list');
-      this.files = await response.json();
+      const files = await response.json();
+      // Initialize status if not present
+      this.files = files.map(file => ({
+        ...file,
+        status: file.status || 'draft'
+      }));
     } catch (error) {
       console.error('Failed to load files:', error);
       this.files = [];
@@ -94,6 +99,28 @@
       console.error('Failed to download file:', error);
       alert('Failed to download file');
     }
+  },
+  
+  async updateFileStatus(file) {
+    try {
+      const response = await fetch('/api/sultan/escalation/excel/status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          filename: file.name,
+          status: file.status
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+    } catch (error) {
+      console.error('Failed to update file status:', error);
+      alert('Failed to update file status');
+    }
   }
 }
 {% endblock %}
@@ -132,7 +159,19 @@
           <template x-for="file in files" :key="file.name">
             <div class="flex items-center justify-between bg-gray-700 p-4 rounded-lg">
               <div>
-                <span x-text="file.name" class="font-medium"></span>
+                <div class="flex items-center space-x-4">
+                  <span x-text="file.name" class="font-medium"></span>
+                  <select 
+                    x-model="file.status" 
+                    @change="updateFileStatus(file)"
+                    class="bg-gray-600 text-white px-2 py-1 rounded border border-gray-500"
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="review">Review</option>
+                    <option value="approved">Approved</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
                 <div class="text-sm text-gray-400">
                   <span x-text="new Date(file.modified).toLocaleString()"></span>
                   <span x-text="'(' + Math.round(file.size/1024) + ' KB)'"></span>

@@ -419,6 +419,30 @@ def download_excel(filename):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/sultan/escalation/excel/status', methods=['POST'])
+def update_excel_status():
+    try:
+        data = request.json
+        filename = data.get('filename')
+        status = data.get('status')
+        
+        if not filename or not status:
+            return jsonify({'error': 'Filename and status required'}), 400
+            
+        # Update metadata in S3
+        excel_path = f'sultan/escalation/excel/{filename}'
+        s3.copy_object(
+            Bucket=BUCKET_NAME,
+            CopySource={'Bucket': BUCKET_NAME, 'Key': excel_path},
+            Key=excel_path,
+            Metadata={'status': status},
+            MetadataDirective='REPLACE'
+        )
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/sultan/emailgroups')
 def emailgroups_list():
     return render_template('sultan/emailgroups/index.html')
