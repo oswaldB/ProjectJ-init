@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, render_template, redirect, send_from_directory, request, jsonify
+from flask import Flask, Blueprint, render_template, redirect, send_from_directory, request, jsonify, send_file
 import json
 import logging
 from email.mime.text import MIMEText
