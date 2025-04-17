@@ -10,9 +10,38 @@
   forms: [],
   selectedForm: null,
   formData: null,
+  customLists: {},
+  editingList: null,
+  newListValues: '',
   
   async init() {
     await this.loadForms();
+  },
+
+  createCustomList() {
+    const listName = prompt('Enter list name:');
+    if (listName) {
+      this.customLists[listName] = [];
+      this.editingList = listName;
+      this.newListValues = '';
+    }
+  },
+
+  saveListValues() {
+    if (this.editingList && this.newListValues.trim()) {
+      this.customLists[this.editingList] = this.newListValues
+        .split('\n')
+        .map(v => v.trim())
+        .filter(v => v);
+    }
+    this.editingList = null;
+    this.newListValues = '';
+  },
+
+  deleteCustomList(listName) {
+    if (confirm(`Delete list "${listName}"?`)) {
+      delete this.customLists[listName];
+    }
   },
 
   async loadForms() {
@@ -59,6 +88,45 @@
   <div class="mb-6 space-y-4">
     <h1 class="text-2xl font-bold text-white">Excel Grid</h1>
     
+    <!-- Custom Lists Management -->
+    <div class="bg-gray-800 p-4 rounded-lg mb-4">
+      <div class="flex justify-between mb-4">
+        <h2 class="text-lg font-semibold">Custom Lists</h2>
+        <button @click="createCustomList()" class="bg-green-600 px-4 py-2 rounded hover:bg-green-700">
+          Create List
+        </button>
+      </div>
+      
+      <div class="space-y-4">
+        <template x-for="(values, name) in customLists" :key="name">
+          <div class="border border-gray-600 p-4 rounded">
+            <div class="flex justify-between items-center mb-2">
+              <h3 x-text="name" class="font-medium"></h3>
+              <div class="space-x-2">
+                <button @click="editingList = name; newListValues = values.join('\n')" class="text-blue-400 hover:text-blue-300">Edit</button>
+                <button @click="deleteCustomList(name)" class="text-red-400 hover:text-red-300">Delete</button>
+              </div>
+            </div>
+            <div x-show="editingList === name" class="mt-2">
+              <textarea
+                x-model="newListValues"
+                placeholder="Enter values (one per line)"
+                class="w-full h-32 bg-gray-700 text-white p-2 rounded border border-gray-600"
+              ></textarea>
+              <div class="flex justify-end mt-2">
+                <button @click="saveListValues()" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">
+                  Save
+                </button>
+              </div>
+            </div>
+            <div x-show="editingList !== name" class="text-sm text-gray-400">
+              <span x-text="values.length"></span> values
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
     <!-- Column Configuration -->
     <div class="bg-gray-800 p-4 rounded-lg">
       <div class="flex justify-between mb-4">
@@ -82,7 +150,8 @@
               class="bg-gray-700 text-white p-2 rounded"
             >
               <option value="freetext">Free Text</option>
-              <option value="list">From List</option>
+              <option value="list">From Form</option>
+              <option value="customlist">From Custom List</option>
             </select>
             
             <template x-if="column.type === 'list'">
@@ -103,6 +172,20 @@
                   placeholder="Value Path (e.g. options.name)"
                   class="bg-gray-700 text-white p-2 rounded"
                 >
+              </div>
+            </template>
+            
+            <template x-if="column.type === 'customlist'">
+              <div class="col-span-2">
+                <select 
+                  x-model="column.source"
+                  class="w-full bg-gray-700 text-white p-2 rounded"
+                >
+                  <option value="">Select Custom List</option>
+                  <template x-for="(_, name) in customLists" :key="name">
+                    <option :value="name" x-text="name"></option>
+                  </template>
+                </select>
               </div>
             </template>
           </div>
@@ -135,6 +218,13 @@
                   <template x-if="column.type === 'list'">
                     <datalist :id="'list-' + column.id">
                       <template x-for="value in getNestedValue(formData, column.valuePath)" :key="value">
+                        <option x-text="value"></option>
+                      </template>
+                    </datalist>
+                  </template>
+                  <template x-if="column.type === 'customlist'">
+                    <datalist :id="'list-' + column.id">
+                      <template x-for="value in customLists[column.source] || []" :key="value">
                         <option x-text="value"></option>
                       </template>
                     </datalist>
