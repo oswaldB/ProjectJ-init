@@ -330,7 +330,7 @@
                     >
                       <option value="">Select Email Group</option>
                       <template x-for="group in emailGroups" :key="group.id">
-                        <option :value="group.id" x-text="group.name"></option>
+                        <option :value="group.id" x-text="group.emails.join(', ')"></option>
                       </template>
                     </select>
                   </template>
