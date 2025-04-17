@@ -357,18 +357,89 @@
 
   <!-- Main Content -->
   <div class="p-4 space-y-3">
-    <!-- Form Selection -->
-    <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-300">Form</label>
-        <select x-model="escalation.form" @change="loadFormData($event.target.value); escalation.blocks.forEach(block => block.form = $event.target.value)" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-          <option value="">Select a form</option>
-          <template x-for="form in forms.filter(f => f.status === 'PROD')" :key="form.id">
-            <option :value="form.id" x-text="form.name"></option>
-          </template>
-        </select>
+    <!-- Excel-like Grid Headers -->
+      <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
+        <div class="grid grid-cols-6 gap-0 border border-gray-600">
+          <!-- Headers -->
+          <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Block Name</div>
+          <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Select Level</div>
+          <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Status</div>
+          <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Escalation Name</div>
+          <div class="bg-gray-700 p-2 border-b border-r border-gray-600 font-semibold">Asset Class</div>
+          <div class="bg-gray-700 p-2 border-b border-gray-600 font-semibold">Site</div>
+
+          <!-- Excel-like Input Fields -->
+          <div class="bg-gray-800 p-1 border-r border-gray-600">
+            <input type="text" 
+                   x-model="block.name" 
+                   class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none"
+                   @keydown.enter="$event.target.blur()"
+                   @keydown.tab="$event.preventDefault(); $event.target.parentElement.nextElementSibling.querySelector('select').focus()">
+          </div>
+          <div class="bg-gray-800 p-1 border-r border-gray-600">
+            <select x-model="block.level" 
+                    class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none"
+                    @keydown.enter="$event.target.blur()"
+                    @keydown.tab="$event.preventDefault(); $event.target.parentElement.nextElementSibling.querySelector('select').focus()">
+              <option value="">Select Level</option>
+              <option>L1</option>
+              <option>L2</option>
+              <option>L3</option>
+              <option>L4</option>
+            </select>
+          </div>
+          <div class="bg-gray-800 p-1 border-r border-gray-600">
+            <select x-model="block.status" 
+                    class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none"
+                    @keydown.enter="$event.target.blur()"
+                    @keydown.tab="$event.preventDefault(); $event.target.parentElement.nextElementSibling.querySelector('input').focus()">
+              <option value="draft">Draft</option>
+              <option value="prod">Prod</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+          <div class="bg-gray-800 p-1 border-r border-gray-600">
+            <input type="text" 
+                   x-model="escalation.name" 
+                   class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none"
+                   @keydown.enter="$event.target.blur()"
+                   @keydown.tab="$event.preventDefault(); $event.target.parentElement.nextElementSibling.querySelector('select').focus()">
+          </div>
+          <div class="bg-gray-800 p-1 border-r border-gray-600">
+            <select x-model="escalation.assetClass" 
+                    class="w-full bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none"
+                    @keydown.enter="$event.target.blur()"
+                    @keydown.tab="$event.preventDefault(); $event.target.parentElement.nextElementSibling.querySelector('input').focus()">
+              <template x-for="asset in assets">
+                <option :value="asset" x-text="asset"></option>
+              </template>
+            </select>
+          </div>
+          <div class="bg-gray-800 p-1 border-gray-600 flex">
+            <input type="text" 
+                   x-model="escalation.site.name" 
+                   class="flex-1 bg-transparent text-white p-2 focus:bg-gray-700 focus:outline-none"
+                   @keydown.enter="$event.target.blur()">
+            <button @click="selectedDrawer = 0" 
+                    class="bg-red-500 text-white px-3 hover:bg-red-600 ml-2">
+              Configure
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <!-- Form Selection -->
+      <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300">Form</label>
+          <select x-model="escalation.form" @change="loadFormData($event.target.value); escalation.blocks.forEach(block => block.form = $event.target.value)" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+            <option value="">Select a form</option>
+            <template x-for="form in forms.filter(f => f.status === 'PROD')" :key="form.id">
+              <option :value="form.id" x-text="form.name"></option>
+            </template>
+          </select>
+        </div>
+      </div>
 
     <!-- Filters -->
     <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
