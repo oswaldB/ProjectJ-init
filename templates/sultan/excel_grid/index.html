@@ -250,63 +250,9 @@
               </div>
             </template>
 
-            <template x-if="column.type === 'sites'">
-              <div class="col-span-2 grid grid-cols-2 gap-2">
-                <select 
-                  x-model="selectedSite"
-                  @change="handleDataSource(column, 'sites')"
-                  class="bg-gray-700 text-white p-2 rounded"
-                >
-                  <option value="">Select Site</option>
-                  <template x-for="site in sites" :key="site.id">
-                    <option :value="site" x-text="site.name"></option>
-                  </template>
-                </select>
-                <input 
-                  x-model="column.valuePath"
-                  placeholder="Value Path (e.g. emails)"
-                  class="bg-gray-700 text-white p-2 rounded"
-                >
-              </div>
-            </template>
-
-            <template x-if="column.type === 'templates'">
-              <div class="col-span-2 grid grid-cols-2 gap-2">
-                <select 
-                  x-model="selectedTemplate"
-                  @change="handleDataSource(column, 'templates')"
-                  class="bg-gray-700 text-white p-2 rounded"
-                >
-                  <option value="">Select Template</option>
-                  <template x-for="template in templates" :key="template.id">
-                    <option :value="template" x-text="template.name"></option>
-                  </template>
-                </select>
-                <input 
-                  x-model="column.valuePath"
-                  placeholder="Value Path (e.g. content)"
-                  class="bg-gray-700 text-white p-2 rounded"
-                >
-              </div>
-            </template>
-
-            <template x-if="column.type === 'emailgroups'">
-              <div class="col-span-2 grid grid-cols-2 gap-2">
-                <select 
-                  x-model="selectedEmailGroup"
-                  @change="handleDataSource(column, 'emailgroups')"
-                  class="bg-gray-700 text-white p-2 rounded"
-                >
-                  <option value="">Select Email Group</option>
-                  <template x-for="group in emailGroups" :key="group.id">
-                    <option :value="group" x-text="group.name"></option>
-                  </template>
-                </select>
-                <input 
-                  x-model="column.valuePath"
-                  placeholder="Value Path (e.g. emails)"
-                  class="bg-gray-700 text-white p-2 rounded"
-                >
+            <template x-if="column.type === 'sites' || column.type === 'templates' || column.type === 'emailgroups'">
+              <div class="col-span-2">
+                <!-- No additional configuration needed -->
               </div>
             </template>
           </div>
