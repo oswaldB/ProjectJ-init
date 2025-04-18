@@ -260,7 +260,7 @@ def require_auth(f):
         if request.path == '/login':
             return f(*args, **kwargs)
 
-        if not request.headers.get('user_email'):
+        if not request.headers.get('user_email') and not request.cookies.get('user_email'):
             current_path = request.path
             return redirect(f'/login?redirect={current_path}')
         return f(*args, **kwargs)
