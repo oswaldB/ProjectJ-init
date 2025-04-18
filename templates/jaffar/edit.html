@@ -84,8 +84,15 @@
                   </label>
                 </template>
               </div>
-              <div class="mt-2 text-sm text-gray-400">
-                Selected: <span x-text="formData[field.key]?.length || 0"></span>
+              <div class="flex flex-wrap gap-2 mt-2">
+                <template x-for="selected in formData[field.key]" :key="selected">
+                  <div class="bg-red-500 text-white px-3 py-1 rounded-full flex items-center gap-2">
+                    <span x-text="selected"></span>
+                    <button @click="formData[field.key] = formData[field.key].filter(item => item !== selected)" class="hover:text-gray-200">
+                      ×
+                    </button>
+                  </div>
+                </template>
               </div>
             </div>
           </template>
