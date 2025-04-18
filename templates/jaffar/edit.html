@@ -1,80 +1,98 @@
+
 {% extends "jaffar/base.html" %}
 
 {% block title %}Issue Form{% endblock %}
 
 {% block content %}
-<div class="p-6">
+<div class="p-6" x-data="{
+  config: null,
+  formData: {},
+  
+  async init() {
+    const response = await fetch('/api/jaffar/config');
+    this.config = await response.json();
+  }
+}">
   <div class="mb-6 flex justify-between items-center">
     <h1 class="text-2xl font-bold">New Issue</h1>
     <div class="flex space-x-4">
       <a href="/" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500">
         Cancel
       </a>
-      <button type="submit" form="issueForm" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500">
+      <button type="submit" @click="submitForm()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500">
         Submit
       </button>
     </div>
   </div>
 
-  <form id="issueForm" action="/api/jaffar/save" method="POST" class="space-y-6">
-    <input type="hidden" name="issueId" value="{{ issue_id }}">
-    {% for field in config.fields %}
-    <div class="bg-gray-800 p-4 rounded-lg">
-      <label class="block mb-2">
-        <span class="text-lg font-medium text-white">{{ field.label }}</span>
-        {% if field.required %}
-        <span class="text-red-500 ml-1">*</span>
-        {% endif %}
-      </label>
-      <p class="text-gray-400 text-sm mb-2">{{ field.description }}</p>
+  <template x-if="config">
+    <div class="space-y-6">
+      <template x-for="field in config.fields" :key="field.key">
+        <div class="bg-gray-800 p-4 rounded-lg">
+          <label class="block mb-2">
+            <span class="text-lg font-medium text-white" x-text="field.label"></span>
+            <span x-show="field.required" class="text-red-500 ml-1">*</span>
+          </label>
+          <p class="text-gray-400 text-sm mb-2" x-text="field.description"></p>
 
-      {% if field.type in ['text', 'text_input'] %}
-      <input type="text" 
-             name="{{ field.key }}"
-             {% if field.required %}required{% endif %}
-             class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-      {% endif %}
+          <!-- Text input -->
+          <template x-if="field.type === 'text' || field.type === 'text_input'">
+            <input type="text" 
+                   :name="field.key"
+                   x-model="formData[field.key]"
+                   :required="field.required"
+                   class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+          </template>
 
-      {% if field.type == 'single_select' %}
-      <select name="{{ field.key }}"
-              {% if field.required %}required{% endif %}
-              class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-        <option value="">Select an option</option>
-        {% for option in field.options %}
-        <option value="{{ option.name }}">{{ option.name }}</option>
-        {% endfor %}
-      </select>
-      {% endif %}
+          <!-- Single select -->
+          <template x-if="field.type === 'single_select'">
+            <select :name="field.key"
+                    x-model="formData[field.key]"
+                    :required="field.required"
+                    class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+              <option value="">Select an option</option>
+              <template x-for="option in field.options" :key="option.name">
+                <option :value="option.name" x-text="option.name"></option>
+              </template>
+            </select>
+          </template>
 
-      {% if field.type == 'multiple_checkbox' %}
-      <div class="space-y-2">
-        {% for option in field.options %}
-        <label class="flex items-center space-x-2">
-          <input type="checkbox" 
-                 name="{{ field.key }}" 
-                 value="{{ option.name }}"
-                 class="bg-gray-700 border-gray-600">
-          <span class="text-white">{{ option.name }}</span>
-        </label>
-        {% endfor %}
-      </div>
-      {% endif %}
+          <!-- Multiple checkbox -->
+          <template x-if="field.type === 'multiple_checkbox'">
+            <div class="space-y-2">
+              <template x-for="option in field.options" :key="option.name">
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" 
+                         :name="field.key" 
+                         :value="option.name"
+                         x-model="formData[field.key]"
+                         class="bg-gray-700 border-gray-600">
+                  <span class="text-white" x-text="option.name"></span>
+                </label>
+              </template>
+            </div>
+          </template>
 
-      {% if field.type == 'date' %}
-      <input type="date" 
-             name="{{ field.key }}"
-             {% if field.required %}required{% endif %}
-             class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-      {% endif %}
+          <!-- Date -->
+          <template x-if="field.type === 'date'">
+            <input type="date" 
+                   :name="field.key"
+                   x-model="formData[field.key]"
+                   :required="field.required"
+                   class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+          </template>
 
-      {% if field.type == 'textarea' %}
-      <textarea name="{{ field.key }}"
-                {% if field.required %}required{% endif %}
-                rows="3"
-                class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"></textarea>
-      {% endif %}
+          <!-- Textarea -->
+          <template x-if="field.type === 'textarea'">
+            <textarea :name="field.key"
+                     x-model="formData[field.key]"
+                     :required="field.required"
+                     rows="3"
+                     class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"></textarea>
+          </template>
+        </div>
+      </template>
     </div>
-    {% endfor %}
-  </form>
+  </template>
 </div>
 {% endblock %}

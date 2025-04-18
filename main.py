@@ -762,6 +762,15 @@ def api_form_get(form_id):
         }), 404
 
 
+@app.route('/api/jaffar/config')
+def get_jaffar_config():
+    try:
+        config = get_max_from_global_db('jaffarConfig')
+        return jsonify(config)
+    except Exception as e:
+        logger.error(f"Failed to load Jaffar config: {e}")
+        return jsonify({"error": "Config not found"}), 404
+
 @app.route('/api/sultan/forms/delete/<form_id>', methods=['DELETE'])
 def api_form_delete(form_id):
     try:
