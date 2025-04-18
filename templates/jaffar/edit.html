@@ -47,7 +47,7 @@
   const missingFields = config.fields
     .filter(f => f.required && !formData[f.key])
     .map(f => f.label);
-    
+
   if (missingFields.length > 0) {
     alert('Please fill in required fields: ' + missingFields.join(', '));
     return;
@@ -55,7 +55,7 @@
 
   const now = new Date();
   const id = `JAFF-ISS-${now.getTime()}`;
-  
+
   // Delete draft version if exists
   const draftKey = `jaffar/issues/draft/${id}.json`;
   fetch('/api/jaffar/delete', {
