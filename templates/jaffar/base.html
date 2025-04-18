@@ -8,10 +8,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const currentPath = window.location.pathname;
-            if (currentPath !== '/login' && !localStorage.getItem('user_email')) {
-                window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const currentPath = window.location.pathname;
+                const userEmail = await Promise.resolve(localStorage.getItem('user_email'));
+                if (currentPath !== '/login' && !userEmail) {
+                    window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                window.location.href = '/login';
             }
         });
         
