@@ -9,8 +9,9 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            if (!localStorage.getItem('user_email')) {
-                window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+            const currentPath = window.location.pathname;
+            if (currentPath !== '/login' && !localStorage.getItem('user_email')) {
+                window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
             }
         });
         
