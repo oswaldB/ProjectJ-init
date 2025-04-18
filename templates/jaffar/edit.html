@@ -1,0 +1,118 @@
+
+{% extends "jaffar/base.html" %}
+
+{% block title %}Issue Form{% endblock %}
+
+{% block alpine_component %}
+{
+  page: 'form',
+  config: null,
+  answers: {},
+  async init() {
+    try {
+      const response = await fetch('/api/jaffar/config');
+      this.config = await response.json();
+    } catch (error) {
+      console.error('Failed to load config:', error);
+    }
+  },
+  async saveAnswers() {
+    const issueId = `JAFF-ISS-${Date.now()}`;
+    const userEmail = localStorage.getItem('user_email');
+    
+    try {
+      await fetch('/api/jaffar/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: issueId,
+          author: userEmail,
+          answers: this.answers
+        })
+      });
+      window.location.href = '/acknowledge';
+    } catch (error) {
+      console.error('Failed to save answers:', error);
+    }
+  }
+}
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+  <div class="mb-6 flex justify-between items-center">
+    <h1 class="text-2xl font-bold">New Issue</h1>
+    <div class="flex space-x-4">
+      <button @click="window.location.href='/'" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500">
+        Cancel
+      </button>
+      <button @click="saveAnswers()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500">
+        Submit
+      </button>
+    </div>
+  </div>
+
+  <div class="space-y-6" x-show="config">
+    <template x-for="field in config.fields" :key="field.key">
+      <div class="bg-gray-800 p-4 rounded-lg">
+        <label class="block mb-2">
+          <span class="text-lg font-medium text-white" x-text="field.label"></span>
+          <span x-show="field.required" class="text-red-500 ml-1">*</span>
+        </label>
+        <p class="text-gray-400 text-sm mb-2" x-text="field.description"></p>
+
+        <!-- Text input -->
+        <template x-if="field.type === 'text' || field.type === 'text_input'">
+          <input type="text" 
+                 x-model="answers[field.key]"
+                 :required="field.required"
+                 class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+        </template>
+
+        <!-- Single select -->
+        <template x-if="field.type === 'single_select'">
+          <select x-model="answers[field.key]"
+                  :required="field.required"
+                  class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+            <option value="">Select an option</option>
+            <template x-for="option in field.options" :key="option.name">
+              <option x-text="option.name" :value="option.name"></option>
+            </template>
+          </select>
+        </template>
+
+        <!-- Multiple checkbox -->
+        <template x-if="field.type === 'multiple_checkbox'">
+          <div class="space-y-2">
+            <template x-for="option in field.options" :key="option.name">
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" 
+                       x-model="answers[field.key]" 
+                       :value="option.name"
+                       class="bg-gray-700 border-gray-600">
+                <span class="text-white" x-text="option.name"></span>
+              </label>
+            </template>
+          </div>
+        </template>
+
+        <!-- Date -->
+        <template x-if="field.type === 'date'">
+          <input type="date" 
+                 x-model="answers[field.key]"
+                 :required="field.required"
+                 class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+        </template>
+
+        <!-- Textarea -->
+        <template x-if="field.type === 'textarea'">
+          <textarea x-model="answers[field.key]"
+                    :required="field.required"
+                    rows="3"
+                    class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"></textarea>
+        </template>
+      </div>
+    </template>
+  </div>
+</div>
+{% endblock %}

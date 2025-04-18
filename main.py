@@ -273,9 +273,48 @@ def require_auth(f):
 def index():
     return render_template('jaffar/index.html')
 
+@app.route('/edit')
+def edit():
+    return render_template('jaffar/edit.html')
+
 @app.route('/acknowledge')
 def acknowledge():
     return render_template('jaffar/acknowledge.html')
+
+@app.route('/api/jaffar/config')
+def api_jaffar_config():
+    try:
+        config_file = get_max_filename_from_global_db('jaffarConfig')
+        if not config_file:
+            return jsonify({"error": "No config found"}), 404
+        return jsonify(get_one_from_global_db(config_file))
+    except Exception as e:
+        logger.error(f"Failed to get config: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/jaffar/save', methods=['POST'])
+def api_jaffar_save():
+    try:
+        data = request.json
+        issue_id = data['id']
+        key = f'jaffar/issues/draft/{issue_id}.json'
+        
+        s3.put_object(
+            Bucket=BUCKET_NAME,
+            Key=key,
+            Body=json.dumps(data)
+        )
+        
+        # Save locally too
+        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        with open(local_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f)
+            
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to save issue: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/acknowledge', methods=['POST'])
 def api_acknowledge():
