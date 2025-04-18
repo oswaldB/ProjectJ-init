@@ -30,7 +30,7 @@
         function checkPassword() {
             const password = document.getElementById('password').value;
             if (password === 'sesame') {
-                document.cookie = 'sultan_auth=true; path=/';
+                localStorage.setItem('sultan_auth', 'true');
                 const redirect = new URLSearchParams(window.location.search).get('redirect') || '/';
                 window.location.href = redirect;
             } else {

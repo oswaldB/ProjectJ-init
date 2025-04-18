@@ -20,7 +20,7 @@
     },
     login() {
         if (this.email && this.email.length > 0) {
-            document.cookie = `user_email=${this.email}; path=/`;
+            localStorage.setItem('user_email', this.email);
             const urlParams = new URLSearchParams(window.location.search);
             const redirect = urlParams.get('redirect') || '/';
             window.location.href = redirect;
