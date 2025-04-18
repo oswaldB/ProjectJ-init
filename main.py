@@ -147,6 +147,21 @@ def get_max_from_global_db(key):
                     max_number = number
                     max_object = file
         if max_object is not None:
+
+def copy_form_to_jaffar_configs(form_id):
+    try:
+        form_path = f'sultan/forms/{form_id}.json'
+        content = get_one_from_global_db(form_path)
+        
+        if content:
+            jaffar_path = f'jaffar/configs/{form_id}.json'
+            save_in_global_db(jaffar_path, content)
+            return True
+        return False
+    except Exception as e:
+        logger.error(f"Failed to copy form to Jaffar configs: {e}")
+        return False
+
             return get_one_from_global_db(max_object)
         else:
             return "No objects with the given key and a digit at the beginning found."
@@ -746,6 +761,7 @@ def api_form_save():
     try:
         form_path = f'sultan/forms/{form["id"]}.json'
         save_in_global_db(form_path, form)
+        copy_form_to_jaffar_configs(form["id"])
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save form: {e}")
