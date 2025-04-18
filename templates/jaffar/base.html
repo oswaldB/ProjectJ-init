@@ -16,7 +16,7 @@
                     window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
                 }
             } catch (error) {
-                console.error('Auth check failed:', error);
+               alert('Auth check failed:', error);
                 window.location.href = '/login';
             }
         });
