@@ -1,138 +1,80 @@
-
 {% extends "jaffar/base.html" %}
 
 {% block title %}Issue Form{% endblock %}
-
-{% block alpine_component %}
-{
-  page: 'form',
-  config: null,
-  answers: {},
-  async init() {
-    try {
-      const response = await fetch('/api/jaffar/config');
-      this.config = await response.json();
-      
-      // Create initial draft
-      const issueId = `JAFF-ISS-${Date.now()}`;
-      const userEmail = localStorage.getItem('user_email');
-      
-      await fetch('/api/jaffar/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: issueId,
-          author: userEmail,
-          createdAt: new Date().toISOString(),
-          status: 'draft',
-          answers: {}
-        })
-      });
-      
-      // Store the ID for later updates
-      this.issueId = issueId;
-    } catch (error) {
-      console.error('Failed to initialize:', error);
-    }
-  },
-  async saveAnswers() {
-    const userEmail = localStorage.getItem('user_email');
-    
-    try {
-      await fetch('/api/jaffar/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: this.issueId,
-          author: userEmail,
-          createdAt: new Date().toISOString(),
-          status: 'submitted',
-          answers: this.answers
-        })
-      });
-      window.location.href = '/acknowledge';
-    } catch (error) {
-      console.error('Failed to save answers:', error);
-    }
-  }
-}
-{% endblock %}
 
 {% block content %}
 <div class="p-6">
   <div class="mb-6 flex justify-between items-center">
     <h1 class="text-2xl font-bold">New Issue</h1>
     <div class="flex space-x-4">
-      <button @click="window.location.href='/'" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500">
+      <a href="/" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500">
         Cancel
-      </button>
-      <button @click="saveAnswers()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500">
+      </a>
+      <button type="submit" form="issueForm" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500">
         Submit
       </button>
     </div>
   </div>
 
-  <div class="space-y-6" x-show="config">
-    <template x-for="field in config.fields" :key="field.key">
-      <div class="bg-gray-800 p-4 rounded-lg">
-        <label class="block mb-2">
-          <span class="text-lg font-medium text-white" x-text="field.label"></span>
-          <span x-show="field.required" class="text-red-500 ml-1">*</span>
+  <form id="issueForm" action="/api/jaffar/save" method="POST" class="space-y-6">
+    <input type="hidden" name="issueId" value="{{ issue_id }}">
+    {% for field in config.fields %}
+    <div class="bg-gray-800 p-4 rounded-lg">
+      <label class="block mb-2">
+        <span class="text-lg font-medium text-white">{{ field.label }}</span>
+        {% if field.required %}
+        <span class="text-red-500 ml-1">*</span>
+        {% endif %}
+      </label>
+      <p class="text-gray-400 text-sm mb-2">{{ field.description }}</p>
+
+      {% if field.type in ['text', 'text_input'] %}
+      <input type="text" 
+             name="{{ field.key }}"
+             {% if field.required %}required{% endif %}
+             class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+      {% endif %}
+
+      {% if field.type == 'single_select' %}
+      <select name="{{ field.key }}"
+              {% if field.required %}required{% endif %}
+              class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+        <option value="">Select an option</option>
+        {% for option in field.options %}
+        <option value="{{ option.name }}">{{ option.name }}</option>
+        {% endfor %}
+      </select>
+      {% endif %}
+
+      {% if field.type == 'multiple_checkbox' %}
+      <div class="space-y-2">
+        {% for option in field.options %}
+        <label class="flex items-center space-x-2">
+          <input type="checkbox" 
+                 name="{{ field.key }}" 
+                 value="{{ option.name }}"
+                 class="bg-gray-700 border-gray-600">
+          <span class="text-white">{{ option.name }}</span>
         </label>
-        <p class="text-gray-400 text-sm mb-2" x-text="field.description"></p>
-
-        <!-- Text input -->
-        <template x-if="field.type === 'text' || field.type === 'text_input'">
-          <input type="text" 
-                 x-model="answers[field.key]"
-                 :required="field.required"
-                 class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-        </template>
-
-        <!-- Single select -->
-        <template x-if="field.type === 'single_select'">
-          <select x-model="answers[field.key]"
-                  :required="field.required"
-                  class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-            <option value="">Select an option</option>
-            <template x-for="option in field.options" :key="option.name">
-              <option x-text="option.name" :value="option.name"></option>
-            </template>
-          </select>
-        </template>
-
-        <!-- Multiple checkbox -->
-        <template x-if="field.type === 'multiple_checkbox'">
-          <div class="space-y-2">
-            <template x-for="option in field.options" :key="option.name">
-              <label class="flex items-center space-x-2">
-                <input type="checkbox" 
-                       x-model="answers[field.key]" 
-                       :value="option.name"
-                       class="bg-gray-700 border-gray-600">
-                <span class="text-white" x-text="option.name"></span>
-              </label>
-            </template>
-          </div>
-        </template>
-
-        <!-- Date -->
-        <template x-if="field.type === 'date'">
-          <input type="date" 
-                 x-model="answers[field.key]"
-                 :required="field.required"
-                 class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-        </template>
-
-        <!-- Textarea -->
-        <template x-if="field.type === 'textarea'">
-          <textarea x-model="answers[field.key]"
-                    :required="field.required"
-                    rows="3"
-                    class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"></textarea>
-        </template>
+        {% endfor %}
       </div>
-    </template>
-  </div>
+      {% endif %}
+
+      {% if field.type == 'date' %}
+      <input type="date" 
+             name="{{ field.key }}"
+             {% if field.required %}required{% endif %}
+             class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+      {% endif %}
+
+      {% if field.type == 'textarea' %}
+      <textarea name="{{ field.key }}"
+                {% if field.required %}required{% endif %}
+                rows="3"
+                class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"></textarea>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </form>
 </div>
 {% endblock %}
