@@ -290,6 +290,28 @@ def api_jaffar_config():
         logger.error(f"Failed to get config: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/jaffar/delete', methods=['DELETE'])
+def api_jaffar_delete():
+    try:
+        data = request.json
+        if not data or 'key' not in data:
+            return jsonify({"error": "Missing key"}), 400
+            
+        key = data['key']
+        
+        # Delete from S3
+        s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+        
+        # Delete locally
+        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        if os.path.exists(local_path):
+            os.remove(local_path)
+            
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to delete: {e}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/jaffar/save', methods=['POST'])
 def api_jaffar_save():
     try:
@@ -317,8 +339,8 @@ def api_jaffar_save():
         with open(local_path, 'w', encoding='utf-8') as f:
             f.write(json_data)
             
-        # Send confirmation email if author is present
-        if 'author' in data:
+        # Send confirmation email if author is present and status is new
+        if 'author' in data and status == 'new':
             sendConfirmationEmail(data['author'], issue_id, data)
             
         return jsonify({"status": "success"})
