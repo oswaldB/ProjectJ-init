@@ -16,6 +16,24 @@
         this.formData[field.key] = [];
       }
     });
+
+    // Watch formData for changes and auto-save as draft
+    this.$watch('formData', (value) => {
+      const now = new Date();
+      const formToSave = {
+        id: `JAFF-ISS-${now.getTime()}`,
+        author: localStorage.getItem('user_email'),
+        ...value,
+        status: 'draft',
+        created_at: now.toISOString()
+      };
+
+      fetch('/api/jaffar/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formToSave)
+      });
+    }, { deep: true });
   }
 }" x-init="init()">
   <div class="mb-6 flex justify-between items-center">
