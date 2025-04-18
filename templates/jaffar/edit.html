@@ -27,23 +27,35 @@
       <button type="submit" @click="
   const now = new Date();
   const id = `JAFF-ISS-${now.getTime()}`;
-  const form = {
+  const formToSave = {
     id: id,
     author: localStorage.getItem('user_email'),
-    ...formData
+    ...formData,
+    status: 'draft',
+    created_at: now.toISOString()
   };
 
   fetch('/api/jaffar/save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(form)
+    body: JSON.stringify(formToSave)
   })
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
   .then(result => {
-    if(result.status === 'success') {
+    if (result.status === 'success') {
       window.location.href = '/';
+    } else {
+      alert('Error saving form: ' + result.error);
     }
   })
+  .catch(error => {
+    alert('Error saving form: ' + error.message);
+  });
 " class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
         Submit
       </button>

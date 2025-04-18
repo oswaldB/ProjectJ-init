@@ -294,20 +294,32 @@ def api_jaffar_config():
 def api_jaffar_save():
     try:
         data = request.json
+        if not data or 'id' not in data:
+            return jsonify({"error": "Missing required data"}), 400
+            
         issue_id = data['id']
-        key = f'jaffar/issues/draft/{issue_id}.json'
+        status = data.get('status', 'draft')
+        key = f'jaffar/issues/{status}/{issue_id}.json'
         
+        # Ensure the data is valid JSON
+        json_data = json.dumps(data, ensure_ascii=False)
+        
+        # Save to S3
         s3.put_object(
             Bucket=BUCKET_NAME,
             Key=key,
-            Body=json.dumps(data)
+            Body=json_data
         )
         
-        # Save locally too
+        # Save locally
         local_path = os.path.join(LOCAL_BUCKET_DIR, key)
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
         with open(local_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f)
+            f.write(json_data)
+            
+        # Send confirmation email if author is present
+        if 'author' in data:
+            sendConfirmationEmail(data['author'], issue_id, data)
             
         return jsonify({"status": "success"})
     except Exception as e:
