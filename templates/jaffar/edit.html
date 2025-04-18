@@ -12,12 +12,30 @@
     try {
       const response = await fetch('/api/jaffar/config');
       this.config = await response.json();
+      
+      // Create initial draft
+      const issueId = `JAFF-ISS-${Date.now()}`;
+      const userEmail = localStorage.getItem('user_email');
+      
+      await fetch('/api/jaffar/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: issueId,
+          author: userEmail,
+          createdAt: new Date().toISOString(),
+          status: 'draft',
+          answers: {}
+        })
+      });
+      
+      // Store the ID for later updates
+      this.issueId = issueId;
     } catch (error) {
-      console.error('Failed to load config:', error);
+      console.error('Failed to initialize:', error);
     }
   },
   async saveAnswers() {
-    const issueId = `JAFF-ISS-${Date.now()}`;
     const userEmail = localStorage.getItem('user_email');
     
     try {
@@ -25,8 +43,10 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: issueId,
+          id: this.issueId,
           author: userEmail,
+          createdAt: new Date().toISOString(),
+          status: 'submitted',
           answers: this.answers
         })
       });
