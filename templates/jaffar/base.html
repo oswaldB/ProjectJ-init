@@ -20,11 +20,15 @@
                 window.location.href = '/login';
             }
         });
-        
+
         window.jaffar = function() {
             return {
+                page: window.location.pathname === '/login' ? 'login' : 'main',
                 version: '1.0.0',
-                demoMode: false
+                demoMode: false,
+                showFormPage() {
+                    this.page = 'form';
+                }
             }
         }
     </script>
