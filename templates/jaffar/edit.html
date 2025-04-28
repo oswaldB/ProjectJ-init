@@ -197,7 +197,8 @@
                 this.selections = formData[field.key] || [];
                 this.$watch('selections', value => {
                   formData[field.key] = value;
-                });
+                  this.$nextTick(() => this.$dispatch('form-updated'));
+                }, { debounce: 500 });
               }
             }" x-init="init()">
               <input type="text"
@@ -213,7 +214,6 @@
                            :name="field.key" 
                            :value="option.name"
                            x-model="selections"
-                           @change="$dispatch('form-updated')"
                            class="bg-gray-700 border-gray-600">
                     <span class="text-white text-sm" x-text="option.name"></span>
                   </label>
