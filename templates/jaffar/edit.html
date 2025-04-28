@@ -192,13 +192,11 @@
           <template x-if="field.type === 'multiple_checkbox'">
             <div x-data="{ 
               search: '',
-              selections: [],
+              selections: formData[field.key] || [],
               init() {
-                this.selections = formData[field.key] || [];
                 this.$watch('selections', value => {
                   formData[field.key] = value;
-                  this.$nextTick(() => this.$dispatch('form-updated'));
-                }, { debounce: 500 });
+                }, { deep: true });
               }
             }" x-init="init()">
               <input type="text"
