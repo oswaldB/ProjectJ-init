@@ -510,9 +510,15 @@ def api_jaffar_save():
                         logger.info(f"Change detected in field {field_key}")
                         logger.info(f"Previous value: {old_data[field_key]}")
                         logger.info(f"New value: {new_value}")
+                        
+                        def simplify_value(value):
+                            if isinstance(value, (dict, list)):
+                                return json.dumps(value, ensure_ascii=False)
+                            return value
+
                         changes[field_key] = {
-                            'previous': old_data[field_key],
-                            'new': new_value
+                            'previous': simplify_value(old_data.get(field_key)),
+                            'new': simplify_value(new_value)
                         }
                     else:
                         logger.info(f"No change in field {field_key}")
