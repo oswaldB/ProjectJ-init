@@ -79,7 +79,7 @@
             <template x-if="item.content">
               <div>
                 <div class="flex justify-between items-start mb-2">
-                  <span class="text-sm text-gray-400" x-text="item.author + ' commented on ' + new Date(item.created_at).toLocaleDateString()"></span>
+                  <span class="text-sm text-gray-400" x-text="item.author"></span>
                 </div>
                 <div x-html="item.content"></div>
               </div>
@@ -89,7 +89,7 @@
             <template x-if="item.value_changes">
               <div>
                 <div class="flex justify-between items-start mb-2">
-                  <span class="text-sm text-gray-400" x-text="item.modified_by + ' modified on ' + new Date(item.modified_at).toLocaleDateString()"></span>
+                  <span class="text-sm text-gray-400" x-text="item.modified_by"></span>
                 </div>
                 <div class="space-y-2">
                   <template x-for="(change, field) in item.value_changes" :key="field">
