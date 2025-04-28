@@ -283,6 +283,30 @@ def acknowledge():
 def new_issue():
     now = datetime.datetime.now()
     issue_id = f'JAFF-ISS-{int(now.timestamp() * 1000)}'
+    
+    # Create initial draft
+    issue_data = {
+        'id': issue_id,
+        'author': request.headers.get('user_email'),
+        'status': 'draft',
+        'created_at': now.isoformat(),
+        'updated_at': now.isoformat()
+    }
+    
+    # Save to S3
+    key = f'jaffar/issues/draft/{issue_id}.json'
+    s3.put_object(
+        Bucket=BUCKET_NAME,
+        Key=key,
+        Body=json.dumps(issue_data, ensure_ascii=False)
+    )
+    
+    # Save locally
+    local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+    with open(local_path, 'w', encoding='utf-8') as f:
+        f.write(json.dumps(issue_data, ensure_ascii=False))
+        
     return redirect(f'/edit/{issue_id}')
 
 @app.route('/edit/<issue_id>')
