@@ -34,8 +34,15 @@
       return;
     }
 
+    let initialLoad = true;
+    
     // Watch formData for changes and auto-save as draft
     this.$watch('formData', (value) => {
+      if (initialLoad) {
+        initialLoad = false;
+        return;
+      }
+      
       const now = new Date();
       const formToSave = {
         id: this.formData.id || `JAFF-ISS-${now.getTime()}`,
