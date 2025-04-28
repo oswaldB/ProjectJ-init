@@ -96,23 +96,6 @@ def save_in_global_db(key, obj):
     json_object = json.dumps(obj, separators=(',', ':'))
     try:
         # S3 save
-
-@app.route('/api/jaffar/issues/<issue_id>', methods=['PUT'])
-def update_issue(issue_id):
-    try:
-        data = request.json
-        status = data.get('status', 'draft')
-        key = f'jaffar/issues/{status}/{issue_id}.json'
-
-        # Save to S3 and local
-        save_in_global_db(key, data)
-        
-        return jsonify(data)
-    except Exception as e:
-        logger.error(f"Failed to update issue: {e}")
-        return jsonify({"error": str(e)}), 500
-
-
         s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_object)
 
         # Local save
