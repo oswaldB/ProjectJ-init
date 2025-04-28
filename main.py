@@ -577,43 +577,56 @@ def send_confirmation_if_needed(data):
                               data['id'], data)
 
 
+def validate_save_request(data):
+    if not data or 'id' not in data:
+        logger.error("Missing required data in save request")
+        return False
+    return True
+
+def save_issue_to_storage(issue_id, status, data):
+    key = f'jaffar/issues/{status}/{issue_id}.json'
+    json_data = json.dumps(data, ensure_ascii=False, cls=CircularRefEncoder)
+
+    try:
+        # Save to S3
+        s3.put_object(
+            Bucket=BUCKET_NAME, 
+            Key=key, 
+            Body=json_data.encode('utf-8'), 
+            ContentType='application/json'
+        )
+
+        # Save locally
+        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        with open(local_path, 'w', encoding='utf-8') as f:
+            f.write(json_data)
+
+        logger.info(f"Issue {issue_id} saved successfully")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to save issue {issue_id}: {e}")
+        return False
+
 @app.route('/api/jaffar/save', methods=['POST'])
 def api_jaffar_save():
     try:
         data = request.json
-        if not data or 'id' not in data:
-            logger.error("Missing required data in save request")
+        if not validate_save_request(data):
             return jsonify({"error": "Missing required data"}), 400
 
         issue_id = data['id']
         status = data.get('status', 'draft')
-        key = f'jaffar/issues/{status}/{issue_id}.json'
-
         logger.info(f"Saving issue {issue_id} with status {status}")
 
-        # Separate changes from the issue
+        # Extract changes before saving main issue
         changes = data.pop('changes', [])
 
-        # Save the issue without changes
-        try:
-            json_data = json.dumps(data,
-                                   ensure_ascii=False,
-                                   cls=CircularRefEncoder)
-            s3.put_object(Bucket=BUCKET_NAME,
-                          Key=key,
-                          Body=json_data.encode('utf-8'),
-                          ContentType='application/json')
+        # Save main issue
+        if not save_issue_to_storage(issue_id, status, data):
+            return jsonify({"error": "Failed to save issue"}), 500
 
-            local_path = os.path.join(LOCAL_BUCKET_DIR, key)
-            os.makedirs(os.path.dirname(local_path), exist_ok=True)
-            with open(local_path, 'w', encoding='utf-8') as f:
-                f.write(json_data)
-            logger.info(f"Issue {issue_id} saved locally and in S3")
-        except Exception as e:
-            logger.error(f"Failed to save issue {issue_id}: {e}")
-            return jsonify({"error": f"Failed to save issue: {str(e)}"}), 500
-
-        # Save changes to a dedicated file
+        # Save changes if present
         if changes:
             save_issue_changes(issue_id, changes)
 
@@ -909,7 +922,7 @@ def api_escalation_list():
                 escalations.append(escalation)
             except Exception as e:
                 logger.error(f"Failed to load escalation {obj['Key']}: {e}")
-    except Exception as e:
+    except Exception ase:
         logger.error(f"Failed to list escalations: {e}")
         return jsonify({"error": str(e)}), 500
 
