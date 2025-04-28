@@ -300,179 +300,6 @@ def require_auth(f):
     return decorated
 
 
-@app.route('/')
-def index():
-    return render_template('jaffar/index.html')
-
-
-@app.route('/edit')
-def edit():
-    return render_template('jaffar/edit.html')
-
-
-@app.route('/acknowledge')
-def acknowledge():
-    return render_template('jaffar/acknowledge.html')
-
-
-@app.route('/new-issue')
-def new_issue():
-    now = datetime.datetime.now()
-    issue_id = f'JAFF-ISS-{int(now.timestamp() * 1000)}'
-    user_email = request.form.get('user_email') or request.args.get(
-        'user_email')
-
-    if not user_email:
-        return redirect('/login')
-
-    # Create initial draft
-    issue_data = {
-        'id': issue_id,
-        'author': user_email,
-        'status': 'draft',
-        'created_at': now.isoformat(),
-        'updated_at': now.isoformat()
-    }
-
-    # Save to S3
-    key = f'jaffar/issues/draft/{issue_id}.json'
-    s3.put_object(Bucket=BUCKET_NAME,
-                  Key=key,
-                  Body=json.dumps(issue_data, ensure_ascii=False))
-
-    # Save locally
-    local_path = os.path.join(LOCAL_BUCKET_DIR, key)
-    os.makedirs(os.path.dirname(local_path), exist_ok=True)
-    with open(local_path, 'w', encoding='utf-8') as f:
-        f.write(json.dumps(issue_data, ensure_ascii=False))
-
-    return redirect(f'/edit/{issue_id}')
-
-
-@app.route('/edit/<issue_id>')
-def edit_with_id(issue_id):
-    return render_template('jaffar/edit.html')
-
-
-@app.route('/issue/<issue_id>')
-def view_issue(issue_id):
-    return render_template('jaffar/issue.html')
-
-
-@app.route('/api/jaffar/issues/list', methods=['GET'])
-def list_issues():
-    issues = []
-    try:
-        # List objects in both draft and new folders
-        for status in ['draft', 'new']:
-            prefix = f'jaffar/issues/{status}/'
-            try:
-                response = s3.list_objects_v2(Bucket=BUCKET_NAME,
-                                              Prefix=prefix)
-
-                if 'Contents' in response:
-                    for obj in response['Contents']:
-                        try:
-                            response = s3.get_object(Bucket=BUCKET_NAME,
-                                                     Key=obj['Key'])
-                            issue = json.loads(
-                                response['Body'].read().decode('utf-8'))
-                            issues.append(issue)
-                        except Exception as e:
-                            logger.error(
-                                f"Error loading issue {obj['Key']}: {e}")
-
-            except Exception as e:
-                logger.error(f"Error listing issues for status {status}: {e}")
-
-        return jsonify(issues)
-    except Exception as e:
-        logger.error(f"Error in list_issues: {e}")
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route('/api/jaffar/issues/<issue_id>', methods=['GET'])
-def get_issue(issue_id):
-    # Try both draft and new folders
-    for status in ['draft', 'new']:
-        try:
-            key = f'jaffar/issues/{status}/{issue_id}.json'
-            response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-            return jsonify(json.loads(response['Body'].read().decode('utf-8')))
-        except s3.exceptions.NoSuchKey:
-            continue
-    return jsonify({'error': 'Issue not found'}), 404
-
-
-@app.route('/api/jaffar/issues/<issue_id>/comments', methods=['POST'])
-def add_comment(issue_id):
-    comment = request.json
-
-    # Find the issue in either draft or new folder
-    for status in ['draft', 'new']:
-        key = f'jaffar/issues/{status}/{issue_id}.json'
-        try:
-            response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-            issue = json.loads(response['Body'].read().decode('utf-8'))
-
-            if 'comments' not in issue:
-                issue['comments'] = []
-
-            issue['comments'].append(comment)
-
-            # Save updated issue
-            s3.put_object(Bucket=BUCKET_NAME,
-                          Key=key,
-                          Body=json.dumps(issue, ensure_ascii=False))
-
-            # Save locally
-            local_path = os.path.join(LOCAL_BUCKET_DIR, key)
-            os.makedirs(os.path.dirname(local_path), exist_ok=True)
-            with open(local_path, 'w', encoding='utf-8') as f:
-                f.write(json.dumps(issue, ensure_ascii=False))
-
-            return jsonify(issue)
-
-        except s3.exceptions.NoSuchKey:
-            continue
-
-    return jsonify({'error': 'Issue not found'}), 404
-
-
-@app.route('/api/jaffar/config')
-def api_jaffar_config():
-    try:
-        config_file = get_max_filename_from_global_db('jaffarConfig')
-        if not config_file:
-            return jsonify({"error": "No config found"}), 404
-        return jsonify(get_one_from_global_db(config_file))
-    except Exception as e:
-        logger.error(f"Failed to get config: {e}")
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route('/api/jaffar/delete', methods=['DELETE'])
-def api_jaffar_delete():
-    try:
-        data = request.json
-        if not data or 'key' not in data:
-            return jsonify({"error": "Missing key"}), 400
-
-        key = data['key']
-
-        # Delete from S3
-        s3.delete_object(Bucket=BUCKET_NAME, Key=key)
-
-        # Delete locally
-        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
-        if os.path.exists(local_path):
-            os.remove(local_path)
-
-        return jsonify({"status": "success"})
-    except Exception as e:
-        logger.error(f"Failed to delete: {e}")
-        return jsonify({"error": str(e)}), 500
-
 
 def fetch_old_issue(issue_id, previous_status):
     try:
@@ -716,60 +543,126 @@ def api_acknowledge():
     return jsonify({'error': 'Issue not found'}), 404
 
 
-@app.route('/sultan/login')
-def sultan_login():
-    return render_template('sultan/login.html')
+@app.route('/api/jaffar/issues/list', methods=['GET'])
+def list_issues():
+    issues = []
+    try:
+        # List objects in both draft and new folders
+        for status in ['draft', 'new']:
+            prefix = f'jaffar/issues/{status}/'
+            try:
+                response = s3.list_objects_v2(Bucket=BUCKET_NAME,
+                                              Prefix=prefix)
+
+                if 'Contents' in response:
+                    for obj in response['Contents']:
+                        try:
+                            response = s3.get_object(Bucket=BUCKET_NAME,
+                                                     Key=obj['Key'])
+                            issue = json.loads(
+                                response['Body'].read().decode('utf-8'))
+                            issues.append(issue)
+                        except Exception as e:
+                            logger.error(
+                                f"Error loading issue {obj['Key']}: {e}")
+
+            except Exception as e:
+                logger.error(f"Error listing issues for status {status}: {e}")
+
+        return jsonify(issues)
+    except Exception as e:
+        logger.error(f"Error in list_issues: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
-@app.route('/sultan')
-def sultan():
-    return render_template('sultan/base.html')
+@app.route('/api/jaffar/issues/<issue_id>', methods=['GET'])
+def get_issue(issue_id):
+    # Try both draft and new folders
+    for status in ['draft', 'new']:
+        try:
+            key = f'jaffar/issues/{status}/{issue_id}.json'
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+            return jsonify(json.loads(response['Body'].read().decode('utf-8')))
+        except s3.exceptions.NoSuchKey:
+            continue
+    return jsonify({'error': 'Issue not found'}), 404
 
 
-@app.route('/sultan/<path:path>')
-def sultan_pages(path):
-    return render_template(f'sultan/{path}')
+@app.route('/api/jaffar/issues/<issue_id>/comments', methods=['POST'])
+def add_comment(issue_id):
+    comment = request.json
+
+    # Find the issue in either draft or new folder
+    for status in ['draft', 'new']:
+        key = f'jaffar/issues/{status}/{issue_id}.json'
+        try:
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+            issue = json.loads(response['Body'].read().decode('utf-8'))
+
+            if 'comments' not in issue:
+                issue['comments'] = []
+
+            issue['comments'].append(comment)
+
+            # Save updated issue
+            s3.put_object(Bucket=BUCKET_NAME,
+                          Key=key,
+                          Body=json.dumps(issue, ensure_ascii=False))
+
+            # Save locally
+            local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            with open(local_path, 'w', encoding='utf-8') as f:
+                f.write(json.dumps(issue, ensure_ascii=False))
+
+            return jsonify(issue)
+
+        except s3.exceptions.NoSuchKey:
+            continue
+
+    return jsonify({'error': 'Issue not found'}), 404
 
 
-@app.route('/questions')
-def questions():
-    return render_template('sultan/pages/jaffar-questions-studio.html')
+@app.route('/api/jaffar/config')
+def api_jaffar_config():
+    try:
+        config_file = get_max_filename_from_global_db('jaffarConfig')
+        if not config_file:
+            return jsonify({"error": "No config found"}), 404
+        return jsonify(get_one_from_global_db(config_file))
+    except Exception as e:
+        logger.error(f"Failed to get config: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
-@app.route('/questions/import')
-def questions_import():
-    return render_template('sultan/questions/import.html')
+@app.route('/api/jaffar/delete', methods=['DELETE'])
+def api_jaffar_delete():
+    try:
+        data = request.json
+        if not data or 'key' not in data:
+            return jsonify({"error": "Missing key"}), 400
+
+        key = data['key']
+
+        # Delete from S3
+        s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+
+        # Delete locally
+        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        if os.path.exists(local_path):
+            os.remove(local_path)
+
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to delete: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
-@app.route('/questions/export')
-def questions_export():
-    return render_template('components/questions/export.html')
+from routes.jaffar_routes import jaffar_bp
+from routes.sultan_routes import sultan_bp
 
-
-@app.route('/sultan/forms')
-def forms_list():
-    return render_template('sultan/forms/index.html')
-
-
-@app.route('/sultan/forms/edit/<form_id>')
-def form_edit(form_id):
-    return render_template('sultan/forms/edit.html')
-
-
-@app.route('/sultan/escalation')
-def escalation_list():
-    return redirect('/sultan/escalation/edit/new')
-
-
-@app.route('/sultan/escalation/edit/<escalation_id>')
-def escalation_edit(escalation_id):
-    return render_template('sultan/escalation/edit.html')
-
-
-@app.route('/sultan/excel_grid')
-def excel_grid():
-    return render_template('sultan/excel_grid/index.html')
-
+app.register_blueprint(jaffar_bp)
+app.register_blueprint(sultan_bp, url_prefix='/sultan')
 
 @app.route('/api/sultan/escalation/excel/upload', methods=['POST'])
 def upload_excel():
@@ -1286,6 +1179,46 @@ def api_template_duplicate():
     except Exception as e:
         logger.error(f"Failed to duplicate template: {e}")
         return jsonify({"error": "Failed to duplicate template"}), 500
+
+
+@app.route('/questions')
+def questions():
+    return render_template('sultan/pages/jaffar-questions-studio.html')
+
+
+@app.route('/questions/import')
+def questions_import():
+    return render_template('sultan/questions/import.html')
+
+
+@app.route('/questions/export')
+def questions_export():
+    return render_template('components/questions/export.html')
+
+
+@app.route('/sultan/forms')
+def forms_list():
+    return render_template('sultan/forms/index.html')
+
+
+@app.route('/sultan/forms/edit/<form_id>')
+def form_edit(form_id):
+    return render_template('sultan/forms/edit.html')
+
+
+@app.route('/sultan/escalation')
+def escalation_list():
+    return redirect('/sultan/escalation/edit/new')
+
+
+@app.route('/sultan/escalation/edit/<escalation_id>')
+def escalation_edit(escalation_id):
+    return render_template('sultan/escalation/edit.html')
+
+
+@app.route('/sultan/excel_grid')
+def excel_grid():
+    return render_template('sultan/excel_grid/index.html')
 
 
 if __name__ == '__main__':
