@@ -469,159 +469,104 @@ def api_jaffar_delete():
         return jsonify({"error": str(e)}), 500
 
 
+def fetch_old_issue(issue_id, previous_status):
+    try:
+        key = f'jaffar/issues/{previous_status}/{issue_id}.json'
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+        return json.loads(response['Body'].read().decode('utf-8'))
+    except Exception:
+        return None
+
+def clean_value(value):
+    if isinstance(value, str):
+        return value.strip()
+    if value is None:
+        return ''
+    return value
+
+def has_meaningful_change(old_value, new_value):
+    return clean_value(old_value) != clean_value(new_value)
+
+def simplify_value(value):
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False)
+    return value
+
+def compare_issues(old_data, new_data):
+    if not old_data:
+        return {}
+
+    changes = {}
+    for key, new_value in new_data.items():
+        if key in old_data:
+            if has_meaningful_change(old_data[key], new_value):
+                changes[key] = {
+                    'previous': simplify_value(old_data.get(key)),
+                    'new': simplify_value(new_value)
+                }
+        else:
+            changes[key] = {'previous': None, 'new': simplify_value(new_value)}
+    return changes
+
+def save_issue(issue_id, status, data):
+    key = f'jaffar/issues/{status}/{issue_id}.json'
+    cleaned_data = remove_circular_references(data)
+    json_data = json.dumps(cleaned_data, ensure_ascii=False, cls=CircularRefEncoder)
+    
+    # Save to S3
+    s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_data.encode('utf-8'), ContentType='application/json')
+    
+    # Save locally
+    local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+    with open(local_path, 'w', encoding='utf-8') as f:
+        f.write(json_data)
+
+def record_change(data, changes, user_email, previous_status):
+    change_record = {
+        'modified_by': user_email,
+        'modified_at': datetime.datetime.now().isoformat(),
+        'previous_status': previous_status,
+        'value_changes': changes
+    }
+    if 'changes' not in data or not isinstance(data['changes'], list):
+        data['changes'] = []
+    data['changes'].append(change_record)
+
+def send_confirmation_if_needed(data):
+    if data.get('author') and data.get('status') == 'new':
+        sendConfirmationEmail(data['author'], data['id'], data)
+
 @app.route('/api/jaffar/save', methods=['POST'])
 def api_jaffar_save():
     try:
         data = request.json
         if not data or 'id' not in data:
-            logger.error("Missing required data in save request")
             return jsonify({"error": "Missing required data"}), 400
 
         issue_id = data['id']
         status = data.get('status', 'draft')
-        key = f'jaffar/issues/{status}/{issue_id}.json'
+        user_email = data.get('author')
+        previous_status = data.get('previous_status', status)
 
-        logger.info(f"Saving issue {issue_id} with status {status}")
-        logger.info(f"Issue author: {data.get('author')}")
-        logger.info(f"Issue data keys: {list(data.keys())}")
-        logger.info(f"Target S3 key: {key}")
-
-        # Initialize changes array if it doesn't exist
-        if 'changes' not in data:
-            data['changes'] = []
-        elif not isinstance(data['changes'], list):
-            data['changes'] = []
-
-        # Get the previous version to compare changes
-        try:
-            old_key = f'jaffar/issues/{data.get("previous_status", status)}/{issue_id}.json'
-            old_response = s3.get_object(Bucket=BUCKET_NAME, Key=old_key)
-            old_data = json.loads(old_response['Body'].read().decode('utf-8'))
-
-            # Compare and record changes
-            logger.info("Starting changes comparison...")
-            logger.info(f"Old data keys: {list(old_data.keys())}")
-            logger.info(f"New data keys: {list(data.keys())}")
-
-            def clean_value(value):
-                if isinstance(value, str):
-                    return value.strip()
-                if value is None:
-                    return ''
-                return value
-
-            def has_meaningful_change(old_value, new_value):
-                old_clean = clean_value(old_value)
-                new_clean = clean_value(new_value)
-                return old_clean != new_clean
-
-            def simplify_value(value):
-                if isinstance(value, (dict, list)):
-                    return json.dumps(value, ensure_ascii=False)
-                return value
-
-            changes = {}
-            for field_key, new_value in data.items():
-                logger.info(f"Checking field: {field_key}")
-                if field_key in old_data:
-                    if has_meaningful_change(old_data.get(field_key), new_value):
-                        logger.info(f"Meaningful change detected in field {field_key}")
-                        logger.info(f"Previous value: {old_data[field_key]}")
-                        logger.info(f"New value: {new_value}")
-                        changes[field_key] = {
-                            'previous': simplify_value(old_data.get(field_key)),
-                            'new': simplify_value(new_value)
-                        }
-                    else:
-                        logger.info(f"No meaningful change in field {field_key}")
-                else:
-                    logger.info(f"New field added: {field_key}")
-                    changes[field_key] = {'previous': None, 'new': simplify_value(new_value)}
-
-            if changes:
-                user_email = data.get('author')
-                if not user_email:
-                    return jsonify({"error": "Author email is required"}), 400
-
-                data['changes'].append({
-                    'modified_by':
-                    user_email,
-                    'modified_at':
-                    datetime.datetime.now().isoformat(),
-                    'previous_status':
-                    data.get('previous_status', status),
-                    'value_changes':
-                    changes
-                })
-        except Exception as e:
-            # If no previous version exists, just record status change
-            user_email = data.get('author')
+        old_data = fetch_old_issue(issue_id, previous_status)
+        changes = compare_issues(old_data, data)
+        
+        if changes:
             if not user_email:
                 return jsonify({"error": "Author email is required"}), 400
-
-            data['changes'].append({
-                'modified_by':
-                user_email,
-                'modified_at':
-                datetime.datetime.now().isoformat(),
-                'previous_status':
-                data.get('previous_status', status)
-            })
+            record_change(data, changes, user_email, previous_status)
 
         data['previous_status'] = status
         data['updated_at'] = datetime.datetime.now().isoformat()
 
-        # Clean data by removing circular references before serialization
-        cleaned_data = remove_circular_references(data)
+        save_issue(issue_id, status, data)
+        send_confirmation_if_needed(data)
 
-        # Convert cleaned data to JSON using CircularRefEncoder
-        json_data = json.dumps(cleaned_data,
-                               ensure_ascii=False,
-                               cls=CircularRefEncoder)
-
-        # Save to S3
-        try:
-            s3.put_object(Bucket=BUCKET_NAME,
-                          Key=key,
-                          Body=json_data.encode('utf-8'),
-                          ContentType='application/json')
-            logger.info(f"Issue {issue_id} saved to S3")
-        except Exception as e:
-            logger.error(f"Failed to save to S3: {e}")
-            error_msg = f"Failed to save to S3: {str(e)}"
-            logger.error(error_msg)
-            logger.error(f"Issue ID: {issue_id}")
-            logger.error(f"Status: {status}")
-            logger.error(f"Key: {key}")
-            return jsonify({"error": error_msg}), 500
-
-        # Save locally
-        try:
-            local_path = os.path.join(LOCAL_BUCKET_DIR, key)
-            os.makedirs(os.path.dirname(local_path), exist_ok=True)
-            with open(local_path, 'w', encoding='utf-8') as f:
-                f.write(json_data)
-            logger.info(f"Issue {issue_id} saved locally")
-        except Exception as e:
-            logger.error(f"Failed to save locally: {e}")
-            return jsonify({"error": f"Failed to save locally: {str(e)}"}), 500
-
-        # Send confirmation email if author is present and status is new
-        if 'author' in data and status == 'new':
-            sendConfirmationEmail(data['author'], issue_id, data)
-
-        return app.response_class(
-            response=json.dumps(data, ensure_ascii=False, cls=CircularRefEncoder),
-            status=200,
-            mimetype='application/json'
-        )
+        return jsonify(data)
     except Exception as e:
         logger.error(f"Failed to save issue: {e}")
-        return app.response_class(
-            response=json.dumps({"error": str(e)}, ensure_ascii=False, cls=CircularRefEncoder),
-            status=500,
-            mimetype='application/json'
-        )
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/api/acknowledge', methods=['POST'])
