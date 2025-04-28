@@ -16,9 +16,19 @@
   },
   
   async loadIssues() {
-    const response = await fetch('/api/jaffar/issues/list');
-    this.issues = await response.json();
-    this.filterIssues();
+    try {
+      const response = await fetch('/api/jaffar/issues/list');
+      if (!response.ok) {
+        throw new Error('Failed to load issues');
+      }
+      const data = await response.json();
+      this.issues = Array.isArray(data) ? data : [];
+      this.filterIssues();
+    } catch (error) {
+      console.error('Error loading issues:', error);
+      this.issues = [];
+      this.filterIssues();
+    }
   },
   
   filterIssues() {
