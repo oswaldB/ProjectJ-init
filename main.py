@@ -283,7 +283,7 @@ def acknowledge():
 def new_issue():
     now = datetime.datetime.now()
     issue_id = f'JAFF-ISS-{int(now.timestamp() * 1000)}'
-    
+
     # Create initial draft
     issue_data = {
         'id': issue_id,
@@ -292,7 +292,7 @@ def new_issue():
         'created_at': now.isoformat(),
         'updated_at': now.isoformat()
     }
-    
+
     # Save to S3
     key = f'jaffar/issues/draft/{issue_id}.json'
     s3.put_object(
@@ -300,13 +300,13 @@ def new_issue():
         Key=key,
         Body=json.dumps(issue_data, ensure_ascii=False)
     )
-    
+
     # Save locally
     local_path = os.path.join(LOCAL_BUCKET_DIR, key)
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
     with open(local_path, 'w', encoding='utf-8') as f:
         f.write(json.dumps(issue_data, ensure_ascii=False))
-        
+
     return redirect(f'/edit/{issue_id}')
 
 @app.route('/edit/<issue_id>')
@@ -326,7 +326,7 @@ def list_issues():
             prefix = f'jaffar/issues/{status}/'
             try:
                 response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-                
+
                 if 'Contents' in response:
                     for obj in response['Contents']:
                         try:
@@ -335,10 +335,10 @@ def list_issues():
                             issues.append(issue)
                         except Exception as e:
                             logger.error(f"Error loading issue {obj['Key']}: {e}")
-                            
+
             except Exception as e:
                 logger.error(f"Error listing issues for status {status}: {e}")
-                
+
         return jsonify(issues)
     except Exception as e:
         logger.error(f"Error in list_issues: {e}")
@@ -359,37 +359,37 @@ def get_issue(issue_id):
 @app.route('/api/jaffar/issues/<issue_id>/comments', methods=['POST'])
 def add_comment(issue_id):
     comment = request.json
-    
+
     # Find the issue in either draft or new folder
     for status in ['draft', 'new']:
         key = f'jaffar/issues/{status}/{issue_id}.json'
         try:
             response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
             issue = json.loads(response['Body'].read().decode('utf-8'))
-            
+
             if 'comments' not in issue:
                 issue['comments'] = []
-            
+
             issue['comments'].append(comment)
-            
+
             # Save updated issue
             s3.put_object(
                 Bucket=BUCKET_NAME,
                 Key=key,
                 Body=json.dumps(issue, ensure_ascii=False)
             )
-            
+
             # Save locally
             local_path = os.path.join(LOCAL_BUCKET_DIR, key)
             os.makedirs(os.path.dirname(local_path), exist_ok=True)
             with open(local_path, 'w', encoding='utf-8') as f:
                 f.write(json.dumps(issue, ensure_ascii=False))
-                
+
             return jsonify(issue)
-            
+
         except s3.exceptions.NoSuchKey:
             continue
-            
+
     return jsonify({'error': 'Issue not found'}), 404
 
 @app.route('/api/jaffar/config')
@@ -409,17 +409,17 @@ def api_jaffar_delete():
         data = request.json
         if not data or 'key' not in data:
             return jsonify({"error": "Missing key"}), 400
-            
+
         key = data['key']
-        
+
         # Delete from S3
         s3.delete_object(Bucket=BUCKET_NAME, Key=key)
-        
+
         # Delete locally
         local_path = os.path.join(LOCAL_BUCKET_DIR, key)
         if os.path.exists(local_path):
             os.remove(local_path)
-            
+
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to delete: {e}")
@@ -431,7 +431,7 @@ def api_jaffar_save():
         data = request.json
         if not data or 'id' not in data:
             return jsonify({"error": "Missing required data"}), 400
-            
+
         issue_id = data['id']
         status = data.get('status', 'draft')
         key = f'jaffar/issues/{status}/{issue_id}.json'
@@ -441,13 +441,13 @@ def api_jaffar_save():
             data['changes'] = []
         elif not isinstance(data['changes'], list):
             data['changes'] = []
-            
+
         # Get the previous version to compare changes
         try:
             old_key = f'jaffar/issues/{data.get("previous_status", status)}/{issue_id}.json'
             old_response = s3.get_object(Bucket=BUCKET_NAME, Key=old_key)
             old_data = json.loads(old_response['Body'].read().decode('utf-8'))
-            
+
             # Compare and record changes
             changes = {}
             for key, new_value in data.items():
@@ -456,9 +456,12 @@ def api_jaffar_save():
                         'previous': old_data[key],
                         'new': new_value
                     }
-                    
+
             if changes:
                 user_email = request.headers.get('user_email')
+                if not user_email:
+                    return jsonify({"error": "User email is required"}), 400
+
                 data['changes'].append({
                     'modified_by': user_email,
                     'modified_at': datetime.datetime.now().isoformat(),
@@ -468,6 +471,9 @@ def api_jaffar_save():
         except Exception as e:
             # If no previous version exists, just record status change
             user_email = request.headers.get('user_email')
+            if not user_email:
+                return jsonify({"error": "User email is required"}), 400
+
             data['changes'].append({
                 'modified_by': user_email,
                 'modified_at': datetime.datetime.now().isoformat(),
@@ -476,7 +482,7 @@ def api_jaffar_save():
 
         data['previous_status'] = status
         data['updated_at'] = datetime.datetime.now().isoformat()
-        
+
         # Save to S3
         json_data = json.dumps(data, ensure_ascii=False)
         s3.put_object(
@@ -484,17 +490,17 @@ def api_jaffar_save():
             Key=key,
             Body=json_data
         )
-        
+
         # Save locally
         local_path = os.path.join(LOCAL_BUCKET_DIR, key)
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
         with open(local_path, 'w', encoding='utf-8') as f:
             f.write(json_data)
-            
+
         # Send confirmation email if author is present and status is new
         if 'author' in data and status == 'new':
             sendConfirmationEmail(data['author'], issue_id, data)
-            
+
         return jsonify(data)
     except Exception as e:
         logger.error(f"Failed to save issue: {e}")
