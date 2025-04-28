@@ -1,38 +1,3 @@
-
-def save_issue_changes(issue_id, changes):
-    key = f'jaffar/issues/changes/{issue_id}-changes.json'
-    json_data = json.dumps(changes, ensure_ascii=False)
-    
-    def save_to_s3():
-        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_data.encode('utf-8'), ContentType='application/json')
-    
-    def save_to_local():
-        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
-        os.makedirs(os.path.dirname(local_path), exist_ok=True)
-        with open(local_path, 'w', encoding='utf-8') as f:
-            f.write(json_data)
-            
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        s3_future = executor.submit(save_to_s3)
-        local_future = executor.submit(save_to_local)
-        s3_future.result()
-        local_future.result()
-
-def get_changes_from_global_db(issue_id):
-    changes_key = f'jaffar/issues/changes/{issue_id}-changes.json'
-
-    try:
-        # Get changes from S3
-        response = s3.get_object(Bucket=BUCKET_NAME, Key=changes_key)
-        content = response['Body'].read().decode('utf-8')
-        return json.loads(content)
-    except s3.exceptions.NoSuchKey:
-        logger.info(f"No changes found for issue {issue_id}")
-        return []
-    except Exception as e:
-        logger.error(f"Failed to get changes for {issue_id}: {e}")
-        return []
-
 from flask import Flask, Blueprint, render_template, redirect, send_from_directory, request, jsonify, send_file
 import json
 import logging
@@ -45,6 +10,7 @@ import pandas as pd
 import boto3
 
 from concurrent.futures import ThreadPoolExecutor
+
 email_executor = ThreadPoolExecutor(max_workers=2)
 
 from moto import mock_aws
@@ -516,6 +482,7 @@ def fetch_old_issue(issue_id, previous_status):
     except Exception:
         return None
 
+
 def clean_value(value):
     if isinstance(value, str):
         return value.strip()
@@ -523,15 +490,22 @@ def clean_value(value):
         return ''
     return value
 
+
 def has_meaningful_change(old_value, new_value):
     return clean_value(old_value) != clean_value(new_value)
+
 
 def simplify_value(value):
     if isinstance(value, (dict, list)):
         return json.dumps(value, ensure_ascii=False)
     return value
 
-IMPORTANT_FIELDS = {'name', 'status', 'author', 'issue-description', 'materiality-bs', 'materiality-pl', 'rag'}
+
+IMPORTANT_FIELDS = {
+    'name', 'status', 'author', 'issue-description', 'materiality-bs',
+    'materiality-pl', 'rag'
+}
+
 
 def compare_issues(old_data, new_data):
     if not old_data:
@@ -551,24 +525,29 @@ def compare_issues(old_data, new_data):
             changes[key] = {'previous': None, 'new': simplify_value(new_value)}
     return changes
 
+
 def save_issue_changes(issue_id, changes):
     key = f'jaffar/issues/changes/{issue_id}-changes.json'
     json_data = json.dumps(changes, ensure_ascii=False)
-    
+
     def save_to_s3():
-        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_data.encode('utf-8'), ContentType='application/json')
-    
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
+                      Body=json_data.encode('utf-8'),
+                      ContentType='application/json')
+
     def save_to_local():
         local_path = os.path.join(LOCAL_BUCKET_DIR, key)
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
         with open(local_path, 'w', encoding='utf-8') as f:
             f.write(json_data)
-            
+
     with ThreadPoolExecutor(max_workers=2) as executor:
         s3_future = executor.submit(save_to_s3)
         local_future = executor.submit(save_to_local)
         s3_future.result()
         local_future.result()
+
 
 def save_issue(issue_id, status, data):
     # Remove changes from main data before saving
@@ -576,25 +555,31 @@ def save_issue(issue_id, status, data):
     if 'changes' in main_data:
         save_issue_changes(issue_id, main_data['changes'])
         del main_data['changes']
-    
+
     key = f'jaffar/issues/{status}/{issue_id}.json'
     cleaned_data = remove_circular_references(main_data)
-    json_data = json.dumps(cleaned_data, ensure_ascii=False, cls=CircularRefEncoder)
-    
+    json_data = json.dumps(cleaned_data,
+                           ensure_ascii=False,
+                           cls=CircularRefEncoder)
+
     def save_to_s3():
-        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_data.encode('utf-8'), ContentType='application/json')
-    
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
+                      Body=json_data.encode('utf-8'),
+                      ContentType='application/json')
+
     def save_to_local():
         local_path = os.path.join(LOCAL_BUCKET_DIR, key)
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
         with open(local_path, 'w', encoding='utf-8') as f:
             f.write(json_data)
-            
+
     with ThreadPoolExecutor(max_workers=2) as executor:
         s3_future = executor.submit(save_to_s3)
         local_future = executor.submit(save_to_local)
         s3_future.result()
         local_future.result()
+
 
 def record_change(data, changes, user_email, previous_status):
     change_record = {
@@ -607,10 +592,13 @@ def record_change(data, changes, user_email, previous_status):
         data['changes'] = []
     data['changes'].append(change_record)
 
+
 def send_confirmation_if_needed(data):
     if data.get('author') and data.get('status') == 'new':
         # Send email asynchronously
-        email_executor.submit(sendConfirmationEmail, data['author'], data['id'], data)
+        email_executor.submit(sendConfirmationEmail, data['author'],
+                              data['id'], data)
+
 
 @app.route('/api/jaffar/save', methods=['POST'])
 def api_jaffar_save():
@@ -625,14 +613,19 @@ def api_jaffar_save():
         key = f'jaffar/issues/{status}/{issue_id}.json'
 
         logger.info(f"Saving issue {issue_id} with status {status}")
-        
+
         # Separate changes from the issue
         changes = data.pop('changes', [])
 
         # Save the issue without changes
         try:
-            json_data = json.dumps(data, ensure_ascii=False, cls=CircularRefEncoder)
-            s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_data.encode('utf-8'), ContentType='application/json')
+            json_data = json.dumps(data,
+                                   ensure_ascii=False,
+                                   cls=CircularRefEncoder)
+            s3.put_object(Bucket=BUCKET_NAME,
+                          Key=key,
+                          Body=json_data.encode('utf-8'),
+                          ContentType='application/json')
 
             local_path = os.path.join(LOCAL_BUCKET_DIR, key)
             os.makedirs(os.path.dirname(local_path), exist_ok=True)
@@ -653,6 +646,45 @@ def api_jaffar_save():
     except Exception as e:
         logger.error(f"Failed to save issue: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+def save_issue_changes(issue_id, changes):
+    key = f'jaffar/issues/changes/{issue_id}-changes.json'
+    json_data = json.dumps(changes, ensure_ascii=False)
+
+    def save_to_s3():
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
+                      Body=json_data.encode('utf-8'),
+                      ContentType='application/json')
+
+    def save_to_local():
+        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        with open(local_path, 'w', encoding='utf-8') as f:
+            f.write(json_data)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        s3_future = executor.submit(save_to_s3)
+        local_future = executor.submit(save_to_local)
+        s3_future.result()
+        local_future.result()
+
+
+def get_changes_from_global_db(issue_id):
+    changes_key = f'jaffar/issues/changes/{issue_id}-changes.json'
+
+    try:
+        # Get changes from S3
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=changes_key)
+        content = response['Body'].read().decode('utf-8')
+        return json.loads(content)
+    except s3.exceptions.NoSuchKey:
+        logger.info(f"No changes found for issue {issue_id}")
+        return []
+    except Exception as e:
+        logger.error(f"Failed to get changes for {issue_id}: {e}")
+        return []
 
 
 @app.route('/api/acknowledge', methods=['POST'])
@@ -930,7 +962,8 @@ def api_escalation_duplicate():
 
     try:
         # Get original escalation
-        escalation = get_one_from_global_db(            f'sultan/configs/draft/escalations/{escalation_id}.json')
+        escalation = get_one_from_global_db(
+            f'sultan/configs/draft/escalations/{escalation_id}.json')
 
         # Create new escalation with unique ID
         import uuid
