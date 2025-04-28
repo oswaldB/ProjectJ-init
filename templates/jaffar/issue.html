@@ -93,10 +93,10 @@
       </div>
 
       <div class="bg-gray-800 p-4 rounded-lg mb-6">
-        <div x-show="!isEditing" x-html="issue.description" class="prose prose-invert"></div>
+        <div x-show="!isEditing" x-html="issue.definition" class="prose prose-invert"></div>
         <textarea
           x-show="isEditing"
-          x-model="editForm.description"
+          x-model="editForm.definition"
           class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
           rows="6"
         ></textarea>
