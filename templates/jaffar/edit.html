@@ -180,7 +180,14 @@
 
           <!-- Multiple checkbox -->
           <template x-if="field.type === 'multiple_checkbox'">
-            <div x-data="{ search: '' }">
+            <div x-data="{ 
+              search: '',
+              init() {
+                if (!formData[field.key]) {
+                  formData[field.key] = [];
+                }
+              }
+            }" x-init="init">
               <input type="text"
                      x-model="search"
                      placeholder="Search..."
@@ -194,6 +201,7 @@
                            :name="field.key" 
                            :value="option.name"
                            x-model="formData[field.key]"
+                           @change="$dispatch('form-updated')"
                            class="bg-gray-700 border-gray-600">
                     <span class="text-white text-sm" x-text="option.name"></span>
                   </label>
