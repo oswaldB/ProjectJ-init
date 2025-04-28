@@ -279,6 +279,99 @@ def edit():
 def acknowledge():
     return render_template('jaffar/acknowledge.html')
 
+@app.route('/new-issue')
+def new_issue():
+    return render_template('jaffar/edit.html')
+
+@app.route('/issue/<issue_id>')
+def view_issue(issue_id):
+    return render_template('jaffar/issue.html')
+
+@app.route('/api/jaffar/issues/list', methods=['GET'])
+def list_issues():
+    issues = []
+    # List objects in both draft and new folders
+    for status in ['draft', 'new']:
+        prefix = f'jaffar/issues/{status}/'
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        
+        if 'Contents' in response:
+            for obj in response['Contents']:
+                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                issue = json.loads(response['Body'].read().decode('utf-8'))
+                issues.append(issue)
+                
+    return jsonify(issues)
+
+@app.route('/api/jaffar/issues/<issue_id>', methods=['GET', 'PUT'])
+def manage_issue(issue_id):
+    if request.method == 'GET':
+        # Try both draft and new folders
+        for status in ['draft', 'new']:
+            try:
+                key = f'jaffar/issues/{status}/{issue_id}.json'
+                response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+                return jsonify(json.loads(response['Body'].read().decode('utf-8')))
+            except s3.exceptions.NoSuchKey:
+                continue
+        return jsonify({'error': 'Issue not found'}), 404
+        
+    elif request.method == 'PUT':
+        data = request.json
+        status = data.get('status', 'draft')
+        key = f'jaffar/issues/{status}/{issue_id}.json'
+        
+        # Save to S3
+        s3.put_object(
+            Bucket=BUCKET_NAME,
+            Key=key,
+            Body=json.dumps(data, ensure_ascii=False)
+        )
+        
+        # Save locally
+        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        with open(local_path, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(data, ensure_ascii=False))
+            
+        return jsonify(data)
+
+@app.route('/api/jaffar/issues/<issue_id>/comments', methods=['POST'])
+def add_comment(issue_id):
+    comment = request.json
+    
+    # Find the issue in either draft or new folder
+    for status in ['draft', 'new']:
+        key = f'jaffar/issues/{status}/{issue_id}.json'
+        try:
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+            issue = json.loads(response['Body'].read().decode('utf-8'))
+            
+            if 'comments' not in issue:
+                issue['comments'] = []
+            
+            issue['comments'].append(comment)
+            
+            # Save updated issue
+            s3.put_object(
+                Bucket=BUCKET_NAME,
+                Key=key,
+                Body=json.dumps(issue, ensure_ascii=False)
+            )
+            
+            # Save locally
+            local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            with open(local_path, 'w', encoding='utf-8') as f:
+                f.write(json.dumps(issue, ensure_ascii=False))
+                
+            return jsonify(issue)
+            
+        except s3.exceptions.NoSuchKey:
+            continue
+            
+    return jsonify({'error': 'Issue not found'}), 404
+
 @app.route('/api/jaffar/config')
 def api_jaffar_config():
     try:

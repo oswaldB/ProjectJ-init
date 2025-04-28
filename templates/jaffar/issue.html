@@ -1,0 +1,150 @@
+
+{% extends "jaffar/base.html" %}
+
+{% block title %}Issue Detail{% endblock %}
+
+{% block content %}
+<div class="p-6" x-data="{
+  issue: null,
+  isEditing: false,
+  editForm: {},
+  newComment: '',
+  
+  async init() {
+    const issueId = window.location.pathname.split('/').pop();
+    await this.loadIssue(issueId);
+  },
+  
+  async loadIssue(id) {
+    const response = await fetch(`/api/jaffar/issues/${id}`);
+    this.issue = await response.json();
+    this.editForm = {...this.issue};
+  },
+  
+  async saveIssue() {
+    const response = await fetch(`/api/jaffar/issues/${this.issue.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(this.editForm)
+    });
+    if (response.ok) {
+      this.issue = await response.json();
+      this.isEditing = false;
+    }
+  },
+  
+  async addComment() {
+    if (!this.newComment.trim()) return;
+    
+    const comment = {
+      author: localStorage.getItem('user_email'),
+      content: this.newComment,
+      created_at: new Date().toISOString()
+    };
+    
+    const response = await fetch(`/api/jaffar/issues/${this.issue.id}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(comment)
+    });
+    
+    if (response.ok) {
+      this.issue = await response.json();
+      this.newComment = '';
+    }
+  }
+}">
+  <template x-if="issue">
+    <div>
+      <div class="mb-6">
+        <div class="flex justify-between items-start">
+          <div x-show="!isEditing">
+            <h1 class="text-2xl font-bold text-white" x-text="issue.title"></h1>
+            <div class="mt-2 space-x-2">
+              <template x-for="tag in issue.tags" :key="tag">
+                <span class="bg-blue-900 text-blue-200 px-2 py-1 rounded-full text-xs" x-text="tag"></span>
+              </template>
+            </div>
+          </div>
+          <div x-show="isEditing" class="w-full">
+            <input 
+              type="text" 
+              x-model="editForm.title"
+              class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 text-xl"
+            >
+            <div class="mt-2">
+              <input 
+                type="text" 
+                x-model="editForm.tags" 
+                placeholder="Tags (comma separated)"
+                class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
+              >
+            </div>
+          </div>
+          <div class="flex space-x-2">
+            <template x-if="!isEditing">
+              <button @click="isEditing = true" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 text-white">
+                Edit
+              </button>
+            </template>
+            <template x-if="isEditing">
+              <div class="space-x-2">
+                <button @click="saveIssue()" class="bg-green-600 px-4 py-2 rounded hover:bg-green-700 text-white">
+                  Save
+                </button>
+                <button @click="isEditing = false; editForm = {...issue}" class="bg-gray-600 px-4 py-2 rounded hover:bg-gray-700 text-white">
+                  Cancel
+                </button>
+              </div>
+            </template>
+          </div>
+        </div>
+        
+        <div class="mt-4 text-sm text-gray-400">
+          Created by <span x-text="issue.author"></span> on <span x-text="new Date(issue.created_at).toLocaleDateString()"></span>
+        </div>
+      </div>
+
+      <div class="bg-gray-800 p-4 rounded-lg mb-6">
+        <div x-show="!isEditing" x-html="issue.description" class="prose prose-invert"></div>
+        <textarea
+          x-show="isEditing"
+          x-model="editForm.description"
+          class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
+          rows="6"
+        ></textarea>
+      </div>
+
+      <div class="space-y-4">
+        <h2 class="text-xl font-bold text-white">Comments</h2>
+        
+        <template x-for="comment in issue.comments" :key="comment.created_at">
+          <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-sm text-gray-400" x-text="comment.author + ' commented on ' + new Date(comment.created_at).toLocaleDateString()"></span>
+            </div>
+            <div x-html="comment.content"></div>
+          </div>
+        </template>
+
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+          <textarea
+            x-model="newComment"
+            placeholder="Add a comment..."
+            class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
+            rows="3"
+          ></textarea>
+          <div class="mt-2 flex justify-end">
+            <button 
+              @click="addComment()"
+              class="bg-green-600 px-4 py-2 rounded hover:bg-green-700 text-white"
+            >
+              Comment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+</div>
+{% endblock %}

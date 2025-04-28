@@ -1,24 +1,95 @@
-{% extends 'jaffar/base.html' %}
 
-{% block title %}Jaffar{% endblock %}
+{% extends "jaffar/base.html" %}
+
+{% block title %}Issues{% endblock %}
 
 {% block content %}
-<div class="mx-auto flex min-h-screen min-w-screen">
-    <div class="container mx-auto">
-        <!-- Main content goes here -->
-    </div>
-</div>
-<script>
-// Check authentication
-if (!localStorage.getItem('author')) {
-    window.location.href = '/login';
-}
-</script>
-{% endblock %}
+<div class="p-6" x-data="{
+  issues: [],
+  filteredIssues: [],
+  searchQuery: '',
+  selectedStatus: 'all',
+  selectedTags: [],
+  
+  async init() {
+    await this.loadIssues();
+  },
+  
+  async loadIssues() {
+    const response = await fetch('/api/jaffar/issues/list');
+    this.issues = await response.json();
+    this.filterIssues();
+  },
+  
+  filterIssues() {
+    this.filteredIssues = this.issues.filter(issue => {
+      const matchesSearch = issue.title?.toLowerCase().includes(this.searchQuery.toLowerCase());
+      const matchesStatus = this.selectedStatus === 'all' || issue.status === this.selectedStatus;
+      const matchesTags = this.selectedTags.length === 0 || 
+        issue.tags?.some(tag => this.selectedTags.includes(tag));
+      return matchesSearch && matchesStatus && matchesTags;
+    });
+  }
+}">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-white">Issues</h1>
+    <a href="/new-issue" class="bg-green-600 px-4 py-2 rounded hover:bg-green-700 text-white">
+      New Issue
+    </a>
+  </div>
 
-{% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pouchdb@9.0.0/dist/pouchdb.min.js"></script>
-<script src="{{ url_for('static', filename='jaffar/jaffar.js') }}"></script>
+  <div class="bg-gray-800 p-4 rounded-lg mb-6">
+    <div class="flex gap-4 mb-4">
+      <input 
+        type="text" 
+        x-model="searchQuery" 
+        @input="filterIssues()"
+        placeholder="Search issues..."
+        class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600"
+      >
+      <select 
+        x-model="selectedStatus" 
+        @change="filterIssues()"
+        class="bg-gray-700 text-white p-2 rounded border border-gray-600"
+      >
+        <option value="all">All Status</option>
+        <option value="draft">Draft</option>
+        <option value="new">New</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="space-y-4">
+    <template x-for="issue in filteredIssues" :key="issue.id">
+      <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+        <div class="flex justify-between items-start">
+          <div>
+            <a :href="'/issue/' + issue.id" class="text-xl font-medium text-white hover:text-blue-400" x-text="issue.title"></a>
+            <div class="mt-2 space-x-2">
+              <template x-for="tag in issue.tags" :key="tag">
+                <span 
+                  class="bg-blue-900 text-blue-200 px-2 py-1 rounded-full text-xs cursor-pointer"
+                  @click="selectedTags.includes(tag) ? selectedTags = selectedTags.filter(t => t !== tag) : selectedTags.push(tag); filterIssues()"
+                  x-text="tag"
+                ></span>
+              </template>
+            </div>
+          </div>
+          <span 
+            class="px-2 py-1 rounded text-xs"
+            :class="{
+              'bg-yellow-900 text-yellow-200': issue.status === 'draft',
+              'bg-green-900 text-green-200': issue.status === 'new'
+            }"
+            x-text="issue.status"
+          ></span>
+        </div>
+        <div class="mt-4 text-sm text-gray-400">
+          <span x-text="'Created by ' + issue.author + ' on ' + new Date(issue.created_at).toLocaleDateString()"></span>
+          <span x-show="issue.comments?.length" x-text="' • ' + issue.comments.length + ' comments'"></span>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>
 {% endblock %}
