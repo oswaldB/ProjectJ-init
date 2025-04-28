@@ -8,6 +8,10 @@ import json
 import re
 import pandas as pd
 import boto3
+
+from concurrent.futures import ThreadPoolExecutor
+email_executor = ThreadPoolExecutor(max_workers=2)
+
 from moto import mock_aws
 import os
 import datetime
@@ -492,19 +496,23 @@ def simplify_value(value):
         return json.dumps(value, ensure_ascii=False)
     return value
 
+IMPORTANT_FIELDS = {'name', 'status', 'author', 'issue-description', 'materiality-bs', 'materiality-pl', 'rag'}
+
 def compare_issues(old_data, new_data):
     if not old_data:
         return {}
 
     changes = {}
-    for key, new_value in new_data.items():
+    # Only compare important fields to reduce processing
+    for key in IMPORTANT_FIELDS:
+        new_value = new_data.get(key)
         if key in old_data:
             if has_meaningful_change(old_data[key], new_value):
                 changes[key] = {
                     'previous': simplify_value(old_data.get(key)),
                     'new': simplify_value(new_value)
                 }
-        else:
+        elif new_value is not None:
             changes[key] = {'previous': None, 'new': simplify_value(new_value)}
     return changes
 
@@ -513,14 +521,21 @@ def save_issue(issue_id, status, data):
     cleaned_data = remove_circular_references(data)
     json_data = json.dumps(cleaned_data, ensure_ascii=False, cls=CircularRefEncoder)
     
-    # Save to S3
-    s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_data.encode('utf-8'), ContentType='application/json')
+    def save_to_s3():
+        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_data.encode('utf-8'), ContentType='application/json')
     
-    # Save locally
-    local_path = os.path.join(LOCAL_BUCKET_DIR, key)
-    os.makedirs(os.path.dirname(local_path), exist_ok=True)
-    with open(local_path, 'w', encoding='utf-8') as f:
-        f.write(json_data)
+    def save_to_local():
+        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        with open(local_path, 'w', encoding='utf-8') as f:
+            f.write(json_data)
+            
+    # Execute saves in parallel
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        s3_future = executor.submit(save_to_s3)
+        local_future = executor.submit(save_to_local)
+        s3_future.result()  # Wait for S3 save to complete
+        local_future.result()  # Wait for local save to complete
 
 def record_change(data, changes, user_email, previous_status):
     change_record = {
@@ -535,7 +550,8 @@ def record_change(data, changes, user_email, previous_status):
 
 def send_confirmation_if_needed(data):
     if data.get('author') and data.get('status') == 'new':
-        sendConfirmationEmail(data['author'], data['id'], data)
+        # Send email asynchronously
+        email_executor.submit(sendConfirmationEmail, data['author'], data['id'], data)
 
 @app.route('/api/jaffar/save', methods=['POST'])
 def api_jaffar_save():
