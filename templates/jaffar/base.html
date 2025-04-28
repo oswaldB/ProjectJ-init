@@ -42,6 +42,27 @@
     </div>
     <script>
         document.getElementById('userEmail').textContent = localStorage.getItem('user_email');
+        
+        // Add user_email to all fetch requests
+        const oldFetch = window.fetch;
+        window.fetch = function() {
+            const userEmail = localStorage.getItem('user_email');
+            let [resource, config] = arguments;
+            
+            // Add user_email as query param for GET requests
+            if (!config || config.method === 'GET') {
+                const separator = resource.includes('?') ? '&' : '?';
+                resource = `${resource}${separator}user_email=${userEmail}`;
+            }
+            // Add user_email to form data for other requests
+            else if (config.body) {
+                const data = JSON.parse(config.body);
+                data.user_email = userEmail;
+                config.body = JSON.stringify(data);
+            }
+            
+            return oldFetch.apply(this, [resource, config]);
+        };
     </script>
     {% block scripts %}{% endblock %}
 </body>

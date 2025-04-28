@@ -283,7 +283,7 @@ def acknowledge():
 def new_issue():
     now = datetime.datetime.now()
     issue_id = f'JAFF-ISS-{int(now.timestamp() * 1000)}'
-    user_email = request.headers.get('user_email')
+    user_email = request.form.get('user_email') or request.args.get('user_email')
 
     if not user_email:
         return redirect('/login')
