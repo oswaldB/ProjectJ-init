@@ -1,0 +1,39 @@
+background.js:6 Uncaught (in promise) Error: IO error: .../004814.log: FILE_ERROR_NO_SPACE (ChromeMethodBFE: 3::WritableFileAppend::8)
+    at background.js:6:74919
+11background.js:6 Uncaught (in promise) Error: IO error: .../004817.log: FILE_ERROR_NO_SPACE (ChromeMethodBFE: 3::WritableFileAppend::8)
+    at background.js:6:74919
+background.js:39 Error: IO error: .../004817.log: FILE_ERROR_NO_SPACE (ChromeMethodBFE: 3::WritableFileAppend::8)
+    at background.js:6:74919
+Sa @ background.js:39
+background.js:39 The above error occurred in task anonymous
+    created by takeEvery(aY, )
+    created by bound 
+    created by bound 
+Tasks cancelled due to error:
+takeEvery(aY, )
+takeEvery(, NJ)
+Sa @ background.js:39
+11background.js:6 Uncaught (in promise) Error: IO error: .../004817.log: FILE_ERROR_NO_SPACE (ChromeMethodBFE: 3::WritableFileAppend::8)
+    at background.js:6:74919
+112background.js:6 Uncaught (in promise) Error: IO error: .../004819.ldb: FILE_ERROR_NO_SPACE (ChromeMethodBFE: 3::WritableFileAppend::8)
+    at background.js:6:74919
+background.js:6 Uncaught (in promise) Error: IO error: .../004819.ldb: FILE_ERROR_NO_SPACE (ChromeMethodBFE: 3::WritableFileAppend::8)
+    at background.js:6:74919
+(anonymous) @ background.js:6
+51background.js:6 Uncaught (in promise) Error: IO error: .../004819.ldb: FILE_ERROR_NO_SPACE (ChromeMethodBFE: 3::WritableFileAppend::8)
+    at background.js:6:74919
+3background.js:6 Uncaught (in promise) Error: IO error: .../004819.ldb: FILE_ERROR_NO_SPACE (ChromeMethodBFE: 3::WritableFileAppend::8)
+    at background.js:6:74919
+(anonymous) @ background.js:6
+98background.js:6 Uncaught (in promise) Error: IO error: .../004819.ldb: FILE_ERROR_NO_SPACE (ChromeMethodBFE: 3::WritableFileAppend::8)
+    at background.js:6:74919
+2background.js:6 Uncaught (in promise) Error: IO error: .../004819.ldb: FILE_ERROR_NO_SPACE (ChromeMethodBFE: 3::WritableFileAppend::8)
+    at background.js:6:74919
+(anonymous) @ background.js:6
+2background.js:6 Uncaught (in promise) Error: IO error: .../004819.ldb: FILE_ERROR_NO_SPACE (ChromeMethodBFE: 3::WritableFileAppend::8)
+    at background.js:6:74919
+background.js:6 Uncaught (in promise) Error: IO error: .../004819.ldb: FILE_ERROR_NO_SPACE (ChromeMethodBFE: 3::WritableFileAppend::8)
+    at background.js:6:74919
+(anonymous) @ background.js:6
+34background.js:6 Uncaught (in promise) Error: IO error: .../004819.ldb: FILE_ERROR_NO_SPACE (ChromeMethodBFE: 3::WritableFileAppend::8)
+    at background.js:6:74919
