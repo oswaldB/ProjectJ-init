@@ -72,10 +72,27 @@
       <div class="bg-gray-800 p-4 rounded-lg mb-6">
         <h2 class="text-xl font-bold text-white mb-4">Form Values</h2>
         <div class="grid grid-cols-2 gap-4">
-          <template x-for="(value, key) in Object.entries(issue).filter(([k,v]) => !['id', 'author', 'created_at', 'comments', 'changes', 'tags', 'name', 'issue-description'].includes(k))" :key="key">
-            <div class="col-span-1">
-              <label class="block text-sm font-medium text-gray-400" x-text="value[0]"></label>
-              <div class="mt-1 text-white" x-text="Array.isArray(value[1]) ? value[1].join(', ') : value[1]"></div>
+          <template x-for="field in config.fields" :key="field.key">
+            <div class="col-span-1" x-show="issue[field.key] !== undefined">
+              <label class="block text-sm font-medium text-gray-400" x-text="field.label"></label>
+              <div class="mt-1 text-white">
+                <div x-text="Array.isArray(issue[field.key]) ? issue[field.key].join(', ') : issue[field.key]"></div>
+                <!-- Display nested questions if they exist -->
+                <template x-if="field.type === 'conditional' && field.options">
+                  <template x-for="option in field.options" :key="option.name">
+                    <template x-if="issue[field.key] === option.name && option.questions">
+                      <div class="mt-2 ml-4 border-l-2 border-gray-600 pl-4">
+                        <template x-for="question in option.questions" :key="question.key">
+                          <div class="mt-2" x-show="issue[question.key]">
+                            <label class="block text-sm font-medium text-gray-400" x-text="question.label"></label>
+                            <div class="text-white" x-text="Array.isArray(issue[question.key]) ? issue[question.key].join(', ') : issue[question.key]"></div>
+                          </div>
+                        </template>
+                      </div>
+                    </template>
+                  </template>
+                </template>
+              </div>
             </div>
           </template>
         </div>
