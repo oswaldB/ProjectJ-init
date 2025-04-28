@@ -458,9 +458,9 @@ def api_jaffar_save():
                     }
 
             if changes:
-                user_email = request.headers.get('user_email')
+                user_email = data.get('author')
                 if not user_email:
-                    return jsonify({"error": "User email is required"}), 400
+                    return jsonify({"error": "Author email is required"}), 400
 
                 data['changes'].append({
                     'modified_by': user_email,
@@ -470,9 +470,9 @@ def api_jaffar_save():
                 })
         except Exception as e:
             # If no previous version exists, just record status change
-            user_email = request.headers.get('user_email')
+            user_email = data.get('author')
             if not user_email:
-                return jsonify({"error": "User email is required"}), 400
+                return jsonify({"error": "Author email is required"}), 400
 
             data['changes'].append({
                 'modified_by': user_email,
