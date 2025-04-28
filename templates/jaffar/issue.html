@@ -5,8 +5,6 @@
 {% block content %}
 <div class="p-6" x-data="{
   issue: null,
-  isEditing: false,
-  editForm: {},
   newComment: '',
 
   async init() {
@@ -17,55 +15,6 @@
   async loadIssue(id) {
     const response = await fetch(`/api/jaffar/issues/${id}`);
     this.issue = await response.json();
-    this.editForm = {...this.issue};
-  },
-
-  async saveIssue() {
-    // Only save if there are actual changes
-    if (!this.isEditing) return;
-
-    // Track value changes
-    const changes = {};
-    for (const [key, value] of Object.entries(this.editForm)) {
-      if (this.issue[key] !== value) {
-        changes[key] = {
-          previous: this.issue[key],
-          new: value
-        };
-      }
-    }
-
-    // Only proceed if there are actual changes
-    if (Object.keys(changes).length > 0) {
-      if (!this.editForm.changes) {
-        this.editForm.changes = [];
-      }
-      
-      this.editForm.changes.push({
-        modified_by: localStorage.getItem('user_email'),
-        modified_at: new Date().toISOString(),
-        value_changes: changes
-      });
-
-      const dataToSend = {
-        ...this.editForm,
-        changes: this.editForm.changes || []
-      };
-
-      const response = await fetch(`/api/jaffar/issues/${this.issue.id}`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'user_email': localStorage.getItem('user_email')
-        },
-        body: JSON.stringify(dataToSend)
-      });
-      
-      if (response.ok) {
-        this.issue = await response.json();
-        this.isEditing = false;
-      }
-    }
   },
 
   async addComment() {
@@ -91,9 +40,10 @@
 }">
   <template x-if="issue">
     <div>
+      <!-- Issue Header -->
       <div class="mb-6">
         <div class="flex justify-between items-start">
-          <div x-show="!isEditing">
+          <div>
             <h1 class="text-2xl font-bold text-white" x-text="issue.name"></h1>
             <div class="mt-2 space-x-2">
               <template x-for="tag in issue.tags" :key="tag">
@@ -101,22 +51,7 @@
               </template>
             </div>
           </div>
-          <div x-show="isEditing" class="w-full">
-            <input 
-              type="text" 
-              x-model="editForm.title"
-              class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 text-xl"
-            >
-            <div class="mt-2">
-              <input 
-                type="text" 
-                x-model="editForm.tags" 
-                placeholder="Tags (comma separated)"
-                class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
-              >
-            </div>
-          </div>
-          <div class="flex space-x-2">
+          <div>
             <a :href="'/edit/' + issue.id" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600 text-white">
               Edit Issue
             </a>
@@ -126,80 +61,16 @@
         <div class="mt-4 text-sm text-gray-400">
           Created by <span x-text="issue.author"></span> on <span x-text="new Date(issue.created_at).toLocaleDateString()"></span>
         </div>
-
-        <!-- Changes History -->
-        <div class="mt-6" x-show="issue.changes && issue.changes.length">
-          <h3 class="text-lg font-semibold mb-3">Modifications History</h3>
-          <div class="space-y-2">
-            <template x-for="change in issue.changes" :key="change.modified_at">
-              <div class="bg-gray-800 p-3 rounded">
-                <div class="text-sm">
-                  <span class="text-blue-400" x-text="change.modified_by"></span>
-                  <span class="text-gray-400"> modified on </span>
-                  <span class="text-gray-300" x-text="new Date(change.modified_at).toLocaleString()"></span>
-                </div>
-                <div class="text-sm mt-1" x-show="change.previous_status">
-                  <span class="text-gray-400">Status changed from </span>
-                  <span class="text-yellow-400" x-text="change.previous_status"></span>
-                </div>
-                <template x-if="change.value_changes">
-                  <div class="text-sm mt-1">
-                    <template x-for="(change, field) in change.value_changes" :key="field">
-                      <div>
-                        <span class="text-gray-400" x-text="field + ' changed from '"></span>
-                        <span class="text-yellow-400" x-text="change.previous"></span>
-                        <span class="text-gray-400"> to </span>
-                        <span class="text-green-400" x-text="change.new"></span>
-                      </div>
-                    </template>
-                  </div>
-                </template>
-              </div>
-            </template>
-          </div>
-        </div>
       </div>
 
+      <!-- Issue Description -->
       <div class="bg-gray-800 p-4 rounded-lg mb-6">
-        <div x-show="!isEditing" x-html="issue['issue-description']" class="prose prose-invert"></div>
-        <textarea
-          x-show="isEditing"
-          x-model="editForm['issue-description']"
-          class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
-          rows="6"
-        ></textarea>
+        <div x-html="issue['issue-description']" class="prose prose-invert"></div>
       </div>
 
+      <!-- Comments Section -->
       <div class="space-y-4">
-        <h2 class="text-xl font-bold text-white">Comments & Modifications</h2>
-
-        <template x-for="change in issue.changes" :key="change.modified_at">
-          <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <div class="flex justify-between items-start mb-2">
-              <span class="text-sm text-gray-400">
-                <span class="text-blue-400" x-text="change.modified_by"></span>
-                <span x-text="' modified on ' + new Date(change.modified_at).toLocaleString()"></span>
-              </span>
-            </div>
-            <div class="text-sm" x-show="change.previous_status">
-              <span>Status changed from </span>
-              <span class="text-yellow-400" x-text="change.previous_status"></span>
-            </div>
-            <template x-if="change.value_changes">
-              <div class="mt-2 space-y-1">
-                <template x-for="(change_details, field) in change.value_changes" :key="field">
-                  <div class="text-sm">
-                    <span class="text-gray-400" x-text="field"></span>
-                    <span class="text-gray-400"> changed from </span>
-                    <span class="text-yellow-400" x-text="change_details.previous"></span>
-                    <span class="text-gray-400"> to </span>
-                    <span class="text-green-400" x-text="change_details.new"></span>
-                  </div>
-                </template>
-              </div>
-            </template>
-          </div>
-        </template>
+        <h2 class="text-xl font-bold text-white">Comments</h2>
 
         <template x-for="comment in issue.comments" :key="comment.created_at">
           <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
@@ -210,6 +81,7 @@
           </div>
         </template>
 
+        <!-- Add Comment Form -->
         <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
           <textarea
             x-model="newComment"
