@@ -94,6 +94,20 @@ def process_issue_data(issue_data):
     return processed_data
 
 
+def remove_circular_references(obj, seen=None):
+    if seen is None:
+        seen = set()
+    if id(obj) in seen:
+        return None
+    seen.add(id(obj))
+    if isinstance(obj, dict):
+        return {k: remove_circular_references(v, seen) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [remove_circular_references(i, seen) for i in obj]
+    else:
+        return obj
+
+
 class CircularRefEncoder(json.JSONEncoder):
 
     def default(self, obj):
@@ -539,8 +553,11 @@ def api_jaffar_save():
         data['previous_status'] = status
         data['updated_at'] = datetime.datetime.now().isoformat()
 
-        # Convert data to JSON using CircularRefEncoder
-        json_data = json.dumps(data,
+        # Clean data by removing circular references before serialization
+        cleaned_data = remove_circular_references(data)
+
+        # Convert cleaned data to JSON using CircularRefEncoder
+        json_data = json.dumps(cleaned_data,
                                ensure_ascii=False,
                                cls=CircularRefEncoder)
 
