@@ -458,16 +458,18 @@ def api_jaffar_save():
                     }
                     
             if changes:
+                user_email = request.headers.get('user_email')
                 data['changes'].append({
-                    'modified_by': request.headers.get('user_email'),
+                    'modified_by': user_email,
                     'modified_at': datetime.datetime.now().isoformat(),
                     'previous_status': data.get('previous_status', status),
                     'value_changes': changes
                 })
         except Exception as e:
             # If no previous version exists, just record status change
+            user_email = request.headers.get('user_email')
             data['changes'].append({
-                'modified_by': request.headers.get('user_email'),
+                'modified_by': user_email,
                 'modified_at': datetime.datetime.now().isoformat(),
                 'previous_status': data.get('previous_status', status)
             })
