@@ -1,3 +1,31 @@
+
+def save_issue_changes(issue_id, changes):
+    key = f'jaffar/issues/changes/{issue_id}-changes.json'
+    json_data = json.dumps(changes, ensure_ascii=False)
+    
+    def save_to_s3():
+        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_data.encode('utf-8'), ContentType='application/json')
+    
+    def save_to_local():
+        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        with open(local_path, 'w', encoding='utf-8') as f:
+            f.write(json_data)
+            
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        s3_future = executor.submit(save_to_s3)
+        local_future = executor.submit(save_to_local)
+        s3_future.result()
+        local_future.result()
+
+def get_issue_changes(issue_id):
+    key = f'jaffar/issues/changes/{issue_id}-changes.json'
+    try:
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+        return json.loads(response['Body'].read().decode('utf-8'))
+    except:
+        return {'changes': []}
+
 from flask import Flask, Blueprint, render_template, redirect, send_from_directory, request, jsonify, send_file
 import json
 import logging
