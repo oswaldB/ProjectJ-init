@@ -184,14 +184,13 @@
           <template x-if="field.type === 'multiple_checkbox'">
             <div x-data="{ 
               search: '',
-              selections: [],
+              selections: formData[field.key] || [],
               init() {
-                this.selections = formData[field.key] || [];
                 this.$watch('selections', value => {
                   formData[field.key] = value;
                 });
               }
-            }" x-init="init()">
+            }" x-init="init">
               <input type="text"
                      x-model="search"
                      placeholder="Search..."
@@ -202,8 +201,10 @@
                 )" :key="option.name">
                   <label class="flex items-center space-x-2 p-2 hover:bg-gray-700 rounded">
                     <input type="checkbox" 
-                           :checked="selections.includes(option.name)"
-                           @click="selections = selections.includes(option.name) ? selections.filter(s => s !== option.name) : [...selections, option.name]"
+                           :name="field.key" 
+                           :value="option.name"
+                           x-model="selections"
+                           @change="$dispatch('form-updated')"
                            class="bg-gray-700 border-gray-600">
                     <span class="text-white text-sm" x-text="option.name"></span>
                   </label>
