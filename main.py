@@ -470,12 +470,16 @@ def api_jaffar_save():
                         logger.info(f"Change detected in field {field_key}")
                         logger.info(f"Previous value: {old_data[field_key]}")
                         logger.info(f"New value: {new_value}")
+                        changes[field_key] = {
+                            'previous': old_data[field_key],
+                            'new': new_value
+                        }
                     else:
                         logger.info(f"No change in field {field_key}")
                 else:
                     logger.info(f"New field added: {field_key}")
                     changes[field_key] = {
-                        'previous': old_data[field_key],
+                        'previous': None,
                         'new': new_value
                     }
 
