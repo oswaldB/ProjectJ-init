@@ -68,16 +68,45 @@
         <div x-html="issue['issue-description']" class="prose prose-invert"></div>
       </div>
 
-      <!-- Comments Section -->
+      <!-- Comments and Changes Section -->
       <div class="space-y-4">
-        <h2 class="text-xl font-bold text-white">Comments</h2>
+        <h2 class="text-xl font-bold text-white">Activity</h2>
 
-        <template x-for="comment in issue.comments" :key="comment.created_at">
+        <!-- Combined timeline of comments and changes -->
+        <template x-for="item in [...(issue.comments || []), ...(issue.changes || [])].sort((a, b) => new Date(b.created_at || b.modified_at) - new Date(a.created_at || a.modified_at))" :key="item.created_at || item.modified_at">
           <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <div class="flex justify-between items-start mb-2">
-              <span class="text-sm text-gray-400" x-text="comment.author + ' commented on ' + new Date(comment.created_at).toLocaleDateString()"></span>
-            </div>
-            <div x-html="comment.content"></div>
+            <!-- Comment display -->
+            <template x-if="item.content">
+              <div>
+                <div class="flex justify-between items-start mb-2">
+                  <span class="text-sm text-gray-400" x-text="item.author + ' commented on ' + new Date(item.created_at).toLocaleDateString()"></span>
+                </div>
+                <div x-html="item.content"></div>
+              </div>
+            </template>
+
+            <!-- Change display -->
+            <template x-if="item.value_changes">
+              <div>
+                <div class="flex justify-between items-start mb-2">
+                  <span class="text-sm text-gray-400" x-text="item.modified_by + ' modified on ' + new Date(item.modified_at).toLocaleDateString()"></span>
+                </div>
+                <div class="space-y-2">
+                  <template x-for="(change, field) in item.value_changes" :key="field">
+                    <div class="flex flex-col space-y-1">
+                      <span class="text-sm font-medium text-gray-300" x-text="field"></span>
+                      <div class="flex items-center space-x-2">
+                        <span class="text-red-400" x-text="change.previous"></span>
+                        <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                        <span class="text-green-400" x-text="change.new"></span>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
           </div>
         </template>
 
