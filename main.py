@@ -440,6 +440,8 @@ def api_jaffar_save():
         status = data.get('status', 'draft')
         key = f'jaffar/issues/{status}/{issue_id}.json'
 
+        logger.info(f"Saving issue {issue_id} with status {status}")
+
         # Initialize changes array if it doesn't exist
         if 'changes' not in data:
             data['changes'] = []
@@ -453,9 +455,13 @@ def api_jaffar_save():
             old_data = json.loads(old_response['Body'].read().decode('utf-8'))
 
             # Compare and record changes
+            logger.info("Starting changes comparison...")
             changes = {}
             for field_key, new_value in data.items():
                 if field_key in old_data and old_data[field_key] != new_value:
+                    logger.info(f"Change detected in field {field_key}")
+                    logger.info(f"Previous value: {old_data[field_key]}")
+                    logger.info(f"New value: {new_value}")
                     changes[field_key] = {
                         'previous': old_data[field_key],
                         'new': new_value
@@ -498,6 +504,7 @@ def api_jaffar_save():
                 Body=json_data.encode('utf-8'),
                 ContentType='application/json'
             )
+            logger.info(f"Issue {issue_id} saved to S3")
         except Exception as e:
             logger.error(f"Failed to save to S3: {e}")
             return jsonify({"error": f"Failed to save to S3: {str(e)}"}), 500
@@ -508,6 +515,7 @@ def api_jaffar_save():
             os.makedirs(os.path.dirname(local_path), exist_ok=True)
             with open(local_path, 'w', encoding='utf-8') as f:
                 f.write(json_data)
+            logger.info(f"Issue {issue_id} saved locally")
         except Exception as e:
             logger.error(f"Failed to save locally: {e}")
             return jsonify({"error": f"Failed to save locally: {str(e)}"}), 500
@@ -852,7 +860,7 @@ def api_emailgroup_save():
         return jsonify({"error": "Email group required"}), 400
 
     try:
-        emailgroup_path = f'sultan/emailgroups/{emailgroup["id"]}.json'
+        emailgroup_path = f'sultan/emailgroups/{emailgroup["id"]}.json`.json'
         save_in_global_db(emailgroup_path, emailgroup)
         return jsonify({"status": "success"})
     except Exception as e:
