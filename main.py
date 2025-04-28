@@ -20,6 +20,7 @@ LOCAL_BUCKET_DIR = "./local_bucket"
 BUCKET_NAME = "jaffar-bucket"
 os.makedirs(LOCAL_BUCKET_DIR, exist_ok=True)
 
+
 # Initialize mocked AWS
 def restore_local_to_s3():
     for root, _, files in os.walk(LOCAL_BUCKET_DIR):
@@ -32,6 +33,7 @@ def restore_local_to_s3():
                     s3.put_object(Bucket=BUCKET_NAME, Key=s3_key, Body=content)
                 except Exception as e:
                     logger.error(f"Failed to restore {s3_key} to S3: {e}")
+
 
 mock = mock_aws()
 mock.start()
@@ -93,14 +95,18 @@ def process_issue_data(issue_data):
 
 
 class CircularRefEncoder(json.JSONEncoder):
+
     def default(self, obj):
         try:
             return super().default(obj)
         except:
             return str(obj)
 
+
 def save_in_global_db(key, obj):
-    json_object = json.dumps(obj, separators=(',', ':'), cls=CircularRefEncoder)
+    json_object = json.dumps(obj,
+                             separators=(',', ':'),
+                             cls=CircularRefEncoder)
     try:
         # S3 save
         s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_object)
@@ -274,23 +280,28 @@ def require_auth(f):
 
     return decorated
 
+
 @app.route('/')
 def index():
     return render_template('jaffar/index.html')
+
 
 @app.route('/edit')
 def edit():
     return render_template('jaffar/edit.html')
 
+
 @app.route('/acknowledge')
 def acknowledge():
     return render_template('jaffar/acknowledge.html')
+
 
 @app.route('/new-issue')
 def new_issue():
     now = datetime.datetime.now()
     issue_id = f'JAFF-ISS-{int(now.timestamp() * 1000)}'
-    user_email = request.form.get('user_email') or request.args.get('user_email')
+    user_email = request.form.get('user_email') or request.args.get(
+        'user_email')
 
     if not user_email:
         return redirect('/login')
@@ -306,11 +317,9 @@ def new_issue():
 
     # Save to S3
     key = f'jaffar/issues/draft/{issue_id}.json'
-    s3.put_object(
-        Bucket=BUCKET_NAME,
-        Key=key,
-        Body=json.dumps(issue_data, ensure_ascii=False)
-    )
+    s3.put_object(Bucket=BUCKET_NAME,
+                  Key=key,
+                  Body=json.dumps(issue_data, ensure_ascii=False))
 
     # Save locally
     local_path = os.path.join(LOCAL_BUCKET_DIR, key)
@@ -320,13 +329,16 @@ def new_issue():
 
     return redirect(f'/edit/{issue_id}')
 
+
 @app.route('/edit/<issue_id>')
 def edit_with_id(issue_id):
     return render_template('jaffar/edit.html')
 
+
 @app.route('/issue/<issue_id>')
 def view_issue(issue_id):
     return render_template('jaffar/issue.html')
+
 
 @app.route('/api/jaffar/issues/list', methods=['GET'])
 def list_issues():
@@ -336,16 +348,20 @@ def list_issues():
         for status in ['draft', 'new']:
             prefix = f'jaffar/issues/{status}/'
             try:
-                response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+                response = s3.list_objects_v2(Bucket=BUCKET_NAME,
+                                              Prefix=prefix)
 
                 if 'Contents' in response:
                     for obj in response['Contents']:
                         try:
-                            response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                            issue = json.loads(response['Body'].read().decode('utf-8'))
+                            response = s3.get_object(Bucket=BUCKET_NAME,
+                                                     Key=obj['Key'])
+                            issue = json.loads(
+                                response['Body'].read().decode('utf-8'))
                             issues.append(issue)
                         except Exception as e:
-                            logger.error(f"Error loading issue {obj['Key']}: {e}")
+                            logger.error(
+                                f"Error loading issue {obj['Key']}: {e}")
 
             except Exception as e:
                 logger.error(f"Error listing issues for status {status}: {e}")
@@ -354,6 +370,7 @@ def list_issues():
     except Exception as e:
         logger.error(f"Error in list_issues: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/api/jaffar/issues/<issue_id>', methods=['GET'])
 def get_issue(issue_id):
@@ -366,6 +383,7 @@ def get_issue(issue_id):
         except s3.exceptions.NoSuchKey:
             continue
     return jsonify({'error': 'Issue not found'}), 404
+
 
 @app.route('/api/jaffar/issues/<issue_id>/comments', methods=['POST'])
 def add_comment(issue_id):
@@ -384,11 +402,9 @@ def add_comment(issue_id):
             issue['comments'].append(comment)
 
             # Save updated issue
-            s3.put_object(
-                Bucket=BUCKET_NAME,
-                Key=key,
-                Body=json.dumps(issue, ensure_ascii=False)
-            )
+            s3.put_object(Bucket=BUCKET_NAME,
+                          Key=key,
+                          Body=json.dumps(issue, ensure_ascii=False))
 
             # Save locally
             local_path = os.path.join(LOCAL_BUCKET_DIR, key)
@@ -403,6 +419,7 @@ def add_comment(issue_id):
 
     return jsonify({'error': 'Issue not found'}), 404
 
+
 @app.route('/api/jaffar/config')
 def api_jaffar_config():
     try:
@@ -413,6 +430,7 @@ def api_jaffar_config():
     except Exception as e:
         logger.error(f"Failed to get config: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/api/jaffar/delete', methods=['DELETE'])
 def api_jaffar_delete():
@@ -435,6 +453,7 @@ def api_jaffar_delete():
     except Exception as e:
         logger.error(f"Failed to delete: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/api/jaffar/save', methods=['POST'])
 def api_jaffar_save():
@@ -485,10 +504,7 @@ def api_jaffar_save():
                         logger.info(f"No change in field {field_key}")
                 else:
                     logger.info(f"New field added: {field_key}")
-                    changes[field_key] = {
-                        'previous': None,
-                        'new': new_value
-                    }
+                    changes[field_key] = {'previous': None, 'new': new_value}
 
             if changes:
                 user_email = data.get('author')
@@ -496,10 +512,14 @@ def api_jaffar_save():
                     return jsonify({"error": "Author email is required"}), 400
 
                 data['changes'].append({
-                    'modified_by': user_email,
-                    'modified_at': datetime.datetime.now().isoformat(),
-                    'previous_status': data.get('previous_status', status),
-                    'value_changes': changes
+                    'modified_by':
+                    user_email,
+                    'modified_at':
+                    datetime.datetime.now().isoformat(),
+                    'previous_status':
+                    data.get('previous_status', status),
+                    'value_changes':
+                    changes
                 })
         except Exception as e:
             # If no previous version exists, just record status change
@@ -508,25 +528,28 @@ def api_jaffar_save():
                 return jsonify({"error": "Author email is required"}), 400
 
             data['changes'].append({
-                'modified_by': user_email,
-                'modified_at': datetime.datetime.now().isoformat(),
-                'previous_status': data.get('previous_status', status)
+                'modified_by':
+                user_email,
+                'modified_at':
+                datetime.datetime.now().isoformat(),
+                'previous_status':
+                data.get('previous_status', status)
             })
 
         data['previous_status'] = status
         data['updated_at'] = datetime.datetime.now().isoformat()
 
-        # Convert data to JSON
-        json_data = json.dumps(data, ensure_ascii=False)
+        # Convert data to JSON using CircularRefEncoder
+        json_data = json.dumps(data,
+                               ensure_ascii=False,
+                               cls=CircularRefEncoder)
 
         # Save to S3
         try:
-            s3.put_object(
-                Bucket=BUCKET_NAME,
-                Key=key,
-                Body=json_data.encode('utf-8'),
-                ContentType='application/json'
-            )
+            s3.put_object(Bucket=BUCKET_NAME,
+                          Key=key,
+                          Body=json_data.encode('utf-8'),
+                          ContentType='application/json')
             logger.info(f"Issue {issue_id} saved to S3")
         except Exception as e:
             logger.error(f"Failed to save to S3: {e}")
@@ -557,6 +580,7 @@ def api_jaffar_save():
         logger.error(f"Failed to save issue: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/api/acknowledge', methods=['POST'])
 def api_acknowledge():
     data = request.json
@@ -575,16 +599,16 @@ def api_acknowledge():
                 issue['acknowledgeEscalation'] = []
 
             issue['acknowledgeEscalation'].append({
-                'email': email,
-                'date': datetime.datetime.now().isoformat()
+                'email':
+                email,
+                'date':
+                datetime.datetime.now().isoformat()
             })
 
             # Save directly back to S3
-            s3.put_object(
-                Bucket=BUCKET_NAME,
-                Key=s3_key,
-                Body=json.dumps(issue)
-            )
+            s3.put_object(Bucket=BUCKET_NAME,
+                          Key=s3_key,
+                          Body=json.dumps(issue))
             return jsonify({'status': 'success'})
 
         except s3.exceptions.NoSuchKey:
@@ -635,18 +659,20 @@ def forms_list():
 def form_edit(form_id):
     return render_template('sultan/forms/edit.html')
 
+
 @app.route('/sultan/escalation')
 def escalation_list():
     return redirect('/sultan/escalation/edit/new')
+
 
 @app.route('/sultan/escalation/edit/<escalation_id>')
 def escalation_edit(escalation_id):
     return render_template('sultan/escalation/edit.html')
 
+
 @app.route('/sultan/excel_grid')
 def excel_grid():
     return render_template('sultan/excel_grid/index.html')
-
 
 
 @app.route('/api/sultan/escalation/excel/upload', methods=['POST'])
@@ -665,10 +691,11 @@ def upload_excel():
 
         # Save to S3
         s3.put_object(
-            Bucket=BUCKET_NAME, 
+            Bucket=BUCKET_NAME,
             Key=excel_path,
             Body=file_content,
-            ContentType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            ContentType=
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
 
         # Save locally
@@ -682,10 +709,12 @@ def upload_excel():
         print(f"Upload error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/api/sultan/escalation/excel/list')
 def list_excels():
     try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix='sultan/escalation/excel/')
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME,
+                                      Prefix='sultan/escalation/excel/')
         files = []
         for obj in response.get('Contents', []):
             if obj['Key'].endswith(('.xlsx', '.xls')):
@@ -703,16 +732,15 @@ def list_excels():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/api/sultan/escalation/excel/download/<filename>')
 def download_excel(filename):
     try:
         excel_path = f'sultan/escalation/excel/{filename}'
         file = s3.get_object(Bucket=BUCKET_NAME, Key=excel_path)
-        return send_file(
-            file['Body'],
-            download_name=filename,
-            as_attachment=True
-        )
+        return send_file(file['Body'],
+                         download_name=filename,
+                         as_attachment=True)
     except s3.exceptions.NoSuchKey:
         return jsonify({'error': 'File not found'}), 404
     except Exception as e:
@@ -723,17 +751,21 @@ def download_excel(filename):
 def emailgroups_list():
     return render_template('sultan/emailgroups/index.html')
 
+
 @app.route('/sultan/emailgroups/edit/<emailgroup_id>')
 def emailgroup_edit(emailgroup_id):
     return render_template('sultan/emailgroups/edit.html')
+
 
 @app.route('/sultan/sites')
 def sites_list():
     return render_template('sultan/sites/index.html')
 
+
 @app.route('/sultan/sites/edit/<site_id>')
 def site_edit(site_id):
     return render_template('sultan/sites/edit.html')
+
 
 @app.route('/api/sultan/emailgroups/list')
 def api_emailgroups_list():
@@ -756,6 +788,7 @@ def api_emailgroups_list():
 
     return jsonify(emailgroups)
 
+
 @app.route('/api/sultan/sites/list')
 def api_sites_list():
     sites = []
@@ -776,6 +809,7 @@ def api_sites_list():
         return jsonify({"error": str(e)}), 500
 
     return jsonify(sites)
+
 
 @app.route('/api/sultan/escalation/list')
 def api_escalation_list():
@@ -798,6 +832,7 @@ def api_escalation_list():
 
     return jsonify(escalations)
 
+
 @app.route('/api/sultan/escalation/<escalation_id>')
 def api_escalation_get(escalation_id):
     try:
@@ -806,13 +841,13 @@ def api_escalation_get(escalation_id):
         else:
             key = f'sultan/escalations/{escalation_id}.json'
 
-        content = s3.get_object(
-            Bucket=BUCKET_NAME,
-            Key=key)['Body'].read().decode('utf-8')
+        content = s3.get_object(Bucket=BUCKET_NAME,
+                                Key=key)['Body'].read().decode('utf-8')
         return jsonify(json.loads(content))
     except Exception as e:
         logger.error(f"Failed to load escalation {escalation_id}: {e}")
         return jsonify({"error": "Escalation not found"}), 404
+
 
 @app.route('/api/sultan/escalation/duplicate', methods=['POST'])
 def api_escalation_duplicate():
@@ -821,7 +856,8 @@ def api_escalation_duplicate():
 
     try:
         # Get original escalation
-        escalation = get_one_from_global_db(f'sultan/configs/draft/escalations/{escalation_id}.json')
+        escalation = get_one_from_global_db(
+            f'sultan/configs/draft/escalations/{escalation_id}.json')
 
         # Create new escalation with unique ID
         import uuid
@@ -830,12 +866,15 @@ def api_escalation_duplicate():
         new_escalation['name'] = f'{escalation["name"]} (Copy)'
 
         # Save new escalation
-        save_in_global_db(f'sultan/configs/draft/escalations/{new_escalation["id"]}.json', new_escalation)
+        save_in_global_db(
+            f'sultan/configs/draft/escalations/{new_escalation["id"]}.json',
+            new_escalation)
 
         return jsonify(new_escalation)
     except Exception as e:
         logger.error(f"Failed to duplicate escalation: {e}")
         return jsonify({"error": "Failed to duplicate escalation"}), 500
+
 
 @app.route('/api/sultan/escalation/delete/<escalation_id>', methods=['DELETE'])
 def api_escalation_delete(escalation_id):
@@ -846,6 +885,7 @@ def api_escalation_delete(escalation_id):
     except Exception as e:
         logger.error(f"Failed to delete escalation: {e}")
         return jsonify({"error": "Failed to delete escalation"}), 500
+
 
 @app.route('/api/sultan/escalation/save', methods=['POST'])
 def api_escalation_save():
@@ -863,6 +903,7 @@ def api_escalation_save():
         logger.error(f"Failed to save escalation: {e}")
         return jsonify({"error": "Failed to save escalation"}), 500
 
+
 @app.route('/api/sultan/emailgroups/<emailgroup_id>')
 def api_emailgroup_get(emailgroup_id):
     try:
@@ -871,13 +912,13 @@ def api_emailgroup_get(emailgroup_id):
         else:
             key = f'sultan/emailgroups/{emailgroup_id}.json'
 
-        content = s3.get_object(
-            Bucket=BUCKET_NAME,
-            Key=key)['Body'].read().decode('utf-8')
+        content = s3.get_object(Bucket=BUCKET_NAME,
+                                Key=key)['Body'].read().decode('utf-8')
         return jsonify(json.loads(content))
     except Exception as e:
         logger.error(f"Failed to load email group {emailgroup_id}: {e}")
         return jsonify({"error": "Email group not found"}), 404
+
 
 @app.route('/api/sultan/emailgroups/save', methods=['POST'])
 def api_emailgroup_save():
@@ -895,7 +936,9 @@ def api_emailgroup_save():
         logger.error(f"Failed to save email group: {e}")
         return jsonify({"error": "Failed to save email group"}), 500
 
-@app.route('/api/sultan/emailgroups/delete/<emailgroup_id>', methods=['DELETE'])
+
+@app.route('/api/sultan/emailgroups/delete/<emailgroup_id>',
+           methods=['DELETE'])
 def api_emailgroup_delete(emailgroup_id):
     try:
         key = f'sultan/emailgroups/{emailgroup_id}.json'
@@ -905,6 +948,7 @@ def api_emailgroup_delete(emailgroup_id):
         logger.error(f"Failed to delete email group: {e}")
         return jsonify({"error": "Failed to delete email group"}), 500
 
+
 @app.route('/api/sultan/sites/<site_id>')
 def api_site_get(site_id):
     try:
@@ -913,13 +957,13 @@ def api_site_get(site_id):
         else:
             key = f'sultan/sites/{site_id}.json'
 
-        content = s3.get_object(
-            Bucket=BUCKET_NAME,
-            Key=key)['Body'].read().decode('utf-8')
+        content = s3.get_object(Bucket=BUCKET_NAME,
+                                Key=key)['Body'].read().decode('utf-8')
         return jsonify(json.loads(content))
     except Exception as e:
         logger.error(f"Failed to load site {site_id}: {e}")
         return jsonify({"error": "Site not found"}), 404
+
 
 @app.route('/api/sultan/sites/save', methods=['POST'])
 def api_site_save():
@@ -937,6 +981,7 @@ def api_site_save():
         logger.error(f"Failed to save site: {e}")
         return jsonify({"error": "Failed to save site"}), 500
 
+
 @app.route('/api/sultan/sites/delete/<site_id>', methods=['DELETE'])
 def api_site_delete(site_id):
     try:
@@ -947,9 +992,11 @@ def api_site_delete(site_id):
         logger.error(f"Failed to delete site: {e}")
         return jsonify({"error": "Failed to delete site"}), 500
 
+
 @app.route('/sultan/templates')
 def templates_list():
     return render_template('sultan/templates/index.html')
+
 
 @app.route('/sultan/templates/edit/<template_id>')
 def template_edit(template_id):
@@ -957,7 +1004,8 @@ def template_edit(template_id):
 
 
 @app.route('/api/sultan/forms')
-@app.route('/api/sultan/forms/list')  # Keep old route for backward compatibility
+@app.route(
+    '/api/sultan/forms/list')  # Keep old route for backward compatibility
 def api_forms_list():
     forms = []
     prefix = 'sultan/forms/'
@@ -993,9 +1041,8 @@ def api_form_get(form_id):
         else:
             key = f'sultan/forms/{form_id}.json'
 
-        content = s3.get_object(
-            Bucket=BUCKET_NAME,
-            Key=key)['Body'].read().decode('utf-8')
+        content = s3.get_object(Bucket=BUCKET_NAME,
+                                Key=key)['Body'].read().decode('utf-8')
         return jsonify(json.loads(content))
     except Exception as e:
         logger.error(f"Failed to load form {form_id}: {e}")
@@ -1014,6 +1061,7 @@ def get_jaffar_config():
         logger.error(f"Failed to load Jaffar config: {e}")
         return jsonify({"error": "Config not found"}), 404
 
+
 @app.route('/api/sultan/forms/delete/<form_id>', methods=['DELETE'])
 def api_form_delete(form_id):
     try:
@@ -1023,6 +1071,7 @@ def api_form_delete(form_id):
     except Exception as e:
         logger.error(f"Failed to delete form: {e}")
         return jsonify({"error": "Failed to delete form"}), 500
+
 
 @app.route('/api/sultan/forms/save', methods=['POST'])
 def api_form_save():
@@ -1042,7 +1091,8 @@ def api_form_save():
 
 
 @app.route('/api/sultan/templates')
-@app.route('/api/sultan/templates/list')  # Keep old route for backward compatibility
+@app.route(
+    '/api/sultan/templates/list')  # Keep old route for backward compatibility
 def api_templates_list():
     templates = []
     prefix = 'sultan/templates/'
@@ -1077,9 +1127,8 @@ def api_template_get(template_id):
         else:
             key = f'sultan/templates/{template_id}.json'
 
-        content = s3.get_object(
-            Bucket=BUCKET_NAME,
-            Key=key)['Body'].read().decode('utf-8')
+        content = s3.get_object(Bucket=BUCKET_NAME,
+                                Key=key)['Body'].read().decode('utf-8')
         return jsonify(json.loads(content))
     except Exception as e:
         logger.error(f"Failed to load template {template_id}: {e}")
@@ -1116,6 +1165,7 @@ def api_template_save():
         logger.error(f"Failed to save template: {e}")
         return jsonify({"error": "Failed to save template"}), 500
 
+
 @app.route('/api/sultan/templates/duplicate', methods=['POST'])
 def api_template_duplicate():
     data = request.json
@@ -1123,7 +1173,8 @@ def api_template_duplicate():
 
     try:
         # Get original template
-        template = get_one_from_global_db(f'sultan/templates/{template_id}.json')
+        template = get_one_from_global_db(
+            f'sultan/templates/{template_id}.json')
 
         # Create new template with unique ID using uuid
         import uuid
@@ -1132,7 +1183,8 @@ def api_template_duplicate():
         new_template['name'] = f'{template["name"]} (Copy)'
 
         # Save new template
-        save_in_global_db(f'sultan/templates/{new_template["id"]}.json', new_template)
+        save_in_global_db(f'sultan/templates/{new_template["id"]}.json',
+                          new_template)
 
         return jsonify(new_template)
     except Exception as e:
