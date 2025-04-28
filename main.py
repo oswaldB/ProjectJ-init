@@ -610,28 +610,39 @@ def api_jaffar_save():
     try:
         data = request.json
         if not data or 'id' not in data:
+            logger.error("Missing required data in save request")
             return jsonify({"error": "Missing required data"}), 400
 
         issue_id = data['id']
         status = data.get('status', 'draft')
-        user_email = data.get('author')
-        previous_status = data.get('previous_status', status)
+        key = f'jaffar/issues/{status}/{issue_id}.json'
 
-        old_data = fetch_old_issue(issue_id, previous_status)
-        changes = compare_issues(old_data, data)
+        logger.info(f"Saving issue {issue_id} with status {status}")
         
+        # Separate changes from the issue
+        changes = data.pop('changes', [])
+
+        # Save the issue without changes
+        try:
+            json_data = json.dumps(data, ensure_ascii=False, cls=CircularRefEncoder)
+            s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_data.encode('utf-8'), ContentType='application/json')
+
+            local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            with open(local_path, 'w', encoding='utf-8') as f:
+                f.write(json_data)
+            logger.info(f"Issue {issue_id} saved locally and in S3")
+        except Exception as e:
+            logger.error(f"Failed to save issue {issue_id}: {e}")
+            return jsonify({"error": f"Failed to save issue: {str(e)}"}), 500
+
+        # Save changes to a dedicated file
         if changes:
-            if not user_email:
-                return jsonify({"error": "Author email is required"}), 400
-            record_change(data, changes, user_email, previous_status)
+            save_issue_changes(issue_id, changes)
 
-        data['previous_status'] = status
-        data['updated_at'] = datetime.datetime.now().isoformat()
-
-        save_issue(issue_id, status, data)
         send_confirmation_if_needed(data)
-
         return jsonify(data)
+
     except Exception as e:
         logger.error(f"Failed to save issue: {e}")
         return jsonify({"error": str(e)}), 500
