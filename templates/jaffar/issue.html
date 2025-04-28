@@ -73,7 +73,22 @@
         <h2 class="text-xl font-bold text-white">Activity</h2>
 
         <!-- Combined timeline of comments and changes -->
-        <template x-for="item in [...(issue.comments || []), ...(issue.changes || [])].sort((a, b) => new Date(b.created_at || b.modified_at) - new Date(a.created_at || a.modified_at))" :key="item.created_at || item.modified_at">
+        <template x-for="(item, index) in [...(issue.comments || []), ...(issue.changes || [])].sort((a, b) => new Date(b.created_at || b.modified_at) - new Date(a.created_at || a.modified_at)).reduce((acc, curr) => {
+          if (curr.value_changes) {
+            const currTime = new Date(curr.modified_at).getTime();
+            const lastItem = acc[acc.length - 1];
+            
+            if (lastItem && lastItem.value_changes && 
+                lastItem.modified_by === curr.modified_by && 
+                Math.abs(new Date(lastItem.modified_at).getTime() - currTime) <= 180000) {
+              // Merge changes if within 3 minutes
+              lastItem.value_changes = {...lastItem.value_changes, ...curr.value_changes};
+              return acc;
+            }
+          }
+          acc.push(curr);
+          return acc;
+        }, [])" :key="item.created_at || item.modified_at">
           <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
             <!-- Comment display -->
             <template x-if="item.content">
