@@ -21,6 +21,9 @@
   },
 
   async saveIssue() {
+    // Only save if there are actual changes
+    if (!this.isEditing) return;
+
     // Track value changes
     const changes = {};
     for (const [key, value] of Object.entries(this.editForm)) {
@@ -32,7 +35,7 @@
       }
     }
 
-    // Add changes to editForm
+    // Only proceed if there are actual changes
     if (Object.keys(changes).length > 0) {
       if (!this.editForm.changes) {
         this.editForm.changes = [];
@@ -43,25 +46,25 @@
         modified_at: new Date().toISOString(),
         value_changes: changes
       });
-    }
 
-    // Ensure we're sending the changes array
-    const dataToSend = {
-      ...this.editForm,
-      changes: this.editForm.changes || []
-    };
+      const dataToSend = {
+        ...this.editForm,
+        changes: this.editForm.changes || []
+      };
 
-    const response = await fetch(`/api/jaffar/issues/${this.issue.id}`, {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'user_email': localStorage.getItem('user_email')
-      },
-      body: JSON.stringify(dataToSend)
-    });
-    if (response.ok) {
-      this.issue = await response.json();
-      this.isEditing = false;
+      const response = await fetch(`/api/jaffar/issues/${this.issue.id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'user_email': localStorage.getItem('user_email')
+        },
+        body: JSON.stringify(dataToSend)
+      });
+      
+      if (response.ok) {
+        this.issue = await response.json();
+        this.isEditing = false;
+      }
     }
   },
 
