@@ -1,0 +1,102 @@
+lpine Expression Error: Unexpected identifier 'missingFields'
+
+Expression: "
+  // Validate required fields
+  let missingFields = [];
+if (config && config.fields) {
+  missingFields = config.fields
+    .filter(f => f.required && !formData[f.key])
+    .map(f => f.label);
+}
+
+  if (missingFields.length > 0) {
+    alert('Please fill in required fields: ' + missingFields.join(', '));
+    return;
+  }
+
+  const now = new Date();
+  const id = `JAFF-ISS-${now.getTime()}`;
+
+  // Delete draft version if exists
+  const draftKey = `jaffar/issues/draft/${id}.json`;
+  fetch('/api/jaffar/delete', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: draftKey })
+  });
+
+  // Load all configs
+  Promise.all([
+    fetch('/api/jaffar/config'),
+    fetch('/api/jaffar/templates'),
+    fetch('/api/jaffar/escalation'),
+    fetch('/api/jaffar/rules')
+  ])
+  .then(responses => Promise.all(responses.map(r => r.json())))
+  .then(([questions, template, escalation, rules]) => {
+    const formToSave = {
+      id: id,
+      author: localStorage.getItem('user_email'),
+      ...formData,
+      status: 'new',
+      created_at: now.toISOString(),
+      submittedAt: now.toISOString(),
+      configs: {
+        questions,
+        template,
+        escalation,
+        rules
+      }
+    };
+
+    return fetch('/api/jaffar/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formToSave)
+    });
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+  .then(result => {
+    if (result.status === 'success') {
+      window.location.href = '/';
+    } else {
+      alert('Error saving form: ' + result.error);
+    }
+  })
+  .catch(error => {
+    alert('Error saving form: ' + error.message);
+  });
+"
+
+ button.bg-red-500.text-white.px-4.py-2.rounded.hover:bg-red-600
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+jn @ cdn.min.js:5
+Fn @ cdn.min.js:5
+xt @ cdn.min.js:5
+x @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+Rr @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught SyntaxError: Unexpected identifier 'missingFields'
+    at new AsyncFunction (<anonymous>)
+    at cdn.min.js:5:665
+    at jn (cdn.min.js:5:889)
+    at Fn (cdn.min.js:5:934)
+    at xt (cdn.min.js:5:302)
+    at x (cdn.min.js:5:180)
+    at cdn.min.js:5:38945
+    at Rr (cdn.min.js:5:11664)
+    at r (cdn.min.js:5:2323)
+    at n (cdn.min.js:5:2353)
