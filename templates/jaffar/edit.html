@@ -8,14 +8,31 @@
   formData: {},
 
   async init() {
-    const response = await fetch('/api/jaffar/config');
-    this.config = await response.json();
-    // Initialize formData with empty arrays for multiple_checkbox fields
-    this.config.fields.forEach(field => {
-      if (field.type === 'multiple_checkbox') {
-        this.formData[field.key] = [];
+    const issueId = window.location.pathname.split('/').pop();
+    if (!issueId) {
+      window.location.href = '/';
+      return;
+    }
+
+    try {
+      const [configResponse, issueResponse] = await Promise.all([
+        fetch('/api/jaffar/config'),
+        fetch(`/api/jaffar/issues/${issueId}`)
+      ]);
+      
+      this.config = await configResponse.json();
+      const issueData = await issueResponse.json();
+      
+      if (issueData.error) {
+        window.location.href = '/';
+        return;
       }
-    });
+      
+      this.formData = issueData;
+    } catch (error) {
+      window.location.href = '/';
+      return;
+    }
 
     // Watch formData for changes and auto-save as draft
     this.$watch('formData', (value) => {

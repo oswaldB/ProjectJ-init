@@ -281,6 +281,12 @@ def acknowledge():
 
 @app.route('/new-issue')
 def new_issue():
+    now = datetime.datetime.now()
+    issue_id = f'JAFF-ISS-{int(now.timestamp() * 1000)}'
+    return redirect(f'/edit/{issue_id}')
+
+@app.route('/edit/<issue_id>')
+def edit_with_id(issue_id):
     return render_template('jaffar/edit.html')
 
 @app.route('/issue/<issue_id>')
