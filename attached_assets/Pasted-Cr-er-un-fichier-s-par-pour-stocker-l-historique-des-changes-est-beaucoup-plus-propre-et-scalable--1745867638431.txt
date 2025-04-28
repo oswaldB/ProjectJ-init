@@ -1,0 +1,127 @@
+Créer un fichier séparé pour stocker l'historique des changes est beaucoup plus propre et scalable. 🔥
+
+🧠 Ce qu'on va faire
+➔ Le ticket (issue_id) restera léger.
+➔ Les changes seront sauvegardés dans un fichier à part.
+➔ À la lecture d'un ticket, on pourra récupérer l'historique si besoin.
+
+📐 Architecture proposée
+Aujourd'hui :
+
+bash
+Copier
+Modifier
+jaffar/issues/new/JAFF-ISS-123.json
+# => Contient tout, y compris l'historique changes
+Demain :
+
+bash
+Copier
+Modifier
+jaffar/issues/new/JAFF-ISS-123.json       # Seulement les infos principales
+jaffar/issues/changes/JAFF-ISS-123.json    # L'historique des changements
+🛠️ Modifications à faire
+1. Dans /api/jaffar/save, séparer les changes
+Modifie ton endpoint api_jaffar_save ainsi :
+
+python
+Copier
+Modifier
+@app.route('/api/jaffar/save', methods=['POST'])
+def api_jaffar_save():
+    try:
+        data = request.json
+        if not data or 'id' not in data:
+            return jsonify({"error": "Missing required data"}), 400
+
+        issue_id = data['id']
+        status = data.get('status', 'draft')
+        key = f'jaffar/issues/{status}/{issue_id}.json'
+
+        # Préparation pour sauver l'issue principale
+        cleaned_issue_data = data.copy()
+
+        # 1️⃣ Séparer les changes
+        current_change = None
+        if 'changes' in cleaned_issue_data:
+            if isinstance(cleaned_issue_data['changes'], list) and cleaned_issue_data['changes']:
+                current_change = cleaned_issue_data['changes'][-1]  # on prend uniquement le dernier changement
+            del cleaned_issue_data['changes']  # on supprime le champ changes de l'issue principale
+
+        cleaned_issue_data['updated_at'] = datetime.datetime.now().isoformat()
+
+        # 2️⃣ Save principale (léger)
+        json_data = json.dumps(cleaned_issue_data, ensure_ascii=False, cls=CircularRefEncoder)
+        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_data.encode('utf-8'), ContentType='application/json')
+
+        # Save aussi localement
+        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        with open(local_path, 'w', encoding='utf-8') as f:
+            f.write(json_data)
+
+        # 3️⃣ Save des changes (dans fichier séparé)
+        if current_change:
+            changes_key = f'jaffar/issues/changes/{issue_id}.json'
+
+            try:
+                # Charger l'historique existant
+                response = s3.get_object(Bucket=BUCKET_NAME, Key=changes_key)
+                previous_changes = json.loads(response['Body'].read().decode('utf-8'))
+            except s3.exceptions.NoSuchKey:
+                previous_changes = []
+
+            previous_changes.append(current_change)
+
+            # Limiter à 100 changements max
+            previous_changes = previous_changes[-100:]
+
+            changes_data = json.dumps(previous_changes, ensure_ascii=False, cls=CircularRefEncoder)
+            s3.put_object(Bucket=BUCKET_NAME, Key=changes_key, Body=changes_data.encode('utf-8'), ContentType='application/json')
+
+            # Save local également
+            local_changes_path = os.path.join(LOCAL_BUCKET_DIR, changes_key)
+            os.makedirs(os.path.dirname(local_changes_path), exist_ok=True)
+            with open(local_changes_path, 'w', encoding='utf-8') as f:
+                f.write(changes_data)
+
+        # 4️⃣ Si status = new => envoie mail
+        if 'author' in data and status == 'new':
+            sendConfirmationEmail(data['author'], issue_id, data)
+
+        return app.response_class(
+            response=json.dumps(cleaned_issue_data, ensure_ascii=False, cls=CircularRefEncoder),
+            status=200,
+            mimetype='application/json'
+        )
+    except Exception as e:
+        logger.error(f"Failed to save issue: {e}")
+        return app.response_class(
+            response=json.dumps({"error": str(e)}, ensure_ascii=False, cls=CircularRefEncoder),
+            status=500,
+            mimetype='application/json'
+        )
+2. (Optionnel) Endpoint pour récupérer les changes
+On peut créer un petit endpoint pour lire les changements :
+
+python
+Copier
+Modifier
+@app.route('/api/jaffar/issues/<issue_id>/changes', methods=['GET'])
+def get_issue_changes(issue_id):
+    changes_key = f'jaffar/issues/changes/{issue_id}.json'
+    try:
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=changes_key)
+        changes = json.loads(response['Body'].read().decode('utf-8'))
+        return jsonify(changes)
+    except s3.exceptions.NoSuchKey:
+        return jsonify([])  # pas de changement enregistré
+    except Exception as e:
+        logger.error(f"Failed to load changes for issue {issue_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+🚀 Résultat
+
+Avant	Après
+À chaque save ➔ tout changes réécrit	À chaque save ➔ seulement le dernier changement ajouté
+Fichier qui grossit sans fin	Deux fichiers séparés (issue.json + changes.json)
+App lente quand issue modifiée beaucoup	App rapide même après 100 changements
