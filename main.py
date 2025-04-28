@@ -18,13 +18,20 @@ def save_issue_changes(issue_id, changes):
         s3_future.result()
         local_future.result()
 
-def get_issue_changes(issue_id):
-    key = f'jaffar/issues/changes/{issue_id}-changes.json'
+def get_changes_from_global_db(issue_id):
+    changes_key = f'jaffar/issues/changes/{issue_id}-changes.json'
+
     try:
-        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-        return json.loads(response['Body'].read().decode('utf-8'))
-    except:
-        return {'changes': []}
+        # Get changes from S3
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=changes_key)
+        content = response['Body'].read().decode('utf-8')
+        return json.loads(content)
+    except s3.exceptions.NoSuchKey:
+        logger.info(f"No changes found for issue {issue_id}")
+        return []
+    except Exception as e:
+        logger.error(f"Failed to get changes for {issue_id}: {e}")
+        return []
 
 from flask import Flask, Blueprint, render_template, redirect, send_from_directory, request, jsonify, send_file
 import json
