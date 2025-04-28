@@ -7,6 +7,79 @@
   config: null,
   formData: {},
 
+  async submitForm() {
+    try {
+      // Validate required fields
+      if (!this.config || !this.config.fields) return;
+      
+      const missingFields = this.config.fields
+        .filter(f => f.required && !this.formData[f.key])
+        .map(f => f.label);
+
+      if (missingFields.length > 0) {
+        alert('Please fill in required fields: ' + missingFields.join(', '));
+        return;
+      }
+
+      const now = new Date();
+      const id = `JAFF-ISS-${now.getTime()}`;
+      const draftKey = `jaffar/issues/draft/${id}.json`;
+
+      // Delete draft version if exists
+      await fetch('/api/jaffar/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: draftKey })
+      });
+
+      // Load all configs
+      const responses = await Promise.all([
+        fetch('/api/jaffar/config'),
+        fetch('/api/jaffar/templates'), 
+        fetch('/api/jaffar/escalation'),
+        fetch('/api/jaffar/rules')
+      ]);
+
+      const [questions, template, escalation, rules] = await Promise.all(
+        responses.map(r => r.json())
+      );
+
+      const formToSave = {
+        id,
+        author: localStorage.getItem('user_email'),
+        ...this.formData,
+        status: 'new',
+        created_at: now.toISOString(),
+        submittedAt: now.toISOString(),
+        configs: {
+          questions,
+          template,
+          escalation,
+          rules
+        }
+      };
+
+      const saveResponse = await fetch('/api/jaffar/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formToSave)
+      });
+
+      if (!saveResponse.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const result = await saveResponse.json();
+      if (result.status === 'success') {
+        window.location.href = '/';
+      } else {
+        alert('Error saving form: ' + result.error);
+      }
+    } catch (error) {
+      alert('Error saving form: ' + error.message);
+    }
+  },
+
   async init() {
     const issueId = window.location.pathname.split('/').pop();
     if (!issueId) {
@@ -67,78 +140,7 @@
       <a href="/" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
         Cancel
       </a>
-      <button type="submit" @click="async () => {
-        try {
-          // Validate required fields
-          if (!config || !config.fields) return;
-          
-          const missingFields = config.fields
-            .filter(f => f.required && !formData[f.key])
-            .map(f => f.label);
-
-          if (missingFields.length > 0) {
-            alert('Please fill in required fields: ' + missingFields.join(', '));
-            return;
-          }
-
-          const now = new Date();
-          const id = `JAFF-ISS-${now.getTime()}`;
-          const draftKey = `jaffar/issues/draft/${id}.json`;
-
-          // Delete draft version if exists
-          await fetch('/api/jaffar/delete', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key: draftKey })
-          });
-
-          // Load all configs
-          const responses = await Promise.all([
-            fetch('/api/jaffar/config'),
-            fetch('/api/jaffar/templates'), 
-            fetch('/api/jaffar/escalation'),
-            fetch('/api/jaffar/rules')
-          ]);
-
-          const [questions, template, escalation, rules] = await Promise.all(
-            responses.map(r => r.json())
-          );
-
-          const formToSave = {
-            id,
-            author: localStorage.getItem('user_email'),
-            ...formData,
-            status: 'new',
-            created_at: now.toISOString(),
-            submittedAt: now.toISOString(),
-            configs: {
-              questions,
-              template,
-              escalation,
-              rules
-            }
-          };
-
-          const saveResponse = await fetch('/api/jaffar/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formToSave)
-          });
-
-          if (!saveResponse.ok) {
-            throw new Error('Network response was not ok');
-          }
-
-          const result = await saveResponse.json();
-          if (result.status === 'success') {
-            window.location.href = '/';
-          } else {
-            alert('Error saving form: ' + result.error);
-          }
-        } catch (error) {
-          alert('Error saving form: ' + error.message);
-        }
-      }"
+      <button type="submit" @click="submitForm"
 " class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
         Submit
       </button>
