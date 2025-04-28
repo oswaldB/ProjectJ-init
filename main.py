@@ -450,10 +450,10 @@ def api_jaffar_save():
 
             # Compare and record changes
             changes = {}
-            for key, new_value in data.items():
-                if key in old_data and old_data[key] != new_value:
-                    changes[key] = {
-                        'previous': old_data[key],
+            for field_key, new_value in data.items():
+                if field_key in old_data and old_data[field_key] != new_value:
+                    changes[field_key] = {
+                        'previous': old_data[field_key],
                         'new': new_value
                     }
 
@@ -483,19 +483,30 @@ def api_jaffar_save():
         data['previous_status'] = status
         data['updated_at'] = datetime.datetime.now().isoformat()
 
-        # Save to S3
+        # Convert data to JSON
         json_data = json.dumps(data, ensure_ascii=False)
-        s3.put_object(
-            Bucket=BUCKET_NAME,
-            Key=key,
-            Body=json_data
-        )
+
+        # Save to S3
+        try:
+            s3.put_object(
+                Bucket=BUCKET_NAME,
+                Key=key,
+                Body=json_data.encode('utf-8'),
+                ContentType='application/json'
+            )
+        except Exception as e:
+            logger.error(f"Failed to save to S3: {e}")
+            return jsonify({"error": f"Failed to save to S3: {str(e)}"}), 500
 
         # Save locally
-        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
-        os.makedirs(os.path.dirname(local_path), exist_ok=True)
-        with open(local_path, 'w', encoding='utf-8') as f:
-            f.write(json_data)
+        try:
+            local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            with open(local_path, 'w', encoding='utf-8') as f:
+                f.write(json_data)
+        except Exception as e:
+            logger.error(f"Failed to save locally: {e}")
+            return jsonify({"error": f"Failed to save locally: {str(e)}"}), 500
 
         # Send confirmation email if author is present and status is new
         if 'author' in data and status == 'new':
