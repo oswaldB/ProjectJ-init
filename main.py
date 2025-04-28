@@ -436,8 +436,10 @@ def api_jaffar_save():
         status = data.get('status', 'draft')
         key = f'jaffar/issues/{status}/{issue_id}.json'
 
-        # Add changes tracking
-        if not isinstance(data.get('changes', []), list):
+        # Initialize changes array if it doesn't exist
+        if 'changes' not in data:
+            data['changes'] = []
+        elif not isinstance(data['changes'], list):
             data['changes'] = []
             
         # Get the previous version to compare changes
@@ -462,7 +464,7 @@ def api_jaffar_save():
                     'previous_status': data.get('previous_status', status),
                     'value_changes': changes
                 })
-        except:
+        except Exception as e:
             # If no previous version exists, just record status change
             data['changes'].append({
                 'modified_by': request.headers.get('user_email'),
