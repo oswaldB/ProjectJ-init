@@ -38,7 +38,9 @@
 
       // Filtre des drafts
       const userEmail = localStorage.getItem('user_email');
-      const matchesDraft = (issue.status !== 'draft') || (this.showDrafts && issue.author === userEmail);
+      const matchesDraft = (issue.status !== 'draft') || 
+                          (issue.author === userEmail) || 
+                          (this.showDrafts);
 
       // Filtre des tags si ils existent
       const matchesTags = this.selectedTags.length === 0 || 
@@ -74,7 +76,7 @@
           @change="filterIssues()"
           class="rounded bg-gray-700 border-gray-600"
         >
-        Show drafts
+        Show all drafts
       </label>
     </div>
   </div>
