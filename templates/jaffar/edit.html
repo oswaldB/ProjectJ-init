@@ -19,15 +19,15 @@
         fetch('/api/jaffar/config'),
         fetch(`/api/jaffar/issues/${issueId}`)
       ]);
-      
+
       this.config = await configResponse.json();
       const issueData = await issueResponse.json();
-      
+
       if (issueData.error) {
         window.location.href = '/';
         return;
       }
-      
+
       this.formData = issueData;
     } catch (error) {
       window.location.href = '/';
@@ -35,14 +35,14 @@
     }
 
     let initialLoad = true;
-    
+
     // Watch formData for changes and auto-save as draft
     this.$watch('formData', (value) => {
       if (initialLoad) {
         initialLoad = false;
         return;
       }
-      
+
       const now = new Date();
       const formToSave = {
         id: this.formData.id || `JAFF-ISS-${now.getTime()}`,
@@ -225,6 +225,27 @@
                      :required="field.required"
                      rows="3"
                      class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"></textarea>
+          </template>
+
+          <!-- Conditional Questions Section -->
+          <template x-if="field.type === 'conditional' && field.options && field.options.length > 0">
+            <div class="mt-4 space-y-4">
+              <template x-for="option in field.options" :key="option.name">
+                <div x-show="formData[field.key] === option.name" class="space-y-4">
+                  <template x-for="question in option.questions" :key="question.key">
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                      <label class="block mb-2">
+                        <span class="text-lg font-medium text-white" x-text="question.label"></span>
+                      </label>
+                      <input 
+                        type="text"
+                        x-model="formData[question.key]"
+                        class="w-full bg-gray-600 text-white p-2 rounded border border-gray-500">
+                    </div>
+                  </template>
+                </div>
+              </template>
+            </div>
           </template>
         </div>
       </template>
