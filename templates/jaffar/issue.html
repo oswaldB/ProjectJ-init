@@ -123,7 +123,22 @@
       </div>
 
       <div class="space-y-4">
-        <h2 class="text-xl font-bold text-white">Comments</h2>
+        <h2 class="text-xl font-bold text-white">Comments & Modifications</h2>
+
+        <template x-for="change in issue.changes" :key="change.modified_at">
+          <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-sm text-gray-400">
+                <span class="text-blue-400" x-text="change.modified_by"></span>
+                <span x-text="' modified on ' + new Date(change.modified_at).toLocaleString()"></span>
+              </span>
+            </div>
+            <div class="text-sm" x-show="change.previous_status">
+              <span>Status changed from </span>
+              <span class="text-yellow-400" x-text="change.previous_status"></span>
+            </div>
+          </div>
+        </template>
 
         <template x-for="comment in issue.comments" :key="comment.created_at">
           <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
