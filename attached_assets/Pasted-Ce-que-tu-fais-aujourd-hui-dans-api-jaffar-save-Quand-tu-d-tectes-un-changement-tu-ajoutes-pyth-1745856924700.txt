@@ -1,0 +1,88 @@
+Ce que tu fais aujourd'hui dans /api/jaffar/save
+Quand tu détectes un changement, tu ajoutes :
+
+python
+Copier
+Modifier
+data['changes'].append({
+    'modified_by': user_email,
+    'modified_at': datetime.datetime.now().isoformat(),
+    'previous_status': data.get('previous_status', status),
+    'value_changes': changes
+})
+Le problème :
+
+changes peut contenir des sous-objets lourds (old_data[field_key] et new_value) qui eux-mêmes contiennent des références...
+
+...et si l'objet est imbriqué (data contient un changes qui lui-même pointe sur data ou ses sous-objets...), 💥 boom : référence circulaire.
+
+🎯 Ce qu'on doit faire
+1. Ne stocker que des valeurs primitives dans changes.
+➡️ Texte, nombres, booléens : OK.
+➡️ Pas d'objets dicts compliqués ou de listes.
+
+2. Si une valeur est un objet ou une liste, on la convertit en texte.
+
+🛠 Voici comment corriger proprement ton changes :
+Remplace ta logique dans /api/jaffar/save :
+
+Au lieu de :
+
+python
+Copier
+Modifier
+changes[field_key] = {
+    'previous': old_data[field_key],
+    'new': new_value
+}
+fais :
+
+python
+Copier
+Modifier
+def simplify_value(value):
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False)
+    return value
+
+changes[field_key] = {
+    'previous': simplify_value(old_data.get(field_key)),
+    'new': simplify_value(new_value)
+}
+🧹 En clair
+Les objets (dict, list) sont serializés (écrits sous forme de texte).
+
+Les types simples (str, int, bool, etc.) restent tels quels.
+
+Ainsi, dans ton changes, tu n’auras plus jamais de cycles, parce que :
+
+Un objet complexe sera juste du texte plat.
+
+Plus d'arbre d'objet qui se pointe sur lui-même.
+
+🧠 Pourquoi c’est mieux ?
+Plus rapide : tu n'as plus besoin de nettoyer avec remove_circular_references après.
+
+Plus sûr : aucun risque de "circular reference detected" plus tard.
+
+Plus lisible dans l'historique des changements (car tout est simple).
+
+✨ Résumé
+Ajoute cette fonction :
+
+python
+Copier
+Modifier
+def simplify_value(value):
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False)
+    return value
+et dans la détection des changements :
+
+python
+Copier
+Modifier
+changes[field_key] = {
+    'previous': simplify_value(old_data.get(field_key)),
+    'new': simplify_value(new_value)
+}
