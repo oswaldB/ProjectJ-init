@@ -201,7 +201,6 @@
               selections: [],
               init() {
                 this.$nextTick(() => {
-                  console.log('Initial value for', field.key, ':', formData[field.key]);
                   if (formData && formData[field.key]) {
                     this.selections = [...formData[field.key]];
                   }
