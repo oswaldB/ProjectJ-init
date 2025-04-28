@@ -362,6 +362,19 @@ def manage_issue(issue_id):
         status = data.get('status', 'draft')
         key = f'jaffar/issues/{status}/{issue_id}.json'
         
+        # Add change history
+        if 'changes' not in data:
+            data['changes'] = []
+            
+        data['changes'].append({
+            'modified_by': request.headers.get('user_email'),
+            'modified_at': datetime.datetime.now().isoformat(),
+            'previous_status': data.get('previous_status', status)
+        })
+        
+        data['previous_status'] = status
+        data['updated_at'] = datetime.datetime.now().isoformat()
+        
         # Save to S3
         s3.put_object(
             Bucket=BUCKET_NAME,
