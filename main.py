@@ -922,7 +922,7 @@ def api_escalation_list():
                 escalations.append(escalation)
             except Exception as e:
                 logger.error(f"Failed to load escalation {obj['Key']}: {e}")
-    except Exception ase:
+    except Exception as e:
         logger.error(f"Failed to list escalations: {e}")
         return jsonify({"error": str(e)}), 500
 
