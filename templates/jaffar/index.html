@@ -37,7 +37,8 @@
         (issue.title && issue.title.toLowerCase().includes(this.searchQuery.toLowerCase()));
 
       // Filtre des drafts
-      const matchesDraft = this.showDrafts || issue.status !== 'draft';
+      const userEmail = localStorage.getItem('user_email');
+      const matchesDraft = (issue.status !== 'draft') || (this.showDrafts && issue.author === userEmail);
 
       // Filtre des tags si ils existent
       const matchesTags = this.selectedTags.length === 0 || 
