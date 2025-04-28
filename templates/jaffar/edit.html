@@ -126,10 +126,18 @@
         updated_at: now.toISOString()
       };
 
+      // Show loader after 3 seconds if save hasn't completed
+      const loaderTimeout = setTimeout(() => {
+        document.body._x_dataStack[0].saving = true;
+      }, 3000);
+
       fetch('/api/jaffar/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formToSave)
+      }).finally(() => {
+        clearTimeout(loaderTimeout);
+        document.body._x_dataStack[0].saving = false;
       });
     }, { deep: true });
   }
