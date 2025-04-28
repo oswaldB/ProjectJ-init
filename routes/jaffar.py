@@ -1,6 +1,6 @@
 
 from flask import Blueprint, request, jsonify, render_template, redirect
-from services.storage import save_in_global_db, get_one_from_global_db, delete
+from services.storage import save_in_global_db, get_one_from_global_db, delete, s3, BUCKET_NAME
 import datetime
 import json
 import logging
