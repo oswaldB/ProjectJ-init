@@ -241,20 +241,80 @@
                      class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"></textarea>
           </template>
 
+          <!-- List input -->
+          <template x-if="field.type === 'list'">
+            <div x-data="{ newItem: '', items: formData[field.key] || [] }" @input="formData[field.key] = items">
+              <div class="flex gap-2 mb-2">
+                <input type="text" 
+                       x-model="newItem" 
+                       class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600"
+                       @keyup.enter="if(newItem.trim()) { items.push(newItem.trim()); newItem = ''; }">
+                <button @click="if(newItem.trim()) { items.push(newItem.trim()); newItem = ''; }"
+                        class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">Add</button>
+              </div>
+              <div class="space-y-2">
+                <template x-for="(item, index) in items" :key="index">
+                  <div class="flex items-center gap-2 bg-gray-700 p-2 rounded">
+                    <span x-text="item" class="flex-1"></span>
+                    <button @click="items.splice(index, 1)" class="text-red-400 hover:text-red-300">×</button>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+
           <!-- Conditional Questions Section -->
-          <template x-if="field.type === 'conditional' && field.options && field.options.length > 0">
-            <div class="mt-4 space-y-4">
+          <template x-if="field.type === 'conditional'">
+            <div>
+              <select 
+                x-model="formData[field.key]"
+                :required="field.required"
+                class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 mb-4">
+                <option value="">Select an option</option>
+                <template x-for="option in field.options" :key="option.name">
+                  <option :value="option.name" x-text="option.name"></option>
+                </template>
+              </select>
+
               <template x-for="option in field.options" :key="option.name">
                 <div x-show="formData[field.key] === option.name" class="space-y-4">
-                  <template x-for="question in option.questions" :key="question.key">
+                  <template x-for="question in (option.questions || [])" :key="question.key">
                     <div class="bg-gray-700 p-4 rounded-lg">
                       <label class="block mb-2">
                         <span class="text-lg font-medium text-white" x-text="question.label"></span>
                       </label>
-                      <input 
-                        type="text"
-                        x-model="formData[question.key]"
-                        class="w-full bg-gray-600 text-white p-2 rounded border border-gray-500">
+                      <template x-if="question.type === 'text_input' || !question.type">
+                        <input type="text"
+                               x-model="formData[question.key]"
+                               class="w-full bg-gray-600 text-white p-2 rounded border border-gray-500">
+                      </template>
+                      <template x-if="question.type === 'textarea'">
+                        <textarea x-model="formData[question.key]"
+                                class="w-full bg-gray-600 text-white p-2 rounded border border-gray-500"
+                                rows="3"></textarea>
+                      </template>
+                      <template x-if="question.type === 'list'">
+                        <div x-data="{ newItem: '', items: formData[question.key] || [] }" 
+                             @input="formData[question.key] = items">
+                          <div class="flex gap-2 mb-2">
+                            <input type="text" 
+                                   x-model="newItem" 
+                                   class="flex-1 bg-gray-600 text-white p-2 rounded border border-gray-500"
+                                   @keyup.enter="if(newItem.trim()) { items.push(newItem.trim()); newItem = ''; }">
+                            <button @click="if(newItem.trim()) { items.push(newItem.trim()); newItem = ''; }"
+                                    class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">Add</button>
+                          </div>
+                          <div class="space-y-2">
+                            <template x-for="(item, index) in items" :key="index">
+                              <div class="flex items-center gap-2 bg-gray-600 p-2 rounded">
+                                <span x-text="item" class="flex-1"></span>
+                                <button @click="items.splice(index, 1)" 
+                                        class="text-red-400 hover:text-red-300">×</button>
+                              </div>
+                            </template>
+                          </div>
+                        </div>
+                      </template>
                     </div>
                   </template>
                 </div>
