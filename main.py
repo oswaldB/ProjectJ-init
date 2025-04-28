@@ -502,29 +502,41 @@ def api_jaffar_save():
             logger.info("Starting changes comparison...")
             logger.info(f"Old data keys: {list(old_data.keys())}")
             logger.info(f"New data keys: {list(data.keys())}")
+
+            def clean_value(value):
+                if isinstance(value, str):
+                    return value.strip()
+                if value is None:
+                    return ''
+                return value
+
+            def has_meaningful_change(old_value, new_value):
+                old_clean = clean_value(old_value)
+                new_clean = clean_value(new_value)
+                return old_clean != new_clean
+
+            def simplify_value(value):
+                if isinstance(value, (dict, list)):
+                    return json.dumps(value, ensure_ascii=False)
+                return value
+
             changes = {}
             for field_key, new_value in data.items():
                 logger.info(f"Checking field: {field_key}")
                 if field_key in old_data:
-                    if old_data[field_key] != new_value:
-                        logger.info(f"Change detected in field {field_key}")
+                    if has_meaningful_change(old_data.get(field_key), new_value):
+                        logger.info(f"Meaningful change detected in field {field_key}")
                         logger.info(f"Previous value: {old_data[field_key]}")
                         logger.info(f"New value: {new_value}")
-                        
-                        def simplify_value(value):
-                            if isinstance(value, (dict, list)):
-                                return json.dumps(value, ensure_ascii=False)
-                            return value
-
                         changes[field_key] = {
                             'previous': simplify_value(old_data.get(field_key)),
                             'new': simplify_value(new_value)
                         }
                     else:
-                        logger.info(f"No change in field {field_key}")
+                        logger.info(f"No meaningful change in field {field_key}")
                 else:
                     logger.info(f"New field added: {field_key}")
-                    changes[field_key] = {'previous': None, 'new': new_value}
+                    changes[field_key] = {'previous': None, 'new': simplify_value(new_value)}
 
             if changes:
                 user_email = data.get('author')
@@ -887,8 +899,7 @@ def api_escalation_duplicate():
 
     try:
         # Get original escalation
-        escalation = get_one_from_global_db(
-            f'sultan/configs/draft/escalations/{escalation_id}.json')
+        escalation = get_one_from_global_db(            f'sultan/configs/draft/escalations/{escalation_id}.json')
 
         # Create new escalation with unique ID
         import uuid
