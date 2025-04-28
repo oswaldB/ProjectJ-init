@@ -69,9 +69,12 @@
       </a>
       <button type="submit" @click="
   // Validate required fields
-  const missingFields = config.fields
+  let missingFields = [];
+if (config && config.fields) {
+  missingFields = config.fields
     .filter(f => f.required && !formData[f.key])
     .map(f => f.label);
+}
 
   if (missingFields.length > 0) {
     alert('Please fill in required fields: ' + missingFields.join(', '));
