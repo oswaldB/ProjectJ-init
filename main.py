@@ -434,6 +434,7 @@ def api_jaffar_save():
     try:
         data = request.json
         if not data or 'id' not in data:
+            logger.error("Missing required data in save request")
             return jsonify({"error": "Missing required data"}), 400
 
         issue_id = data['id']
@@ -441,6 +442,9 @@ def api_jaffar_save():
         key = f'jaffar/issues/{status}/{issue_id}.json'
 
         logger.info(f"Saving issue {issue_id} with status {status}")
+        logger.info(f"Issue author: {data.get('author')}")
+        logger.info(f"Issue data keys: {list(data.keys())}")
+        logger.info(f"Target S3 key: {key}")
 
         # Initialize changes array if it doesn't exist
         if 'changes' not in data:
@@ -456,12 +460,20 @@ def api_jaffar_save():
 
             # Compare and record changes
             logger.info("Starting changes comparison...")
+            logger.info(f"Old data keys: {list(old_data.keys())}")
+            logger.info(f"New data keys: {list(data.keys())}")
             changes = {}
             for field_key, new_value in data.items():
-                if field_key in old_data and old_data[field_key] != new_value:
-                    logger.info(f"Change detected in field {field_key}")
-                    logger.info(f"Previous value: {old_data[field_key]}")
-                    logger.info(f"New value: {new_value}")
+                logger.info(f"Checking field: {field_key}")
+                if field_key in old_data:
+                    if old_data[field_key] != new_value:
+                        logger.info(f"Change detected in field {field_key}")
+                        logger.info(f"Previous value: {old_data[field_key]}")
+                        logger.info(f"New value: {new_value}")
+                    else:
+                        logger.info(f"No change in field {field_key}")
+                else:
+                    logger.info(f"New field added: {field_key}")
                     changes[field_key] = {
                         'previous': old_data[field_key],
                         'new': new_value
@@ -507,7 +519,12 @@ def api_jaffar_save():
             logger.info(f"Issue {issue_id} saved to S3")
         except Exception as e:
             logger.error(f"Failed to save to S3: {e}")
-            return jsonify({"error": f"Failed to save to S3: {str(e)}"}), 500
+            error_msg = f"Failed to save to S3: {str(e)}"
+            logger.error(error_msg)
+            logger.error(f"Issue ID: {issue_id}")
+            logger.error(f"Status: {status}")
+            logger.error(f"Key: {key}")
+            return jsonify({"error": error_msg}), 500
 
         # Save locally
         try:
