@@ -14,10 +14,22 @@ mock = mock_aws()
 mock.start()
 
 s3 = boto3.client('s3', region_name='us-east-1')
+
+# Create bucket if it doesn't exist
 try:
-    s3.create_bucket(Bucket=BUCKET_NAME)
+    s3.head_bucket(Bucket=BUCKET_NAME)
 except:
-    pass
+    try:
+        s3.create_bucket(Bucket=BUCKET_NAME)
+        # Sync local files to S3
+        for root, _, files in os.walk(LOCAL_BUCKET_DIR):
+            for file in files:
+                local_path = os.path.join(root, file)
+                s3_key = os.path.relpath(local_path, LOCAL_BUCKET_DIR)
+                with open(local_path, 'rb') as f:
+                    s3.put_object(Bucket=BUCKET_NAME, Key=s3_key, Body=f.read())
+    except Exception as e:
+        logger.error(f"Failed to create bucket: {e}")
 
 def save_in_global_db(key, obj):
     json_object = json.dumps(obj, separators=(',', ':'))
