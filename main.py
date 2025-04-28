@@ -344,77 +344,17 @@ def list_issues():
         logger.error(f"Error in list_issues: {e}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/jaffar/issues/<issue_id>', methods=['GET', 'PUT'])
-def manage_issue(issue_id):
-    if request.method == 'GET':
-        # Try both draft and new folders
-        for status in ['draft', 'new']:
-            try:
-                key = f'jaffar/issues/{status}/{issue_id}.json'
-                response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-                return jsonify(json.loads(response['Body'].read().decode('utf-8')))
-            except s3.exceptions.NoSuchKey:
-                continue
-        return jsonify({'error': 'Issue not found'}), 404
-        
-    elif request.method == 'PUT':
-        data = request.json
-        if not isinstance(data.get('changes', []), list):
-            data['changes'] = []
-            
-        status = data.get('status', 'draft')
-        key = f'jaffar/issues/{status}/{issue_id}.json'
-            
-        # Get the previous version to compare changes
+@app.route('/api/jaffar/issues/<issue_id>', methods=['GET'])
+def get_issue(issue_id):
+    # Try both draft and new folders
+    for status in ['draft', 'new']:
         try:
-            old_key = f'jaffar/issues/{data.get("previous_status", status)}/{issue_id}.json'
-            old_response = s3.get_object(Bucket=BUCKET_NAME, Key=old_key)
-            old_data = json.loads(old_response['Body'].read().decode('utf-8'))
-            
-            # Compare and record changes
-            changes = {}
-            for key, new_value in data.items():
-                if key in old_data and old_data[key] != new_value:
-                    changes[key] = {
-                        'previous': old_data[key],
-                        'new': new_value
-                    }
-                    
-            if changes:
-                data['changes'].append({
-                    'modified_by': request.headers.get('user_email'),
-                    'modified_at': datetime.datetime.now().isoformat(),
-                    'previous_status': data.get('previous_status', status),
-                    'value_changes': changes
-                })
-        except:
-            # If no previous version exists, just record status change
-            data['changes'].append({
-                'modified_by': request.headers.get('user_email'),
-                'modified_at': datetime.datetime.now().isoformat(),
-                'previous_status': data.get('previous_status', status)
-            })
-        
-        data['previous_status'] = status
-        data['updated_at'] = datetime.datetime.now().isoformat()
-        
-        # Save to S3 and locally
-        json_data = json.dumps(data, ensure_ascii=False)
-        
-        # Save to S3
-        s3.put_object(
-            Bucket=BUCKET_NAME,
-            Key=key,
-            Body=json_data
-        )
-        
-        # Save locally
-        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
-        os.makedirs(os.path.dirname(local_path), exist_ok=True)
-        with open(local_path, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(data, ensure_ascii=False))
-            
-        return jsonify(data)
+            key = f'jaffar/issues/{status}/{issue_id}.json'
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+            return jsonify(json.loads(response['Body'].read().decode('utf-8')))
+        except s3.exceptions.NoSuchKey:
+            continue
+    return jsonify({'error': 'Issue not found'}), 404
 
 @app.route('/api/jaffar/issues/<issue_id>/comments', methods=['POST'])
 def add_comment(issue_id):
@@ -495,11 +435,46 @@ def api_jaffar_save():
         issue_id = data['id']
         status = data.get('status', 'draft')
         key = f'jaffar/issues/{status}/{issue_id}.json'
-        
-        # Ensure the data is valid JSON
-        json_data = json.dumps(data, ensure_ascii=False)
+
+        # Add changes tracking
+        if not isinstance(data.get('changes', []), list):
+            data['changes'] = []
+            
+        # Get the previous version to compare changes
+        try:
+            old_key = f'jaffar/issues/{data.get("previous_status", status)}/{issue_id}.json'
+            old_response = s3.get_object(Bucket=BUCKET_NAME, Key=old_key)
+            old_data = json.loads(old_response['Body'].read().decode('utf-8'))
+            
+            # Compare and record changes
+            changes = {}
+            for key, new_value in data.items():
+                if key in old_data and old_data[key] != new_value:
+                    changes[key] = {
+                        'previous': old_data[key],
+                        'new': new_value
+                    }
+                    
+            if changes:
+                data['changes'].append({
+                    'modified_by': request.headers.get('user_email'),
+                    'modified_at': datetime.datetime.now().isoformat(),
+                    'previous_status': data.get('previous_status', status),
+                    'value_changes': changes
+                })
+        except:
+            # If no previous version exists, just record status change
+            data['changes'].append({
+                'modified_by': request.headers.get('user_email'),
+                'modified_at': datetime.datetime.now().isoformat(),
+                'previous_status': data.get('previous_status', status)
+            })
+
+        data['previous_status'] = status
+        data['updated_at'] = datetime.datetime.now().isoformat()
         
         # Save to S3
+        json_data = json.dumps(data, ensure_ascii=False)
         s3.put_object(
             Bucket=BUCKET_NAME,
             Key=key,
@@ -516,7 +491,7 @@ def api_jaffar_save():
         if 'author' in data and status == 'new':
             sendConfirmationEmail(data['author'], issue_id, data)
             
-        return jsonify({"status": "success"})
+        return jsonify(data)
     except Exception as e:
         logger.error(f"Failed to save issue: {e}")
         return jsonify({"error": str(e)}), 500
