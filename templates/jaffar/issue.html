@@ -182,6 +182,19 @@
               <span>Status changed from </span>
               <span class="text-yellow-400" x-text="change.previous_status"></span>
             </div>
+            <template x-if="change.value_changes">
+              <div class="mt-2 space-y-1">
+                <template x-for="(change_details, field) in change.value_changes" :key="field">
+                  <div class="text-sm">
+                    <span class="text-gray-400" x-text="field"></span>
+                    <span class="text-gray-400"> changed from </span>
+                    <span class="text-yellow-400" x-text="change_details.previous"></span>
+                    <span class="text-gray-400"> to </span>
+                    <span class="text-green-400" x-text="change_details.new"></span>
+                  </div>
+                </template>
+              </div>
+            </template>
           </div>
         </template>
 
