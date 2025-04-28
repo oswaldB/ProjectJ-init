@@ -109,7 +109,7 @@
         <p class="mt-2 text-gray-300" x-text="issue['issue-description'] || 'No description available'"></p>
         <div class="mt-4 text-sm text-gray-400">
           <span x-text="'Created by ' + issue.author + ' on ' + new Date(issue.created_at).toLocaleDateString()"></span>
-          <span x-show="issue.comments?.length" x-text="' • ' + (issue.comments?.length || 0) + ' comments'"></span>
+          <span x-show="issue.comments && issue.comments.length > 0" x-text="' • ' + issue.comments.length + ' comments'"></span>
         </div>
       </div>
     </template>

@@ -92,8 +92,15 @@ def process_issue_data(issue_data):
     return processed_data
 
 
+class CircularRefEncoder(json.JSONEncoder):
+    def default(self, obj):
+        try:
+            return super().default(obj)
+        except:
+            return str(obj)
+
 def save_in_global_db(key, obj):
-    json_object = json.dumps(obj, separators=(',', ':'))
+    json_object = json.dumps(obj, separators=(',', ':'), cls=CircularRefEncoder)
     try:
         # S3 save
         s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_object)
