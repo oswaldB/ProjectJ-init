@@ -320,18 +320,29 @@ def view_issue(issue_id):
 @app.route('/api/jaffar/issues/list', methods=['GET'])
 def list_issues():
     issues = []
-    # List objects in both draft and new folders
-    for status in ['draft', 'new']:
-        prefix = f'jaffar/issues/{status}/'
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-        
-        if 'Contents' in response:
-            for obj in response['Contents']:
-                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                issue = json.loads(response['Body'].read().decode('utf-8'))
-                issues.append(issue)
+    try:
+        # List objects in both draft and new folders
+        for status in ['draft', 'new']:
+            prefix = f'jaffar/issues/{status}/'
+            try:
+                response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
                 
-    return jsonify(issues)
+                if 'Contents' in response:
+                    for obj in response['Contents']:
+                        try:
+                            response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                            issue = json.loads(response['Body'].read().decode('utf-8'))
+                            issues.append(issue)
+                        except Exception as e:
+                            logger.error(f"Error loading issue {obj['Key']}: {e}")
+                            
+            except Exception as e:
+                logger.error(f"Error listing issues for status {status}: {e}")
+                
+        return jsonify(issues)
+    except Exception as e:
+        logger.error(f"Error in list_issues: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/jaffar/issues/<issue_id>', methods=['GET', 'PUT'])
 def manage_issue(issue_id):
