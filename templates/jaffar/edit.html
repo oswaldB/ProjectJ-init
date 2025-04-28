@@ -81,6 +81,7 @@
   },
 
   async init() {
+    console.log('Initializing edit form...');
     const issueId = window.location.pathname.split('/').pop();
     if (!issueId) {
       window.location.href = '/';
