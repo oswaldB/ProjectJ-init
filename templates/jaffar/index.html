@@ -8,7 +8,7 @@
   issues: [],
   filteredIssues: [],
   searchQuery: '',
-  selectedStatus: 'all',
+  showDrafts: false,
   selectedTags: [],
   
   async init() {
@@ -24,10 +24,10 @@
   filterIssues() {
     this.filteredIssues = this.issues.filter(issue => {
       const matchesSearch = issue.title?.toLowerCase().includes(this.searchQuery.toLowerCase());
-      const matchesStatus = this.selectedStatus === 'all' || issue.status === this.selectedStatus;
+      const matchesDraft = this.showDrafts || issue.status !== 'draft';
       const matchesTags = this.selectedTags.length === 0 || 
         issue.tags?.some(tag => this.selectedTags.includes(tag));
-      return matchesSearch && matchesStatus && matchesTags;
+      return matchesSearch && matchesDraft && matchesTags;
     });
   }
 }">
@@ -47,15 +47,15 @@
         placeholder="Search issues..."
         class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600"
       >
-      <select 
-        x-model="selectedStatus" 
-        @change="filterIssues()"
-        class="bg-gray-700 text-white p-2 rounded border border-gray-600"
-      >
-        <option value="all">All Status</option>
-        <option value="draft">Draft</option>
-        <option value="new">New</option>
-      </select>
+      <label class="flex items-center gap-2 text-white">
+        <input 
+          type="checkbox" 
+          x-model="showDrafts" 
+          @change="filterIssues()"
+          class="rounded bg-gray-700 border-gray-600"
+        >
+        Show drafts
+      </label>
     </div>
   </div>
 
@@ -64,7 +64,7 @@
       <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
         <div class="flex justify-between items-start">
           <div>
-            <a :href="'/issue/' + issue.id" class="text-xl font-medium text-white hover:text-blue-400" x-text="issue.title"></a>
+            <a :href="'/issue/' + issue.id" class="text-xl font-medium text-white hover:text-blue-400" x-text="issue.title || 'Untitled Issue'"></a>
             <div class="mt-2 space-x-2">
               <template x-for="tag in issue.tags" :key="tag">
                 <span 
