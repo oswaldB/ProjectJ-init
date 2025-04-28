@@ -359,12 +359,11 @@ def manage_issue(issue_id):
         
     elif request.method == 'PUT':
         data = request.json
+        if not isinstance(data.get('changes', []), list):
+            data['changes'] = []
+            
         status = data.get('status', 'draft')
         key = f'jaffar/issues/{status}/{issue_id}.json'
-        
-        # Ensure changes array exists
-        if 'changes' not in data:
-            data['changes'] = []
             
         # Get the previous version to compare changes
         try:
