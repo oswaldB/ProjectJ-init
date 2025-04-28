@@ -293,6 +293,16 @@
                                 class="w-full bg-gray-600 text-white p-2 rounded border border-gray-500"
                                 rows="3"></textarea>
                       </template>
+                      <template x-if="question.type === 'single_select'">
+                        <select x-model="formData[question.key]"
+                                :required="question.required"
+                                class="w-full bg-gray-600 text-white p-2 rounded border border-gray-500">
+                          <option value="">Select an option</option>
+                          <template x-for="option in question.options" :key="option.name">
+                            <option :value="option.name" x-text="option.name"></option>
+                          </template>
+                        </select>
+                      </template>
                       <template x-if="question.type === 'list'">
                         <div x-data="{ newItem: '', items: formData[question.key] || [] }" 
                              @input="formData[question.key] = items">
