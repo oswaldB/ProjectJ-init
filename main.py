@@ -575,10 +575,18 @@ def api_jaffar_save():
         if 'author' in data and status == 'new':
             sendConfirmationEmail(data['author'], issue_id, data)
 
-        return jsonify(data)
+        return app.response_class(
+            response=json.dumps(data, ensure_ascii=False, cls=CircularRefEncoder),
+            status=200,
+            mimetype='application/json'
+        )
     except Exception as e:
         logger.error(f"Failed to save issue: {e}")
-        return jsonify({"error": str(e)}), 500
+        return app.response_class(
+            response=json.dumps({"error": str(e)}, ensure_ascii=False, cls=CircularRefEncoder),
+            status=500,
+            mimetype='application/json'
+        )
 
 
 @app.route('/api/acknowledge', methods=['POST'])
