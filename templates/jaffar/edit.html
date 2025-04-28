@@ -213,7 +213,7 @@
                 <template x-for="selected in formData[field.key]" :key="selected">
                   <div class="bg-red-500 text-white px-3 py-1 rounded-full flex items-center gap-2">
                     <span x-text="selected"></span>
-                    <button @click="formData[field.key] = formData[field.key].filter(item => item !== selected)" class="hover:text-gray-200">
+                    <button @click="selections = selections.filter(item => item !== selected)" class="hover:text-gray-200">
                       ×
                     </button>
                   </div>
