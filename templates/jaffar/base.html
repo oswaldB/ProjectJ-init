@@ -33,22 +33,9 @@
 
         <!-- Main Content -->
         <div class="flex-1 ml-64">
-            <!-- Header -->
-            <header class="bg-gray-800 shadow h-16 fixed w-full z-10">
-                <div class="flex items-center justify-between h-full px-6">
-                    <h1 class="text-xl font-semibold">Jaffar</h1>
-                    <div class="flex items-center space-x-4">
-                        <span id="userEmail" class="text-sm text-gray-300"></span>
-                        <button onclick="localStorage.removeItem('user_email'); window.location.href='/login'" 
-                                class="text-sm text-red-400 hover:text-red-300">
-                            Logout
-                        </button>
-                    </div>
-                </div>
-            </header>
 
             <!-- Main Content Area -->
-            <main class="p-6 mt-16">
+            <main class="p-6 mt-4">
                 {% block content %}{% endblock %}
             </main>
         </div>
