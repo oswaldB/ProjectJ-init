@@ -1,0 +1,127 @@
+Ton intuition est bonne : ta fonction api_jaffar_save() est trop longue (plus de 100 lignes).
+Et elle fait trop de choses à la fois : comparaison, journalisation, sauvegarde, envoi d'email, etc.
+
+Voici comment on va corriger ça proprement
+👉 On va la découper en 5 fonctions ultra claires :
+
+
+Fonction	Rôle
+fetch_old_issue(issue_id, status)	Récupérer l'ancienne version
+compare_issues(old_data, new_data)	Comparer et détecter les vrais changements
+save_issue(issue_id, status, data)	Sauvegarder sur S3 + local
+record_change(data, changes, user_email)	Ajouter un historique de modification
+send_confirmation_if_needed(data)	Envoyer un email si nécessaire
+📦 Voici comment tu vas réécrire api_jaffar_save()
+python
+Copier
+Modifier
+@app.route('/api/jaffar/save', methods=['POST'])
+def api_jaffar_save():
+    try:
+        data = request.json
+        if not data or 'id' not in data:
+            return jsonify({"error": "Missing required data"}), 400
+
+        issue_id = data['id']
+        status = data.get('status', 'draft')
+        user_email = data.get('author')
+        previous_status = data.get('previous_status', status)
+
+        old_data = fetch_old_issue(issue_id, previous_status)
+
+        changes = compare_issues(old_data, data)
+        
+        if changes:
+            if not user_email:
+                return jsonify({"error": "Author email is required"}), 400
+            record_change(data, changes, user_email, previous_status)
+
+        data['previous_status'] = status
+        data['updated_at'] = datetime.datetime.now().isoformat()
+
+        save_issue(issue_id, status, data)
+        send_confirmation_if_needed(data)
+
+        return jsonify(data)
+    except Exception as e:
+        logger.error(f"Failed to save issue: {e}")
+        return jsonify({"error": str(e)}), 500
+🛠 Et chacune des fonctions est simple :
+1. Récupérer l'ancienne version
+python
+Copier
+Modifier
+def fetch_old_issue(issue_id, previous_status):
+    try:
+        key = f'jaffar/issues/{previous_status}/{issue_id}.json'
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+        return json.loads(response['Body'].read().decode('utf-8'))
+    except Exception:
+        return None
+2. Comparer
+python
+Copier
+Modifier
+def clean_value(value):
+    if isinstance(value, str):
+        return value.strip()
+    if value is None:
+        return ''
+    return value
+
+def has_meaningful_change(old_value, new_value):
+    return clean_value(old_value) != clean_value(new_value)
+
+def compare_issues(old_data, new_data):
+    if not old_data:
+        return {}
+
+    changes = {}
+    for key, new_value in new_data.items():
+        if key in old_data:
+            if has_meaningful_change(old_data[key], new_value):
+                changes[key] = {
+                    'previous': old_data.get(key),
+                    'new': new_value
+                }
+        else:
+            changes[key] = {'previous': None, 'new': new_value}
+    return changes
+3. Sauvegarder
+python
+Copier
+Modifier
+def save_issue(issue_id, status, data):
+    key = f'jaffar/issues/{status}/{issue_id}.json'
+    save_in_global_db(key, remove_circular_references(data))
+4. Enregistrer l'historique
+python
+Copier
+Modifier
+def record_change(data, changes, user_email, previous_status):
+    change_record = {
+        'modified_by': user_email,
+        'modified_at': datetime.datetime.now().isoformat(),
+        'previous_status': previous_status,
+        'value_changes': changes
+    }
+    if 'changes' not in data or not isinstance(data['changes'], list):
+        data['changes'] = []
+    data['changes'].append(change_record)
+5. Envoi d'email
+python
+Copier
+Modifier
+def send_confirmation_if_needed(data):
+    if data.get('author') and data.get('status') == 'new':
+        sendConfirmationEmail(data['author'], data['id'], data)
+🎯 Avantages IMMÉDIATS
+La fonction /api/jaffar/save fait moins de 30 lignes.
+
+Chaque morceau est réutilisable (par exemple pour /duplicate, /update, etc.)
+
+Tu peux tester chaque fonction séparément sans tout casser.
+
+Tu gagnes du temps : ton code est plus rapide à relire et corriger.
+
+Ton serveur Flask est plus rapide (moins de risques d'erreurs sur les gros objets JSON).
