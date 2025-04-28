@@ -544,9 +544,34 @@ def compare_issues(old_data, new_data):
             changes[key] = {'previous': None, 'new': simplify_value(new_value)}
     return changes
 
+def save_issue_changes(issue_id, changes):
+    key = f'jaffar/issues/changes/{issue_id}-changes.json'
+    json_data = json.dumps(changes, ensure_ascii=False)
+    
+    def save_to_s3():
+        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_data.encode('utf-8'), ContentType='application/json')
+    
+    def save_to_local():
+        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        with open(local_path, 'w', encoding='utf-8') as f:
+            f.write(json_data)
+            
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        s3_future = executor.submit(save_to_s3)
+        local_future = executor.submit(save_to_local)
+        s3_future.result()
+        local_future.result()
+
 def save_issue(issue_id, status, data):
+    # Remove changes from main data before saving
+    main_data = data.copy()
+    if 'changes' in main_data:
+        save_issue_changes(issue_id, main_data['changes'])
+        del main_data['changes']
+    
     key = f'jaffar/issues/{status}/{issue_id}.json'
-    cleaned_data = remove_circular_references(data)
+    cleaned_data = remove_circular_references(main_data)
     json_data = json.dumps(cleaned_data, ensure_ascii=False, cls=CircularRefEncoder)
     
     def save_to_s3():
@@ -558,12 +583,11 @@ def save_issue(issue_id, status, data):
         with open(local_path, 'w', encoding='utf-8') as f:
             f.write(json_data)
             
-    # Execute saves in parallel
     with ThreadPoolExecutor(max_workers=2) as executor:
         s3_future = executor.submit(save_to_s3)
         local_future = executor.submit(save_to_local)
-        s3_future.result()  # Wait for S3 save to complete
-        local_future.result()  # Wait for local save to complete
+        s3_future.result()
+        local_future.result()
 
 def record_change(data, changes, user_email, previous_status):
     change_record = {
