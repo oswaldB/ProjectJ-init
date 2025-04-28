@@ -21,11 +21,12 @@
     this.$watch('formData', (value) => {
       const now = new Date();
       const formToSave = {
-        id: `JAFF-ISS-${now.getTime()}`,
+        id: this.formData.id || `JAFF-ISS-${now.getTime()}`,
         author: localStorage.getItem('user_email'),
         ...value,
         status: 'draft',
-        created_at: now.toISOString()
+        created_at: this.formData.created_at || now.toISOString(),
+        updated_at: now.toISOString()
       };
 
       fetch('/api/jaffar/save', {
@@ -118,7 +119,8 @@
 
   <template x-if="config">
     <div class="space-y-6">
-      <template x-for="field in config.fields" :key="field.key">
+      <template x-for="field in config.fields.filter(f => !f.conditions || 
+        f.conditions.every(c => formData[c.field] === c.value))" :key="field.key">
         <div class="bg-gray-800 p-4 rounded-lg">
           <label class="block mb-2">
             <span class="text-lg font-medium text-white" x-text="field.label"></span>
