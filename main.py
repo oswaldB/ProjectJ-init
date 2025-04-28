@@ -283,11 +283,15 @@ def acknowledge():
 def new_issue():
     now = datetime.datetime.now()
     issue_id = f'JAFF-ISS-{int(now.timestamp() * 1000)}'
+    user_email = request.headers.get('user_email')
+
+    if not user_email:
+        return redirect('/login')
 
     # Create initial draft
     issue_data = {
         'id': issue_id,
-        'author': request.headers.get('user_email'),
+        'author': user_email,
         'status': 'draft',
         'created_at': now.isoformat(),
         'updated_at': now.isoformat()
