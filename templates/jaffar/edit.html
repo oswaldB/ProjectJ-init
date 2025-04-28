@@ -195,6 +195,7 @@
               search: '',
               selections: [],
               init() {
+                console.log('Initial value for', field.key, ':', formData[field.key]);
                 this.selections = formData[field.key] || [];
                 this.$watch('selections', value => {
                   formData[field.key] = [...value];
