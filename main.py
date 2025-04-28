@@ -362,24 +362,51 @@ def manage_issue(issue_id):
         status = data.get('status', 'draft')
         key = f'jaffar/issues/{status}/{issue_id}.json'
         
-        # Add change history
+        # Ensure changes array exists
         if 'changes' not in data:
             data['changes'] = []
             
-        data['changes'].append({
-            'modified_by': request.headers.get('user_email'),
-            'modified_at': datetime.datetime.now().isoformat(),
-            'previous_status': data.get('previous_status', status)
-        })
+        # Get the previous version to compare changes
+        try:
+            old_key = f'jaffar/issues/{data.get("previous_status", status)}/{issue_id}.json'
+            old_response = s3.get_object(Bucket=BUCKET_NAME, Key=old_key)
+            old_data = json.loads(old_response['Body'].read().decode('utf-8'))
+            
+            # Compare and record changes
+            changes = {}
+            for key, new_value in data.items():
+                if key in old_data and old_data[key] != new_value:
+                    changes[key] = {
+                        'previous': old_data[key],
+                        'new': new_value
+                    }
+                    
+            if changes:
+                data['changes'].append({
+                    'modified_by': request.headers.get('user_email'),
+                    'modified_at': datetime.datetime.now().isoformat(),
+                    'previous_status': data.get('previous_status', status),
+                    'value_changes': changes
+                })
+        except:
+            # If no previous version exists, just record status change
+            data['changes'].append({
+                'modified_by': request.headers.get('user_email'),
+                'modified_at': datetime.datetime.now().isoformat(),
+                'previous_status': data.get('previous_status', status)
+            })
         
         data['previous_status'] = status
         data['updated_at'] = datetime.datetime.now().isoformat()
+        
+        # Save to S3 and locally
+        json_data = json.dumps(data, ensure_ascii=False)
         
         # Save to S3
         s3.put_object(
             Bucket=BUCKET_NAME,
             Key=key,
-            Body=json.dumps(data, ensure_ascii=False)
+            Body=json_data
         )
         
         # Save locally
