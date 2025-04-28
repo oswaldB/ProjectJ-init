@@ -40,7 +40,7 @@
       if (!this.editForm.changes) {
         this.editForm.changes = [];
       }
-      
+
       this.editForm.changes.push({
         modified_by: localStorage.getItem('user_email'),
         modified_at: new Date().toISOString(),
@@ -52,15 +52,15 @@
         changes: this.editForm.changes || []
       };
 
-      const response = await fetch(`/api/jaffar/issues/${this.issue.id}`, {
-        method: 'PUT',
+      const response = await fetch('/api/jaffar/save', {
+        method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'user_email': localStorage.getItem('user_email')
         },
         body: JSON.stringify(dataToSend)
       });
-      
+
       if (response.ok) {
         this.issue = await response.json();
         this.isEditing = false;
