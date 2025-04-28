@@ -11,7 +11,7 @@
     try {
       // Validate required fields
       if (!this.config || !this.config.fields) return;
-      
+
       const missingFields = this.config.fields
         .filter(f => f.required && !this.formData[f.key])
         .map(f => f.label);
@@ -184,9 +184,8 @@
           <template x-if="field.type === 'multiple_checkbox'">
             <div x-data="{ 
               search: '',
-              selections: [],
+              selections: formData[field.key] || [],
               init() {
-                this.selections = formData[field.key] || [];
                 this.$watch('selections', value => {
                   formData[field.key] = value;
                 });
