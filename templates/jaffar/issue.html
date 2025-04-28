@@ -45,10 +45,19 @@
       });
     }
 
+    // Ensure we're sending the changes array
+    const dataToSend = {
+      ...this.editForm,
+      changes: this.editForm.changes || []
+    };
+
     const response = await fetch(`/api/jaffar/issues/${this.issue.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(this.editForm)
+      headers: { 
+        'Content-Type': 'application/json',
+        'user_email': localStorage.getItem('user_email')
+      },
+      body: JSON.stringify(dataToSend)
     });
     if (response.ok) {
       this.issue = await response.json();
