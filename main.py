@@ -498,8 +498,6 @@ def save_issue_changes(issue_id, changes):
         s3_future.result()
         local_future.result()
 
- 500
-
 
 def get_changes_from_global_db(issue_id):
     changes_key = f'jaffar/issues/changes/{issue_id}-changes.json'
