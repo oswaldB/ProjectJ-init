@@ -102,14 +102,6 @@
 
       const result = await saveResponse.json();
       if (result.status === 'success') {
-        //Save changes after successful main save
-        if (this.changes.length > 0) {
-          await fetch('/api/jaffar/changes/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ issue_id: id, changes: this.changes })
-          });
-        }
         window.location.href = '/';
       } else {
         alert('Error saving form: ' + result.error);
