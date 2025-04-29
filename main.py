@@ -115,10 +115,44 @@ def validate_save_request(data):
     return True
 
 
+def get_max_filename_from_global_db(suffix):
+    prefix = 'jaffar/configs/'
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        max_num = 0
+        max_key = None
+        
+        if 'Contents' in response:
+            for obj in response['Contents']:
+                if obj['Key'].endswith(suffix):
+                    num = int(obj['Key'].split('/')[-1].split('-')[0])
+                    if num > max_num:
+                        max_num = num
+                        max_key = obj['Key']
+        return max_key
+    except Exception as e:
+        logger.error(f"Failed to get max filename: {e}")
+        return None
+
 def save_issue_to_storage(issue_id, status, data):
     logger.info(f"Entering save_issue_to_storage for issue {issue_id}")
     key = f'jaffar/issues/{status}/{issue_id}.json'
     logger.info(f"Generated storage key: {key}")
+
+    # Add config array
+    config = []
+    configs = {
+        "escalation": get_max_filename_from_global_db("escalationRules.json"),
+        "questions": get_max_filename_from_global_db("jaffarConfig.json"),
+        "templates": get_max_filename_from_global_db("templates.json"),
+        "rules": get_max_filename_from_global_db("rules.json")
+    }
+    
+    for key_name, value in configs.items():
+        if value:
+            config.append({key_name: value})
+    
+    data['config'] = config
 
     try:
         # Check if this is a first save
