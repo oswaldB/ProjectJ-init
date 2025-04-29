@@ -1,10 +1,58 @@
 
 from flask import Blueprint, render_template, redirect, request, jsonify
 import datetime
+import json
+import os
+import logging
 from services.email_service import send_confirmation_if_needed
-from services.issue_service import save_issue
+from main import s3, BUCKET_NAME, LOCAL_BUCKET_DIR, remove_circular_references, CircularRefEncoder
 
+logger = logging.getLogger(__name__)
 jaffar_bp = Blueprint('jaffar', __name__)
+
+def save_issue_to_storage(issue_id, status, data):
+    logger.info(f"Saving issue {issue_id}")
+    
+    # Remove changes from main data
+    main_data = data.copy()
+    changes = main_data.pop('changes', None)
+    
+    # Save issue data
+    key = f'jaffar/issues/{status}/{issue_id}.json'
+    cleaned_data = remove_circular_references(main_data)
+    json_data = json.dumps(cleaned_data, ensure_ascii=False, cls=CircularRefEncoder)
+    
+    try:
+        # Save to S3
+        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_data.encode('utf-8'))
+        
+        # Save locally
+        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        with open(local_path, 'w', encoding='utf-8') as f:
+            f.write(json_data)
+            
+        # Save changes if present
+        if changes:
+            save_issue_changes(issue_id, changes)
+            
+        return True
+    except Exception as e:
+        logger.error(f"Failed to save issue {issue_id}: {e}")
+        return False
+
+def save_issue_changes(issue_id, changes):
+    changes_key = f'jaffar/issues/changes/{issue_id}-changes.json'
+    try:
+        json_data = json.dumps(changes, ensure_ascii=False)
+        s3.put_object(Bucket=BUCKET_NAME, Key=changes_key, Body=json_data.encode('utf-8'))
+        
+        local_path = os.path.join(LOCAL_BUCKET_DIR, changes_key)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        with open(local_path, 'w', encoding='utf-8') as f:
+            f.write(json_data)
+    except Exception as e:
+        logger.error(f"Failed to save changes for issue {issue_id}: {e}")
 
 @jaffar_bp.route('/')
 def index():
