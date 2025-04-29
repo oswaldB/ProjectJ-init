@@ -198,13 +198,22 @@
                 <template x-if="formData?.status">
                   <span>•</span>
                 </template>
-                <template x-if="formData?.status">
-                  <span class="px-2 py-0.5 rounded-full text-xs" 
-                    :class="{
-                      'bg-yellow-900 text-yellow-200': formData?.status === 'draft',
-                      'bg-green-900 text-green-200': formData?.status === 'new'
-                    }"
-                    x-text="formData?.status">
+                <span
+                  class="px-2 py-0.5 rounded-full text-sm font-semibold"
+                  :class="{
+                    'bg-yellow-900 text-yellow-200': formData?.status === 'draft',
+                    'bg-green-900 text-green-200': formData?.status === 'new'
+                  }"
+                  x-text="formData?.status"
+                ></span>
+                <template x-if="formData?.version">
+                  <span class="text-sm text-gray-400">
+                    Version <span x-text="formData.version"></span>
+                  </span>
+                </template>
+                <template x-if="formData?.status === 'new' && formData?.previous_status === 'draft'">
+                  <span class="px-3 py-1 rounded-full text-sm font-semibold bg-yellow-900 text-yellow-200">
+                    V<span x-text="(formData.version || 1) + 1"></span>: draft
                   </span>
                 </template>
               </div>
