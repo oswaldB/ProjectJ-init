@@ -527,6 +527,10 @@ def api_jaffar_save():
 def save_issue_changes(issue_id, new_changes):
     logger.info(f"Starting to save changes for issue {issue_id}")
     
+    if not isinstance(new_changes, list):
+        logger.info(f"Converting changes to list for issue {issue_id}")
+        new_changes = [new_changes]
+        
     if not new_changes:
         logger.info(f"No changes to save for issue {issue_id}")
         return
@@ -539,15 +543,23 @@ def save_issue_changes(issue_id, new_changes):
         try:
             response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
             existing_changes = json.loads(response['Body'].read().decode('utf-8'))
-            if isinstance(existing_changes, list):
-                existing_changes.extend(new_changes)
-            else:
-                existing_changes = new_changes
-        except:
+            logger.info(f"Loaded {len(existing_changes)} existing changes")
+            
+            if not isinstance(existing_changes, list):
+                existing_changes = [existing_changes]
+                
+            # Add only new changes that aren't already in the history
+            for change in new_changes:
+                if change not in existing_changes:
+                    existing_changes.append(change)
+                    logger.info("Added new change to history")
+                    
+        except Exception as e:
+            logger.info(f"No existing changes found: {e}")
             existing_changes = new_changes
 
         json_data = json.dumps(existing_changes, ensure_ascii=False)
-        logger.info("Successfully serialized changes to JSON")
+        logger.info(f"Successfully serialized {len(existing_changes)} changes to JSON")
     except Exception as e:
         logger.error(f"Failed to serialize changes to JSON: {e}")
         return
