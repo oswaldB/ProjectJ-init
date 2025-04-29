@@ -171,7 +171,7 @@
             <template x-if="!item.type">
               <div>
                 <div class="flex justify-between items-start mb-2">
-                  <span class="text-sm text-gray-400" x-text="Object.values(item)[0][0].author + ' - ' + new Date(Object.values(item)[0][0].timestamp).toLocaleString()"></span>
+                  <span class="text-sm text-gray-400" x-text="item[Object.keys(item)[0]][0].author + ' - ' + new Date(item[Object.keys(item)[0]][0].timestamp).toLocaleString()"></span>
                 </div>
                 <div class="space-y-2">
                   <template x-for="(changes, field) in item" :key="field">
