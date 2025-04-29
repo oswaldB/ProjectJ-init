@@ -1,3 +1,4 @@
+
 {% extends "jaffar/base.html" %}
 
 {% block title %}Issues Grid{% endblock %}
@@ -10,8 +11,9 @@
     margin-top: 20px;
   }
   .sheet-table {
-    width: 100%;
+    min-width: 100%;
     border-collapse: collapse;
+    white-space: nowrap;
   }
   .sheet-table th, .sheet-table td {
     border: 1px solid #374151;
@@ -21,6 +23,8 @@
   .sheet-table th {
     background-color: #1f2937;
     color: white;
+    position: sticky;
+    top: 0;
   }
   .sheet-table tr:nth-child(even) {
     background-color: #111827;
@@ -56,7 +60,9 @@ let issuesData = [];
 async function loadData() {
   const response = await fetch('/api/jaffar/issues/list');
   if (response.ok) {
-    issuesData = await response.json();
+    const data = await response.json();
+    // Filter only issues with version number
+    issuesData = data.filter(issue => issue.version);
     displayData(issuesData);
   }
 }
@@ -66,8 +72,14 @@ function displayData(data) {
   const table = document.createElement('table');
   table.className = 'sheet-table';
 
-  // Headers
-  const headers = ['ID', 'Status', 'Version', 'Name', 'Description', 'Asset Class', 'Business Unit', 'Region', 'PC Function', 'Issue Family', 'Author', 'Submitted At'];
+  // Headers - Added more columns
+  const headers = [
+    'ID', 'Status', 'Version', 'Name', 'Description', 'Asset Class', 
+    'Business Unit', 'Region', 'PC Function', 'Issue Family', 
+    'Control Pillar', 'Date Identification', 'Impact Breach Start Date',
+    'Author', 'Created At', 'Updated At', 'Submitted At'
+  ];
+  
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
   headers.forEach(header => {
@@ -93,7 +105,12 @@ function displayData(data) {
       Array.isArray(issue.region) ? issue.region.join(', ') : issue.region || '',
       issue['pc-function'] || '',
       issue['issue-family'] || '',
-      issue.author,
+      Array.isArray(issue['control-pillar']) ? issue['control-pillar'].join(', ') : issue['control-pillar'] || '',
+      issue['date-identification'] || '',
+      issue['impact-breach-start-date'] || '',
+      issue.author || '',
+      issue.created_at ? new Date(issue.created_at).toLocaleString() : '',
+      issue.updated_at ? new Date(issue.updated_at).toLocaleString() : '',
       issue.submitted_at ? new Date(issue.submitted_at).toLocaleString() : ''
     ];
 
@@ -122,7 +139,12 @@ function exportToExcel() {
     Region: Array.isArray(issue.region) ? issue.region.join(', ') : issue.region || '',
     'PC Function': issue['pc-function'] || '',
     'Issue Family': issue['issue-family'] || '',
-    Author: issue.author,
+    'Control Pillar': Array.isArray(issue['control-pillar']) ? issue['control-pillar'].join(', ') : issue['control-pillar'] || '',
+    'Date Identification': issue['date-identification'] || '',
+    'Impact Breach Start Date': issue['impact-breach-start-date'] || '',
+    Author: issue.author || '',
+    'Created At': issue.created_at ? new Date(issue.created_at).toLocaleString() : '',
+    'Updated At': issue.updated_at ? new Date(issue.updated_at).toLocaleString() : '',
     'Submitted At': issue.submitted_at ? new Date(issue.submitted_at).toLocaleString() : ''
   }));
 
