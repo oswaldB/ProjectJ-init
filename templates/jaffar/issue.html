@@ -35,7 +35,7 @@
     const comment = {
       author: localStorage.getItem('user_email'),
       content: this.newComment,
-      created_at: new Date().toISOString(),
+      timestamp: new Date().toISOString(),
       type: 'comment'
     };
 
@@ -161,7 +161,7 @@
             <template x-if="item.type === 'comment'">
               <div>
                 <div class="flex justify-between items-start mb-2">
-                  <span class="text-sm text-gray-400" x-text="item.author + ' - ' + new Date(item.created_at).toLocaleString()"></span>
+                  <span class="text-sm text-gray-400" x-text="item.author + ' - ' + new Date(item.timestamp).toLocaleString()"></span>
                 </div>
                 <div x-html="item.content"></div>
               </div>
