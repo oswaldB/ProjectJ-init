@@ -12,7 +12,7 @@
 
   trackChanges(newData, oldData) {
     if (!oldData) return;
-    
+
     const change = {
       modified_by: localStorage.getItem('user_email'),
       modified_at: new Date().toISOString(),
@@ -120,19 +120,26 @@
         body: JSON.stringify(formToSave)
       });
 
-      if (!saveResponse.ok) {
-        throw new Error('Network response was not ok');
-      }
-
       const result = await saveResponse.json();
-      if (result.status === 'success') {
-        //Save changes after successful main save
+      if (result.status === 'success' || !result.error) {
+        // Save changes after successful main save
         if (this.changes.length > 0) {
-          await fetch('/api/jaffar/changes/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ issue_id: id, changes: this.changes })
-          });
+          try {
+            const issueId = this.formData.id;
+            const changeResponse = await fetch('/api/jaffar/changes/save', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                issue_id: issueId,
+                changes: this.changes
+              })
+            });
+            if (!changeResponse.ok) {
+              throw new Error('Failed to save changes');
+            }
+          } catch (error) {
+            console.error('Error saving changes:', error);
+          }
         }
         window.location.href = '/';
       } else {
@@ -163,7 +170,7 @@
       const formToSave = {
         id: this.formData.id || `JAFF-ISS-${now.getTime()}`,
         author: localStorage.getItem('user_email'),
-        ...value,
+        ...newValue,
         status: 'draft',
         created_at: this.formData.created_at || now.toISOString(),
         updated_at: now.toISOString()
@@ -194,7 +201,7 @@
       <button type="submit" @click.prevent="submitForm" 
         class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
         Submit
-</button>
+      </button>
     </div>
   </div>
 
