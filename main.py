@@ -499,33 +499,16 @@ def save_issue():
         # Extract changes before saving issue
         changes = data.pop('changes', None)
         
-        # Vérifier si l'issue existe déjà en statut 'new'
-        try:
-            new_key = f'jaffar/issues/new/{issue_id}.json'
-            response = s3.get_object(Bucket=BUCKET_NAME, Key=new_key)
-            existing_issue = json.loads(response['Body'].read().decode('utf-8'))
-            
-            # Si l'issue existe déjà en 'new', sauvegarder les modifications comme brouillon
-            draft_data = {
-                'id': issue_id,
-                'author': data.get('author'),
-                'parent_version': existing_issue.get('version', 1),
-                'changes': data,
-                'original_data': existing_issue,
-                'status': 'draft',
-                'updated_at': datetime.datetime.now().isoformat()
-            }
-            save_issue_to_storage(issue_id, 'draft', draft_data)
-            logger.info(f"Saved draft changes for submitted issue {issue_id}")
-            
-        except s3.exceptions.NoSuchKey:
-            # Si l'issue n'existe pas en 'new', procéder normalement
-            save_issue_to_storage(issue_id, status, data)
-            logger.info(f"Saved new issue {issue_id}")
+        # Save the issue without changes
+        save_issue_to_storage(issue_id, status, data)
 
         # Track changes if any exist
         if changes:
             save_issue_changes(issue_id, changes)
+
+        # Send confirmation email for new issues
+        if status == 'new':
+            email_executor.submit(send_confirmation_if_needed, data)
 
         return jsonify({"status": "success"})
     except Exception as e:
