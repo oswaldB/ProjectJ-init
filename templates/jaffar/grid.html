@@ -20,7 +20,9 @@
     const response = await fetch('/api/jaffar/issues/list');
     if (response.ok) {
       const data = await response.json();
-      this.issues = data.filter(issue => issue.status === 'new' || issue.version);
+      this.issues = data
+        .filter(issue => issue.status === 'new' || issue.version)
+        .map(issue => ({...issue, showEmail: false}));
     }
   },
   filteredIssues() {
@@ -142,7 +144,18 @@
             <td class="p-3" x-text="Array.isArray(issue.region) ? issue.region.join(', ') : issue.region || '--'"></td>
             <td class="p-3" x-text="issue['pc-function'] || '--'"></td>
             <td class="p-3" x-text="issue['issue-family'] || '--'"></td>
-            <td class="p-3" x-text="issue.author"></td>
+            <td class="p-3">
+              <div class="flex items-center gap-2">
+                <span x-show="!issue.showEmail" x-text="issue.author === localStorage.getItem('user_email') ? 'YOU' : issue.author.split('@')[0]"></span>
+                <span x-show="issue.showEmail" x-text="issue.author"></span>
+                <button 
+                  @click="issue.showEmail = !issue.showEmail"
+                  class="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded"
+                >
+                  <span x-text="issue.showEmail ? 'Hide' : 'Show'"></span>
+                </button>
+              </div>
+            </td>
             <td class="p-3" x-text="issue.submitted_at ? new Date(issue.submitted_at).toLocaleString() : '--'"></td>
           </tr>
         </template>
