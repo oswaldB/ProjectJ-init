@@ -4,7 +4,7 @@
 {% block title %}Issues Grid{% endblock %}
 
 {% block content %}
-<div class="p-6" x-data="{
+<div class="p-6" x-data="{ 
   issues: [],
   config: null,
   search: '',
@@ -16,6 +16,14 @@
     region: '',
     'pc-function': '',
     'issue-family': ''
+  },
+  toggleFullscreen() {
+    this.isFullscreen = !this.isFullscreen;
+  },
+  getFieldOptions(fieldKey) {
+    if (!this.config?.fields) return [];
+    const field = this.config.fields.find(f => f.key === fieldKey);
+    return field?.options || [];
   },
   async init() {
     const [issuesResponse, configResponse] = await Promise.all([
@@ -57,7 +65,7 @@
   <div class="flex justify-between items-center mb-6">
     <div class="flex gap-4 items-center">
       <button 
-        @click="isFullscreen = !isFullscreen"
+        @click="toggleFullscreen()"
         class="bg-gray-800 p-2 rounded-lg hover:bg-gray-700"
       >
         <svg x-show="!isFullscreen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
