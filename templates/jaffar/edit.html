@@ -6,32 +6,8 @@
 <div class="p-6" x-data="{
   config: null,
   formData: null,
-  changes: [],
-  previousData: null,
+  changes: [], // Added to track separate changes
   loading: true,
-
-  trackChanges(newData, oldData) {
-    if (!oldData) return;
-
-    const change = {
-      modified_by: localStorage.getItem('user_email'),
-      modified_at: new Date().toISOString(),
-      value_changes: {}
-    };
-
-    for (const key in newData) {
-      if (JSON.stringify(newData[key]) !== JSON.stringify(oldData[key])) {
-        change.value_changes[key] = {
-          previous: oldData[key],
-          new: newData[key]
-        };
-      }
-    }
-
-    if (Object.keys(change.value_changes).length > 0) {
-      this.changes.push(change);
-    }
-  },
 
   async loadData() {
     const issueId = window.location.pathname.split('/').pop();
@@ -100,13 +76,18 @@
       );
 
       const formToSave = {
-        id: this.formData.id,
+        id,
         author: localStorage.getItem('user_email'),
         ...this.formData,
         status: 'new',
         created_at: now.toISOString(),
         submittedAt: now.toISOString(),
-        changes: this.changes
+        configs: {
+          questions,
+          template,
+          escalation,
+          rules
+        }
       };
 
       const saveResponse = await fetch('/api/jaffar/save', {
@@ -116,11 +97,19 @@
       });
 
       if (!saveResponse.ok) {
-        throw new Error('Failed to save form');
+        throw new Error('Network response was not ok');
       }
 
       const result = await saveResponse.json();
-      if (!result.error) {
+      if (result.status === 'success') {
+        //Save changes after successful main save
+        if (this.changes.length > 0) {
+          await fetch('/api/jaffar/changes/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ issue_id: id, changes: this.changes })
+          });
+        }
         window.location.href = '/';
       } else {
         alert('Error saving form: ' + result.error);
@@ -136,21 +125,17 @@
     let initialLoad = true;
 
     // Watch formData for changes and auto-save as draft
-    this.$watch('formData', (newValue, oldValue) => {
+    this.$watch('formData', (value) => {
       if (initialLoad) {
         initialLoad = false;
-        this.previousData = JSON.parse(JSON.stringify(newValue));
         return;
       }
-
-      this.trackChanges(newValue, this.previousData);
-      this.previousData = JSON.parse(JSON.stringify(newValue));
 
       const now = new Date();
       const formToSave = {
         id: this.formData.id || `JAFF-ISS-${now.getTime()}`,
         author: localStorage.getItem('user_email'),
-        ...newValue,
+        ...value,
         status: 'draft',
         created_at: this.formData.created_at || now.toISOString(),
         updated_at: now.toISOString()
@@ -181,7 +166,7 @@
       <button type="submit" @click.prevent="submitForm" 
         class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
         Submit
-      </button>
+</button>
     </div>
   </div>
 
