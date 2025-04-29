@@ -332,21 +332,32 @@ def get_issue_changes(issue_id):
 @app.route('/api/jaffar/issues/<issue_id>/comments', methods=['POST'])
 def add_comment(issue_id):
     comment = request.json
-    for status in ['draft', 'new']:
-        key = f'jaffar/issues/{status}/{issue_id}.json'
+    changes_key = f'jaffar/issues/changes/{issue_id}-changes.json'
+
+    try:
         try:
-            response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-            issue = json.loads(response['Body'].read().decode('utf-8'))
-            if 'comments' not in issue:
-                issue['comments'] = []
-            issue['comments'].append(comment)
-            s3.put_object(Bucket=BUCKET_NAME,
-                          Key=key,
-                          Body=json.dumps(issue, ensure_ascii=False))
-            return jsonify(issue)
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=changes_key)
+            changes = json.loads(response['Body'].read().decode('utf-8'))
+            if not isinstance(changes, list):
+                changes = [changes]
         except s3.exceptions.NoSuchKey:
-            continue
-    return jsonify({'error': 'Issue not found'}), 404
+            changes = []
+
+        changes.append(comment)
+
+        json_data = json.dumps(changes, ensure_ascii=False)
+        s3.put_object(Bucket=BUCKET_NAME, Key=changes_key, Body=json_data.encode('utf-8'))
+
+        # Save locally
+        local_path = os.path.join(LOCAL_BUCKET_DIR, changes_key)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        with open(local_path, 'w', encoding='utf-8') as f:
+            f.write(json_data)
+
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to save comment: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/api/jaffar/save', methods=['POST'])
@@ -358,14 +369,14 @@ def save_issue():
 
         issue_id = data.get('id')
         status = data.get('status', 'draft')
-        
+
         # Save the issue
         save_issue_to_storage(issue_id, status, data)
-        
+
         # Track changes if any exist
         if 'changes' in data:
             save_issue_changes(issue_id, data['changes'])
-            
+
         # Send confirmation email for new issues
         if status == 'new':
             email_executor.submit(send_confirmation_if_needed, data)

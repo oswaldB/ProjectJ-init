@@ -35,7 +35,8 @@
     const comment = {
       author: localStorage.getItem('user_email'),
       content: this.newComment,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      type: 'comment'
     };
 
     const response = await fetch(`/api/jaffar/issues/${this.issue.id}/comments`, {
@@ -45,7 +46,10 @@
     });
 
     if (response.ok) {
-      this.issue = await response.json();
+      if (!Array.isArray(this.issue.changes)) {
+        this.issue.changes = [];
+      }
+      this.issue.changes.push(comment);
       this.newComment = '';
     }
   }
