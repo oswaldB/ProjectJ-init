@@ -1,0 +1,156 @@
+lpine Expression Error: Unexpected token '}'
+
+Expression: "{ 
+  issues: [],
+  config: null,
+  search: '',
+  isFullscreen: false,
+  filters: {
+    status: '',
+    'asset-class': '',
+    'business-unit': '',
+    region: '',
+    'pc-function': '',
+    'issue-family': ''
+  },
+  toggleFullscreen() {
+    this.isFullscreen = !this.isFullscreen;
+  },
+  getFieldOptions(fieldKey) {
+    if (!this.config?.fields) return [];
+    const field = this.config.fields.find(f => f.key === fieldKey);
+    return field?.options || [];
+  },
+  async init() {
+    const [issuesResponse, configResponse] = await Promise.all([
+      fetch('/api/jaffar/issues/list'),
+      fetch('/api/jaffar/config')
+    ]);
+
+    if (configResponse.ok) {
+      this.config = await configResponse.json();
+    }
+
+    if (issuesResponse.ok) {
+      const data = await issuesResponse.json();
+      this.issues = data
+        .filter(issue => issue.status === 'new' || issue.version)
+        .map(issue => ({...issue, showEmail: false}));
+    }
+  },
+  getFieldOptions(fieldKey) {
+    if (!this.config?.fields) return [];
+    const field = this.config.fields.find(f => f.key === fieldKey);
+    return field?.options || [];
+  },
+  filteredIssues() {
+    return this.issues.filter(issue => {
+      const matchesSearch = JSON.stringify(issue).toLowerCase().includes(this.search.toLowerCase());
+      const matchesFilters = Object.entries(this.filters).every(([key, value]) => {
+        if (!value) return true;
+        const issueValue = issue[key];
+        if (Array.isArray(issueValue)) {
+          return issueValue.includes(value);
+        }
+        return issueValue === value;
+      });
+      return matchesSearch && matchesFilters;
+    });
+  },
+  exportToExcel() {
+    const data = this.filteredIssues().map(issue => ({
+      ID: issue.id,
+      Status: issue.status,
+      Version: issue.version || '',
+      Name: issue.name || '',
+      Description: issue['issue-description'] || '',
+      'Asset Class': Array.isArray(issue['asset-class']) ? issue['asset-class'].join(', ') : issue['asset-class'] || '',
+      'Business Unit': Array.isArray(issue['business-unit']) ? issue['business-unit'].join(', ') : issue['business-unit'] || '',
+      Region: Array.isArray(issue.region) ? issue.region.join(', ') : issue.region || '',
+      'PC Function': issue['pc-function'] || '',
+      'Issue Family': issue['issue-family'] || '',
+      Author: issue.author,
+      'Submitted At': issue.submitted_at ? new Date(issue.submitted_at).toLocaleString() : ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "
+
+ <div class=​"p-6" x-data=​"{ 
+  issues:​ []​,
+  config:​ null,
+  search:​ '',
+  isFullscreen:​ false,
+  filters:​ {
+    status:​ '',
+    'asset-class':​ '',
+    'business-unit':​ '',
+    region:​ '',
+    'pc-function':​ '',
+    'issue-family':​ ''
+  }​,
+  toggleFullscreen()​ {
+    this.isFullscreen = !this.isFullscreen;​
+  }​,
+  getFieldOptions(fieldKey)​ {
+    if (!this.config?.fields)​ return []​;​
+    const field = this.config.fields.find(f => f.key === fieldKey)​;​
+    return field?.options || []​;​
+  }​,
+  async init()​ {
+    const [issuesResponse, configResponse]​ = await Promise.all([
+      fetch('/​api/​jaffar/​issues/​list')​,
+      fetch('/​api/​jaffar/​config')​
+    ]​)​;​
+
+    if (configResponse.ok)​ {
+      this.config = await configResponse.json()​;​
+    }​
+
+    if (issuesResponse.ok)​ {
+      const data = await issuesResponse.json()​;​
+      this.issues = data
+        .filter(issue => issue.status === 'new' || issue.version)​
+        .map(issue => ({...issue, showEmail:​ false}​)​)​;​
+    }​
+  }​,
+  getFieldOptions(fieldKey)​ {
+    if (!this.config?.fields)​ return []​;​
+    const field = this.config.fields.find(f => f.key === fieldKey)​;​
+    return field?.options || []​;​
+  }​,
+  filteredIssues()​ {
+    return this.issues.filter(issue => {
+      const matchesSearch = JSON.stringify(issue)​.toLowerCase()​.includes(this.search.toLowerCase()​)​;​
+      const matchesFilters = Object.entries(this.filters)​.every(([key, value]​)​ => {
+        if (!value)​ return true;​
+        const issueValue = issue[key]​;​
+        if (Array.isArray(issueValue)​)​ {
+          return issueValue.includes(value)​;​
+        }​
+        return issueValue === value;​
+      }​)​;​
+      return matchesSearch && matchesFilters;​
+    }​)​;​
+  }​,
+  exportToExcel()​ {
+    const data = this.filteredIssues()​.map(issue => ({
+      ID:​ issue.id,
+      Status:​ issue.status,
+      Version:​ issue.version || '',
+      Name:​ issue.name || '',
+      Description:​ issue['issue-description']​ || '',
+      'Asset Class':​ Array.isArray(issue['asset-class']​)​ ? issue['asset-class']​.join(', ')​ :​ issue['asset-class']​ || '',
+      'Business Unit':​ Array.isArray(issue['business-unit']​)​ ? issue['business-unit']​.join(', ')​ :​ issue['business-unit']​ || '',
+      Region:​ Array.isArray(issue.region)​ ? issue.region.join(', ')​ :​ issue.region || '',
+      'PC Function':​ issue['pc-function']​ || '',
+      'Issue Family':​ issue['issue-family']​ || '',
+      Author:​ issue.author,
+      'Submitted At':​ issue.submitted_at ? new Date(issue.submitted_at)​.toLocaleString()​ :​ ''
+    }​)​)​;​
+
+    const ws = XLSX.utils.json_to_sheet(data)​;​
+    const wb = XLSX.utils.book_new()​;​
+    XLSX.utils.book_append_sheet(wb, ws, " issues"); xlsx.writefile(wb, "issues.xlsx"); } }">​…​</div>​
+re @ cdn.min.js:1
