@@ -367,6 +367,9 @@ def list_issues():
                                                      Key=obj['Key'])
                             issue = json.loads(
                                 response['Body'].read().decode('utf-8'))
+                            # Remove changes field to reduce payload size
+                            if 'changes' in issue:
+                                del issue['changes']
                             issues.append(issue)
                         except Exception as e:
                             logger.error(
