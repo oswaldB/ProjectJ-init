@@ -1,4 +1,3 @@
-
 import json
 import os
 import boto3
@@ -10,8 +9,18 @@ logger = logging.getLogger(__name__)
 LOCAL_BUCKET_DIR = "./local_bucket"
 BUCKET_NAME = "jaffar-bucket"
 
-# Initialize S3 client
-s3 = boto3.client('s3', region_name='us-east-1')
+# Initialize S3 client with mock credentials for local development
+# Replace this with a proper mocking library in a production environment.
+mock = mock_aws() # Placeholder - needs a real mock implementation
+mock.start() # Placeholder - needs a real mock implementation
+
+s3 = boto3.client(
+    's3',
+    aws_access_key_id='mock',
+    aws_secret_access_key='mock',
+    region_name='us-east-1'
+)
+
 
 def restore_local_to_s3():
     for root, _, files in os.walk(LOCAL_BUCKET_DIR):
@@ -28,11 +37,11 @@ def restore_local_to_s3():
 def save_issue_to_storage(issue_id, status, data):
     folder = status if status else 'draft'
     key = f'jaffar/issues/{folder}/{issue_id}.json'
-    
+
     try:
         content = json.dumps(data, indent=2)
         s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=content)
-        
+
         # Local save
         local_path = os.path.join(LOCAL_BUCKET_DIR, key)
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
@@ -46,11 +55,11 @@ def save_issue_to_storage(issue_id, status, data):
 def save_issue_changes(issue_id, changes):
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     key = f'changes/{issue_id}-{timestamp}.json'
-    
+
     try:
         content = json.dumps(changes, indent=2)
         s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=content)
-        
+
         # Local save
         local_path = os.path.join(LOCAL_BUCKET_DIR, 'changes', f'{issue_id}-{timestamp}.json')
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
@@ -64,7 +73,7 @@ def save_issue_changes(issue_id, changes):
 def get_changes_from_global_db(issue_id):
     prefix = f'jaffar/issues/changes/{issue_id}'
     changes = []
-    
+
     try:
         response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
         for obj in response.get('Contents', []):
@@ -77,7 +86,7 @@ def get_changes_from_global_db(issue_id):
                 logger.error(f"Failed to load change {obj['Key']}: {e}")
     except Exception as e:
         logger.error(f"Failed to list changes: {e}")
-    
+
     return changes
 
 def list_issues():
@@ -108,13 +117,14 @@ def get_issue(issue_id):
             continue
     return None
 
+import re
 def get_max_from_global_db(key):
     prefix = 'jaffar/configs/'
     try:
         response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
         max_number = -1
         max_object = None
-        
+
         for obj in response.get('Contents', []):
             remaining_parts = obj['Key'][len(prefix):]
             match = re.match(r'(\d+)-' + key, remaining_parts)
@@ -123,11 +133,11 @@ def get_max_from_global_db(key):
                 if number > max_number:
                     max_number = number
                     max_object = obj['Key']
-                    
+
         if max_object:
             response = s3.get_object(Bucket=BUCKET_NAME, Key=max_object)
             return json.loads(response['Body'].read().decode('utf-8'))
-            
+
     except Exception as e:
         logger.error(f"Error in get_max_from_global_db: {e}")
     return None
