@@ -191,16 +191,21 @@
                 }
                 
                 // Pour chaque changement dans le champ
-                fieldChanges.forEach(fieldChange => {
-                  // Ne garder que le dernier changement pour chaque valeur
-                  const existingChange = currentGroup.changes[field].find(
-                    existing => existing.new === fieldChange.new
-                  );
+                // Ne garder que le premier et le dernier changement
+                if (fieldChanges.length > 0) {
+                  const firstChange = fieldChanges[0];
+                  const lastChange = fieldChanges[fieldChanges.length - 1];
                   
-                  if (!existingChange) {
-                    currentGroup.changes[field].push(fieldChange);
+                  // Si la valeur initiale et finale sont différentes
+                  if (JSON.stringify(firstChange.previous) !== JSON.stringify(lastChange.new)) {
+                    currentGroup.changes[field] = [{
+                      previous: firstChange.previous,
+                      new: lastChange.new,
+                      timestamp: lastChange.timestamp,
+                      author: lastChange.author
+                    }];
                   }
-                });
+                }
               }
             });
           });
