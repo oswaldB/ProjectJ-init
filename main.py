@@ -340,38 +340,6 @@ IMPORTANT_FIELDS = {
 }
 
 
-def save_issue_to_storage(issue_id, status, data):
-    logger.info(f"Saving issue {issue_id}")
-    
-    # Remove changes from main data
-    main_data = data.copy()
-    changes = main_data.pop('changes', None)
-    
-    # Save issue data
-    key = f'jaffar/issues/{status}/{issue_id}.json'
-    cleaned_data = remove_circular_references(main_data)
-    json_data = json.dumps(cleaned_data, ensure_ascii=False, cls=CircularRefEncoder)
-    
-    try:
-        # Save to S3
-        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_data.encode('utf-8'))
-        
-        # Save locally
-        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
-        os.makedirs(os.path.dirname(local_path), exist_ok=True)
-        with open(local_path, 'w', encoding='utf-8') as f:
-            f.write(json_data)
-            
-        # Save changes if present
-        if changes:
-            save_issue_changes(issue_id, changes)
-            
-        return True
-    except Exception as e:
-        logger.error(f"Failed to save issue {issue_id}: {e}")
-        return False
-
-
 def send_confirmation_if_needed(data):
     if data.get('author') and data.get('status') == 'new':
         # Send email asynchronously
@@ -379,69 +347,18 @@ def send_confirmation_if_needed(data):
                               data['id'], data)
 
 
-def validate_save_request(data):
-    if not data or 'id' not in data:
-        logger.error("Missing required data in save request")
-        return False
-    return True
-
-def save_issue_to_storage(issue_id, status, data):
-    logger.info(f"Entering save_issue_to_storage for issue {issue_id}")
-    key = f'jaffar/issues/{status}/{issue_id}.json'
-    logger.info(f"Generated storage key: {key}")
-
-    try:
-        logger.info("Starting JSON serialization")
-        json_data = json.dumps(data, ensure_ascii=False, cls=CircularRefEncoder)
-        logger.info("JSON serialization completed")
-
-        logger.info("Starting S3 save")
-        s3.put_object(
-            Bucket=BUCKET_NAME, 
-            Key=key, 
-            Body=json_data.encode('utf-8'), 
-            ContentType='application/json'
-        )
-        logger.info("S3 save completed successfully")
-
-        logger.info("Starting local save")
-        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
-        logger.info(f"Local path generated: {local_path}")
-        
-        logger.info("Creating directories if needed")
-        os.makedirs(os.path.dirname(local_path), exist_ok=True)
-        
-        logger.info("Writing file locally")
-        with open(local_path, 'w', encoding='utf-8') as f:
-            f.write(json_data)
-        logger.info("Local save completed successfully")
-
-        logger.info(f"Issue {issue_id} saved successfully to both S3 and local storage")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to save issue {issue_id}: {e}")
-        return False
-
-def extract_issue_data(request_data):
-    """Extract and prepare issue data from request"""
-    issue_data = request_data.copy()
-    changes = issue_data.pop('changes', [])
-    return issue_data, changes
-
 @app.route('/api/jaffar/save', methods=['POST'])
 def api_jaffar_save():
     try:
         data = request.json
-        if not validate_save_request(data):
+        if not data or 'id' not in data:
+            logger.error("Missing required data in save request")
             return jsonify({"error": "Missing required data"}), 400
 
         issue_id = data['id']
         status = data.get('status', 'draft')
-        
-        if not save_issue_to_storage(issue_id, status, data):
-            return jsonify({"error": "Failed to save issue"}), 500
 
-        send_confirmation_if_needed(data)
+        #Issue saving moved to jaffar_routes.py
         return jsonify({"status": "success"})
 
     except Exception as e:
@@ -449,97 +366,12 @@ def api_jaffar_save():
         return jsonify({"error": str(e)}), 500
 
 
-def save_issue_changes(issue_id, new_changes):
-    logger.info(f"Starting to save changes for issue {issue_id}")
-    
-    if not isinstance(new_changes, list):
-        logger.info(f"Converting changes to list for issue {issue_id}")
-        new_changes = [new_changes]
-        
-    if not new_changes:
-        logger.info(f"No changes to save for issue {issue_id}")
-        return
 
-    key = f'jaffar/issues/changes/{issue_id}-changes.json'
-    logger.info(f"Generated changes file path: {key}")
-
-    try:
-        # Try to load existing changes
-        try:
-            response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-            existing_changes = json.loads(response['Body'].read().decode('utf-8'))
-            logger.info(f"Loaded {len(existing_changes)} existing changes")
-            
-            if not isinstance(existing_changes, list):
-                existing_changes = [existing_changes]
-                
-            # Add only new changes that aren't already in the history
-            for change in new_changes:
-                if change not in existing_changes:
-                    existing_changes.append(change)
-                    logger.info("Added new change to history")
-                    
-        except Exception as e:
-            logger.info(f"No existing changes found: {e}")
-            existing_changes = new_changes
-
-        json_data = json.dumps(existing_changes, ensure_ascii=False)
-        logger.info(f"Successfully serialized {len(existing_changes)} changes to JSON")
-    except Exception as e:
-        logger.error(f"Failed to serialize changes to JSON: {e}")
-        return
-
-    def save_to_s3():
-        try:
-            logger.info("Starting S3 save")
-            s3.put_object(Bucket=BUCKET_NAME,
-                          Key=key,
-                          Body=json_data.encode('utf-8'),
-                          ContentType='application/json')
-            logger.info("Successfully saved to S3")
-        except Exception as e:
-            logger.error(f"Failed to save to S3: {e}")
-            raise
-
-    def save_to_local():
-        try:
-            logger.info("Starting local save")
-            local_path = os.path.join(LOCAL_BUCKET_DIR, key)
-            os.makedirs(os.path.dirname(local_path), exist_ok=True)
-            with open(local_path, 'w', encoding='utf-8') as f:
-                f.write(json_data)
-            logger.info(f"Successfully saved locally to {local_path}")
-        except Exception as e:
-            logger.error(f"Failed to save locally: {e}")
-            raise
-
-    try:
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            logger.info("Starting parallel save operations")
-            s3_future = executor.submit(save_to_s3)
-            local_future = executor.submit(save_to_local)
-            s3_future.result()
-            local_future.result()
-        logger.info("Successfully completed all save operations")
-    except Exception as e:
-        logger.error(f"Error during parallel save operations: {e}")
-
-
-def get_changes_from_global_db(issue_id):
-    changes_key = f'jaffar/issues/changes/{issue_id}-changes.json'
-
-    try:
-        # Get changes from S3
-        response = s3.get_object(Bucket=BUCKET_NAME, Key=changes_key)
-        content = response['Body'].read().decode('utf-8')
-        return json.loads(content)
-    except s3.exceptions.NoSuchKey:
-        logger.info(f"No changes found for issue {issue_id}")
-        return []
-    except Exception as e:
-        logger.error(f"Failed to get changes for {issue_id}: {e}")
-        return []
-
+def extract_issue_data(request_data):
+    """Extract and prepare issue data from request"""
+    issue_data = request_data.copy()
+    changes = issue_data.pop('changes', [])
+    return issue_data, changes
 
 @app.route('/api/acknowledge', methods=['POST'])
 def api_acknowledge():
