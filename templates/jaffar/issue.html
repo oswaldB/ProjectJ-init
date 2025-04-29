@@ -154,7 +154,7 @@
         <template x-for="(item, index) in [...(Array.isArray(issue.changes) ? issue.changes : [])].reverse()" :key="index">
           <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
             <!-- System activity display -->
-            <template x-if="item.type === 'Jaffar'">
+            <template x-if="item.type === 'system'">
               <div class="border-l-4 border-blue-500 pl-4">
                 <div class="flex justify-between items-start mb-2">
                   <div class="flex items-center gap-2">
