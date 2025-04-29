@@ -3,14 +3,32 @@
 {% block title %}Issues Grid{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/styles/ag-grid.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/styles/ag-theme-alpine-dark.css">
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-enterprise@30.2.1/dist/ag-grid-enterprise.min.js"></script>
 <style>
-  .grid-container {
-    height: calc(100vh - 120px);
-    width: 100%;
+  .sheet-container {
+    overflow-x: auto;
     margin-top: 20px;
+  }
+  .sheet-table {
+    min-width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+  }
+  .sheet-table th, .sheet-table td {
+    border: 1px solid #374151;
+    padding: 8px;
+    text-align: left;
+  }
+  .sheet-table th {
+    background-color: #1f2937;
+    color: white;
+    position: sticky;
+    top: 0;
+  }
+  .sheet-table tr:nth-child(even) {
+    background-color: #111827;
+  }
+  .sheet-table tr:hover {
+    background-color: #374151;
   }
 </style>
 {% endblock %}
@@ -21,66 +39,86 @@
     <h1 class="text-2xl font-bold text-white">Issues Grid</h1>
   </div>
 
-  <div id="grid" class="ag-theme-alpine-dark grid-container"></div>
+  <div class="sheet-container" id="sheet-container"></div>
+
+  <input type="file" id="fileInput" style="display: none" accept=".xlsx,.xls">
 </div>
 
 <script>
-let gridApi;
-
-const columnDefs = [
-  { field: 'id', sortable: true, filter: true },
-  { field: 'status', sortable: true, filter: true },
-  { field: 'version', sortable: true, filter: true },
-  { field: 'name', sortable: true, filter: true },
-  { field: 'issue-description', headerName: 'Description', sortable: true, filter: true },
-  { field: 'asset-class', headerName: 'Asset Class', sortable: true, filter: true, valueFormatter: params => Array.isArray(params.value) ? params.value.join(', ') : params.value },
-  { field: 'business-unit', headerName: 'Business Unit', sortable: true, filter: true, valueFormatter: params => Array.isArray(params.value) ? params.value.join(', ') : params.value },
-  { field: 'region', sortable: true, filter: true, valueFormatter: params => Array.isArray(params.value) ? params.value.join(', ') : params.value },
-  { field: 'pc-function', headerName: 'PC Function', sortable: true, filter: true },
-  { field: 'issue-family', headerName: 'Issue Family', sortable: true, filter: true },
-  { field: 'control-pillar', headerName: 'Control Pillar', sortable: true, filter: true, valueFormatter: params => Array.isArray(params.value) ? params.value.join(', ') : params.value },
-  { field: 'date-identification', headerName: 'Date Identification', sortable: true, filter: true },
-  { field: 'impact-breach-start-date', headerName: 'Impact Breach Start Date', sortable: true, filter: true },
-  { field: 'author', sortable: true, filter: true },
-  { field: 'created_at', headerName: 'Created At', sortable: true, filter: true, valueFormatter: params => params.value ? new Date(params.value).toLocaleString() : '' },
-  { field: 'updated_at', headerName: 'Updated At', sortable: true, filter: true, valueFormatter: params => params.value ? new Date(params.value).toLocaleString() : '' },
-  { field: 'submitted_at', headerName: 'Submitted At', sortable: true, filter: true, valueFormatter: params => params.value ? new Date(params.value).toLocaleString() : '' }
-];
+let issuesData = [];
 
 async function loadData() {
   const response = await fetch('/api/jaffar/issues/list');
   if (response.ok) {
     const data = await response.json();
-    const issues = data.filter(issue => issue.version);
-    const gridOptions = {
-      columnDefs: columnDefs,
-      rowData: issues,
-      defaultColDef: {
-        flex: 1,
-        minWidth: 150,
-        resizable: true
-      },
-      enableRangeSelection: true,
-      copyHeadersToClipboard: true,
-      rowSelection: 'multiple',
-      onGridReady: params => {
-        gridApi = params.api;
-        params.api.sizeColumnsToFit();
-      }
-    };
-
-    new agGrid.Grid(document.getElementById('grid'), gridOptions);
+    // Filter only issues with version number
+    issuesData = data.filter(issue => issue.version);
+    displayData(issuesData);
   }
 }
 
+function displayData(data) {
+  const container = document.getElementById('sheet-container');
+  const table = document.createElement('table');
+  table.className = 'sheet-table';
+
+  // Headers - Added more columns
+  const headers = [
+    'ID', 'Status', 'Version', 'Name', 'Description', 'Asset Class', 
+    'Business Unit', 'Region', 'PC Function', 'Issue Family', 
+    'Control Pillar', 'Date Identification', 'Impact Breach Start Date',
+    'Author', 'Created At', 'Updated At', 'Submitted At'
+  ];
+
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  headers.forEach(header => {
+    const th = document.createElement('th');
+    th.textContent = header;
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // Data rows
+  const tbody = document.createElement('tbody');
+  data.forEach(issue => {
+    const row = document.createElement('tr');
+    const values = [
+      issue.id,
+      issue.status,
+      issue.version || '',
+      issue.name || '',
+      issue['issue-description'] || '',
+      Array.isArray(issue['asset-class']) ? issue['asset-class'].join(', ') : issue['asset-class'] || '',
+      Array.isArray(issue['business-unit']) ? issue['business-unit'].join(', ') : issue['business-unit'] || '',
+      Array.isArray(issue.region) ? issue.region.join(', ') : issue.region || '',
+      issue['pc-function'] || '',
+      issue['issue-family'] || '',
+      Array.isArray(issue['control-pillar']) ? issue['control-pillar'].join(', ') : issue['control-pillar'] || '',
+      issue['date-identification'] || '',
+      issue['impact-breach-start-date'] || '',
+      issue.author || '',
+      issue.created_at ? new Date(issue.created_at).toLocaleString() : '',
+      issue.updated_at ? new Date(issue.updated_at).toLocaleString() : '',
+      issue.submitted_at ? new Date(issue.submitted_at).toLocaleString() : ''
+    ];
+
+    values.forEach(value => {
+      const td = document.createElement('td');
+      td.textContent = value;
+      row.appendChild(td);
+    });
+    tbody.appendChild(row);
+  });
+  table.appendChild(tbody);
+
+  container.innerHTML = '';
+  container.appendChild(table);
+}
+
+
 // Load data when page loads
 document.addEventListener('DOMContentLoaded', loadData);
-
-// Handle window resize
-window.addEventListener('resize', () => {
-  if (gridApi) {
-    gridApi.sizeColumnsToFit();
-  }
-});
 </script>
 {% endblock %}
