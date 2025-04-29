@@ -5,14 +5,9 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
 import json
-import re
 import pandas as pd
 import boto3
-
 from concurrent.futures import ThreadPoolExecutor
-
-email_executor = ThreadPoolExecutor(max_workers=2)
-
 from moto import mock_aws
 import os
 import datetime
@@ -31,6 +26,7 @@ LOCAL_BUCKET_DIR = "./local_bucket"
 BUCKET_NAME = "jaffar-bucket"
 os.makedirs(LOCAL_BUCKET_DIR, exist_ok=True)
 
+email_executor = ThreadPoolExecutor(max_workers=2)
 
 # Initialize mocked AWS
 def restore_local_to_s3():
@@ -45,7 +41,6 @@ def restore_local_to_s3():
                 except Exception as e:
                     logger.error(f"Failed to restore {s3_key} to S3: {e}")
 
-
 mock = mock_aws()
 mock.start()
 
@@ -58,9 +53,7 @@ except:
 
 restore_local_to_s3()
 
-
 class Email:
-
     def __init__(self, to, subject, content):
         self.to = to if isinstance(to, list) else [to]
         self.subject = subject
@@ -81,46 +74,15 @@ class Email:
             logger.error(f"Failed to send email: {e}")
             return False
 
-
-def flatten_dict(dd, separator='_', prefix=''):
-    return {
-        f"{prefix}{separator}{k}" if prefix else k: v
-        for kk, vv in dd.items()
-        for k, v in flatten_dict(vv, separator, kk).items()
-    } if isinstance(dd, dict) else {
-        prefix: dd
-    }
-
-
-def process_issue_data(issue_data):
-    processed_data = {}
-    for key, value in issue_data.items():
-        if isinstance(value, list):
-            processed_data[key] = ', '.join(value)
-        elif isinstance(value, dict):
-            flattened_dict = flatten_dict(value)
-            processed_data.update(flattened_dict)
-        else:
-            processed_data[key] = value
-    return processed_data
-
-
-
-
-
 class CircularRefEncoder(json.JSONEncoder):
-
     def default(self, obj):
         try:
             return super().default(obj)
         except:
             return str(obj)
 
-
 def save_in_global_db(key, obj):
-    json_object = json.dumps(obj,
-                             separators=(',', ':'),
-                             cls=CircularRefEncoder)
+    json_object = json.dumps(obj, separators=(',', ':'), cls=CircularRefEncoder)
     try:
         # S3 save
         s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_object)
@@ -136,7 +98,6 @@ def save_in_global_db(key, obj):
     except Exception as e:
         logger.error(f"Failed to save data: {e}")
         return False
-
 
 def get_one_from_global_db(key):
     try:
@@ -154,61 +115,6 @@ def get_one_from_global_db(key):
             logger.error(f"Failed to get data: {e}")
             raise
 
-
-def get_max_from_global_db(key):
-    files = []
-    try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME,
-                                      Prefix='jaffar/configs/')
-        for obj in response.get('Contents', []):
-            files.append(obj['Key'])
-
-        max_number = -1
-        max_object = None
-        for file in files:
-            remaining_parts = file[len('jaffar/configs/'):]
-            match = re.match(r'(\d+)-' + key, remaining_parts)
-            if match:
-                number = int(match.group(1))
-                if number > max_number:
-                    max_number = number
-                    max_object = file
-        if max_object is not None:
-            return get_one_from_global_db(max_object)
-        else:
-            return "No objects with the given key and a digit at the beginning found."
-    except Exception as e:
-        logger.error(f"Error in get_max_from_global_db: {e}")
-        return None
-
-
-def get_max_filename_from_global_db(key):
-    files = []
-    try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME,
-                                      Prefix='jaffar/configs/')
-        for obj in response.get('Contents', []):
-            files.append(obj['Key'])
-
-        max_number = -1
-        max_object = None
-        for file in files:
-            remaining_parts = file[len('jaffar/configs/'):]
-            match = re.match(r'(\d+)-' + key, remaining_parts)
-            if match:
-                number = int(match.group(1))
-                if number > max_number:
-                    max_number = number
-                    max_object = file
-        if max_object is not None:
-            return max_object
-        else:
-            return "No objects with the given key and a digit at the beginning found."
-    except Exception as e:
-        logger.error(f"Error in get_max_filename_from_global_db: {e}")
-        return None
-
-
 def delete(key):
     s3.delete_object(Bucket=BUCKET_NAME, Key=key)
     #Local delete
@@ -217,6 +123,17 @@ def delete(key):
         os.remove(full_path)
     return
 
+def process_issue_data(issue_data):
+    processed_data = {}
+    for key, value in issue_data.items():
+        if isinstance(value, list):
+            processed_data[key] = ', '.join(value)
+        elif isinstance(value, dict):
+            flattened_dict = flatten_dict(value)
+            processed_data.update(flattened_dict)
+        else:
+            processed_data[key] = value
+    return processed_data
 
 def sendConfirmationEmail(email_address, subject, issue):
     logger.info(f"Sending email to {email_address}")
@@ -269,72 +186,18 @@ def sendConfirmationEmail(email_address, subject, issue):
     )
     return email.send()
 
-
-# Routes
-@app.route('/login')
-def login():
-    if request.path == '/login':
-        return render_template('login.html')
-    return redirect('/')
-
-
-def require_auth(f):
-    from functools import wraps
-    from flask import request, redirect, url_for
-
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if request.path == '/login':
-            return f(*args, **kwargs)
-
-        if not request.headers.get('user_email'):
-            current_path = request.path
-            return redirect(f'/login?redirect={current_path}')
-        return f(*args, **kwargs)
-
-    return decorated
-
-
-
-def fetch_old_issue(issue_id, previous_status):
-    try:
-        key = f'jaffar/issues/{previous_status}/{issue_id}.json'
-        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-        return json.loads(response['Body'].read().decode('utf-8'))
-    except Exception:
-        return None
-
-
-def clean_value(value):
-    if isinstance(value, str):
-        return value.strip()
-    if value is None:
-        return ''
-    return value
-
-
-def has_meaningful_change(old_value, new_value):
-    return clean_value(old_value) != clean_value(new_value)
-
-
-def simplify_value(value):
-    if isinstance(value, (dict, list)):
-        return json.dumps(value, ensure_ascii=False)
-    return value
-
-
-IMPORTANT_FIELDS = {
-    'name', 'status', 'author', 'issue-description', 'materiality-bs',
-    'materiality-pl', 'rag'
-}
-
-
 def send_confirmation_if_needed(data):
     if data.get('author') and data.get('status') == 'new':
         # Send email asynchronously
         email_executor.submit(sendConfirmationEmail, data['author'],
                               data['id'], data)
 
+# Routes 
+@app.route('/login')
+def login():
+    if request.path == '/login':
+        return render_template('login.html')
+    return redirect('/')
 
 @app.route('/api/jaffar/save', methods=['POST'])
 def api_jaffar_save():
@@ -354,14 +217,6 @@ def api_jaffar_save():
         logger.error(f"Failed to save issue: {e}")
         return jsonify({"error": str(e)}), 500
 
-
-
-def extract_issue_data(request_data):
-    """Extract and prepare issue data from request"""
-    issue_data = request_data.copy()
-    changes = issue_data.pop('changes', [])
-    return issue_data, changes
-
 @app.route('/api/acknowledge', methods=['POST'])
 def api_acknowledge():
     data = request.json
@@ -380,10 +235,8 @@ def api_acknowledge():
                 issue['acknowledgeEscalation'] = []
 
             issue['acknowledgeEscalation'].append({
-                'email':
-                email,
-                'date':
-                datetime.datetime.now().isoformat()
+                'email': email,
+                'date': datetime.datetime.now().isoformat()
             })
 
             # Save directly back to S3
@@ -399,7 +252,6 @@ def api_acknowledge():
             return jsonify({'error': str(e)}), 500
 
     return jsonify({'error': 'Issue not found'}), 404
-
 
 @app.route('/api/jaffar/issues/list', methods=['GET'])
 def list_issues():
@@ -432,7 +284,6 @@ def list_issues():
         logger.error(f"Error in list_issues: {e}")
         return jsonify({"error": str(e)}), 500
 
-
 @app.route('/api/jaffar/issues/<issue_id>', methods=['GET'])
 def get_issue(issue_id):
     # Try both draft and new folders
@@ -444,7 +295,6 @@ def get_issue(issue_id):
         except s3.exceptions.NoSuchKey:
             continue
     return jsonify({'error': 'Issue not found'}), 404
-
 
 @app.route('/api/jaffar/issues/<issue_id>/comments', methods=['POST'])
 def add_comment(issue_id):
@@ -480,18 +330,16 @@ def add_comment(issue_id):
 
     return jsonify({'error': 'Issue not found'}), 404
 
-
 @app.route('/api/jaffar/config')
 def api_jaffar_config():
     try:
-        config_file = get_max_filename_from_global_db('jaffarConfig')
-        if not config_file:
+        config = get_one_from_global_db('jaffar/configs/2-jaffarConfig.json')
+        if not config:
             return jsonify({"error": "No config found"}), 404
-        return jsonify(get_one_from_global_db(config_file))
+        return jsonify(config)
     except Exception as e:
         logger.error(f"Failed to get config: {e}")
         return jsonify({"error": str(e)}), 500
-
 
 @app.route('/api/jaffar/delete', methods=['DELETE'])
 def api_jaffar_delete():
@@ -501,20 +349,11 @@ def api_jaffar_delete():
             return jsonify({"error": "Missing key"}), 400
 
         key = data['key']
-
-        # Delete from S3
-        s3.delete_object(Bucket=BUCKET_NAME, Key=key)
-
-        # Delete locally
-        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
-        if os.path.exists(local_path):
-            os.remove(local_path)
-
+        delete(key)
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to delete: {e}")
         return jsonify({"error": str(e)}), 500
-
 
 from routes.jaffar_routes import jaffar_bp
 from routes.sultan_routes import sultan_bp
@@ -565,15 +404,10 @@ def list_excels():
         files = []
         for obj in response.get('Contents', []):
             if obj['Key'].endswith(('.xlsx', '.xls')):
-                # Get metadata for each file
-                #metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                #status = metadata.get('Metadata', {}).get('status', 'draft')
-
                 files.append({
                     'name': obj['Key'].split('/')[-1],
                     'size': obj['Size'],
                     'modified': obj['LastModified']
-                    #'status': status
                 })
         return jsonify(files)
     except Exception as e:
@@ -776,7 +610,7 @@ def api_emailgroup_save():
         return jsonify({"error": "Email group required"}), 400
 
     try:
-        emailgroup_path = f'sultan/emailgroups/{emailgroup["id"]}.json`.json'
+        emailgroup_path = f'sultan/emailgroups/{emailgroup["id"]}.json'
         save_in_global_db(emailgroup_path, emailgroup)
         return jsonify({"status": "success"})
     except Exception as e:
@@ -902,7 +736,7 @@ def api_form_get(form_id):
 @app.route('/api/jaffar/config')
 def get_jaffar_config():
     try:
-        config = get_max_from_global_db('jaffarConfig')
+        config = get_one_from_global_db('jaffar/configs/2-jaffarConfig.json')
         return jsonify(config)
     except Exception as e:
         logger.error(f"Failed to load Jaffar config: {e}")
