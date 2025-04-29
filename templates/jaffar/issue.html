@@ -170,7 +170,10 @@
             <template x-if="item.type === 'comment'">
               <div>
                 <div class="flex justify-between items-start mb-2">
-                  <span class="text-sm text-gray-400" x-text="item.author + ' - ' + new Date(item.timestamp).toLocaleString()"></span>
+                  <div class="flex items-center gap-2">
+                    <span class="bg-green-900 text-green-200 px-2 py-0.5 rounded text-xs" x-text="item.type"></span>
+                    <span class="text-sm text-gray-400" x-text="item.author + ' - ' + new Date(item.timestamp).toLocaleString()"></span>
+                  </div>
                 </div>
                 <div x-html="item.content"></div>
               </div>
@@ -180,7 +183,10 @@
             <template x-if="!item.type">
               <div>
                 <div class="flex justify-between items-start mb-2">
-                  <span class="text-sm text-gray-400" x-text="Object.values(item)[0][0].author + ' - ' + new Date(Object.values(item)[0][0].timestamp).toLocaleString()"></span>
+                  <div class="flex items-center gap-2">
+                    <span class="bg-purple-900 text-purple-200 px-2 py-0.5 rounded text-xs">change</span>
+                    <span class="text-sm text-gray-400" x-text="Object.values(item)[0][0].author + ' - ' + new Date(Object.values(item)[0][0].timestamp).toLocaleString()"></span>
+                  </div>
                 </div>
                 <div class="space-y-2">
                   <template x-for="[field, changes] in Object.entries(item)" :key="field">
