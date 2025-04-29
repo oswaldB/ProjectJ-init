@@ -121,6 +121,31 @@ def save_issue_to_storage(issue_id, status, data):
     logger.info(f"Generated storage key: {key}")
 
     try:
+        # Check if this is a first save
+        is_new_issue = True
+        try:
+            for st in ['draft', 'new']:
+                try:
+                    s3.head_object(Bucket=BUCKET_NAME, Key=f'jaffar/issues/{st}/{issue_id}.json')
+                    is_new_issue = False
+                    break
+                except:
+                    continue
+        except:
+            pass
+
+        if is_new_issue:
+            # Add creation activity
+            activity = {
+                "type": "system",
+                "content": "Issue created",
+                "timestamp": datetime.datetime.now().isoformat(),
+                "author": data.get('author', 'system')
+            }
+            if not data.get('changes'):
+                data['changes'] = []
+            data['changes'].append(activity)
+
         logger.info("Starting JSON serialization")
         json_data = json.dumps(data,
                                ensure_ascii=False,
