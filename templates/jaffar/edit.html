@@ -7,8 +7,9 @@
   config: null,
   formData: null,
   oldData: null,
-  changes: {}, 
+  changes: {},
   loading: true,
+  saving: false,
 
   async loadData() {
     const issueId = window.location.pathname.split('/').pop();
@@ -145,46 +146,54 @@
   },
 
   async saveForm() {
-    const now = new Date();
-    
-    // Create a clean copy without circular references
-    const cleanFormData = Object.entries(this.formData).reduce((acc, [key, value]) => {
-      // Skip undefined values
-      if (value === undefined) return acc;
-      
-      // Handle the changes object specially
-      if (key === 'changes' && typeof value === 'object') {
-        // Only keep the last change for each field
-        acc[key] = Object.entries(value).reduce((changes, [field, fieldChanges]) => {
-          if (Array.isArray(fieldChanges) && fieldChanges.length > 0) {
-            changes[field] = fieldChanges;
-          }
-          return changes;
-        }, {});
-      } else {
-        acc[key] = value;
-      }
-      return acc;
-    }, {});
-
-    const formToSave = {
-      id: this.formData.id || `JAFF-ISS-${now.getTime()}`,
-      author: localStorage.getItem('user_email'),
-      ...cleanFormData,
-      status: 'draft',
-      created_at: this.formData.created_at || now.toISOString()
-    };
-
-    document.body._x_dataStack[0].saving = true;
+    if (this.saving) return; // Prevent multiple simultaneous saves
     
     try {
-      await fetch('/api/jaffar/save', {
+      this.saving = true;
+      const now = new Date();
+      
+      // Create a clean copy without circular references
+      const cleanFormData = Object.entries(this.formData).reduce((acc, [key, value]) => {
+        if (value === undefined) return acc;
+        
+        if (key === 'changes' && typeof value === 'object') {
+          acc[key] = Object.entries(value).reduce((changes, [field, fieldChanges]) => {
+            if (Array.isArray(fieldChanges) && fieldChanges.length > 0) {
+              changes[field] = fieldChanges;
+            }
+            return changes;
+          }, {});
+        } else {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
+
+      const formToSave = {
+        id: this.formData.id || `JAFF-ISS-${now.getTime()}`,
+        author: localStorage.getItem('user_email'),
+        ...cleanFormData,
+        status: 'draft',
+        created_at: this.formData.created_at || now.toISOString()
+      };
+      
+      const response = await fetch('/api/jaffar/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formToSave)
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to save');
+      }
+
+      // Update oldData after successful save
+      this.oldData = JSON.parse(JSON.stringify(this.formData));
+      
+    } catch (error) {
+      console.error('Save failed:', error);
     } finally {
-      document.body._x_dataStack[0].saving = false;
+      this.saving = false;
     }
   }
 }" x-init="init()">
@@ -194,8 +203,11 @@
       <button onclick="history.back()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
         Back
       </button>
-      <button @click="saveForm" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-        Save
+      <button 
+        @click="saveForm" 
+        :disabled="saving"
+        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
+        <span x-text="saving ? 'Saving...' : 'Save'"></span>
       </button>
       <button type="submit" @click.prevent="submitForm" 
         class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
