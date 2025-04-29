@@ -131,17 +131,19 @@
         <!-- Timeline des actions -->
         <template x-for="(item, index) in [
           ...(issue.comments || []),
-          ...Object.values(issue.changes || {}).flatMap(changes => 
-            changes.map(change => ({
-              ...change,
-              field: Object.keys(issue.changes).find(key => issue.changes[key].includes(change))
-            }))
+          ...(Array.isArray(issue.changes) ? issue.changes : 
+              Object.entries(issue.changes || {}).flatMap(([field, changes]) => 
+                changes.map(change => ({
+                  ...change,
+                  field: field
+                }))
+              )
           )
         ].sort((a, b) => {
-          const dateA = a.created_at || (a.timestamp ? new Date(a.timestamp).getTime() : 0);
-          const dateB = b.created_at || (b.timestamp ? new Date(b.timestamp).getTime() : 0);
+          const dateA = a.created_at || (a.timestamp ? new Date(a.timestamp).getTime() : 0) || (a.modified_at ? new Date(a.modified_at).getTime() : 0);
+          const dateB = b.created_at || (b.timestamp ? new Date(b.timestamp).getTime() : 0) || (b.modified_at ? new Date(b.modified_at).getTime() : 0);
           return dateB - dateA;
-        })" :key="item.created_at || item.timestamp">
+        })" :key="item.created_at || item.timestamp || item.modified_at">
           <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
             <!-- Comment display -->
             <template x-if="item.content">
