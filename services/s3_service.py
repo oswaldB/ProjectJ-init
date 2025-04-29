@@ -29,14 +29,14 @@ def save_issue_to_storage(issue_id, status, data):
 
 def save_issue_changes(issue_id, changes):
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    key = f'jaffar/issues/changes/{issue_id}-{timestamp}.json'
+    key = f'changes/{issue_id}-{timestamp}.json'
     
     try:
         content = json.dumps(changes, indent=2)
         s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=content)
         
         # Local save
-        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        local_path = os.path.join(LOCAL_BUCKET_DIR, 'changes', f'{issue_id}-{timestamp}.json')
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
         with open(local_path, 'w', encoding='utf-8') as f:
             f.write(content)
