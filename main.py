@@ -334,6 +334,32 @@ def add_comment(issue_id):
     return jsonify({'error': 'Issue not found'}), 404
 
 
+@app.route('/api/jaffar/save', methods=['POST'])
+def save_issue():
+    try:
+        data = request.json
+        if not validate_save_request(data):
+            return jsonify({"error": "Invalid request data"}), 400
+
+        issue_id = data.get('id')
+        status = data.get('status', 'draft')
+        
+        # Save the issue
+        save_issue_to_storage(issue_id, status, data)
+        
+        # Track changes if any exist
+        if 'changes' in data:
+            save_issue_changes(issue_id, data['changes'])
+            
+        # Send confirmation email for new issues
+        if status == 'new':
+            email_executor.submit(send_confirmation_if_needed, data)
+
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Error saving issue: {e}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/jaffar/acknowledge', methods=['POST'])
 def api_acknowledge():
     data = request.json
