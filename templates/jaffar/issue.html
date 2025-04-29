@@ -75,7 +75,7 @@
       <div class="mb-6">
         <div class="flex justify-between items-start">
           <div>
-            <h1 class="text-2xl font-bold text-white" x-text="issue.name"></h1>
+            <h1 class="text-2xl font-bold text-white" x-text="issue.id + ': ' + issue.name"></h1>
             <div class="mt-2 space-x-2">
               <template x-for="tag in issue.tags" :key="tag">
                 <span class="bg-red-900 text-red-200 px-2 py-1 rounded-full text-xs" x-text="tag"></span>
@@ -96,12 +96,13 @@
 
       <!-- Issue Description -->
       <div class="bg-gray-800 p-4 rounded-lg mb-6">
+        <h2 class="text-xl font-bold text-white mb-4">Description</h2>
         <div x-html="issue['issue-description']" class="prose prose-invert"></div>
       </div>
 
       <!-- Form Values -->
       <div class="bg-gray-800 p-4 rounded-lg mb-6">
-        <h2 class="text-xl font-bold text-white mb-4"></h2>
+        <h2 class="text-xl font-bold text-white mb-4" x-text="issue.id"></h2>
         <div class="grid grid-cols-2 gap-4">
           <template x-for="field in config.fields" :key="field.key">
             <div class="col-span-1">
