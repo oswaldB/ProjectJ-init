@@ -135,31 +135,41 @@
   async init() {
     await this.loadData();
 
+    let saveTimeout;
     this.$watch('formData', (value, oldValue) => {
       if (!oldValue || this.loading) return;
+      
+      // Éviter les changements dus au tracking
+      if (JSON.stringify(value.changes) !== JSON.stringify(oldValue.changes)) {
+        return;
+      }
       
       this.trackChanges(value, this.oldData);
       this.oldData = JSON.parse(JSON.stringify(value));
 
-      const now = new Date();
-      const formToSave = {
-        id: this.formData.id || `JAFF-ISS-${now.getTime()}`,
-        author: localStorage.getItem('user_email'),
-        ...value,
-        status: 'draft',
-        created_at: this.formData.created_at || now.toISOString()
-      };
+      // Debounce la sauvegarde
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        const now = new Date();
+        const formToSave = {
+          id: this.formData.id || `JAFF-ISS-${now.getTime()}`,
+          author: localStorage.getItem('user_email'),
+          ...value,
+          status: 'draft',
+          created_at: this.formData.created_at || now.toISOString()
+        };
 
-      document.body._x_dataStack[0].saving = true;
-      
-      fetch('/api/jaffar/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formToSave)
-      })
-      .finally(() => {
-        document.body._x_dataStack[0].saving = false;
-      });
+        document.body._x_dataStack[0].saving = true;
+        
+        fetch('/api/jaffar/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formToSave)
+        })
+        .finally(() => {
+          document.body._x_dataStack[0].saving = false;
+        });
+      }, 1000);
     }, { deep: true });
   }
 }" x-init="init()">
