@@ -134,43 +134,37 @@
 
   async init() {
     await this.loadData();
-
-    let saveTimeout;
     this.$watch('formData', (value, oldValue) => {
       if (!oldValue || this.loading) return;
-      
-      // Éviter les changements dus au tracking
       if (JSON.stringify(value.changes) !== JSON.stringify(oldValue.changes)) {
         return;
       }
-      
       this.trackChanges(value, this.oldData);
       this.oldData = JSON.parse(JSON.stringify(value));
-
-      // Debounce la sauvegarde
-      clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(() => {
-        const now = new Date();
-        const formToSave = {
-          id: this.formData.id || `JAFF-ISS-${now.getTime()}`,
-          author: localStorage.getItem('user_email'),
-          ...value,
-          status: 'draft',
-          created_at: this.formData.created_at || now.toISOString()
-        };
-
-        document.body._x_dataStack[0].saving = true;
-        
-        fetch('/api/jaffar/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formToSave)
-        })
-        .finally(() => {
-          document.body._x_dataStack[0].saving = false;
-        });
-      }, 1000);
     }, { deep: true });
+  },
+
+  async saveForm() {
+    const now = new Date();
+    const formToSave = {
+      id: this.formData.id || `JAFF-ISS-${now.getTime()}`,
+      author: localStorage.getItem('user_email'),
+      ...this.formData,
+      status: 'draft',
+      created_at: this.formData.created_at || now.toISOString()
+    };
+
+    document.body._x_dataStack[0].saving = true;
+    
+    try {
+      await fetch('/api/jaffar/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formToSave)
+      });
+    } finally {
+      document.body._x_dataStack[0].saving = false;
+    }
   }
 }" x-init="init()">
   <div class="mb-6 flex justify-between items-center">
@@ -178,6 +172,9 @@
     <div class="flex space-x-4">
       <button onclick="history.back()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
         Back
+      </button>
+      <button @click="saveForm" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+        Save
       </button>
       <button type="submit" @click.prevent="submitForm" 
         class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
