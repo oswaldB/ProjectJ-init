@@ -7,6 +7,7 @@
   issue: null,
   config: null,
   newComment: '',
+  activityFilter: 'all',
 
   async init() {
     const issueId = window.location.pathname.split('/').pop();
@@ -100,7 +101,7 @@
 
       <!-- Form Values -->
       <div class="bg-gray-800 p-4 rounded-lg mb-6">
-        <h2 class="text-xl font-bold text-white mb-4">Form Values</h2>
+        <h2 class="text-xl font-bold text-white mb-4"></h2>
         <div class="grid grid-cols-2 gap-4">
           <template x-for="field in config.fields" :key="field.key">
             <div class="col-span-1">
@@ -130,7 +131,18 @@
 
       <!-- Comments and Changes Section -->
       <div class="space-y-4">
-        <h2 class="text-xl font-bold text-white">Activity</h2>
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-bold text-white">Activity</h2>
+          <select 
+            x-model="activityFilter" 
+            class="bg-gray-700 text-white px-3 py-1 rounded border border-gray-600"
+          >
+            <option value="all">All Activities</option>
+            <option value="system">System</option>
+            <option value="comment">Comments</option>
+            <option value="change">Changes</option>
+          </select>
+        </div>
 
         <!-- Add Comment Form -->
         <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
@@ -151,7 +163,12 @@
         </div>
 
         <!-- Timeline des actions -->
-        <template x-for="(item, index) in [...(Array.isArray(issue.changes) ? issue.changes : [])].reverse()" :key="index">
+        <template x-for="(item, index) in [...(Array.isArray(issue.changes) ? issue.changes : [])].reverse().filter(item => 
+          activityFilter === 'all' || 
+          (activityFilter === 'system' && item.type === 'system') ||
+          (activityFilter === 'comment' && item.type === 'comment') ||
+          (activityFilter === 'change' && !item.type)
+        )" :key="index">
           <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
             <!-- System activity display -->
             <template x-if="item.type === 'system'">
