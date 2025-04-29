@@ -340,89 +340,36 @@ IMPORTANT_FIELDS = {
 }
 
 
-def compare_issues(old_data, new_data):
-    logger.info("Entering compare_issues function")
+def save_issue_to_storage(issue_id, status, data):
+    logger.info(f"Saving issue {issue_id}")
     
-    if not old_data:
-        logger.info("No old data provided, returning empty changes")
-        return {}
-
-    logger.info("Starting comparison of important fields")
-    changes = {}
-    
-    for key in IMPORTANT_FIELDS:
-        logger.info(f"Comparing field: {key}")
-        new_value = new_data.get(key)
-        
-        if key in old_data:
-            if has_meaningful_change(old_data[key], new_value):
-                logger.info(f"Change detected in {key}")
-                changes[key] = {
-                    'previous': simplify_value(old_data.get(key)),
-                    'new': simplify_value(new_value)
-                }
-            else:
-                logger.info(f"No meaningful change in {key}")
-        elif new_value is not None:
-            logger.info(f"New value added for {key}")
-            changes[key] = {'previous': None, 'new': simplify_value(new_value)}
-            
-    logger.info(f"Comparison completed, found {len(changes)} changes")
-    return changes
-
-
-def save_issue(issue_id, status, data):
-    # Remove changes from main data before saving
+    # Remove changes from main data
     main_data = data.copy()
-    if 'changes' in main_data:
-        save_issue_changes(issue_id, main_data['changes'])
-        del main_data['changes']
-
+    changes = main_data.pop('changes', None)
+    
+    # Save issue data
     key = f'jaffar/issues/{status}/{issue_id}.json'
     cleaned_data = remove_circular_references(main_data)
-    json_data = json.dumps(cleaned_data,
-                           ensure_ascii=False,
-                           cls=CircularRefEncoder)
-
-    def save_to_s3():
-        s3.put_object(Bucket=BUCKET_NAME,
-                      Key=key,
-                      Body=json_data.encode('utf-8'),
-                      ContentType='application/json')
-
-    def save_to_local():
+    json_data = json.dumps(cleaned_data, ensure_ascii=False, cls=CircularRefEncoder)
+    
+    try:
+        # Save to S3
+        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_data.encode('utf-8'))
+        
+        # Save locally
         local_path = os.path.join(LOCAL_BUCKET_DIR, key)
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
         with open(local_path, 'w', encoding='utf-8') as f:
             f.write(json_data)
-
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        s3_future = executor.submit(save_to_s3)
-        local_future = executor.submit(save_to_local)
-        s3_future.result()
-        local_future.result()
-
-
-def record_change(data, changes, user_email, previous_status):
-    logger.info("Entering record_change function")
-    logger.info(f"Recording changes for user: {user_email}")
-    
-    logger.info("Creating change record")
-    change_record = {
-        'modified_by': user_email,
-        'modified_at': datetime.datetime.now().isoformat(),
-        'previous_status': previous_status,
-        'value_changes': changes
-    }
-    
-    logger.info("Initializing changes array if needed")
-    if 'changes' not in data or not isinstance(data['changes'], list):
-        logger.info("Creating new changes array")
-        data['changes'] = []
-        
-    logger.info("Appending new change record")
-    data['changes'].append(change_record)
-    logger.info("Change record added successfully")
+            
+        # Save changes if present
+        if changes:
+            save_issue_changes(issue_id, changes)
+            
+        return True
+    except Exception as e:
+        logger.error(f"Failed to save issue {issue_id}: {e}")
+        return False
 
 
 def send_confirmation_if_needed(data):
@@ -483,7 +430,6 @@ def extract_issue_data(request_data):
 
 @app.route('/api/jaffar/save', methods=['POST'])
 def api_jaffar_save():
-    logger.info("Entering api_jaffar_save endpoint")
     try:
         data = request.json
         if not validate_save_request(data):
@@ -491,33 +437,12 @@ def api_jaffar_save():
 
         issue_id = data['id']
         status = data.get('status', 'draft')
-        previous_status = data.get('previous_status', 'draft')
-        user_email = request.headers.get('user_email')
         
-        logger.info(f"Saving issue {issue_id} with status {status}")
-
-        # Récupère l'ancienne version pour comparer
-        old_issue = fetch_old_issue(issue_id, previous_status)
-        
-        # Prépare les données
-        issue_data, existing_changes = extract_issue_data(data)
-        
-        # Compare et enregistre les changements
-        changes = compare_issues(old_issue, data)
-        if changes:
-            logger.info(f"Found changes in issue {issue_id}: {changes}")
-            record_change(data, changes, user_email, previous_status)
-
-        # Sauvegarde l'issue principale
         if not save_issue_to_storage(issue_id, status, data):
             return jsonify({"error": "Failed to save issue"}), 500
 
-        # Sauvegarde les changements existants si présents
-        if existing_changes:
-            save_issue_changes(issue_id, existing_changes)
-
         send_confirmation_if_needed(data)
-        return jsonify(issue_data)
+        return jsonify({"status": "success"})
 
     except Exception as e:
         logger.error(f"Failed to save issue: {e}")
