@@ -267,7 +267,10 @@ def view_issue(issue_id):
 @app.route('/api/jaffar/config')
 def api_jaffar_config():
     try:
-        config = get_max_from_global_db('jaffarConfig')
+        config = get_max_from_global_db('jaffar/configs/2-jaffarConfig.json')
+        if not config:
+            logger.error("No config found")
+            return jsonify({"error": "Config not found"}), 404
         return jsonify(config)
     except Exception as e:
         logger.error(f"Failed to load Jaffar config: {e}")
