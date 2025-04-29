@@ -250,7 +250,7 @@ def api_jaffar_config():
         logger.error(f"Failed to load Jaffar config: {e}")
         return jsonify({"error": "Config not found"}), 404
 
-@app.route('/api/issues/list', methods=['GET'])
+@app.route('/api/jaffar/issues/list', methods=['GET'])
 def list_issues():
     issues = []
     try:
