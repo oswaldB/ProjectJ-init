@@ -123,23 +123,8 @@
       <div class="space-y-4">
         <h2 class="text-xl font-bold text-white">Activity</h2>
 
-        <!-- Combined timeline of comments and changes -->
-        <template x-for="(item, index) in [...(issue.comments || []), ...(issue.changes || [])].sort((a, b) => new Date(b.created_at || b.modified_at) - new Date(a.created_at || a.modified_at)).reduce((acc, curr) => {
-          if (curr.value_changes) {
-            const currTime = new Date(curr.modified_at).getTime();
-            const lastItem = acc[acc.length - 1];
-            
-            if (lastItem && lastItem.value_changes && 
-                lastItem.modified_by === curr.modified_by && 
-                Math.abs(new Date(lastItem.modified_at).getTime() - currTime) <= 180000) {
-              // Merge changes if within 3 minutes
-              lastItem.value_changes = {...lastItem.value_changes, ...curr.value_changes};
-              return acc;
-            }
-          }
-          acc.push(curr);
-          return acc;
-        }, [])" :key="item.created_at || item.modified_at">
+        <!-- Timeline des actions -->
+        <template x-for="(item, index) in [...(issue.comments || []), ...(issue.changes || [])].sort((a, b) => new Date(b.created_at || b.modified_at) - new Date(a.created_at || a.modified_at))" :key="item.created_at || item.modified_at">
           <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
             <!-- Comment display -->
             <template x-if="item.content">
@@ -159,14 +144,14 @@
                 </div>
                 <div class="space-y-2">
                   <template x-for="(change, field) in item.value_changes" :key="field">
-                    <div x-show="field !== 'updated_at'" class="flex flex-col space-y-1">
-                      <span class="text-sm font-medium text-gray-300" x-text="field"></span>
+                    <div x-show="field !== 'updated_at'" class="flex flex-col space-y-1 bg-gray-900 p-2 rounded">
+                      <span class="text-sm font-medium text-blue-300" x-text="field"></span>
                       <div class="flex items-center space-x-2">
-                        <span class="text-red-400" x-text="change.previous"></span>
+                        <span class="bg-red-900/50 px-2 py-1 rounded text-red-200" x-text="change.previous || '(vide)'"></span>
                         <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
-                        <span class="text-green-400" x-text="change.new"></span>
+                        <span class="bg-green-900/50 px-2 py-1 rounded text-green-200" x-text="change.new || '(vide)'"></span>
                       </div>
                     </div>
                   </template>
