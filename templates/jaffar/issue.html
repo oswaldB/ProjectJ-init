@@ -131,6 +131,24 @@
       <!-- Comments and Changes Section -->
       <div class="space-y-4">
         <h2 class="text-xl font-bold text-white">Activity</h2>
+        
+        <!-- Add Comment Form -->
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
+          <textarea
+            x-model="newComment"
+            placeholder="Add a comment..."
+            class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
+            rows="3"
+          ></textarea>
+          <div class="mt-2 flex justify-end">
+            <button 
+              @click="addComment()"
+              class="bg-red-600 px-4 py-2 rounded hover:bg-red-700 text-white"
+            >
+              Comment
+            </button>
+          </div>
+        </div>
 
         <!-- Timeline des actions -->
         <template x-for="(item, index) in [...(Array.isArray(issue.changes) ? issue.changes : [])].sort((a, b) => {
@@ -178,24 +196,7 @@
           </div>
         </template>
 
-        <!-- Add Comment Form -->
-        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-          <textarea
-            x-model="newComment"
-            placeholder="Add a comment..."
-            class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
-            rows="3"
-          ></textarea>
-          <div class="mt-2 flex justify-end">
-            <button 
-              @click="addComment()"
-              class="bg-red-600 px-4 py-2 rounded hover:bg-red-700 text-white"
-            >
-              Comment
-            </button>
-          </div>
         </div>
-      </div>
     </div>
   </template>
 </div>
