@@ -11,7 +11,7 @@ BUCKET_NAME = "jaffar-bucket"
 
 # Initialize S3 client with mock credentials for local development
 # Replace this with a proper mocking library in a production environment.
-mock = mock_aws() # Placeholder - needs a real mock implementation
+mock = mock() # Placeholder - needs a real mock implementation
 mock.start() # Placeholder - needs a real mock implementation
 
 s3 = boto3.client(
