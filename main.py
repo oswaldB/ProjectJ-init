@@ -105,18 +105,7 @@ def process_issue_data(issue_data):
     return processed_data
 
 
-def remove_circular_references(obj, seen=None):
-    if seen is None:
-        seen = set()
-    if id(obj) in seen:
-        return None
-    seen.add(id(obj))
-    if isinstance(obj, dict):
-        return {k: remove_circular_references(v, seen) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [remove_circular_references(i, seen) for i in obj]
-    else:
-        return obj
+
 
 
 class CircularRefEncoder(json.JSONEncoder):

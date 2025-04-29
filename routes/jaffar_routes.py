@@ -5,7 +5,7 @@ import json
 import os
 import logging
 from services.email_service import send_confirmation_if_needed
-from main import s3, BUCKET_NAME, LOCAL_BUCKET_DIR, remove_circular_references, CircularRefEncoder
+from main import s3, BUCKET_NAME, LOCAL_BUCKET_DIR, CircularRefEncoder
 
 # Configure logging
 logging.basicConfig(

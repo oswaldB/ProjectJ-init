@@ -1,5 +1,5 @@
 import logging
-from main import s3, BUCKET_NAME, LOCAL_BUCKET_DIR, remove_circular_references, CircularRefEncoder
+from main import s3, BUCKET_NAME, LOCAL_BUCKET_DIR, CircularRefEncoder
 import json
 import os
 
