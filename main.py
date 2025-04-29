@@ -498,20 +498,7 @@ def save_issue_changes(issue_id, changes):
         s3_future.result()
         local_future.result()
 
-@app.route('/api/jaffar/changes/save', methods=['POST'])
-def api_save_changes():
-    try:
-        data = request.json
-        if not data or 'issue_id' not in data or 'changes' not in data:
-            return jsonify({"error": "Missing required data"}), 400
-
-        issue_id = data['issue_id']
-        changes = data['changes']
-        save_issue_changes(issue_id, changes)
-        return jsonify({"status": "success"})
-    except Exception as e:
-        logger.error(f"Failed to save changes: {e}")
-        return jsonify({"error": str(e)}), 500
+ 500
 
 
 def get_changes_from_global_db(issue_id):
