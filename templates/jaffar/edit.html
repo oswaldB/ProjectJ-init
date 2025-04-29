@@ -6,7 +6,8 @@
 <div class="p-6" x-data="{
   config: null,
   formData: null,
-  changes: [], // Added to track separate changes
+  oldData: null,
+  changes: [], 
   loading: true,
 
   async loadData() {
@@ -31,6 +32,7 @@
       }
 
       this.formData = issueData;
+      this.oldData = JSON.parse(JSON.stringify(issueData)); // Deep copy for comparison
       this.loading = false;
     } catch (error) {
       window.location.href = '/';
@@ -111,6 +113,25 @@
     }
   },
 
+  trackChanges(newValue, oldValue) {
+    if (!oldValue) return;
+
+    const changes = [];
+    for (const [key, value] of Object.entries(newValue)) {
+      if (oldValue[key] !== value) {
+        changes.push({
+          field: key,
+          previous: oldValue[key],
+          new: value,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    if (changes.length > 0) {
+      this.changes.push(...changes);
+    }
+  },
+
   async init() {
     await this.loadData();
 
@@ -122,6 +143,8 @@
         initialLoad = false;
         return;
       }
+      this.trackChanges(value, this.oldData); // Track changes
+      this.oldData = JSON.parse(JSON.stringify(value)); // Update oldData
 
       const now = new Date();
       const formToSave = {
@@ -157,7 +180,7 @@
       <button type="submit" @click.prevent="submitForm" 
         class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
         Submit
-</button>
+      </button>
     </div>
   </div>
 
