@@ -1,7 +1,6 @@
 
 from flask import Blueprint, render_template, redirect, request, jsonify
 import datetime
-from services.s3_service import save_issue_to_storage, save_issue_changes, get_changes_from_global_db
 from services.email_service import send_confirmation_if_needed
 
 jaffar_bp = Blueprint('jaffar', __name__)
@@ -35,7 +34,7 @@ def new_issue():
         'updated_at': now.isoformat()
     }
 
-    save_issue_to_storage(issue_id, 'draft', issue_data)
+    save_issue(issue_id, 'draft', issue_data)
     return redirect(f'/edit/{issue_id}')
 
 @jaffar_bp.route('/edit/<issue_id>')
