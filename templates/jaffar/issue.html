@@ -162,15 +162,11 @@
                         <span class="text-sm font-medium text-blue-300" x-text="field"></span>
                         <template x-for="(change, idx) in changes" :key="idx">
                           <div class="flex items-center space-x-2">
-                            <template x-if="change.previous">
-                              <span class="bg-red-900/50 px-2 py-1 rounded text-red-200" x-text="Array.isArray(change.previous) ? change.previous.join(', ') : change.previous"></span>
-                            </template>
+                            <span class="bg-red-900/50 px-2 py-1 rounded text-red-200" x-text="change.previous ? (Array.isArray(change.previous) ? change.previous.join(', ') : change.previous) : '--'"></span>
                             <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                             </svg>
-                            <template x-if="change.new">
-                              <span class="bg-green-900/50 px-2 py-1 rounded text-green-200" x-text="Array.isArray(change.new) ? change.new.join(', ') : change.new"></span>
-                            </template>
+                            <span class="bg-green-900/50 px-2 py-1 rounded text-green-200" x-text="change.new ? (Array.isArray(change.new) ? change.new.join(', ') : change.new) : '--'"></span>
                           </div>
                         </template>
                       </div>
