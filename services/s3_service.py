@@ -3,16 +3,16 @@ import os
 import boto3
 from datetime import datetime
 import logging
+from moto import mock_s3
 
 logger = logging.getLogger(__name__)
 
 LOCAL_BUCKET_DIR = "./local_bucket"
 BUCKET_NAME = "jaffar-bucket"
 
-# Initialize S3 client with mock credentials for local development
-# Replace this with a proper mocking library in a production environment.
-mock = mock() # Placeholder - needs a real mock implementation
-mock.start() # Placeholder - needs a real mock implementation
+# Initialize S3 mock for local development
+mock = mock_s3()
+mock.start()
 
 s3 = boto3.client(
     's3',
