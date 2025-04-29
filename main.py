@@ -435,13 +435,13 @@ def save_issue_to_storage(issue_id, status, data):
         logger.error(f"Failed to save issue {issue_id}: {e}")
         return False
 
-@app.route('/api/jaffar/save', methods=['POST'])
 def extract_issue_data(request_data):
     """Extract and prepare issue data from request"""
     issue_data = request_data.copy()
     changes = issue_data.pop('changes', [])
     return issue_data, changes
 
+@app.route('/api/jaffar/save', methods=['POST'])
 def api_jaffar_save():
     try:
         data = request.json
