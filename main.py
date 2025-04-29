@@ -466,6 +466,10 @@ def api_jaffar_save():
 
 
 def save_issue_changes(issue_id, changes):
+    if not changes:
+        logger.info(f"No changes to save for issue {issue_id}")
+        return
+
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     key = f'jaffar/issues/changes/{issue_id}-{timestamp}.json'
     json_data = json.dumps(changes, ensure_ascii=False)
