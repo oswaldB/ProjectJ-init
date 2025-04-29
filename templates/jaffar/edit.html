@@ -3,7 +3,7 @@
 {% block title %}Issue Form{% endblock %}
 
 {% block content %}
-<div class="p-6" x-data="{
+<div x-data="{
   config: null,
   formData: null,
   oldData: null,
@@ -207,16 +207,31 @@
     }
   }
 }" x-init="init()">
-  <div class="relative mb-16">
-    <button onclick="window.location.href = document.referrer || '/'" class="absolute top-4 left-4 text-white hover:text-gray-200">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-      </svg>
-    </button>
-  </div>
-  <div class="mb-6 flex justify-between items-center">
-    <h1 class="text-2xl font-bold" x-text="formData.id"></h1>
-    <div class="flex space-x-4">
+  <div class="fixed top-0 left-0 right-0 bg-gray-900 border-b border-gray-700 z-50">
+    <div class="p-4 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <button onclick="window.location.href = document.referrer || '/'" class="text-white hover:text-gray-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </button>
+        <div>
+          <h1 class="text-xl font-bold text-white" x-text="formData.id"></h1>
+          <div class="flex items-center space-x-3 text-sm text-gray-400">
+            <span x-text="formData.author"></span>
+            <span>•</span>
+            <span x-text="new Date(formData.created_at).toLocaleDateString()"></span>
+            <span>•</span>
+            <span class="px-2 py-0.5 rounded-full text-xs" 
+              :class="{
+                'bg-yellow-900 text-yellow-200': formData.status === 'draft',
+                'bg-green-900 text-green-200': formData.status === 'new'
+              }"
+              x-text="formData.status">
+            </span>
+          </div>
+        </div>
+      </div>
       <button type="submit" 
         @click.prevent="submitForm"
         :disabled="config.fields.some(f => f.required && !formData[f.key])"
@@ -225,6 +240,7 @@
       </button>
     </div>
   </div>
+  <div class="pt-24">
 
   <template x-if="!loading && config && formData">
     <div class="space-y-6">
@@ -414,5 +430,6 @@
       </template>
     </div>
   </template>
+  </div>
 </div>
 {% endblock %}
