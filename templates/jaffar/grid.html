@@ -27,8 +27,14 @@
           <th class="p-3">Description</th>
           <th class="p-3">Status</th>
           <th class="p-3">Version</th>
+          <th class="p-3">Asset Class</th>
+          <th class="p-3">Business Unit</th>
+          <th class="p-3">Region</th>
+          <th class="p-3">PC Function</th>
+          <th class="p-3">Issue Family</th>
           <th class="p-3">Author</th>
           <th class="p-3">Created</th>
+          <th class="p-3">Updated</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-700">
@@ -40,13 +46,22 @@
             <td class="p-3" x-text="issue.name || 'Unnamed Issue'"></td>
             <td class="p-3 max-w-md truncate" x-text="issue['issue-description'] || 'No description'"></td>
             <td class="p-3">
-              <span class="px-2 py-1 rounded text-xs bg-green-900 text-green-200" x-text="issue.status"></span>
+              <span class="px-2 py-1 rounded text-xs" :class="{
+                'bg-yellow-900 text-yellow-200': issue.status === 'draft',
+                'bg-green-900 text-green-200': issue.status === 'new'
+              }" x-text="issue.status"></span>
             </td>
             <td class="p-3">
               <span x-show="issue.version" class="px-2 py-1 rounded text-xs bg-blue-900 text-blue-200" x-text="'v' + issue.version"></span>
             </td>
+            <td class="p-3" x-text="Array.isArray(issue['asset-class']) ? issue['asset-class'].join(', ') : issue['asset-class'] || '--'"></td>
+            <td class="p-3" x-text="Array.isArray(issue['business-unit']) ? issue['business-unit'].join(', ') : issue['business-unit'] || '--'"></td>
+            <td class="p-3" x-text="Array.isArray(issue.region) ? issue.region.join(', ') : issue.region || '--'"></td>
+            <td class="p-3" x-text="issue['pc-function'] || '--'"></td>
+            <td class="p-3" x-text="issue['issue-family'] || '--'"></td>
             <td class="p-3" x-text="issue.author"></td>
-            <td class="p-3" x-text="new Date(issue.created_at).toLocaleDateString()"></td>
+            <td class="p-3" x-text="new Date(issue.created_at).toLocaleString()"></td>
+            <td class="p-3" x-text="issue.updated_at ? new Date(issue.updated_at).toLocaleString() : '--'"></td>
           </tr>
         </template>
       </tbody>
