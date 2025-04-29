@@ -153,7 +153,7 @@
             <template x-if="!item.type">
               <div>
                 <div class="flex justify-between items-start mb-2">
-                  <span class="text-sm text-gray-400" x-text="item.author + ' - ' + new Date(item.timestamp).toLocaleString()"></span>
+                  <span class="text-sm text-gray-400" x-text="(item.type === 'comment' ? item.author + ' - ' + new Date(item.created_at).toLocaleString() : item.author + ' - ' + new Date(item.timestamp).toLocaleString())"></span>
                 </div>
                 <div class="space-y-2">
                   <template x-for="(changes, field) in item" :key="field">
