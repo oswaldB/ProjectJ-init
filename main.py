@@ -436,6 +436,12 @@ def save_issue_to_storage(issue_id, status, data):
         return False
 
 @app.route('/api/jaffar/save', methods=['POST'])
+def extract_issue_data(request_data):
+    """Extract and prepare issue data from request"""
+    issue_data = request_data.copy()
+    changes = issue_data.pop('changes', [])
+    return issue_data, changes
+
 def api_jaffar_save():
     try:
         data = request.json
@@ -446,23 +452,19 @@ def api_jaffar_save():
         status = data.get('status', 'draft')
         logger.info(f"Saving issue {issue_id} with status {status}")
 
-        # Make a copy of changes before modifying data
-        changes = data.get('changes', [])
-        
-        # Remove changes from main data to avoid duplication
-        if 'changes' in data:
-            del data['changes']
+        # Prépare les données
+        issue_data, changes = extract_issue_data(data)
 
-        # Save main issue
-        if not save_issue_to_storage(issue_id, status, data):
+        # Sauvegarde l'issue principale
+        if not save_issue_to_storage(issue_id, status, issue_data):
             return jsonify({"error": "Failed to save issue"}), 500
 
-        # Save changes if present
+        # Sauvegarde les changements si présents
         if changes:
             save_issue_changes(issue_id, changes)
 
-        send_confirmation_if_needed(data)
-        return jsonify(data)
+        send_confirmation_if_needed(issue_data)
+        return jsonify(issue_data)
 
     except Exception as e:
         logger.error(f"Failed to save issue: {e}")
