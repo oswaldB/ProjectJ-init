@@ -136,7 +136,19 @@ def get_max_filename_from_global_db(suffix):
 
 def save_issue_to_storage(issue_id, status, data):
     logger.info(f"Entering save_issue_to_storage for issue {issue_id}")
-    key = f'jaffar/issues/{status}/{issue_id}.json'
+    
+    # Check if issue already exists in 'new' status
+    new_key = f'jaffar/issues/new/{issue_id}.json'
+    try:
+        s3.head_object(Bucket=BUCKET_NAME, Key=new_key)
+        if status == 'draft':
+            # If issue exists in 'new', update it there instead of creating draft
+            key = new_key
+        else:
+            key = f'jaffar/issues/{status}/{issue_id}.json'
+    except:
+        key = f'jaffar/issues/{status}/{issue_id}.json'
+    
     logger.info(f"Generated storage key: {key}")
 
     # Add config array
