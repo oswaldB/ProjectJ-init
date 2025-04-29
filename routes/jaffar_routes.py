@@ -1,11 +1,10 @@
-
 from flask import Blueprint, render_template, redirect, request, jsonify
 import datetime
 import json
 import os
 import logging
 from services.email_service import send_confirmation_if_needed
-from main import s3, BUCKET_NAME, LOCAL_BUCKET_DIR, CircularRefEncoder
+from main import s3, BUCKET_NAME, LOCAL_BUCKET_DIR, CircularRefEncoder, get_max_from_global_db, delete, save_in_global_db
 
 # Configure logging
 logging.basicConfig(
@@ -171,3 +170,93 @@ def edit_with_id(issue_id):
 @jaffar_bp.route('/issue/<issue_id>')
 def view_issue(issue_id):
     return render_template('jaffar/issue.html')
+
+@jaffar_bp.route('/api/config')
+def api_jaffar_config():
+    try:
+        config = get_max_from_global_db('jaffarConfig')
+        return jsonify(config)
+    except Exception as e:
+        logger.error(f"Failed to load Jaffar config: {e}")
+        return jsonify({"error": "Config not found"}), 404
+
+@jaffar_bp.route('/api/issues/list', methods=['GET'])
+def list_issues():
+    issues = []
+    try:
+        for status in ['draft', 'new']:
+            prefix = f'jaffar/issues/{status}/'
+            try:
+                response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+                if 'Contents' in response:
+                    for obj in response['Contents']:
+                        try:
+                            response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                            issue = json.loads(response['Body'].read().decode('utf-8'))
+                            issues.append(issue)
+                        except Exception as e:
+                            logger.error(f"Error loading issue {obj['Key']}: {e}")
+            except Exception as e:
+                logger.error(f"Error listing issues for status {status}: {e}")
+        return jsonify(issues)
+    except Exception as e:
+        logger.error(f"Error in list_issues: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@jaffar_bp.route('/api/issues/<issue_id>', methods=['GET'])
+def get_issue(issue_id):
+    for status in ['draft', 'new']:
+        try:
+            key = f'jaffar/issues/{status}/{issue_id}.json'
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+            return jsonify(json.loads(response['Body'].read().decode('utf-8')))
+        except s3.exceptions.NoSuchKey:
+            continue
+    return jsonify({'error': 'Issue not found'}), 404
+
+@jaffar_bp.route('/api/issues/<issue_id>/comments', methods=['POST'])
+def add_comment(issue_id):
+    comment = request.json
+    for status in ['draft', 'new']:
+        key = f'jaffar/issues/{status}/{issue_id}.json'
+        try:
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+            issue = json.loads(response['Body'].read().decode('utf-8'))
+            if 'comments' not in issue:
+                issue['comments'] = []
+            issue['comments'].append(comment)
+            s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json.dumps(issue, ensure_ascii=False))
+            return jsonify(issue)
+        except s3.exceptions.NoSuchKey:
+            continue
+    return jsonify({'error': 'Issue not found'}), 404
+
+@jaffar_bp.route('/api/acknowledge', methods=['POST'])
+def api_acknowledge():
+    data = request.json
+    issue_id = data.get('issueId')
+    email = data.get('email')
+
+    for folder in ['draft', 'new']:
+        s3_key = f'jaffar/issues/{folder}/{issue_id}.json'
+        try:
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=s3_key)
+            issue = json.loads(response['Body'].read().decode('utf-8'))
+
+            if 'acknowledgeEscalation' not in issue:
+                issue['acknowledgeEscalation'] = []
+
+            issue['acknowledgeEscalation'].append({
+                'email': email,
+                'date': datetime.datetime.now().isoformat()
+            })
+
+            s3.put_object(Bucket=BUCKET_NAME, Key=s3_key, Body=json.dumps(issue))
+            return jsonify({'status': 'success'})
+        except s3.exceptions.NoSuchKey:
+            continue
+        except Exception as e:
+            logger.error(f"Error processing acknowledgement: {e}")
+            return jsonify({'error': str(e)}), 500
+
+    return jsonify({'error': 'Issue not found'}), 404
