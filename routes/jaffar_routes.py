@@ -7,6 +7,11 @@ import logging
 from services.email_service import send_confirmation_if_needed
 from main import s3, BUCKET_NAME, LOCAL_BUCKET_DIR, remove_circular_references, CircularRefEncoder
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 jaffar_bp = Blueprint('jaffar', __name__)
 
