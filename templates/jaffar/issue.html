@@ -10,13 +10,18 @@
 
   async init() {
     const issueId = window.location.pathname.split('/').pop();
-    const [configResponse, issueResponse] = await Promise.all([
+    const [configResponse, issueResponse, changesResponse] = await Promise.all([
       fetch('/api/jaffar/config'),
-      fetch(`/api/jaffar/issues/${issueId}`)
+      fetch(`/api/jaffar/issues/${issueId}`),
+      fetch(`/api/jaffar/issues/${issueId}/changes`)
     ]);
     
     this.config = await configResponse.json();
     this.issue = await issueResponse.json();
+    
+    // Fusionner les changements du fichier avec ceux de l'issue
+    const changesFromFile = await changesResponse.json();
+    this.issue.changes = changesFromFile;
   },
 
   async loadIssue(id) {

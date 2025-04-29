@@ -316,6 +316,18 @@ def get_issue(issue_id):
             continue
     return jsonify({'error': 'Issue not found'}), 404
 
+@app.route('/api/jaffar/issues/<issue_id>/changes', methods=['GET'])
+def get_issue_changes(issue_id):
+    try:
+        key = f'jaffar/issues/changes/{issue_id}-changes.json'
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+        return jsonify(json.loads(response['Body'].read().decode('utf-8')))
+    except s3.exceptions.NoSuchKey:
+        return jsonify([])
+    except Exception as e:
+        logger.error(f"Failed to get changes for {issue_id}: {e}")
+        return jsonify([])
+
 
 @app.route('/api/jaffar/issues/<issue_id>/comments', methods=['POST'])
 def add_comment(issue_id):
