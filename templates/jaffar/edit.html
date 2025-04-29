@@ -205,12 +205,16 @@
     }
   }
 }" x-init="init()">
+  <div class="relative">
+    <button onclick="window.location.href = document.referrer || '/'" class="absolute top-4 left-4 text-white hover:text-gray-200">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+    </button>
+  </div>
   <div class="mb-6 flex justify-between items-center">
     <h1 class="text-2xl font-bold">New Issue</h1>
     <div class="flex space-x-4">
-      <button onclick="window.location.href = document.referrer || '/'" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-        Back
-      </button>
       <button 
         @click="saveForm" 
         :disabled="saving"
