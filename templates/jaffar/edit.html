@@ -147,10 +147,30 @@
   async saveForm() {
     const now = new Date();
     
+    // Create a clean copy without circular references
+    const cleanFormData = Object.entries(this.formData).reduce((acc, [key, value]) => {
+      // Skip undefined values
+      if (value === undefined) return acc;
+      
+      // Handle the changes object specially
+      if (key === 'changes' && typeof value === 'object') {
+        // Only keep the last change for each field
+        acc[key] = Object.entries(value).reduce((changes, [field, fieldChanges]) => {
+          if (Array.isArray(fieldChanges) && fieldChanges.length > 0) {
+            changes[field] = fieldChanges;
+          }
+          return changes;
+        }, {});
+      } else {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+
     const formToSave = {
       id: this.formData.id || `JAFF-ISS-${now.getTime()}`,
       author: localStorage.getItem('user_email'),
-      ...this.formData,
+      ...cleanFormData,
       status: 'draft',
       created_at: this.formData.created_at || now.toISOString()
     };
