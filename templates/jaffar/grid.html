@@ -6,62 +6,144 @@
 {% block content %}
 <div class="p-6" x-data="{
   issues: [],
+  search: '',
+  isFullscreen: false,
+  filters: {
+    status: '',
+    'asset-class': '',
+    'business-unit': '',
+    region: '',
+    'pc-function': '',
+    'issue-family': ''
+  },
   async init() {
     const response = await fetch('/api/jaffar/issues/list');
     if (response.ok) {
       const data = await response.json();
       this.issues = data.filter(issue => issue.status === 'new' || issue.version);
     }
+  },
+  filteredIssues() {
+    return this.issues.filter(issue => {
+      const matchesSearch = JSON.stringify(issue).toLowerCase().includes(this.search.toLowerCase());
+      const matchesFilters = Object.entries(this.filters).every(([key, value]) => {
+        if (!value) return true;
+        const issueValue = issue[key];
+        if (Array.isArray(issueValue)) {
+          return issueValue.includes(value);
+        }
+        return issueValue === value;
+      });
+      return matchesSearch && matchesFilters;
+    });
   }
 }">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-white">Issues Grid</h1>
+    <div class="flex gap-4 items-center">
+      <div class="relative">
+        <input 
+          type="text" 
+          x-model="search" 
+          placeholder="Search..."
+          class="bg-gray-800 text-white p-2 rounded-lg w-64 pl-10"
+        >
+        <svg class="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+      </div>
+      <button 
+        @click="isFullscreen = !isFullscreen"
+        class="bg-gray-800 p-2 rounded-lg hover:bg-gray-700"
+      >
+        <svg x-show="!isFullscreen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M4 8V4m0 0h4M4 4l5 5m11-5v4m0-4h-4m4 4l-5-5m-11 13v-4m0 4h4m-4-4l5 5m11-5v4m0-4h-4m4 4l-5-5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+        <svg x-show="isFullscreen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M6 16V6m0 10H4m2 0l5-5m7 5v-2m0 2h2m-2 0l-5-5M6 6h2m-2 0l5 5m7-5v2m0-2h2m-2 0l-5 5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
-  <div class="overflow-x-auto">
+  <div 
+    class="overflow-x-auto transition-all duration-300"
+    :class="{'ml-[-280px]': isFullscreen && window.innerWidth >= 640}"
+  >
     <table class="w-full text-left text-sm">
       <thead class="bg-gray-800 text-white">
         <tr>
-          <th class="p-3">ID</th>
+          <th class="p-3">
+            <select x-model="filters.status" class="bg-gray-700 text-sm rounded p-1">
+              <option value="">Status</option>
+              <option value="new">New</option>
+              <option value="draft">Draft</option>
+            </select>
+          </th>
           <th class="p-3">Name</th>
           <th class="p-3">Description</th>
-          <th class="p-3">Status</th>
-          <th class="p-3">Version</th>
-          <th class="p-3">Asset Class</th>
-          <th class="p-3">Business Unit</th>
-          <th class="p-3">Region</th>
-          <th class="p-3">PC Function</th>
-          <th class="p-3">Issue Family</th>
+          <th class="p-3">
+            <select x-model="filters['asset-class']" class="bg-gray-700 text-sm rounded p-1">
+              <option value="">Asset Class</option>
+              <option>XVA</option>
+              <option>RHU</option>
+            </select>
+          </th>
+          <th class="p-3">
+            <select x-model="filters['business-unit']" class="bg-gray-700 text-sm rounded p-1">
+              <option value="">Business Unit</option>
+            </select>
+          </th>
+          <th class="p-3">
+            <select x-model="filters.region" class="bg-gray-700 text-sm rounded p-1">
+              <option value="">Region</option>
+              <option>Africa</option>
+              <option>MENAT</option>
+              <option>Asia Pacific</option>
+              <option>Europe</option>
+              <option>Americas</option>
+            </select>
+          </th>
+          <th class="p-3">
+            <select x-model="filters['pc-function']" class="bg-gray-700 text-sm rounded p-1">
+              <option value="">PC Function</option>
+              <option>Core PC</option>
+            </select>
+          </th>
+          <th class="p-3">
+            <select x-model="filters['issue-family']" class="bg-gray-700 text-sm rounded p-1">
+              <option value="">Issue Family</option>
+              <option>Daily/Month-end P&L</option>
+            </select>
+          </th>
           <th class="p-3">Author</th>
-          <th class="p-3">Created</th>
-          <th class="p-3">Updated</th>
+          <th class="p-3">Submitted</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-700">
-        <template x-for="issue in issues" :key="issue.id">
+        <template x-for="issue in filteredIssues()" :key="issue.id">
           <tr class="bg-gray-900 hover:bg-gray-800 transition-colors">
             <td class="p-3">
-              <a :href="'/issue/' + issue.id" class="text-blue-400 hover:text-blue-300" x-text="issue.id"></a>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500" x-text="issue.id.split('-').pop()"></span>
+                <span class="px-2 py-1 rounded text-xs" :class="{
+                  'bg-yellow-900 text-yellow-200': issue.status === 'draft',
+                  'bg-green-900 text-green-200': issue.status === 'new'
+                }" x-text="issue.status"></span>
+                <span x-show="issue.version" class="px-2 py-1 rounded text-xs bg-blue-900 text-blue-200" x-text="'v' + issue.version"></span>
+              </div>
             </td>
-            <td class="p-3" x-text="issue.name || 'Unnamed Issue'"></td>
+            <td class="p-3">
+              <a :href="'/issue/' + issue.id" class="hover:text-blue-400 transition-colors" x-text="issue.name || 'Unnamed Issue'"></a>
+            </td>
             <td class="p-3 max-w-md truncate" x-text="issue['issue-description'] || 'No description'"></td>
-            <td class="p-3">
-              <span class="px-2 py-1 rounded text-xs" :class="{
-                'bg-yellow-900 text-yellow-200': issue.status === 'draft',
-                'bg-green-900 text-green-200': issue.status === 'new'
-              }" x-text="issue.status"></span>
-            </td>
-            <td class="p-3">
-              <span x-show="issue.version" class="px-2 py-1 rounded text-xs bg-blue-900 text-blue-200" x-text="'v' + issue.version"></span>
-            </td>
             <td class="p-3" x-text="Array.isArray(issue['asset-class']) ? issue['asset-class'].join(', ') : issue['asset-class'] || '--'"></td>
             <td class="p-3" x-text="Array.isArray(issue['business-unit']) ? issue['business-unit'].join(', ') : issue['business-unit'] || '--'"></td>
             <td class="p-3" x-text="Array.isArray(issue.region) ? issue.region.join(', ') : issue.region || '--'"></td>
             <td class="p-3" x-text="issue['pc-function'] || '--'"></td>
             <td class="p-3" x-text="issue['issue-family'] || '--'"></td>
             <td class="p-3" x-text="issue.author"></td>
-            <td class="p-3" x-text="new Date(issue.created_at).toLocaleString()"></td>
-            <td class="p-3" x-text="issue.updated_at ? new Date(issue.updated_at).toLocaleString() : '--'"></td>
+            <td class="p-3" x-text="issue.submitted_at ? new Date(issue.submitted_at).toLocaleString() : '--'"></td>
           </tr>
         </template>
       </tbody>
