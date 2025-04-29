@@ -116,21 +116,21 @@
 
   trackChanges(newValue, oldValue) {
     if (!oldValue || !newValue) return;
-    
+
     const timestamp = new Date().toISOString();
     for (const [key, value] of Object.entries(newValue)) {
       // Skip the changes property itself to avoid circular references
       if (key === 'changes') continue;
-      
+
       if (JSON.stringify(oldValue[key]) !== JSON.stringify(value)) {
         if (!this.formData.changes) {
           this.formData.changes = {};
         }
-        
+
         // Create a clean copy of the values
         const previous = JSON.parse(JSON.stringify(oldValue[key]));
         const newVal = JSON.parse(JSON.stringify(value));
-        
+
         this.formData.changes[key] = [{
           previous: previous,
           new: newVal,
@@ -142,7 +142,12 @@
   },
 
   async init() {
-    await this.loadData();
+    this.loading = true;
+    try {
+      await this.loadData();
+    } finally {
+      this.loading = false;
+    }
     this.$watch('formData', (value, oldValue) => {
       if (!oldValue || this.loading) return;
       if (JSON.stringify(value.changes) !== JSON.stringify(oldValue.changes)) {
@@ -157,15 +162,15 @@
 
   async saveForm() {
     if (this.saving) return; // Prevent multiple simultaneous saves
-    
+
     try {
       this.saving = true;
       const now = new Date();
-      
+
       // Create a clean copy without circular references
       const cleanFormData = Object.entries(this.formData).reduce((acc, [key, value]) => {
         if (value === undefined) return acc;
-        
+
         if (key === 'changes' && typeof value === 'object') {
           acc[key] = Object.entries(value).reduce((changes, [field, fieldChanges]) => {
             if (Array.isArray(fieldChanges) && fieldChanges.length > 0) {
@@ -186,7 +191,7 @@
         status: 'draft',
         created_at: this.formData.created_at || now.toISOString()
       };
-      
+
       const response = await fetch('/api/jaffar/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -199,7 +204,7 @@
 
       // Update oldData after successful save
       this.oldData = JSON.parse(JSON.stringify(this.formData));
-      
+
     } catch (error) {
       console.error('Save failed:', error);
     } finally {
@@ -216,25 +221,30 @@
           </svg>
         </button>
         <div>
-          <h1 class="text-xl font-bold text-white" x-text="formData.id"></h1>
-          <div class="flex items-center space-x-3 text-sm text-gray-400">
-            <span x-text="formData.author"></span>
-            <span>•</span>
-            <span x-text="new Date(formData.created_at).toLocaleDateString()"></span>
-            <span>•</span>
-            <span class="px-2 py-0.5 rounded-full text-xs" 
-              :class="{
-                'bg-yellow-900 text-yellow-200': formData.status === 'draft',
-                'bg-green-900 text-green-200': formData.status === 'new'
-              }"
-              x-text="formData.status">
-            </span>
-          </div>
+          <template x-if="loading">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+          </template>
+          <template x-if="!loading && formData">
+            <h1 class="text-xl font-bold text-white" x-text="formData?.id"></h1>
+            <div class="flex items-center space-x-3 text-sm text-gray-400">
+              <span x-text="formData?.author"></span>
+              <span>•</span>
+              <span x-text="formData?.created_at ? new Date(formData.created_at).toLocaleDateString() : ''"></span>
+              <span>•</span>
+              <span class="px-2 py-0.5 rounded-full text-xs" 
+                :class="{
+                  'bg-yellow-900 text-yellow-200': formData?.status === 'draft',
+                  'bg-green-900 text-green-200': formData?.status === 'new'
+                }"
+                x-text="formData?.status">
+              </span>
+            </div>
+          </template>
         </div>
       </div>
       <button type="submit" 
         @click.prevent="submitForm"
-        :disabled="config.fields.some(f => f.required && !formData[f.key])"
+        :disabled="config?.fields?.some(f => f.required && !formData?.[f.key])"
         class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed">
         Submit
       </button>
