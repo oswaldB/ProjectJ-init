@@ -135,16 +135,11 @@
   async init() {
     await this.loadData();
 
-    let initialLoad = true;
-
-    // Watch formData for changes and auto-save as draft
-    this.$watch('formData', (value) => {
-      if (initialLoad) {
-        initialLoad = false;
-        return;
-      }
-      this.trackChanges(value, this.oldData); // Track changes
-      this.oldData = JSON.parse(JSON.stringify(value)); // Update oldData
+    this.$watch('formData', (value, oldValue) => {
+      if (!oldValue) return;
+      
+      this.trackChanges(value, this.oldData);
+      this.oldData = JSON.parse(JSON.stringify(value));
 
       const now = new Date();
       const formToSave = {
@@ -155,17 +150,14 @@
         created_at: this.formData.created_at || now.toISOString()
       };
 
-      // Show loader after 3 seconds if save hasn't completed
-      const loaderTimeout = setTimeout(() => {
-        document.body._x_dataStack[0].saving = true;
-      }, 3000);
-
+      document.body._x_dataStack[0].saving = true;
+      
       fetch('/api/jaffar/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formToSave)
-      }).finally(() => {
-        clearTimeout(loaderTimeout);
+      })
+      .finally(() => {
         document.body._x_dataStack[0].saving = false;
       });
     }, { deep: true });
