@@ -291,6 +291,10 @@ def get_changes_from_global_db(issue_id):
 def index():
     return render_template('jaffar/index.html')
 
+@app.route('/grid')
+def grid():
+    return render_template('jaffar/grid.html')
+
 
 @app.route('/edit')
 def edit():
