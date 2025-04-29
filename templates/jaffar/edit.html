@@ -146,10 +146,21 @@
 
   async saveForm() {
     const now = new Date();
+    
+    // Create a clean copy without circular references
+    const cleanData = Object.keys(this.formData).reduce((acc, key) => {
+      if (key === 'changes') {
+        // Skip changes property as it will be handled separately
+        return acc;
+      }
+      acc[key] = this.formData[key];
+      return acc;
+    }, {});
+
     const formToSave = {
       id: this.formData.id || `JAFF-ISS-${now.getTime()}`,
       author: localStorage.getItem('user_email'),
-      ...this.formData,
+      ...cleanData,
       status: 'draft',
       created_at: this.formData.created_at || now.toISOString()
     };
