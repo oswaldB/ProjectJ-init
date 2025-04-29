@@ -6,6 +6,7 @@
 {% block content %}
 <div class="p-6" x-data="{
   issues: [],
+  config: null,
   search: '',
   isFullscreen: false,
   filters: {
@@ -17,13 +18,26 @@
     'issue-family': ''
   },
   async init() {
-    const response = await fetch('/api/jaffar/issues/list');
-    if (response.ok) {
-      const data = await response.json();
+    const [issuesResponse, configResponse] = await Promise.all([
+      fetch('/api/jaffar/issues/list'),
+      fetch('/api/jaffar/config')
+    ]);
+
+    if (configResponse.ok) {
+      this.config = await configResponse.json();
+    }
+
+    if (issuesResponse.ok) {
+      const data = await issuesResponse.json();
       this.issues = data
         .filter(issue => issue.status === 'new' || issue.version)
         .map(issue => ({...issue, showEmail: false}));
     }
+  },
+  getFieldOptions(fieldKey) {
+    if (!this.config?.fields) return [];
+    const field = this.config.fields.find(f => f.key === fieldKey);
+    return field?.options || [];
   },
   filteredIssues() {
     return this.issues.filter(issue => {
@@ -41,23 +55,40 @@
   }
 }">
   <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-white">Issues Grid</h1>
     <div class="flex gap-4 items-center">
-      <div class="relative">
-        <input 
-          type="text" 
-          x-model="search" 
-          placeholder="Search..."
-          class="bg-gray-800 text-white p-2 rounded-lg w-64 pl-10"
-        >
-        <svg class="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-        </svg>
-      </div>
       <button 
         @click="isFullscreen = !isFullscreen"
         class="bg-gray-800 p-2 rounded-lg hover:bg-gray-700"
       >
+        <svg x-show="!isFullscreen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M4 8V4m0 0h4M4 4l5 5m11-5v4m0-4h-4m4 4l-5-5m-11 13v-4m0 4h4m-4-4l5 5m11-5v4m0-4h-4m4 4l-5-5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+        <svg x-show="isFullscreen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M6 16V6m0 10H4m2 0l5-5m7 5v-2m0 2h2m-2 0l-5-5M6 6h2m-2 0l5 5m7-5v2m0-2h2m-2 0l-5 5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+      </button>
+      <h1 class="text-2xl font-bold text-white">Issues Grid</h1>
+    </div>
+    <div class="relative">
+      <input 
+        type="text" 
+        x-model="search" 
+        placeholder="Search..."
+        class="bg-gray-800 text-white p-2 rounded-lg w-64 pl-10"
+      >
+      <svg class="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+      </svg>
+    </div>
+  </div>
+
+  <div 
+    class="overflow-x-auto transition-all duration-300"
+    :class="{
+      'fixed inset-0 bg-gray-900 z-50 p-6': isFullscreen,
+      'ml-[-280px]': isFullscreen && window.innerWidth >= 640
+    }"
+  >
         <svg x-show="!isFullscreen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path d="M4 8V4m0 0h4M4 4l5 5m11-5v4m0-4h-4m4 4l-5-5m-11 13v-4m0 4h4m-4-4l5 5m11-5v4m0-4h-4m4 4l-5-5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
         </svg>
@@ -87,35 +118,41 @@
           <th class="p-3">
             <select x-model="filters['asset-class']" class="bg-gray-700 text-sm rounded p-1">
               <option value="">Asset Class</option>
-              <option>XVA</option>
-              <option>RHU</option>
+              <template x-for="option in getFieldOptions('asset-class')" :key="option.name">
+                <option x-text="option.name"></option>
+              </template>
             </select>
           </th>
           <th class="p-3">
             <select x-model="filters['business-unit']" class="bg-gray-700 text-sm rounded p-1">
               <option value="">Business Unit</option>
+              <template x-for="option in getFieldOptions('business-unit')" :key="option.name">
+                <option x-text="option.name"></option>
+              </template>
             </select>
           </th>
           <th class="p-3">
             <select x-model="filters.region" class="bg-gray-700 text-sm rounded p-1">
               <option value="">Region</option>
-              <option>Africa</option>
-              <option>MENAT</option>
-              <option>Asia Pacific</option>
-              <option>Europe</option>
-              <option>Americas</option>
+              <template x-for="option in getFieldOptions('region')" :key="option.name">
+                <option x-text="option.name"></option>
+              </template>
             </select>
           </th>
           <th class="p-3">
             <select x-model="filters['pc-function']" class="bg-gray-700 text-sm rounded p-1">
               <option value="">PC Function</option>
-              <option>Core PC</option>
+              <template x-for="option in getFieldOptions('pc-function')" :key="option.name">
+                <option x-text="option.name"></option>
+              </template>
             </select>
           </th>
           <th class="p-3">
             <select x-model="filters['issue-family']" class="bg-gray-700 text-sm rounded p-1">
               <option value="">Issue Family</option>
-              <option>Daily/Month-end P&L</option>
+              <template x-for="option in getFieldOptions('issue-family')" :key="option.name">
+                <option x-text="option.name"></option>
+              </template>
             </select>
           </th>
           <th class="p-3">Author</th>
