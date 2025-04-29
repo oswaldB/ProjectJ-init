@@ -5,7 +5,12 @@
 {% block content %}
 <div x-data="{
   config: null,
-  formData: null,
+  formData: {
+    id: '',
+    author: '',
+    created_at: '',
+    status: 'draft'
+  },
   oldData: null,
   changes: {},
   loading: true,
