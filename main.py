@@ -121,7 +121,7 @@ def get_max_filename_from_global_db(suffix):
         response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
         max_num = 0
         max_key = None
-        
+
         if 'Contents' in response:
             for obj in response['Contents']:
                 if obj['Key'].endswith(suffix):
@@ -136,7 +136,7 @@ def get_max_filename_from_global_db(suffix):
 
 def save_issue_to_storage(issue_id, status, data):
     logger.info(f"Entering save_issue_to_storage for issue {issue_id}")
-    
+
     # Check if issue already exists in 'new' status
     new_key = f'jaffar/issues/new/{issue_id}.json'
     try:
@@ -148,7 +148,7 @@ def save_issue_to_storage(issue_id, status, data):
             key = f'jaffar/issues/{status}/{issue_id}.json'
     except:
         key = f'jaffar/issues/{status}/{issue_id}.json'
-    
+
     logger.info(f"Generated storage key: {key}")
 
     # Add config array
@@ -159,11 +159,11 @@ def save_issue_to_storage(issue_id, status, data):
         "templates": get_max_filename_from_global_db("templates.json"),
         "rules": get_max_filename_from_global_db("rules.json")
     }
-    
+
     for key_name, value in configs.items():
         if value:
             config.append({key_name: value})
-    
+
     data['config'] = config
 
     try:
@@ -351,7 +351,7 @@ def api_jaffar_config():
 def list_issues():
     issues = []
     try:
-        for status in ['draft', 'new']:
+        for status in ['draft', 'new', 'submitted']: # Added 'submitted'
             prefix = f'jaffar/issues/{status}/'
             try:
                 response = s3.list_objects_v2(Bucket=BUCKET_NAME,
@@ -377,7 +377,7 @@ def list_issues():
 
 @app.route('/api/jaffar/issues/<issue_id>', methods=['GET'])
 def get_issue(issue_id):
-    for status in ['draft', 'new']:
+    for status in ['draft', 'new', 'submitted']: # Added 'submitted'
         try:
             key = f'jaffar/issues/{status}/{issue_id}.json'
             response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
@@ -404,7 +404,7 @@ def add_comment(issue_id):
     comment = request.json
     if 'timestamp' not in comment:
         comment['timestamp'] = datetime.datetime.now().isoformat()
-        
+
     changes_key = f'jaffar/issues/changes/{issue_id}-changes.json'
 
     try:
@@ -437,10 +437,10 @@ def add_comment(issue_id):
 def submit_issue():
     data = request.json
     issue_id = data.get('issueId')
-    
+
     if not issue_id:
         return jsonify({'error': 'Missing issue ID'}), 400
-        
+
     try:
         # Check if issue exists in new status
         new_key = f'jaffar/issues/new/{issue_id}.json'
@@ -460,10 +460,10 @@ def submit_issue():
             issue_data['submitted_at'] = datetime.datetime.now().isoformat()
             issue_data['version'] = 1
             delete(draft_key)
-        
+
         # Save to new folder
         save_issue_to_storage(issue_id, 'new', issue_data)
-        
+
         # Log system activity
         activity = {
             "type": "system",
@@ -472,16 +472,16 @@ def submit_issue():
             "author": issue_data.get('author', 'system')
         }
         save_issue_changes(issue_id, activity)
-        
+
         # Send confirmation email
         email_executor.submit(send_confirmation_if_needed, issue_data)
-        
+
         return jsonify({
             'status': 'success',
             'redirect': f'/issue/{issue_id}',
             'message': 'Submitted!'
         })
-        
+
     except Exception as e:
         logger.error(f"Failed to submit issue {issue_id}: {e}")
         return jsonify({'error': str(e)}), 500
@@ -495,10 +495,10 @@ def save_issue():
 
         issue_id = data.get('id')
         status = data.get('status', 'draft')
-        
+
         # Extract changes before saving issue
         changes = data.pop('changes', None)
-        
+
         # Save the issue without changes
         save_issue_to_storage(issue_id, status, data)
 
@@ -521,7 +521,7 @@ def api_acknowledge():
     issue_id = data.get('issueId')
     email = data.get('email')
 
-    for folder in ['draft', 'new']:
+    for folder in ['draft', 'new', 'submitted']: # Added 'submitted'
         s3_key = f'jaffar/issues/{folder}/{issue_id}.json'
         try:
             response = s3.get_object(Bucket=BUCKET_NAME, Key=s3_key)
