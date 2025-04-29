@@ -372,13 +372,16 @@ def save_issue():
 
         issue_id = data.get('id')
         status = data.get('status', 'draft')
-
-        # Save the issue
+        
+        # Extract changes before saving issue
+        changes = data.pop('changes', None)
+        
+        # Save the issue without changes
         save_issue_to_storage(issue_id, status, data)
 
         # Track changes if any exist
-        if 'changes' in data:
-            save_issue_changes(issue_id, data['changes'])
+        if changes:
+            save_issue_changes(issue_id, changes)
 
         # Send confirmation email for new issues
         if status == 'new':
