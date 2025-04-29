@@ -156,6 +156,7 @@
           const groupedChanges = [];
           let currentGroup = null;
           
+          // Trier les changements par date décroissante
           changes.sort((a, b) => {
             const dateA = new Date(a.timestamp || (Object.values(a)[0]?.[0]?.timestamp) || 0).getTime();
             const dateB = new Date(b.timestamp || (Object.values(b)[0]?.[0]?.timestamp) || 0).getTime();
@@ -182,12 +183,24 @@
               groupedChanges.push(currentGroup);
             }
             
+            // Pour chaque champ dans le changement
             Object.entries(change).forEach(([field, fieldChanges]) => {
               if (field !== 'author' && field !== 'timestamp') {
                 if (!currentGroup.changes[field]) {
                   currentGroup.changes[field] = [];
                 }
-                currentGroup.changes[field].push(...fieldChanges);
+                
+                // Pour chaque changement dans le champ
+                fieldChanges.forEach(fieldChange => {
+                  // Ne garder que le dernier changement pour chaque valeur
+                  const existingChange = currentGroup.changes[field].find(
+                    existing => existing.new === fieldChange.new
+                  );
+                  
+                  if (!existingChange) {
+                    currentGroup.changes[field].push(fieldChange);
+                  }
+                });
               }
             });
           });
