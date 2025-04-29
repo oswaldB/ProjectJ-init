@@ -7,6 +7,7 @@
     page: 'form-editor',
     form: { id: '', name: '', fields: [], status: 'Draft' },
     preview: true,
+    saveFormDebounced: null,
     async init() {
       this.$watch('form', () => {
         this.saveForm();
@@ -33,24 +34,31 @@
       }
     },
     async saveForm() {
-      if (!this.form.id) {
-        this.form.id = `forms-${Date.now()}`;
+      if (this.saveFormDebounced) {
+        clearTimeout(this.saveFormDebounced);
       }
-      const userEmail = localStorage.getItem('user_email');
-      if (!userEmail) {
-        console.error('User email not found');
-        return;
-      }
-      this.form.user_email = userEmail;
-      try {
-        await fetch('/api/sultan/forms/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: userEmail, form: this.form })
-        });
-      } catch (error) {
-        console.error('Failed to save form:', error);
-      }
+
+      this.saveFormDebounced = setTimeout(async () => {
+        if (!this.form.id) {
+          this.form.id = `forms-${Date.now()}`;
+        }
+        const userEmail = localStorage.getItem('user_email');
+        if (!userEmail) {
+          console.error('User email not found');
+          return;
+        }
+        this.form.user_email = userEmail;
+        try {
+          await fetch('/api/sultan/forms/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: userEmail, form: this.form })
+          });
+        } catch (error) {
+          console.error('Failed to save form:', error);
+          alert('Failed to save form');
+        }
+      }, 1000); // Attendre 1 seconde avant de sauvegarder
     },
     addField() {
       this.form.fields.push({
@@ -84,6 +92,7 @@
     page: 'form-editor',
     form: { id: '', name: '', fields: [], status: 'Draft' },
     preview: true,
+    saveFormDebounced: null,
     async init() {
       this.$watch('form', () => {
         this.saveForm();
@@ -109,24 +118,31 @@
       }
     },
     async saveForm() {
-      if (!this.form.id) {
-        this.form.id = `forms-${Date.now()}`;
+      if (this.saveFormDebounced) {
+        clearTimeout(this.saveFormDebounced);
       }
-      const userEmail = localStorage.getItem('user_email');
-      if (!userEmail) {
-        console.error('User email not found');
-        return;
-      }
-      this.form.user_email = userEmail;
-      try {
-        await fetch('/api/sultan/forms/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: userEmail, form: this.form })
-        });
-      } catch (error) {
-        console.error('Failed to save form:', error);
-      }
+
+      this.saveFormDebounced = setTimeout(async () => {
+        if (!this.form.id) {
+          this.form.id = `forms-${Date.now()}`;
+        }
+        const userEmail = localStorage.getItem('user_email');
+        if (!userEmail) {
+          console.error('User email not found');
+          return;
+        }
+        this.form.user_email = userEmail;
+        try {
+          await fetch('/api/sultan/forms/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: userEmail, form: this.form })
+          });
+        } catch (error) {
+          console.error('Failed to save form:', error);
+          alert('Failed to save form');
+        }
+      }, 1000); // Attendre 1 seconde avant de sauvegarder
     },
     addField() {
       this.form.fields.push({
