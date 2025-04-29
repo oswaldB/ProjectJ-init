@@ -119,13 +119,21 @@
     
     const timestamp = new Date().toISOString();
     for (const [key, value] of Object.entries(newValue)) {
+      // Skip the changes property itself to avoid circular references
+      if (key === 'changes') continue;
+      
       if (JSON.stringify(oldValue[key]) !== JSON.stringify(value)) {
         if (!this.formData.changes) {
           this.formData.changes = {};
         }
+        
+        // Create a clean copy of the values
+        const previous = JSON.parse(JSON.stringify(oldValue[key]));
+        const newVal = JSON.parse(JSON.stringify(value));
+        
         this.formData.changes[key] = [{
-          previous: oldValue[key],
-          new: value,
+          previous: previous,
+          new: newVal,
           timestamp,
           author: localStorage.getItem('user_email')
         }];
