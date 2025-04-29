@@ -4,7 +4,8 @@ import json
 import os
 import logging
 from services.email_service import send_confirmation_if_needed
-from main import s3, BUCKET_NAME, LOCAL_BUCKET_DIR, CircularRefEncoder, get_max_from_global_db, delete, save_in_global_db
+from main import s3, BUCKET_NAME, LOCAL_BUCKET_DIR, CircularRefEncoder
+from services.db_service import get_max_from_global_db, delete, save_in_global_db
 
 # Configure logging
 logging.basicConfig(
