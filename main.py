@@ -20,6 +20,12 @@ import datetime
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
 # Local storage configuration
 LOCAL_BUCKET_DIR = "./local_bucket"
 BUCKET_NAME = "jaffar-bucket"
