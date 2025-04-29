@@ -477,6 +477,7 @@ def extract_issue_data(request_data):
 
 @app.route('/api/jaffar/save', methods=['POST'])
 def api_jaffar_save():
+    logger.info("Entering api_jaffar_save endpoint")
     try:
         data = request.json
         if not validate_save_request(data):
