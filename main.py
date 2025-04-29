@@ -442,34 +442,38 @@ def submit_issue():
         return jsonify({'error': 'Missing issue ID'}), 400
         
     try:
-        # Get current issue from draft
-        draft_key = f'jaffar/issues/draft/{issue_id}.json'
-        response = s3.get_object(Bucket=BUCKET_NAME, Key=draft_key)
-        issue_data = json.loads(response['Body'].read().decode('utf-8'))
-        
-        # Update status and add submitted timestamp
-        issue_data['status'] = 'submitted'
-        issue_data['submitted_at'] = datetime.datetime.now().isoformat()
+        # Check if issue exists in new status
+        new_key = f'jaffar/issues/new/{issue_id}.json'
+        try:
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=new_key)
+            issue_data = json.loads(response['Body'].read().decode('utf-8'))
+            # Update version if exists
+            current_version = issue_data.get('version', 0)
+            issue_data['version'] = current_version + 1
+            issue_data['updated_at'] = datetime.datetime.now().isoformat()
+        except:
+            # Get from draft if not in new
+            draft_key = f'jaffar/issues/draft/{issue_id}.json'
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=draft_key)
+            issue_data = json.loads(response['Body'].read().decode('utf-8'))
+            issue_data['status'] = 'submitted'
+            issue_data['submitted_at'] = datetime.datetime.now().isoformat()
+            issue_data['version'] = 1
+            delete(draft_key)
         
         # Save to new folder
-        new_key = f'jaffar/issues/new/{issue_id}.json'
-        
-        # Save the issue with updated data
         save_issue_to_storage(issue_id, 'new', issue_data)
-        
-        # Delete from draft
-        delete(draft_key)
         
         # Log system activity
         activity = {
             "type": "system",
-            "content": "Issue submitted",
+            "content": f"Issue submitted (version {issue_data['version']})",
             "timestamp": datetime.datetime.now().isoformat(),
             "author": issue_data.get('author', 'system')
         }
         save_issue_changes(issue_id, activity)
         
-        # Send mock confirmation email
+        # Send confirmation email
         email_executor.submit(send_confirmation_if_needed, issue_data)
         
         return jsonify({
