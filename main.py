@@ -332,6 +332,9 @@ def get_issue_changes(issue_id):
 @app.route('/api/jaffar/issues/<issue_id>/comments', methods=['POST'])
 def add_comment(issue_id):
     comment = request.json
+    if 'created_at' not in comment:
+        comment['created_at'] = datetime.datetime.now().isoformat()
+        
     changes_key = f'jaffar/issues/changes/{issue_id}-changes.json'
 
     try:
