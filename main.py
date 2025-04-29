@@ -305,6 +305,36 @@ def new_issue():
         'author': user_email,
         'status': 'draft',
         'created_at': now.isoformat(),
+
+
+@app.route('/api/jaffar/issues/<issue_id>', methods=['DELETE'])
+def delete_issue(issue_id):
+    try:
+        # Try both draft and new status folders
+        for status in ['draft', 'new']:
+            key = f'jaffar/issues/{status}/{issue_id}.json'
+            try:
+                s3.head_object(Bucket=BUCKET_NAME, Key=key)
+                # Delete the issue file
+                delete(key)
+                
+                # Delete associated changes file if it exists
+                changes_key = f'jaffar/issues/changes/{issue_id}-changes.json'
+                try:
+                    delete(changes_key)
+                except:
+                    pass
+                    
+                return jsonify({"status": "success"})
+            except s3.exceptions.ClientError:
+                continue
+                
+        return jsonify({"error": "Issue not found"}), 404
+    except Exception as e:
+        logger.error(f"Failed to delete issue {issue_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
         'updated_at': now.isoformat()
     }
 
