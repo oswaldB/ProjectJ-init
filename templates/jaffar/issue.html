@@ -151,67 +151,7 @@
         </div>
 
         <!-- Timeline des actions -->
-        <template x-for="(item, index) in (function() {
-          const changes = [...(Array.isArray(issue.changes) ? issue.changes : [])];
-          const groupedChanges = [];
-          let currentGroup = null;
-
-          // Trier les changements par date décroissante
-          changes.sort((a, b) => {
-            const dateA = new Date(a.timestamp || (Object.values(a)[0]?.[0]?.timestamp) || 0).getTime();
-            const dateB = new Date(b.timestamp || (Object.values(b)[0]?.[0]?.timestamp) || 0).getTime();
-            return dateB - dateA;
-          }).forEach(change => {
-            const isComment = change.type === 'comment';
-            if (isComment) {
-              groupedChanges.push(change);
-              return;
-            }
-
-            const author = Object.values(change)[0]?.[0]?.author;
-            const timestamp = new Date(Object.values(change)[0]?.[0]?.timestamp).getTime();
-
-            if (!currentGroup || 
-                currentGroup.author !== author || 
-                Math.abs(currentGroup.timestamp - timestamp) > 180000) { // 3 minutes = 180000ms
-              currentGroup = {
-                author,
-                timestamp,
-                changes: {},
-                type: 'changes'
-              };
-              groupedChanges.push(currentGroup);
-            }
-
-            // Pour chaque champ dans le changement
-            Object.entries(change).forEach(([field, fieldChanges]) => {
-              if (field !== 'author' && field !== 'timestamp') {
-                if (!currentGroup.changes[field]) {
-                  currentGroup.changes[field] = [];
-                }
-
-                // Pour chaque changement dans le champ
-                // Ne garder que le premier et le dernier changement
-                if (fieldChanges.length > 0) {
-                  const firstChange = fieldChanges[0];
-                  const lastChange = fieldChanges[fieldChanges.length - 1];
-
-                  // Si la valeur initiale et finale sont différentes
-                  if (JSON.stringify(firstChange.previous) !== JSON.stringify(lastChange.new)) {
-                    currentGroup.changes[field] = [{
-                      previous: firstChange.previous,
-                      new: lastChange.new,
-                      timestamp: lastChange.timestamp,
-                      author: lastChange.author
-                    }];
-                  }
-                }
-              }
-            });
-          });
-
-          return groupedChanges;
-        })()" :key="index">
+        <template x-for="(item, index) in [...(Array.isArray(issue.changes) ? issue.changes : [])].reverse()" :key="index">
           <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
             <!-- System activity display -->
             <template x-if="item.type === 'system'">
@@ -236,26 +176,24 @@
               </div>
             </template>
 
-            <!-- Change display -->
-            <template x-if="item.type === 'changes'">
+            <!-- Field Change display -->
+            <template x-if="!item.type">
               <div>
                 <div class="flex justify-between items-start mb-2">
-                  <span class="text-sm text-gray-400" x-text="item.author + ' - ' + new Date(item.timestamp).toLocaleString()"></span>
+                  <span class="text-sm text-gray-400" x-text="Object.values(item)[0][0].author + ' - ' + new Date(Object.values(item)[0][0].timestamp).toLocaleString()"></span>
                 </div>
                 <div class="space-y-2">
-                  <template x-for="(changes, field) in item.changes" :key="field">
-                    <template x-if="Array.isArray(changes) && item.type !== 'system'">
-                      <div class="flex flex-col space-y-1 bg-gray-900 p-2 rounded">
-                        <span class="text-sm font-medium text-blue-300" x-text="field"></span>
-                        <div class="flex items-center space-x-2">
-                          <span class="bg-red-900/50 px-2 py-1 rounded text-red-200" x-text="changes && changes[0] && changes[0].previous ? (Array.isArray(changes[0].previous) ? changes[0].previous.join(', ') : changes[0].previous) : '--'"></span>
-                          <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                          <span class="bg-green-900/50 px-2 py-1 rounded text-green-200" x-text="changes && changes[0] && changes[0].new ? (Array.isArray(changes[0].new) ? changes[0].new.join(', ') : changes[0].new) : '--'"></span>
-                        </div>
+                  <template x-for="[field, changes] in Object.entries(item)" :key="field">
+                    <div class="flex flex-col space-y-1 bg-gray-900 p-2 rounded">
+                      <span class="text-sm font-medium text-blue-300" x-text="field"></span>
+                      <div class="flex items-center space-x-2">
+                        <span class="bg-red-900/50 px-2 py-1 rounded text-red-200" x-text="changes[0].previous ? (Array.isArray(changes[0].previous) ? changes[0].previous.join(', ') : changes[0].previous) : '--'"></span>
+                        <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                        <span class="bg-green-900/50 px-2 py-1 rounded text-green-200" x-text="changes[0].new ? (Array.isArray(changes[0].new) ? changes[0].new.join(', ') : changes[0].new) : '--'"></span>
                       </div>
-                    </template>
+                    </div>
                   </template>
                 </div>
               </div>
