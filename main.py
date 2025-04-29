@@ -421,6 +421,55 @@ def add_comment(issue_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/jaffar/submit', methods=['POST'])
+def submit_issue():
+    data = request.json
+    issue_id = data.get('issueId')
+    
+    if not issue_id:
+        return jsonify({'error': 'Missing issue ID'}), 400
+        
+    try:
+        # Get current issue from draft
+        draft_key = f'jaffar/issues/draft/{issue_id}.json'
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=draft_key)
+        issue_data = json.loads(response['Body'].read().decode('utf-8'))
+        
+        # Update status and add submitted timestamp
+        issue_data['status'] = 'submitted'
+        issue_data['submitted_at'] = datetime.datetime.now().isoformat()
+        
+        # Save to new folder
+        new_key = f'jaffar/issues/new/{issue_id}.json'
+        
+        # Save the issue with updated data
+        save_issue_to_storage(issue_id, 'new', issue_data)
+        
+        # Delete from draft
+        delete(draft_key)
+        
+        # Log system activity
+        activity = {
+            "type": "system",
+            "content": "Issue submitted",
+            "timestamp": datetime.datetime.now().isoformat(),
+            "author": issue_data.get('author', 'system')
+        }
+        save_issue_changes(issue_id, activity)
+        
+        # Send mock confirmation email
+        email_executor.submit(send_confirmation_if_needed, issue_data)
+        
+        return jsonify({
+            'status': 'success',
+            'redirect': f'/issue/{issue_id}',
+            'message': 'Submitted!'
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to submit issue {issue_id}: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/jaffar/save', methods=['POST'])
 def save_issue():
     try:
