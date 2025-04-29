@@ -335,21 +335,33 @@ IMPORTANT_FIELDS = {
 
 
 def compare_issues(old_data, new_data):
+    logger.info("Entering compare_issues function")
+    
     if not old_data:
+        logger.info("No old data provided, returning empty changes")
         return {}
 
+    logger.info("Starting comparison of important fields")
     changes = {}
-    # Only compare important fields to reduce processing
+    
     for key in IMPORTANT_FIELDS:
+        logger.info(f"Comparing field: {key}")
         new_value = new_data.get(key)
+        
         if key in old_data:
             if has_meaningful_change(old_data[key], new_value):
+                logger.info(f"Change detected in {key}")
                 changes[key] = {
                     'previous': simplify_value(old_data.get(key)),
                     'new': simplify_value(new_value)
                 }
+            else:
+                logger.info(f"No meaningful change in {key}")
         elif new_value is not None:
+            logger.info(f"New value added for {key}")
             changes[key] = {'previous': None, 'new': simplify_value(new_value)}
+            
+    logger.info(f"Comparison completed, found {len(changes)} changes")
     return changes
 
 
@@ -386,15 +398,25 @@ def save_issue(issue_id, status, data):
 
 
 def record_change(data, changes, user_email, previous_status):
+    logger.info("Entering record_change function")
+    logger.info(f"Recording changes for user: {user_email}")
+    
+    logger.info("Creating change record")
     change_record = {
         'modified_by': user_email,
         'modified_at': datetime.datetime.now().isoformat(),
         'previous_status': previous_status,
         'value_changes': changes
     }
+    
+    logger.info("Initializing changes array if needed")
     if 'changes' not in data or not isinstance(data['changes'], list):
+        logger.info("Creating new changes array")
         data['changes'] = []
+        
+    logger.info("Appending new change record")
     data['changes'].append(change_record)
+    logger.info("Change record added successfully")
 
 
 def send_confirmation_if_needed(data):
@@ -411,25 +433,37 @@ def validate_save_request(data):
     return True
 
 def save_issue_to_storage(issue_id, status, data):
+    logger.info(f"Entering save_issue_to_storage for issue {issue_id}")
     key = f'jaffar/issues/{status}/{issue_id}.json'
-    json_data = json.dumps(data, ensure_ascii=False, cls=CircularRefEncoder)
+    logger.info(f"Generated storage key: {key}")
 
     try:
-        # Save to S3
+        logger.info("Starting JSON serialization")
+        json_data = json.dumps(data, ensure_ascii=False, cls=CircularRefEncoder)
+        logger.info("JSON serialization completed")
+
+        logger.info("Starting S3 save")
         s3.put_object(
             Bucket=BUCKET_NAME, 
             Key=key, 
             Body=json_data.encode('utf-8'), 
             ContentType='application/json'
         )
+        logger.info("S3 save completed successfully")
 
-        # Save locally
+        logger.info("Starting local save")
         local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        logger.info(f"Local path generated: {local_path}")
+        
+        logger.info("Creating directories if needed")
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        
+        logger.info("Writing file locally")
         with open(local_path, 'w', encoding='utf-8') as f:
             f.write(json_data)
+        logger.info("Local save completed successfully")
 
-        logger.info(f"Issue {issue_id} saved successfully")
+        logger.info(f"Issue {issue_id} saved successfully to both S3 and local storage")
         return True
     except Exception as e:
         logger.error(f"Failed to save issue {issue_id}: {e}")
