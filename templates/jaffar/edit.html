@@ -114,18 +114,22 @@
   },
 
   trackChanges(newValue, oldValue) {
-    if (!oldValue) return;
-
+    if (!oldValue || !newValue) return;
+    
     const timestamp = new Date().toISOString();
     for (const [key, value] of Object.entries(newValue)) {
-      if (oldValue[key] !== value) {
-        if (!this.changes[key]) {
-          this.changes[key] = [];
+      if (JSON.stringify(oldValue[key]) !== JSON.stringify(value)) {
+        if (!this.formData.changes) {
+          this.formData.changes = {};
         }
-        this.changes[key].push({
+        if (!this.formData.changes[key]) {
+          this.formData.changes[key] = [];
+        }
+        this.formData.changes[key].push({
           previous: oldValue[key],
           new: value,
-          timestamp
+          timestamp,
+          author: localStorage.getItem('user_email')
         });
       }
     }
