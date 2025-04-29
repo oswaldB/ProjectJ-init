@@ -446,8 +446,12 @@ def api_jaffar_save():
         status = data.get('status', 'draft')
         logger.info(f"Saving issue {issue_id} with status {status}")
 
-        # Extract changes before saving main issue
-        changes = data.pop('changes', [])
+        # Make a copy of changes before modifying data
+        changes = data.get('changes', [])
+        
+        # Remove changes from main data to avoid duplication
+        if 'changes' in data:
+            del data['changes']
 
         # Save main issue
         if not save_issue_to_storage(issue_id, status, data):
@@ -470,7 +474,7 @@ def save_issue_changes(issue_id, changes):
         logger.info(f"No changes to save for issue {issue_id}")
         return
 
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     key = f'jaffar/issues/changes/{issue_id}-{timestamp}.json'
     json_data = json.dumps(changes, ensure_ascii=False)
 
