@@ -6,8 +6,32 @@
 <div class="p-6" x-data="{
   config: null,
   formData: null,
-  changes: [], // Added to track separate changes
+  changes: [],
+  previousData: null,
   loading: true,
+
+  trackChanges(newData, oldData) {
+    if (!oldData) return;
+    
+    const change = {
+      modified_by: localStorage.getItem('user_email'),
+      modified_at: new Date().toISOString(),
+      value_changes: {}
+    };
+
+    for (const key in newData) {
+      if (JSON.stringify(newData[key]) !== JSON.stringify(oldData[key])) {
+        change.value_changes[key] = {
+          previous: oldData[key],
+          new: newData[key]
+        };
+      }
+    }
+
+    if (Object.keys(change.value_changes).length > 0) {
+      this.changes.push(change);
+    }
+  },
 
   async loadData() {
     const issueId = window.location.pathname.split('/').pop();
@@ -125,11 +149,15 @@
     let initialLoad = true;
 
     // Watch formData for changes and auto-save as draft
-    this.$watch('formData', (value) => {
+    this.$watch('formData', (newValue, oldValue) => {
       if (initialLoad) {
         initialLoad = false;
+        this.previousData = JSON.parse(JSON.stringify(newValue));
         return;
       }
+
+      this.trackChanges(newValue, this.previousData);
+      this.previousData = JSON.parse(JSON.stringify(newValue));
 
       const now = new Date();
       const formToSave = {
