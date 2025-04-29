@@ -2,6 +2,7 @@
 from flask import Blueprint, render_template, redirect, request, jsonify
 import datetime
 from services.email_service import send_confirmation_if_needed
+from main import save_issue
 
 jaffar_bp = Blueprint('jaffar', __name__)
 
