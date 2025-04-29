@@ -1,34 +1,45 @@
+
 {% extends "jaffar/base.html" %}
 
 {% block title %}Issues Grid{% endblock %}
 
 {% block head %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <style>
-  .sheet-container {
-    overflow-x: auto;
-    margin-top: 20px;
+  .dataTables_wrapper {
+    background-color: #111827;
+    padding: 20px;
+    border-radius: 8px;
+    color: white;
   }
-  .sheet-table {
-    min-width: 100%;
-    border-collapse: collapse;
-    white-space: nowrap;
-  }
-  .sheet-table th, .sheet-table td {
-    border: 1px solid #374151;
-    padding: 8px;
-    text-align: left;
-  }
-  .sheet-table th {
+  table.dataTable tbody tr {
     background-color: #1f2937;
     color: white;
-    position: sticky;
-    top: 0;
   }
-  .sheet-table tr:nth-child(even) {
-    background-color: #111827;
-  }
-  .sheet-table tr:hover {
+  table.dataTable tbody tr:hover {
     background-color: #374151;
+  }
+  .dataTables_filter input, .dataTables_length select {
+    background-color: #374151 !important;
+    color: white !important;
+    border: 1px solid #4b5563 !important;
+    border-radius: 4px;
+    padding: 4px 8px;
+  }
+  .dataTables_info {
+    color: #9ca3af !important;
+  }
+  .paginate_button {
+    color: white !important;
+  }
+  .paginate_button.current {
+    background: #3b82f6 !important;
+    border: none !important;
   }
 </style>
 {% endblock %}
@@ -39,86 +50,94 @@
     <h1 class="text-2xl font-bold text-white">Issues Grid</h1>
   </div>
 
-  <div class="sheet-container" id="sheet-container"></div>
-
-  <input type="file" id="fileInput" style="display: none" accept=".xlsx,.xls">
+  <div class="sheet-container">
+    <table id="issuesTable" class="display">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Status</th>
+          <th>Version</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Asset Class</th>
+          <th>Business Unit</th>
+          <th>Region</th>
+          <th>PC Function</th>
+          <th>Issue Family</th>
+          <th>Control Pillar</th>
+          <th>Date Identification</th>
+          <th>Impact Breach Start Date</th>
+          <th>Author</th>
+          <th>Created At</th>
+          <th>Updated At</th>
+          <th>Submitted At</th>
+        </tr>
+      </thead>
+    </table>
+  </div>
 </div>
 
 <script>
-let issuesData = [];
-
 async function loadData() {
   const response = await fetch('/api/jaffar/issues/list');
   if (response.ok) {
     const data = await response.json();
-    // Filter only issues with version number
-    issuesData = data.filter(issue => issue.version);
-    displayData(issuesData);
+    const issuesData = data.filter(issue => issue.version);
+    
+    $('#issuesTable').DataTable({
+      data: issuesData,
+      columns: [
+        { data: 'id' },
+        { data: 'status' },
+        { data: 'version' },
+        { data: 'name' },
+        { data: 'issue-description' },
+        { 
+          data: 'asset-class',
+          render: data => Array.isArray(data) ? data.join(', ') : data || ''
+        },
+        { 
+          data: 'business-unit',
+          render: data => Array.isArray(data) ? data.join(', ') : data || ''
+        },
+        { 
+          data: 'region',
+          render: data => Array.isArray(data) ? data.join(', ') : data || ''
+        },
+        { data: 'pc-function' },
+        { data: 'issue-family' },
+        { 
+          data: 'control-pillar',
+          render: data => Array.isArray(data) ? data.join(', ') : data || ''
+        },
+        { data: 'date-identification' },
+        { data: 'impact-breach-start-date' },
+        { data: 'author' },
+        { 
+          data: 'created_at',
+          render: data => data ? new Date(data).toLocaleString() : ''
+        },
+        { 
+          data: 'updated_at',
+          render: data => data ? new Date(data).toLocaleString() : ''
+        },
+        { 
+          data: 'submitted_at',
+          render: data => data ? new Date(data).toLocaleString() : ''
+        }
+      ],
+      dom: 'Bfrtip',
+      buttons: ['copy', 'csv', 'excel'],
+      scrollX: true,
+      pageLength: 25,
+      order: [[14, 'desc']], // Sort by Created At by default
+      initComplete: function() {
+        $(this).show();
+      }
+    });
   }
 }
 
-function displayData(data) {
-  const container = document.getElementById('sheet-container');
-  const table = document.createElement('table');
-  table.className = 'sheet-table';
-
-  // Headers - Added more columns
-  const headers = [
-    'ID', 'Status', 'Version', 'Name', 'Description', 'Asset Class', 
-    'Business Unit', 'Region', 'PC Function', 'Issue Family', 
-    'Control Pillar', 'Date Identification', 'Impact Breach Start Date',
-    'Author', 'Created At', 'Updated At', 'Submitted At'
-  ];
-
-  const thead = document.createElement('thead');
-  const headerRow = document.createElement('tr');
-  headers.forEach(header => {
-    const th = document.createElement('th');
-    th.textContent = header;
-    headerRow.appendChild(th);
-  });
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
-
-  // Data rows
-  const tbody = document.createElement('tbody');
-  data.forEach(issue => {
-    const row = document.createElement('tr');
-    const values = [
-      issue.id,
-      issue.status,
-      issue.version || '',
-      issue.name || '',
-      issue['issue-description'] || '',
-      Array.isArray(issue['asset-class']) ? issue['asset-class'].join(', ') : issue['asset-class'] || '',
-      Array.isArray(issue['business-unit']) ? issue['business-unit'].join(', ') : issue['business-unit'] || '',
-      Array.isArray(issue.region) ? issue.region.join(', ') : issue.region || '',
-      issue['pc-function'] || '',
-      issue['issue-family'] || '',
-      Array.isArray(issue['control-pillar']) ? issue['control-pillar'].join(', ') : issue['control-pillar'] || '',
-      issue['date-identification'] || '',
-      issue['impact-breach-start-date'] || '',
-      issue.author || '',
-      issue.created_at ? new Date(issue.created_at).toLocaleString() : '',
-      issue.updated_at ? new Date(issue.updated_at).toLocaleString() : '',
-      issue.submitted_at ? new Date(issue.submitted_at).toLocaleString() : ''
-    ];
-
-    values.forEach(value => {
-      const td = document.createElement('td');
-      td.textContent = value;
-      row.appendChild(td);
-    });
-    tbody.appendChild(row);
-  });
-  table.appendChild(tbody);
-
-  container.innerHTML = '';
-  container.appendChild(table);
-}
-
-
-// Load data when page loads
 document.addEventListener('DOMContentLoaded', loadData);
 </script>
 {% endblock %}
