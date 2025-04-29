@@ -31,32 +31,35 @@ def save_issue_to_storage(issue_id, status, data):
         json_data = json.dumps(data, ensure_ascii=False, cls=CircularRefEncoder)
         logger.info("JSON serialization completed")
 
+        # Save to S3
         logger.info("Starting S3 save")
-        s3.put_object(
-            Bucket=BUCKET_NAME, 
-            Key=key, 
-            Body=json_data.encode('utf-8'), 
-            ContentType='application/json'
-        )
-        logger.info("S3 save completed successfully")
+        try:
+            s3.put_object(
+                Bucket=BUCKET_NAME, 
+                Key=key, 
+                Body=json_data.encode('utf-8'), 
+                ContentType='application/json'
+            )
+            logger.info("S3 save completed successfully")
+        except Exception as s3_error:
+            logger.error(f"S3 save failed: {s3_error}")
+            raise
 
+        # Save locally
         logger.info("Starting local save")
         local_path = os.path.join(LOCAL_BUCKET_DIR, key)
         logger.info(f"Local path generated: {local_path}")
         
-        logger.info("Creating directories if needed")
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
         
-        logger.info("Writing file locally")
         with open(local_path, 'w', encoding='utf-8') as f:
             f.write(json_data)
         logger.info("Local save completed successfully")
 
-        logger.info(f"Issue {issue_id} saved successfully to both S3 and local storage")
         return True
     except Exception as e:
         logger.error(f"Failed to save issue {issue_id}: {e}")
-        return False
+        raise
 
 def save_issue_changes(issue_id, new_changes):
     logger.info(f"Starting to save changes for issue {issue_id}")
