@@ -100,18 +100,13 @@
       );
 
       const formToSave = {
-        id,
+        id: this.formData.id,
         author: localStorage.getItem('user_email'),
         ...this.formData,
         status: 'new',
         created_at: now.toISOString(),
         submittedAt: now.toISOString(),
-        configs: {
-          questions,
-          template,
-          escalation,
-          rules
-        }
+        changes: this.changes
       };
 
       const saveResponse = await fetch('/api/jaffar/save', {
@@ -120,27 +115,12 @@
         body: JSON.stringify(formToSave)
       });
 
+      if (!saveResponse.ok) {
+        throw new Error('Failed to save form');
+      }
+
       const result = await saveResponse.json();
-      if (result.status === 'success' || !result.error) {
-        // Save changes after successful main save
-        if (this.changes.length > 0) {
-          try {
-            const issueId = this.formData.id;
-            const changeResponse = await fetch('/api/jaffar/changes/save', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                issue_id: issueId,
-                changes: this.changes
-              })
-            });
-            if (!changeResponse.ok) {
-              throw new Error('Failed to save changes');
-            }
-          } catch (error) {
-            console.error('Error saving changes:', error);
-          }
-        }
+      if (!result.error) {
         window.location.href = '/';
       } else {
         alert('Error saving form: ' + result.error);
