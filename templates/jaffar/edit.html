@@ -7,7 +7,7 @@
   config: null,
   formData: null,
   oldData: null,
-  changes: [], 
+  changes: {}, 
   loading: true,
 
   async loadData() {
@@ -116,19 +116,18 @@
   trackChanges(newValue, oldValue) {
     if (!oldValue) return;
 
-    const changes = [];
+    const timestamp = new Date().toISOString();
     for (const [key, value] of Object.entries(newValue)) {
       if (oldValue[key] !== value) {
-        changes.push({
-          field: key,
+        if (!this.changes[key]) {
+          this.changes[key] = [];
+        }
+        this.changes[key].push({
           previous: oldValue[key],
           new: value,
-          timestamp: new Date().toISOString()
+          timestamp
         });
       }
-    }
-    if (changes.length > 0) {
-      this.changes.push(...changes);
     }
   },
 
