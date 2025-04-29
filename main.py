@@ -472,31 +472,58 @@ def api_jaffar_save():
 
 
 def save_issue_changes(issue_id, changes):
+    logger.info(f"Starting to save changes for issue {issue_id}")
+    
     if not changes:
         logger.info(f"No changes to save for issue {issue_id}")
         return
 
+    logger.info(f"Processing {len(changes)} changes")
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     key = f'jaffar/issues/changes/{issue_id}-{timestamp}.json'
-    json_data = json.dumps(changes, ensure_ascii=False)
+    logger.info(f"Generated changes file path: {key}")
+
+    try:
+        json_data = json.dumps(changes, ensure_ascii=False)
+        logger.info("Successfully serialized changes to JSON")
+    except Exception as e:
+        logger.error(f"Failed to serialize changes to JSON: {e}")
+        return
 
     def save_to_s3():
-        s3.put_object(Bucket=BUCKET_NAME,
-                      Key=key,
-                      Body=json_data.encode('utf-8'),
-                      ContentType='application/json')
+        try:
+            logger.info("Starting S3 save")
+            s3.put_object(Bucket=BUCKET_NAME,
+                          Key=key,
+                          Body=json_data.encode('utf-8'),
+                          ContentType='application/json')
+            logger.info("Successfully saved to S3")
+        except Exception as e:
+            logger.error(f"Failed to save to S3: {e}")
+            raise
 
     def save_to_local():
-        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
-        os.makedirs(os.path.dirname(local_path), exist_ok=True)
-        with open(local_path, 'w', encoding='utf-8') as f:
-            f.write(json_data)
+        try:
+            logger.info("Starting local save")
+            local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            with open(local_path, 'w', encoding='utf-8') as f:
+                f.write(json_data)
+            logger.info(f"Successfully saved locally to {local_path}")
+        except Exception as e:
+            logger.error(f"Failed to save locally: {e}")
+            raise
 
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        s3_future = executor.submit(save_to_s3)
-        local_future = executor.submit(save_to_local)
-        s3_future.result()
-        local_future.result()
+    try:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            logger.info("Starting parallel save operations")
+            s3_future = executor.submit(save_to_s3)
+            local_future = executor.submit(save_to_local)
+            s3_future.result()
+            local_future.result()
+        logger.info("Successfully completed all save operations")
+    except Exception as e:
+        logger.error(f"Error during parallel save operations: {e}")
 
 
 def get_changes_from_global_db(issue_id):
