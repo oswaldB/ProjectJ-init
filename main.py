@@ -466,7 +466,8 @@ def api_jaffar_save():
 
 
 def save_issue_changes(issue_id, changes):
-    key = f'jaffar/issues/changes/{issue_id}-changes.json'
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    key = f'jaffar/issues/changes/{issue_id}-{timestamp}.json'
     json_data = json.dumps(changes, ensure_ascii=False)
 
     def save_to_s3():
