@@ -152,8 +152,8 @@
 
         <!-- Timeline des actions -->
         <template x-for="(item, index) in [...(Array.isArray(issue.changes) ? issue.changes : [])].sort((a, b) => {
-          const dateA = new Date(a.created_at || (Object.values(a)[0]?.[0]?.timestamp) || 0).getTime();
-          const dateB = new Date(b.created_at || (Object.values(b)[0]?.[0]?.timestamp) || 0).getTime();
+          const dateA = new Date(a.timestamp || (Object.values(a)[0]?.[0]?.timestamp) || 0).getTime();
+          const dateB = new Date(b.timestamp || (Object.values(b)[0]?.[0]?.timestamp) || 0).getTime();
           return dateB - dateA;
         })" :key="index">
           <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
