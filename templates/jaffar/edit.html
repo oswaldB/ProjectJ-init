@@ -122,12 +122,12 @@
         if (!this.formData.changes) {
           this.formData.changes = {};
         }
-        this.formData.changes[key] = {
+        this.formData.changes[key] = [{
           previous: oldValue[key],
           new: value,
           timestamp,
           author: localStorage.getItem('user_email')
-        };
+        }];
       }
     }
   },
