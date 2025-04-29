@@ -142,9 +142,8 @@ def save_issue_to_storage(issue_id, status, data):
                 "timestamp": datetime.datetime.now().isoformat(),
                 "author": data.get('author', 'system')
             }
-            if not data.get('changes'):
-                data['changes'] = []
-            data['changes'].append(activity)
+            # Save the creation activity separately
+            save_issue_changes(issue_id, activity)
 
         logger.info("Starting JSON serialization")
         json_data = json.dumps(data,
