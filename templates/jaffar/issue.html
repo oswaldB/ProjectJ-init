@@ -47,6 +47,20 @@
 }">
   <template x-if="issue">
     <div>
+      <!-- Status Tag -->
+      <div class="mb-4">
+        <span
+          class="px-3 py-1 rounded-full text-sm font-semibold"
+          :class="{
+            'bg-yellow-900 text-yellow-200': issue.status === 'draft',
+            'bg-green-900 text-green-200': issue.status === 'new',
+            'bg-blue-900 text-blue-200': issue.status === 'in_progress',
+            'bg-purple-900 text-purple-200': issue.status === 'resolved'
+          }"
+          x-text="issue.status"
+        ></span>
+      </div>
+
       <!-- Issue Header -->
       <div class="mb-6">
         <div class="flex justify-between items-start">
