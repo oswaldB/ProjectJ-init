@@ -1,10 +1,8 @@
-
 {% extends "jaffar/base.html" %}
 
 {% block title %}Issues Grid{% endblock %}
 
 {% block head %}
-<script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 <style>
   .sheet-container {
     overflow-x: auto;
@@ -39,19 +37,11 @@
 <div class="p-6">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-white">Issues Grid</h1>
-    <div class="flex gap-4">
-      <button onclick="exportToExcel()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-        Export Excel
-      </button>
-      <button onclick="importFromExcel()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-        Import Excel
-      </button>
-    </div>
   </div>
 
   <div class="sheet-container" id="sheet-container"></div>
 
-  <input type="file" id="fileInput" style="display: none" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
+  <input type="file" id="fileInput" style="display: none" accept=".xlsx,.xls">
 </div>
 
 <script>
@@ -79,7 +69,7 @@ function displayData(data) {
     'Control Pillar', 'Date Identification', 'Impact Breach Start Date',
     'Author', 'Created At', 'Updated At', 'Submitted At'
   ];
-  
+
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
   headers.forEach(header => {
@@ -127,51 +117,6 @@ function displayData(data) {
   container.appendChild(table);
 }
 
-function exportToExcel() {
-  const data = issuesData.map(issue => ({
-    ID: issue.id,
-    Status: issue.status,
-    Version: issue.version || '',
-    Name: issue.name || '',
-    Description: issue['issue-description'] || '',
-    'Asset Class': Array.isArray(issue['asset-class']) ? issue['asset-class'].join(', ') : issue['asset-class'] || '',
-    'Business Unit': Array.isArray(issue['business-unit']) ? issue['business-unit'].join(', ') : issue['business-unit'] || '',
-    Region: Array.isArray(issue.region) ? issue.region.join(', ') : issue.region || '',
-    'PC Function': issue['pc-function'] || '',
-    'Issue Family': issue['issue-family'] || '',
-    'Control Pillar': Array.isArray(issue['control-pillar']) ? issue['control-pillar'].join(', ') : issue['control-pillar'] || '',
-    'Date Identification': issue['date-identification'] || '',
-    'Impact Breach Start Date': issue['impact-breach-start-date'] || '',
-    Author: issue.author || '',
-    'Created At': issue.created_at ? new Date(issue.created_at).toLocaleString() : '',
-    'Updated At': issue.updated_at ? new Date(issue.updated_at).toLocaleString() : '',
-    'Submitted At': issue.submitted_at ? new Date(issue.submitted_at).toLocaleString() : ''
-  }));
-
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Issues');
-  XLSX.writeFile(wb, 'issues.xlsx');
-}
-
-function importFromExcel() {
-  document.getElementById('fileInput').click();
-}
-
-function handleFileSelect(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const data = new Uint8Array(e.target.result);
-    const workbook = XLSX.read(data, {type: 'array'});
-    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-    const jsonData = XLSX.utils.sheet_to_json(worksheet);
-    displayData(jsonData);
-  };
-  reader.readAsArrayBuffer(file);
-}
 
 // Load data when page loads
 document.addEventListener('DOMContentLoaded', loadData);
