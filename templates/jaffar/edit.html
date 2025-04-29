@@ -150,6 +150,8 @@
       }
       this.trackChanges(value, this.oldData);
       this.oldData = JSON.parse(JSON.stringify(value));
+      // Trigger auto-save
+      this.saveForm();
     }, { deep: true });
   },
 
