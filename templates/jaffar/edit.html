@@ -224,20 +224,28 @@
           <template x-if="loading">
             <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
           </template>
-          <template x-if="!loading && formData">
-            <h1 class="text-xl font-bold text-white" x-text="formData?.id"></h1>
-            <div class="flex items-center space-x-3 text-sm text-gray-400">
-              <span x-text="formData?.author"></span>
-              <span>•</span>
-              <span x-text="formData?.created_at ? new Date(formData.created_at).toLocaleDateString() : ''"></span>
-              <span>•</span>
-              <span class="px-2 py-0.5 rounded-full text-xs" 
-                :class="{
-                  'bg-yellow-900 text-yellow-200': formData?.status === 'draft',
-                  'bg-green-900 text-green-200': formData?.status === 'new'
-                }"
-                x-text="formData?.status">
-              </span>
+          <template x-if="!loading">
+            <div>
+              <h1 class="text-xl font-bold text-white" x-text="formData?.id || ''"></h1>
+              <div class="flex items-center space-x-3 text-sm text-gray-400">
+                <span x-text="formData?.author || ''"></span>
+                <template x-if="formData?.author">
+                  <span>•</span>
+                </template>
+                <span x-text="formData?.created_at ? new Date(formData.created_at).toLocaleDateString() : ''"></span>
+                <template x-if="formData?.status">
+                  <span>•</span>
+                </template>
+                <template x-if="formData?.status">
+                  <span class="px-2 py-0.5 rounded-full text-xs" 
+                    :class="{
+                      'bg-yellow-900 text-yellow-200': formData?.status === 'draft',
+                      'bg-green-900 text-green-200': formData?.status === 'new'
+                    }"
+                    x-text="formData?.status">
+                  </span>
+                </template>
+              </div>
             </div>
           </template>
         </div>
