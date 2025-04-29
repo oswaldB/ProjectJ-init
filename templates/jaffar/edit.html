@@ -135,7 +135,7 @@
     await this.loadData();
 
     this.$watch('formData', (value, oldValue) => {
-      if (!oldValue) return;
+      if (!oldValue || this.loading) return;
       
       this.trackChanges(value, this.oldData);
       this.oldData = JSON.parse(JSON.stringify(value));
