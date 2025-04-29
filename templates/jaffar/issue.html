@@ -241,7 +241,7 @@
                 </div>
                 <div class="space-y-2">
                   <template x-for="(changes, field) in item.changes" :key="field">
-                    <template x-if="Array.isArray(changes)">
+                    <template x-if="Array.isArray(changes) && item.type !== 'system'">
                       <div class="flex flex-col space-y-1 bg-gray-900 p-2 rounded">
                         <span class="text-sm font-medium text-blue-300" x-text="field"></span>
                         <div class="flex items-center space-x-2">
