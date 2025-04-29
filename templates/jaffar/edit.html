@@ -202,7 +202,7 @@
           <!-- Single select -->
           <template x-if="field.type === 'single_select'">
             <select :name="field.key"
-                    x-model="formData[field.key]"
+                    x-model.debounce.500ms="formData[field.key]"
                     :required="field.required"
                     class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
               <option value="">Select an option</option>
@@ -224,7 +224,7 @@
               }
             }" x-init="init()">
               <input type="text"
-                     x-model="search"
+                     x-model.debounce.500ms="search"
                      placeholder="Search..."
                      class="w-full mb-4 bg-gray-700 text-white p-2 rounded border border-gray-600">
               <div class="grid grid-cols-3 gap-4 max-h-60 overflow-y-auto">
