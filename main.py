@@ -503,20 +503,20 @@ def api_jaffar_save():
         issue_data, existing_changes = extract_issue_data(data)
         
         # Compare et enregistre les changements
-        changes = compare_issues(old_issue, issue_data)
+        changes = compare_issues(old_issue, data)
         if changes:
             logger.info(f"Found changes in issue {issue_id}: {changes}")
-            record_change(issue_data, changes, user_email, previous_status)
+            record_change(data, changes, user_email, previous_status)
 
         # Sauvegarde l'issue principale
-        if not save_issue_to_storage(issue_id, status, issue_data):
+        if not save_issue_to_storage(issue_id, status, data):
             return jsonify({"error": "Failed to save issue"}), 500
 
         # Sauvegarde les changements existants si présents
         if existing_changes:
             save_issue_changes(issue_id, existing_changes)
 
-        send_confirmation_if_needed(issue_data)
+        send_confirmation_if_needed(data)
         return jsonify(issue_data)
 
     except Exception as e:
