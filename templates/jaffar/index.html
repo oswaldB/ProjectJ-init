@@ -16,7 +16,7 @@
 
   async loadIssues() {
     try {
-      const response = await fetch('/api/jaffar/issues/list');
+      const response = await fetch('/api/issues/list');
       if (!response.ok) {
         throw new Error('Failed to load issues');
       }

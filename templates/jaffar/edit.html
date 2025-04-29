@@ -19,8 +19,8 @@
 
     try {
       const [configResponse, issueResponse] = await Promise.all([
-        fetch('/api/jaffar/config'),
-        fetch(`/api/jaffar/issues/${issueId}`)
+        fetch('/api/config'),
+        fetch(`/api/issues/${issueId}`)
       ]);
 
       this.config = await configResponse.json();
