@@ -524,20 +524,29 @@ def api_jaffar_save():
         return jsonify({"error": str(e)}), 500
 
 
-def save_issue_changes(issue_id, changes):
+def save_issue_changes(issue_id, new_changes):
     logger.info(f"Starting to save changes for issue {issue_id}")
     
-    if not changes:
+    if not new_changes:
         logger.info(f"No changes to save for issue {issue_id}")
         return
 
-    logger.info(f"Processing {len(changes)} changes")
-    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    key = f'jaffar/issues/changes/{issue_id}-{timestamp}.json'
+    key = f'jaffar/issues/changes/{issue_id}-changes.json'
     logger.info(f"Generated changes file path: {key}")
 
     try:
-        json_data = json.dumps(changes, ensure_ascii=False)
+        # Try to load existing changes
+        try:
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+            existing_changes = json.loads(response['Body'].read().decode('utf-8'))
+            if isinstance(existing_changes, list):
+                existing_changes.extend(new_changes)
+            else:
+                existing_changes = new_changes
+        except:
+            existing_changes = new_changes
+
+        json_data = json.dumps(existing_changes, ensure_ascii=False)
         logger.info("Successfully serialized changes to JSON")
     except Exception as e:
         logger.error(f"Failed to serialize changes to JSON: {e}")
