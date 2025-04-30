@@ -21,9 +21,7 @@
     login() {
         if (this.email && this.email.length > 0) {
             localStorage.setItem('user_email', this.email);
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirect = urlParams.get('redirect') || '/';
-            window.location.href = redirect;
+            window.location.href = '/login';
         }
     }
 }">
