@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AG Grid with Quartz Theme</title>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Bootstrap for responsive layout -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    
+    <!-- AG Grid Script -->
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/dist/ag-grid-community.min.js"></script>
+    
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <style>
+        /* Custom styles for AG Grid with Quartz theme */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1f2836;
+            color: #FFF;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            padding: 20px 0;
+        }
+        
+        h1 {
+            color: #FFF;
+            font-weight: 600;
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            border: none;
+            background-color: #2b394b;
+        }
+        
+        .card-header {
+            background-color: #2b394b;
+            border-bottom: 1px solid #3a495c;
+            padding: 15px 20px;
+            color: #FFF;
+        }
+        
+        .card-body {
+            padding: 0;
+        }
+        
+        /* Custom styles for the AG Grid Quartz theme */
+        .ag-theme-quartz {
+            --ag-foreground-color: #FFF;
+            --ag-background-color: #1f2836;
+            --ag-header-foreground-color: #FFF;
+            --ag-header-background-color: #2b394b;
+            --ag-odd-row-background-color: rgba(255, 255, 255, 0.05);
+            --ag-border-color: #3a495c;
+            --ag-row-hover-color: rgba(244, 67, 54, 0.2);
+            --ag-selected-row-background-color: rgba(244, 67, 54, 0.3);
+            --ag-font-size: 14px;
+            --ag-font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --ag-cell-horizontal-padding: 12px;
+            --ag-range-selection-border-color: #F44336;
+            --ag-header-column-separator-color: rgba(255, 255, 255, 0.1);
+            --ag-input-focus-border-color: #F44336;
+            
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .ag-header-cell {
+            font-weight: 600;
+        }
+        
+        /* Filter input styling */
+        #filter-text-box {
+            border-radius: 4px;
+            border: 1px solid #3a495c;
+            padding: 8px 12px;
+            width: 250px;
+            background-color: #2b394b;
+            color: #fff;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .controls {
+                margin-top: 10px;
+                width: 100%;
+            }
+            
+            #filter-text-box {
+                width: 100%;
+            }
+            
+            #myGrid {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="my-4">
+            <h1 class="text-center">AG Grid with Quartz Theme</h1>
+            <p class="text-center lead">A responsive data grid with sorting and filtering capabilities</p>
+        </header>
+        
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Data Grid</h5>
+                        <div class="controls">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="filter-text-box" placeholder="Search...">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- AG Grid will be rendered in this div -->
+                        <div id="myGrid" class="ag-theme-quartz" style="height: 500px; width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="text-center mb-4">
+            <p>AG Grid with Quartz Theme | Built with <i class="fas fa-heart text-danger"></i></p>
+        </footer>
+    </div>
+    
+    <script>
+        // Wait for the DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Import the Quartz theme directly from agGrid
+            const { themeQuartz } = agGrid;
+            
+            // Set up custom Quartz theme with specific parameters
+            const myTheme = themeQuartz.withParams({
+                accentColor: "#F44336",
+                backgroundColor: "#1f2836",
+                browserColorScheme: "dark",
+                chromeBackgroundColor: {
+                    ref: "foregroundColor",
+                    mix: 0.07,
+                    onto: "backgroundColor"
+                },
+                foregroundColor: "#FFF",
+                headerFontSize: 14
+            });
+            
+            // Grid options configuration
+            const gridOptions = {
+                // Apply custom theme
+                theme: myTheme,
+                
+                // Enable sorting and filtering
+                defaultColDef: {
+                    flex: 1,
+                    minWidth: 100,
+                    sortable: true,
+                    filter: true,
+                    resizable: true
+                },
+                
+                // Define column definitions
+                columnDefs: [
+                    { headerName: 'ID', field: 'id', width: 80, filter: 'agNumberColumnFilter' },
+                    { headerName: 'Name', field: 'name', filter: 'agTextColumnFilter' },
+                    { headerName: 'Email', field: 'email', filter: 'agTextColumnFilter' },
+                    { 
+                        headerName: 'Country', 
+                        field: 'country', 
+                        filter: 'agTextColumnFilter'
+                    },
+                    { 
+                        headerName: 'Company', 
+                        field: 'company', 
+                        filter: 'agTextColumnFilter'
+                    },
+                    { 
+                        headerName: 'Role', 
+                        field: 'role', 
+                        filter: 'agTextColumnFilter'
+                    },
+                    { 
+                        headerName: 'Active', 
+                        field: 'active', 
+                        filter: 'agTextColumnFilter',
+                        cellRenderer: params => {
+                            return params.value ? 
+                                '<span class="badge bg-success">Active</span>' : 
+                                '<span class="badge bg-danger">Inactive</span>';
+                        }
+                    }
+                ],
+                
+                // Sample row data (test data)
+                rowData: [
+                    { id: 1, name: 'John Smith', email: 'john@example.com', country: 'USA', company: 'Tech Corp', role: 'Developer', active: true },
+                    { id: 2, name: 'Jane Doe', email: 'jane@example.com', country: 'Canada', company: 'Digital Inc', role: 'Designer', active: true },
+                    { id: 3, name: 'Bob Johnson', email: 'bob@example.com', country: 'UK', company: 'WebTech', role: 'Manager', active: false },
+                    { id: 4, name: 'Alice Williams', email: 'alice@example.com', country: 'Australia', company: 'Global Systems', role: 'Analyst', active: true },
+                    { id: 5, name: 'Charlie Brown', email: 'charlie@example.com', country: 'Germany', company: 'Data Solutions', role: 'Engineer', active: true },
+                    { id: 6, name: 'Diana Miller', email: 'diana@example.com', country: 'France', company: 'Innovative Ltd', role: 'Director', active: false },
+                    { id: 7, name: 'Edward Davis', email: 'edward@example.com', country: 'Spain', company: 'Creative Co', role: 'Consultant', active: true },
+                    { id: 8, name: 'Fiona Clark', email: 'fiona@example.com', country: 'Italy', company: 'Tech Solutions', role: 'Architect', active: true },
+                    { id: 9, name: 'George Wilson', email: 'george@example.com', country: 'Japan', company: 'Global Tech', role: 'Developer', active: false },
+                    { id: 10, name: 'Hannah Moore', email: 'hannah@example.com', country: 'Brazil', company: 'Web Experts', role: 'Designer', active: true },
+                    { id: 11, name: 'Ivan Chen', email: 'ivan@example.com', country: 'China', company: 'Eastern Tech', role: 'Developer', active: true },
+                    { id: 12, name: 'Julia Ferreira', email: 'julia@example.com', country: 'Portugal', company: 'Software SA', role: 'Designer', active: true },
+                    { id: 13, name: 'Kevin Lee', email: 'kevin@example.com', country: 'South Korea', company: 'K-Solutions', role: 'Manager', active: false },
+                    { id: 14, name: 'Laura Peterson', email: 'laura@example.com', country: 'Sweden', company: 'Nordic Systems', role: 'CTO', active: true },
+                    { id: 15, name: 'Michael Brown', email: 'michael@example.com', country: 'Ireland', company: 'Green Tech', role: 'Developer', active: true },
+                    { id: 16, name: 'Natalie Wong', email: 'natalie@example.com', country: 'Singapore', company: 'Asia Digital', role: 'Designer', active: false },
+                    { id: 17, name: 'Oliver Schmidt', email: 'oliver@example.com', country: 'Austria', company: 'Alpine Code', role: 'Tester', active: true },
+                    { id: 18, name: 'Paula Santos', email: 'paula@example.com', country: 'Brazil', company: 'Rio Solutions', role: 'Architect', active: true },
+                    { id: 19, name: 'Quincy Adams', email: 'quincy@example.com', country: 'USA', company: 'Q-Tech', role: 'Developer', active: false },
+                    { id: 20, name: 'Rachel Kim', email: 'rachel@example.com', country: 'Canada', company: 'North Systems', role: 'Designer', active: true }
+                ],
+                
+                // Enable pagination
+                pagination: true,
+                paginationPageSize: 10,
+                paginationPageSizeSelector: [10, 20, 50, 100],
+                
+                // Enable row selection
+                rowSelection: { type: 'multiple' },
+                
+                // Styling
+                rowClass: 'custom-row',
+                
+                // Set to animate rows when sorting
+                animateRows: true,
+                
+                // Enable column menus
+                suppressMenuHide: false
+            };
+            
+            // Initialize the grid
+            const gridDiv = document.querySelector('#myGrid');
+            const grid = agGrid.createGrid(gridDiv, gridOptions);
+            
+            // Implement quick filter functionality
+            const filterTextBox = document.querySelector('#filter-text-box');
+            filterTextBox.addEventListener('input', function() {
+                if (grid && grid.api) {
+                    grid.api.setQuickFilter(this.value);
+                }
+            });
+            
+            // Function to handle when grid is ready
+            function onGridReady(params) {
+                // Auto-size all columns to fit their content
+                params.columnApi.autoSizeAllColumns();
+                
+                // Resize the grid if the window size changes
+                window.addEventListener('resize', function() {
+                    setTimeout(function() {
+                        params.api.sizeColumnsToFit();
+                    });
+                });
+            }
+            
+            // Add event listener for grid ready
+            gridOptions.onGridReady = onGridReady;
+        });
+    </script>
+</body>
+</html>
