@@ -1,0 +1,1 @@
+{"id": "JAFF-ISS-1746165181633", "author": "null", "config": [{"escalation": "jaffar/configs/2-escalationRules.json"}, {"questions": "jaffar/configs/2-jaffarConfig.json"}], "created_at": "2025-05-02T05:53:01.633609", "status": "draft", "updated_at": "2025-05-02T05:53:01.633609"}
