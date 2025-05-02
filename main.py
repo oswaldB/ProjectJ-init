@@ -310,15 +310,10 @@ def acknowledge():
 def new_issue():
     now = datetime.datetime.now()
     issue_id = f'JAFF-ISS-{int(now.timestamp() * 1000)}'
-    user_email = request.form.get('user_email') or request.args.get(
-        'user_email')
-
-    if not user_email:
-        return redirect('/login') #This line remains as is, since the user_email check is still needed to redirect
-
+    
     issue_data = {
         'id': issue_id,
-        'author': user_email,
+        'author': 'oswald.bernard@gmail.com',
         'status': 'draft',
         'created_at': now.isoformat(),
         'updated_at': now.isoformat()
@@ -466,6 +461,7 @@ def submit_issue():
             issue_data['status'] = 'submitted'
             issue_data['submitted_at'] = datetime.datetime.now().isoformat()
             issue_data['version'] = 1
+            issue_data['author'] = 'oswald.bernard@gmail.com'
             delete(draft_key)
 
         # Save to new folder
