@@ -522,6 +522,76 @@ def save_issue():
         logger.error(f"Error saving issue: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/jaffar/feedback/list')
+def list_feedback():
+    try:
+        key = 'users_feedbacks/ideas.json'
+        try:
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+            return jsonify(json.loads(response['Body'].read().decode('utf-8')))
+        except s3.exceptions.NoSuchKey:
+            return jsonify([])
+    except Exception as e:
+        logger.error(f"Error listing feedback: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/jaffar/feedback/submit', methods=['POST'])
+def submit_feedback():
+    try:
+        data = request.json
+        if not data or 'text' not in data:
+            return jsonify({"error": "Missing text"}), 400
+
+        key = 'users_feedbacks/ideas.json'
+        try:
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+            ideas = json.loads(response['Body'].read().decode('utf-8'))
+        except:
+            ideas = []
+
+        new_idea = {
+            'id': f'IDEA-{int(datetime.datetime.now().timestamp() * 1000)}',
+            'text': data['text'],
+            'author': 'oswald.bernard@gmail.com',
+            'date': datetime.datetime.now().isoformat(),
+            'votes': 0
+        }
+        ideas.append(new_idea)
+
+        s3.put_object(Bucket=BUCKET_NAME, Key=key, 
+                     Body=json.dumps(ideas, ensure_ascii=False))
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Error submitting feedback: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/jaffar/feedback/vote', methods=['POST'])
+def vote_feedback():
+    try:
+        data = request.json
+        if not data or 'id' not in data or 'type' not in data:
+            return jsonify({"error": "Missing data"}), 400
+
+        key = 'users_feedbacks/ideas.json'
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+        ideas = json.loads(response['Body'].read().decode('utf-8'))
+
+        for idea in ideas:
+            if idea['id'] == data['id']:
+                idea['votes'] += 1 if data['type'] == 'up' else -1
+                break
+
+        s3.put_object(Bucket=BUCKET_NAME, Key=key, 
+                     Body=json.dumps(ideas, ensure_ascii=False))
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Error voting on feedback: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/feedback')
+def feedback():
+    return render_template('jaffar/feedback.html')
+
 @app.route('/api/jaffar/acknowledge', methods=['POST'])
 def api_acknowledge():
     data = request.json
