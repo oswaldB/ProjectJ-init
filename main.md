@@ -1,24 +1,26 @@
-from flask import Flask, Blueprint, render_template, redirect, send_from_directory, request, jsonify
+from flask import Flask, Blueprint, render_template, redirect, request, jsonify
 import json
 import logging
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import smtplib
-import json
-import re
-import pandas as pd
 import boto3
 from moto import mock_aws
 import os
 import datetime
+from concurrent.futures import ThreadPoolExecutor
 
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
+email_executor = ThreadPoolExecutor(max_workers=2)
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # Local storage configuration
 LOCAL_BUCKET_DIR = "./local_bucket"
 BUCKET_NAME = "jaffar-bucket"
 os.makedirs(LOCAL_BUCKET_DIR, exist_ok=True)
+
 
 # Initialize mocked AWS
 def restore_local_to_s3():
@@ -33,6 +35,7 @@ def restore_local_to_s3():
                 except Exception as e:
                     logger.error(f"Failed to restore {s3_key} to S3: {e}")
 
+
 mock = mock_aws()
 mock.start()
 
@@ -41,68 +44,42 @@ s3 = boto3.client('s3', region_name='us-east-1')
 try:
     s3.create_bucket(Bucket=BUCKET_NAME)
 except:
-    pass  # Bucket may already exist
+    pass
 
 restore_local_to_s3()
 
 
-class Email:
+class CircularRefEncoder(json.JSONEncoder):
 
-    def __init__(self, to, subject, content):
-        self.to = to if isinstance(to, list) else [to]
-        self.subject = subject
-        self.content = content
-
-    def send(self):
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = self.subject
-        msg['From'] = "jaffar@hsbc.com"
-        msg['To'] = ", ".join(self.to)
-        html_part = MIMEText(self.content, 'html')
-        msg.attach(html_part)
+    def default(self, obj):
         try:
-            with smtplib.SMTP('localhost') as server:
-                server.send_message(msg)
-            return True
-        except Exception as e:
-            logger.error(f"Failed to send email: {e}")
-            return False
+            return super().default(obj)
+        except:
+            return str(obj)
 
 
-def flatten_dict(dd, separator='_', prefix=''):
-    return {
-        f"{prefix}{separator}{k}" if prefix else k: v
-        for kk, vv in dd.items()
-        for k, v in flatten_dict(vv, separator, kk).items()
-    } if isinstance(dd, dict) else {
-        prefix: dd
-    }
-
-
-def process_issue_data(issue_data):
-    processed_data = {}
-    for key, value in issue_data.items():
-        if isinstance(value, list):
-            processed_data[key] = ', '.join(value)
-        elif isinstance(value, dict):
-            flattened_dict = flatten_dict(value)
-            processed_data.update(flattened_dict)
-        else:
-            processed_data[key] = value
-    return processed_data
+# Database Service Functions
+def get_max_from_global_db(prefix):
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        if 'Contents' in response:
+            max_value = max(response['Contents'],
+                            key=lambda x: x['LastModified'])
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=max_value['Key'])
+            return json.loads(response['Body'].read().decode('utf-8'))
+    except Exception as e:
+        logger.error(f"Failed to get max from DB: {e}")
+        return None
 
 
 def save_in_global_db(key, obj):
-    json_object = json.dumps(obj, separators=(',', ':'))
+    json_object = json.dumps(obj,
+                             separators=(',', ':'),
+                             cls=CircularRefEncoder)
     try:
-        # S3 save
         s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_object)
-
-        # Local save
         full_path = os.path.join(LOCAL_BUCKET_DIR, key)
-        directory = os.path.dirname(full_path)
-        if directory:
-            os.makedirs(directory, exist_ok=True)
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
         with open(full_path, "w", encoding='utf-8') as f:
             f.write(json_object)
         return True
@@ -111,202 +88,466 @@ def save_in_global_db(key, obj):
         return False
 
 
-def get_one_from_global_db(key):
-    try:
-        # Try S3 first
-        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-        content = response['Body'].read().decode('utf-8')
-        return json.loads(content)
-    except:
-        # Fallback to local
-        try:
-            local_path = os.path.join(LOCAL_BUCKET_DIR, key)
-            with open(local_path, 'r', encoding='utf-8') as f:
-                return json.loads(f.read())
-        except Exception as e:
-            logger.error(f"Failed to get data: {e}")
-            raise
-
-
-def get_max_from_global_db(key):
-    files = []
-    try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME,
-                                      Prefix='jaffar/configs/')
-        for obj in response.get('Contents', []):
-            files.append(obj['Key'])
-
-        max_number = -1
-        max_object = None
-        for file in files:
-            remaining_parts = file[len('jaffar/configs/'):]
-            match = re.match(r'(\d+)-' + key, remaining_parts)
-            if match:
-                number = int(match.group(1))
-                if number > max_number:
-                    max_number = number
-                    max_object = file
-        if max_object is not None:
-            return get_one_from_global_db(max_object)
-        else:
-            return "No objects with the given key and a digit at the beginning found."
-    except Exception as e:
-        logger.error(f"Error in get_max_from_global_db: {e}")
-        return None
-
-
-def get_max_filename_from_global_db(key):
-    files = []
-    try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME,
-                                      Prefix='jaffar/configs/')
-        for obj in response.get('Contents', []):
-            files.append(obj['Key'])
-
-        max_number = -1
-        max_object = None
-        for file in files:
-            remaining_parts = file[len('jaffar/configs/'):]
-            match = re.match(r'(\d+)-' + key, remaining_parts)
-            if match:
-                number = int(match.group(1))
-                if number > max_number:
-                    max_number = number
-                    max_object = file
-        if max_object is not None:
-            return max_object
-        else:
-            return "No objects with the given key and a digit at the beginning found."
-    except Exception as e:
-        logger.error(f"Error in get_max_filename_from_global_db: {e}")
-        return None
-
-
 def delete(key):
     s3.delete_object(Bucket=BUCKET_NAME, Key=key)
-    #Local delete
     full_path = os.path.join(LOCAL_BUCKET_DIR, key)
     if os.path.exists(full_path):
         os.remove(full_path)
-    return
 
 
-def sendConfirmationEmail(email_address, subject, issue):
-    logger.info(f"Sending email to {email_address}")
-    issue_data = process_issue_data(issue)
-    style = """
-    <style>
-            table {
-                border-collapse: collapse;
-                font-family: 'Helvetica';
-                font-size:   12px;
+# Email Service Functions
+def send_confirmation_if_needed(issue_data):
+    try:
+        logger.info(
+            f"Processing confirmation email for issue: {issue_data.get('id', 'unknown')}"
+        )
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send confirmation email: {e}")
+        return False
+
+
+# Jaffar Routes
+def validate_save_request(data):
+    if not data or 'id' not in data:
+        logger.error("Missing required data in save request")
+        return False
+    return True
+
+
+def get_max_filename_from_global_db(suffix):
+    prefix = 'jaffar/configs/'
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        max_num = 0
+        max_key = None
+
+        if 'Contents' in response:
+            for obj in response['Contents']:
+                if obj['Key'].endswith(suffix):
+                    num = int(obj['Key'].split('/')[-1].split('-')[0])
+                    if num > max_num:
+                        max_num = num
+                        max_key = obj['Key']
+        return max_key
+    except Exception as e:
+        logger.error(f"Failed to get max filename: {e}")
+        return None
+
+def save_issue_to_storage(issue_id, status, data):
+    logger.info(f"Entering save_issue_to_storage for issue {issue_id}")
+
+    # Check if issue already exists in 'new' status
+    new_key = f'jaffar/issues/new/{issue_id}.json'
+    try:
+        s3.head_object(Bucket=BUCKET_NAME, Key=new_key)
+        if status == 'draft':
+            # If issue exists in 'new', update it there instead of creating draft
+            key = new_key
+        else:
+            key = f'jaffar/issues/{status}/{issue_id}.json'
+    except:
+        key = f'jaffar/issues/{status}/{issue_id}.json'
+
+    logger.info(f"Generated storage key: {key}")
+
+    # Add config array
+    config = []
+    configs = {
+        "escalation": get_max_filename_from_global_db("escalationRules.json"),
+        "questions": get_max_filename_from_global_db("jaffarConfig.json"),
+        "templates": get_max_filename_from_global_db("templates.json"),
+        "rules": get_max_filename_from_global_db("rules.json")
+    }
+
+    for key_name, value in configs.items():
+        if value:
+            config.append({key_name: value})
+
+    data['config'] = config
+
+    try:
+        # Check if this is a first save
+        is_new_issue = True
+        try:
+            for st in ['draft', 'new']:
+                try:
+                    s3.head_object(Bucket=BUCKET_NAME, Key=f'jaffar/issues/{st}/{issue_id}.json')
+                    is_new_issue = False
+                    break
+                except:
+                    continue
+        except:
+            pass
+
+        if is_new_issue:
+            # Add creation activity
+            activity = {
+                "type": "system",
+                "content": "Issue created",
+                "timestamp": datetime.datetime.now().isoformat(),
+                "author": data.get('author', 'system')
             }
-            th {
-                font-weight: normal
-            }
-            th, td {
-                border: 1px solid #ccc;
-                padding: 5px;
-                text-align: left;
-            }
-            td {
-                font-family: Helvetica;
-                font-size:   12px;
-                text-decoration: none;
-            }
-    </style>
-    """
-    df = pd.DataFrame(data=issue_data, index=[0])
-    df = df.fillna(' ').T
-    message = f"""
-    <p>Hello,</p>
-    <p>Jaffar here!</p>
-    <p>I recieved your issue number: {subject}.</p>
-    <hr>
-    <p><strong>Description of the issue</strong></p>
-    <hr>
-    <br>
-    {df.to_html()}
-    <br>
-    <br>
-    <p>If it requires escalation, you will get another email very soon.</p>
-    <br>
-    <br>
-    <p>All the best,</p>
-    """
-    content = style + message
-    email = Email(
-        to=email_address,
-        subject=subject,
-        content=content,
-    )
-    return email.send()
+            # Save the creation activity separately
+            save_issue_changes(issue_id, activity)
+
+        logger.info("Starting JSON serialization")
+        json_data = json.dumps(data,
+                               ensure_ascii=False,
+                               cls=CircularRefEncoder)
+        logger.info("JSON serialization completed")
+
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
+                      Body=json_data.encode('utf-8'),
+                      ContentType='application/json')
+        logger.info("S3 save completed successfully")
+
+        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        logger.info(f"Local path generated: {local_path}")
+
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+
+        with open(local_path, 'w', encoding='utf-8') as f:
+            f.write(json_data)
+        logger.info("Local save completed successfully")
+
+        return True
+    except Exception as e:
+        logger.error(f"Failed to save issue {issue_id}: {e}")
+        raise
 
 
-# Routes
-@app.route('/login')
-def login():
-    if request.path == '/login':
-        return render_template('login.html')
-    return redirect('/')
+def save_issue_changes(issue_id, new_changes):
+    logger.info(f"Starting to save changes for issue {issue_id}")
+
+    if not isinstance(new_changes, list):
+        logger.info(f"Converting changes to list for issue {issue_id}")
+        new_changes = [new_changes]
+
+    if not new_changes:
+        logger.info(f"No changes to save for issue {issue_id}")
+        return
+
+    key = f'jaffar/issues/changes/{issue_id}-changes.json'
+    logger.info(f"Generated changes file path: {key}")
+
+    try:
+        try:
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+            existing_changes = json.loads(
+                response['Body'].read().decode('utf-8'))
+            logger.info(f"Loaded {len(existing_changes)} existing changes")
+
+            if not isinstance(existing_changes, list):
+                existing_changes = [existing_changes]
+
+            for change in new_changes:
+                if change not in existing_changes:
+                    existing_changes.append(change)
+                    logger.info("Added new change to history")
+
+        except Exception as e:
+            logger.info(f"No existing changes found: {e}")
+            existing_changes = new_changes
+
+        json_data = json.dumps(existing_changes, ensure_ascii=False)
+        logger.info(
+            f"Successfully serialized {len(existing_changes)} changes to JSON")
+
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
+                      Body=json_data.encode('utf-8'),
+                      ContentType='application/json')
+        logger.info("Successfully saved to S3")
+
+        local_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        with open(local_path, 'w', encoding='utf-8') as f:
+            f.write(json_data)
+        logger.info(f"Successfully saved locally to {local_path}")
+
+    except Exception as e:
+        logger.error(f"Error saving changes: {e}")
 
 
-def require_auth(f):
-    from functools import wraps
-    from flask import request, redirect, url_for
+def get_changes_from_global_db(issue_id):
+    changes_key = f'jaffar/issues/changes/{issue_id}-changes.json'
 
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if request.path == '/login':
-            return f(*args, **kwargs)
+    try:
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=changes_key)
+        content = response['Body'].read().decode('utf-8')
+        return json.loads(content)
+    except s3.exceptions.NoSuchKey:
+        logger.info(f"No changes found for issue {issue_id}")
+        return []
+    except Exception as e:
+        logger.error(f"Failed to get changes for {issue_id}: {e}")
+        return []
 
-        if not request.headers.get('user_email') and not request.cookies.get(
-                'user_email'):
-            current_path = request.path
-            return redirect(f'/login?redirect={current_path}')
-        return f(*args, **kwargs)
 
-    return decorated
-
+# Jaffar Routes
+@app.route('/tutorial')
+def tutorial():
+    return render_template('jaffar/tutorial.html')
 
 @app.route('/')
 def index():
     return render_template('jaffar/index.html')
 
+@app.route('/grid')
+def grid():
+    return render_template('jaffar/grid.html')
+
+
+@app.route('/edit')
+def edit():
+    return render_template('jaffar/edit.html')
+
+
 @app.route('/acknowledge')
 def acknowledge():
     return render_template('jaffar/acknowledge.html')
 
-@app.route('/api/acknowledge', methods=['POST'])
+
+@app.route('/new-issue')
+def new_issue():
+    now = datetime.datetime.now()
+    issue_id = f'JAFF-ISS-{int(now.timestamp() * 1000)}'
+    
+    issue_data = {
+        'id': issue_id,
+        'author': 'oswald.bernard@gmail.com',
+        'status': 'draft',
+        'created_at': now.isoformat(),
+        'updated_at': now.isoformat()
+    }
+
+    save_issue_to_storage(issue_id, 'draft', issue_data)
+    return redirect(f'/edit/{issue_id}')
+
+
+@app.route('/edit/<issue_id>')
+def edit_with_id(issue_id):
+    return render_template('jaffar/edit.html')
+
+
+@app.route('/issue/<issue_id>')
+def view_issue(issue_id):
+    return render_template('jaffar/issue.html')
+
+
+@app.route('/api/jaffar/config')
+def api_jaffar_config():
+    try:
+        config = get_max_from_global_db('jaffar/configs/2-jaffarConfig.json')
+        if not config:
+            logger.error("No config found")
+            return jsonify({"error": "Config not found"}), 404
+        return jsonify(config)
+    except Exception as e:
+        logger.error(f"Failed to load Jaffar config: {e}")
+        return jsonify({"error": "Config not found"}), 404
+
+
+@app.route('/api/jaffar/issues/list', methods=['GET'])
+def list_issues():
+    issues = []
+    try:
+        for status in ['draft', 'new']:
+            prefix = f'jaffar/issues/{status}/'
+            try:
+                response = s3.list_objects_v2(Bucket=BUCKET_NAME,
+                                              Prefix=prefix)
+                if 'Contents' in response:
+                    for obj in response['Contents']:
+                        try:
+                            response = s3.get_object(Bucket=BUCKET_NAME,
+                                                     Key=obj['Key'])
+                            issue = json.loads(
+                                response['Body'].read().decode('utf-8'))
+                            # Remove changes field to reduce payload size
+                            if 'changes' in issue:
+                                del issue['changes']
+                            issues.append(issue)
+                        except Exception as e:
+                            logger.error(
+                                f"Error loading issue {obj['Key']}: {e}")
+            except Exception as e:
+                logger.error(f"Error listing issues for status {status}: {e}")
+        return jsonify(issues)
+    except Exception as e:
+        logger.error(f"Error in list_issues: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/jaffar/issues/<issue_id>', methods=['GET'])
+def get_issue(issue_id):
+    for status in ['draft', 'new']:
+        try:
+            key = f'jaffar/issues/{status}/{issue_id}.json'
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+            return jsonify(json.loads(response['Body'].read().decode('utf-8')))
+        except s3.exceptions.NoSuchKey:
+            continue
+    return jsonify({'error': 'Issue not found'}), 404
+
+@app.route('/api/jaffar/issues/<issue_id>/changes', methods=['GET'])
+def get_issue_changes(issue_id):
+    try:
+        key = f'jaffar/issues/changes/{issue_id}-changes.json'
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+        return jsonify(json.loads(response['Body'].read().decode('utf-8')))
+    except s3.exceptions.NoSuchKey:
+        return jsonify([])
+    except Exception as e:
+        logger.error(f"Failed to get changes for {issue_id}: {e}")
+        return jsonify([])
+
+
+@app.route('/api/jaffar/issues/<issue_id>/comments', methods=['POST'])
+def add_comment(issue_id):
+    comment = request.json
+    if 'timestamp' not in comment:
+        comment['timestamp'] = datetime.datetime.now().isoformat()
+
+    changes_key = f'jaffar/issues/changes/{issue_id}-changes.json'
+
+    try:
+        try:
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=changes_key)
+            changes = json.loads(response['Body'].read().decode('utf-8'))
+            if not isinstance(changes, list):
+                changes = [changes]
+        except s3.exceptions.NoSuchKey:
+            changes = []
+
+        changes.append(comment)
+
+        json_data = json.dumps(changes, ensure_ascii=False)
+        s3.put_object(Bucket=BUCKET_NAME, Key=changes_key, Body=json_data.encode('utf-8'))
+
+        # Save locally
+        local_path = os.path.join(LOCAL_BUCKET_DIR, changes_key)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        with open(local_path, 'w', encoding='utf-8') as f:
+            f.write(json_data)
+
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to save comment: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/jaffar/submit', methods=['POST'])
+def submit_issue():
+    data = request.json
+    issue_id = data.get('issueId')
+
+    if not issue_id:
+        return jsonify({'error': 'Missing issue ID'}), 400
+
+    try:
+        # Check if issue exists in new status
+        new_key = f'jaffar/issues/new/{issue_id}.json'
+        try:
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=new_key)
+            issue_data = json.loads(response['Body'].read().decode('utf-8'))
+            # Update version if exists
+            current_version = issue_data.get('version', 0)
+            issue_data['version'] = current_version + 1
+            issue_data['updated_at'] = datetime.datetime.now().isoformat()
+        except:
+            # Get from draft if not in new
+            draft_key = f'jaffar/issues/draft/{issue_id}.json'
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=draft_key)
+            issue_data = json.loads(response['Body'].read().decode('utf-8'))
+            issue_data['status'] = 'submitted'
+            issue_data['submitted_at'] = datetime.datetime.now().isoformat()
+            issue_data['version'] = 1
+            issue_data['author'] = 'oswald.bernard@gmail.com'
+            delete(draft_key)
+
+        # Save to new folder
+        save_issue_to_storage(issue_id, 'new', issue_data)
+
+        # Log system activity
+        activity = {
+            "type": "system",
+            "content": f"Issue submitted (version {issue_data['version']})",
+            "timestamp": datetime.datetime.now().isoformat(),
+            "author": issue_data.get('author', 'system')
+        }
+        save_issue_changes(issue_id, activity)
+
+        # Send confirmation email
+        email_executor.submit(send_confirmation_if_needed, issue_data)
+
+        return jsonify({
+            'status': 'success',
+            'redirect': f'/issue/{issue_id}',
+            'message': 'Submitted!'
+        })
+
+    except Exception as e:
+        logger.error(f"Failed to submit issue {issue_id}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/jaffar/save', methods=['POST'])
+def save_issue():
+    try:
+        data = request.json
+        if not validate_save_request(data):
+            return jsonify({"error": "Invalid request data"}), 400
+
+        issue_id = data.get('id')
+        status = data.get('status', 'draft')
+
+        # Extract changes before saving issue
+        changes = data.pop('changes', None)
+
+        # Save the issue without changes
+        save_issue_to_storage(issue_id, status, data)
+
+        # Track changes if any exist
+        if changes:
+            save_issue_changes(issue_id, changes)
+
+        # Send confirmation email for new issues
+        if status == 'new':
+            email_executor.submit(send_confirmation_if_needed, data)
+
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Error saving issue: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/jaffar/acknowledge', methods=['POST'])
 def api_acknowledge():
     data = request.json
     issue_id = data.get('issueId')
     email = data.get('email')
 
-    # Try both draft and new folders in S3
     for folder in ['draft', 'new']:
         s3_key = f'jaffar/issues/{folder}/{issue_id}.json'
         try:
             response = s3.get_object(Bucket=BUCKET_NAME, Key=s3_key)
             issue = json.loads(response['Body'].read().decode('utf-8'))
 
-            # Add or update acknowledgeEscalation array
             if 'acknowledgeEscalation' not in issue:
                 issue['acknowledgeEscalation'] = []
 
             issue['acknowledgeEscalation'].append({
-                'email': email,
-                'date': datetime.datetime.now().isoformat()
+                'email':
+                email,
+                'date':
+                datetime.datetime.now().isoformat()
             })
 
-            # Save directly back to S3
-            s3.put_object(
-                Bucket=BUCKET_NAME,
-                Key=s3_key,
-                Body=json.dumps(issue)
-            )
+            s3.put_object(Bucket=BUCKET_NAME,
+                          Key=s3_key,
+                          Body=json.dumps(issue))
             return jsonify({'status': 'success'})
-
         except s3.exceptions.NoSuchKey:
             continue
         except Exception as e:
@@ -316,34 +557,10 @@ def api_acknowledge():
     return jsonify({'error': 'Issue not found'}), 404
 
 
-@app.route('/sultan/login')
-def sultan_login():
-    return render_template('sultan/login.html')
-
-
-@app.route('/sultan')
-def sultan():
+# Sultan Routes
+@app.route('/sultan/')
+def sultan_index():
     return render_template('sultan/base.html')
-
-
-@app.route('/sultan/<path:path>')
-def sultan_pages(path):
-    return render_template(f'sultan/{path}')
-
-
-@app.route('/questions')
-def questions():
-    return render_template('sultan/pages/jaffar-questions-studio.html')
-
-
-@app.route('/questions/import')
-def questions_import():
-    return render_template('sultan/questions/import.html')
-
-
-@app.route('/questions/export')
-def questions_export():
-    return render_template('components/questions/export.html')
 
 
 @app.route('/sultan/forms')
@@ -355,35 +572,51 @@ def forms_list():
 def form_edit(form_id):
     return render_template('sultan/forms/edit.html')
 
+
 @app.route('/sultan/escalation')
 def escalation_list():
     return redirect('/sultan/escalation/edit/new')
+
 
 @app.route('/sultan/escalation/edit/<escalation_id>')
 def escalation_edit(escalation_id):
     return render_template('sultan/escalation/edit.html')
 
+
 @app.route('/sultan/emailgroups')
 def emailgroups_list():
     return render_template('sultan/emailgroups/index.html')
+
 
 @app.route('/sultan/emailgroups/edit/<emailgroup_id>')
 def emailgroup_edit(emailgroup_id):
     return render_template('sultan/emailgroups/edit.html')
 
+
 @app.route('/sultan/sites')
 def sites_list():
     return render_template('sultan/sites/index.html')
+
 
 @app.route('/sultan/sites/edit/<site_id>')
 def site_edit(site_id):
     return render_template('sultan/sites/edit.html')
 
+
+@app.route('/sultan/templates')
+def templates_list():
+    return render_template('sultan/templates/index.html')
+
+
+@app.route('/sultan/templates/edit/<template_id>')
+def template_edit(template_id):
+    return render_template('sultan/templates/edit.html')
+
+
 @app.route('/api/sultan/emailgroups/list')
 def api_emailgroups_list():
     emailgroups = []
     prefix = 'sultan/emailgroups/'
-
     try:
         response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
         for obj in response.get('Contents', []):
@@ -397,14 +630,13 @@ def api_emailgroups_list():
     except Exception as e:
         logger.error(f"Failed to list emailgroups: {e}")
         return jsonify({"error": str(e)}), 500
-
     return jsonify(emailgroups)
+
 
 @app.route('/api/sultan/sites/list')
 def api_sites_list():
     sites = []
     prefix = 'sultan/sites/'
-
     try:
         response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
         for obj in response.get('Contents', []):
@@ -418,14 +650,13 @@ def api_sites_list():
     except Exception as e:
         logger.error(f"Failed to list sites: {e}")
         return jsonify({"error": str(e)}), 500
-
     return jsonify(sites)
+
 
 @app.route('/api/sultan/escalation/list')
 def api_escalation_list():
     escalations = []
     prefix = 'sultan/escalations/'
-
     try:
         response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
         for obj in response.get('Contents', []):
@@ -439,340 +670,7 @@ def api_escalation_list():
     except Exception as e:
         logger.error(f"Failed to list escalations: {e}")
         return jsonify({"error": str(e)}), 500
-
     return jsonify(escalations)
-
-@app.route('/api/sultan/escalation/<escalation_id>')
-def api_escalation_get(escalation_id):
-    try:
-        if escalation_id.endswith('.json'):
-            key = f'sultan/escalations/{escalation_id}'
-        else:
-            key = f'sultan/escalations/{escalation_id}.json'
-
-        content = s3.get_object(
-            Bucket=BUCKET_NAME,
-            Key=key)['Body'].read().decode('utf-8')
-        return jsonify(json.loads(content))
-    except Exception as e:
-        logger.error(f"Failed to load escalation {escalation_id}: {e}")
-        return jsonify({"error": "Escalation not found"}), 404
-
-@app.route('/api/sultan/escalation/duplicate', methods=['POST'])
-def api_escalation_duplicate():
-    data = request.json
-    escalation_id = data.get('id')
-
-    try:
-        # Get original escalation
-        escalation = get_one_from_global_db(f'sultan/configs/draft/escalations/{escalation_id}.json')
-
-        # Create new escalation with unique ID
-        import uuid
-        new_escalation = escalation.copy()
-        new_escalation['id'] = f'escalation-{str(uuid.uuid4())}'
-        new_escalation['name'] = f'{escalation["name"]} (Copy)'
-
-        # Save new escalation
-        save_in_global_db(f'sultan/configs/draft/escalations/{new_escalation["id"]}.json', new_escalation)
-
-        return jsonify(new_escalation)
-    except Exception as e:
-        logger.error(f"Failed to duplicate escalation: {e}")
-        return jsonify({"error": "Failed to duplicate escalation"}), 500
-
-@app.route('/api/sultan/escalation/delete/<escalation_id>', methods=['DELETE'])
-def api_escalation_delete(escalation_id):
-    try:
-        key = f'sultan/configs/draft/escalations/{escalation_id}.json'
-        delete(key)
-        return jsonify({"status": "success"})
-    except Exception as e:
-        logger.error(f"Failed to delete escalation: {e}")
-        return jsonify({"error": "Failed to delete escalation"}), 500
-
-@app.route('/api/sultan/escalation/save', methods=['POST'])
-def api_escalation_save():
-    data = request.json
-    escalation = data.get('escalation')
-
-    if not escalation:
-        return jsonify({"error": "Escalation required"}), 400
-
-    try:
-        escalation_path = f'sultan/escalations/{escalation["id"]}.json'
-        save_in_global_db(escalation_path, escalation)
-        return jsonify({"status": "success"})
-    except Exception as e:
-        logger.error(f"Failed to save escalation: {e}")
-        return jsonify({"error": "Failed to save escalation"}), 500
-
-@app.route('/api/sultan/emailgroups/<emailgroup_id>')
-def api_emailgroup_get(emailgroup_id):
-    try:
-        if emailgroup_id.endswith('.json'):
-            key = f'sultan/emailgroups/{emailgroup_id}'
-        else:
-            key = f'sultan/emailgroups/{emailgroup_id}.json'
-
-        content = s3.get_object(
-            Bucket=BUCKET_NAME,
-            Key=key)['Body'].read().decode('utf-8')
-        return jsonify(json.loads(content))
-    except Exception as e:
-        logger.error(f"Failed to load email group {emailgroup_id}: {e}")
-        return jsonify({"error": "Email group not found"}), 404
-
-@app.route('/api/sultan/emailgroups/save', methods=['POST'])
-def api_emailgroup_save():
-    data = request.json
-    emailgroup = data.get('emailgroup')
-
-    if not emailgroup:
-        return jsonify({"error": "Email group required"}), 400
-
-    try:
-        emailgroup_path = f'sultan/emailgroups/{emailgroup["id"]}.json'
-        save_in_global_db(emailgroup_path, emailgroup)
-        return jsonify({"status": "success"})
-    except Exception as e:
-        logger.error(f"Failed to save email group: {e}")
-        return jsonify({"error": "Failed to save email group"}), 500
-
-@app.route('/api/sultan/emailgroups/delete/<emailgroup_id>', methods=['DELETE'])
-def api_emailgroup_delete(emailgroup_id):
-    try:
-        key = f'sultan/emailgroups/{emailgroup_id}.json'
-        delete(key)
-        return jsonify({"status": "success"})
-    except Exception as e:
-        logger.error(f"Failed to delete email group: {e}")
-        return jsonify({"error": "Failed to delete email group"}), 500
-
-@app.route('/api/sultan/sites/<site_id>')
-def api_site_get(site_id):
-    try:
-        if site_id.endswith('.json'):
-            key = f'sultan/sites/{site_id}'
-        else:
-            key = f'sultan/sites/{site_id}.json'
-
-        content = s3.get_object(
-            Bucket=BUCKET_NAME,
-            Key=key)['Body'].read().decode('utf-8')
-        return jsonify(json.loads(content))
-    except Exception as e:
-        logger.error(f"Failed to load site {site_id}: {e}")
-        return jsonify({"error": "Site not found"}), 404
-
-@app.route('/api/sultan/sites/save', methods=['POST'])
-def api_site_save():
-    data = request.json
-    site = data.get('site')
-
-    if not site:
-        return jsonify({"error": "Site required"}), 400
-
-    try:
-        site_path = f'sultan/sites/{site["id"]}.json'
-        save_in_global_db(site_path, site)
-        return jsonify({"status": "success"})
-    except Exception as e:
-        logger.error(f"Failed to save site: {e}")
-        return jsonify({"error": "Failed to save site"}), 500
-
-@app.route('/api/sultan/sites/delete/<site_id>', methods=['DELETE'])
-def api_site_delete(site_id):
-    try:
-        key = f'sultan/sites/{site_id}.json'
-        delete(key)
-        return jsonify({"status": "success"})
-    except Exception as e:
-        logger.error(f"Failed to delete site: {e}")
-        return jsonify({"error": "Failed to delete site"}), 500
-
-@app.route('/sultan/templates')
-def templates_list():
-    return render_template('sultan/templates/index.html')
-
-@app.route('/sultan/templates/edit/<template_id>')
-def template_edit(template_id):
-    return render_template('sultan/templates/edit.html')
-
-
-@app.route('/api/sultan/forms')
-@app.route('/api/sultan/forms/list')  # Keep old route for backward compatibility
-def api_forms_list():
-    forms = []
-    prefix = 'sultan/forms/'
-
-    try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-        for obj in response.get('Contents', []):
-            try:
-                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                content = response['Body'].read().decode('utf-8')
-                form = json.loads(content)
-
-                # Add last_modified if not present
-                metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                if 'last_modified' not in form:
-                    form['last_modified'] = metadata['LastModified']
-
-                forms.append(form)
-            except Exception as e:
-                logger.error(f"Failed to load form {obj['Key']}: {e}")
-    except Exception as e:
-        logger.error(f"Failed to list forms: {e}")
-        return jsonify({"error": str(e)}), 500
-
-    return jsonify(forms)
-
-
-@app.route('/api/sultan/forms/<form_id>')
-def api_form_get(form_id):
-    try:
-        if form_id.endswith('.json'):
-            key = f'sultan/forms/{form_id}'
-        else:
-            key = f'sultan/forms/{form_id}.json'
-
-        content = s3.get_object(
-            Bucket=BUCKET_NAME,
-            Key=key)['Body'].read().decode('utf-8')
-        return jsonify(json.loads(content))
-    except Exception as e:
-        logger.error(f"Failed to load form {form_id}: {e}")
-        return jsonify({
-            "error": "Form not found",
-            "redirect": "/sultan/forms/list"
-        }), 404
-
-
-@app.route('/api/sultan/forms/delete/<form_id>', methods=['DELETE'])
-def api_form_delete(form_id):
-    try:
-        form_path = f'sultan/forms/{form_id}.json'
-        delete(form_path)
-        return jsonify({"status": "success"})
-    except Exception as e:
-        logger.error(f"Failed to delete form: {e}")
-        return jsonify({"error": "Failed to delete form"}), 500
-
-@app.route('/api/sultan/forms/save', methods=['POST'])
-def api_form_save():
-    data = request.json
-    form = data.get('form')
-
-    if not form:
-        return jsonify({"error": "Form required"}), 400
-
-    try:
-        form_path = f'sultan/forms/{form["id"]}.json'
-        save_in_global_db(form_path, form)
-        return jsonify({"status": "success"})
-    except Exception as e:
-        logger.error(f"Failed to save form: {e}")
-        return jsonify({"error": "Failed to save form"}), 500
-
-
-@app.route('/api/sultan/templates')
-@app.route('/api/sultan/templates/list')  # Keep old route for backward compatibility
-def api_templates_list():
-    templates = []
-    prefix = 'sultan/templates/'
-
-    try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-        for obj in response.get('Contents', []):
-            try:
-                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                content = response['Body'].read().decode('utf-8')
-                template = json.loads(content)
-
-                # Add last_modified from metadata
-                metadata = s3.head_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                template['last_modified'] = metadata['LastModified']
-
-                templates.append(template)
-            except Exception as e:
-                logger.error(f"Failed to load template {obj['Key']}: {e}")
-    except Exception as e:
-        logger.error(f"Failed to list templates: {e}")
-        return jsonify({"error": str(e)}), 500
-
-    return jsonify(templates)
-
-
-@app.route('/api/sultan/templates/<template_id>')
-def api_template_get(template_id):
-    try:
-        if template_id.endswith('.json'):
-            key = f'sultan/templates/{template_id}'
-        else:
-            key = f'sultan/templates/{template_id}.json'
-
-        content = s3.get_object(
-            Bucket=BUCKET_NAME,
-            Key=key)['Body'].read().decode('utf-8')
-        return jsonify(json.loads(content))
-    except Exception as e:
-        logger.error(f"Failed to load template {template_id}: {e}")
-        return jsonify({
-            "error": "Template not found",
-            "redirect": "/sultan/templates/list"
-        }), 404
-
-
-@app.route('/api/sultan/templates/delete/<template_id>', methods=['DELETE'])
-def api_template_delete(template_id):
-    try:
-        key = f'sultan/templates/{template_id}.json'
-        delete(key)
-        return jsonify({"status": "success"})
-    except Exception as e:
-        logger.error(f"Failed to delete template: {e}")
-        return jsonify({"error": "Failed to delete template"}), 500
-
-
-@app.route('/api/sultan/templates/save', methods=['POST'])
-def api_template_save():
-    data = request.json
-    template = data.get('template')
-
-    if not template:
-        return jsonify({"error": "Template required"}), 400
-
-    try:
-        template_path = f'sultan/templates/{template["id"]}.json'
-        save_in_global_db(template_path, template)
-        return jsonify({"status": "success"})
-    except Exception as e:
-        logger.error(f"Failed to save template: {e}")
-        return jsonify({"error": "Failed to save template"}), 500
-
-@app.route('/api/sultan/templates/duplicate', methods=['POST'])
-def api_template_duplicate():
-    data = request.json
-    template_id = data.get('id')
-
-    try:
-        # Get original template
-        template = get_one_from_global_db(f'sultan/templates/{template_id}.json')
-
-        # Create new template with unique ID using uuid
-        import uuid
-        new_template = template.copy()
-        new_template['id'] = f'templates-{str(uuid.uuid4())}'
-        new_template['name'] = f'{template["name"]} (Copy)'
-
-        # Save new template
-        save_in_global_db(f'sultan/templates/{new_template["id"]}.json', new_template)
-
-        return jsonify(new_template)
-    except Exception as e:
-        logger.error(f"Failed to duplicate template: {e}")
-        return jsonify({"error": "Failed to duplicate template"}), 500
 
 
 if __name__ == '__main__':
