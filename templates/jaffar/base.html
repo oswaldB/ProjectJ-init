@@ -16,24 +16,24 @@
     <div x-show="showTutorial" 
          class="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
         <div class="bg-gray-800 p-6 rounded-lg max-w-2xl">
-            <h2 class="text-2xl font-bold mb-4">Bienvenue sur Jaffar</h2>
+            <h2 class="text-2xl font-bold mb-4">Welcome to Jaffar</h2>
             
             <div class="space-y-4 text-gray-300">
-                <p>Jaffar est votre nouvel outil global pour la gestion des issues, remplaçant le spreadsheet New Issue Loggers.</p>
+                <p>Jaffar is your new global tool for issue management, replacing the New Issue Loggers spreadsheet.</p>
                 
-                <p>Avec Jaffar, vous pouvez :</p>
+                <p>With Jaffar, you can:</p>
                 <ul class="list-disc list-inside space-y-2 ml-4">
-                    <li>Créer et suivre des issues de manière centralisée</li>
-                    <li>Gérer l'escalation de manière efficace</li>
-                    <li>Faire remonter les issues dans Aurora</li>
-                    <li>Bientôt : Intégration avec Helios</li>
+                    <li>Create and track issues centrally</li>
+                    <li>Manage escalation efficiently</li>
+                    <li>Escalate issues to Aurora</li>
+                    <li>Coming soon: Helios integration</li>
                 </ul>
             </div>
 
             <button 
                 @click="localStorage.setItem('tutorialComplete', 'true'); showTutorial = false"
                 class="mt-6 bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">
-                Commencer
+                Get Started
             </button>
         </div>
     </div>
