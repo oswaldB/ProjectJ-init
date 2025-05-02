@@ -8,20 +8,7 @@
     <title>Jaffar - {% block title %}{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const currentPath = window.location.pathname;
-                const userEmail = await Promise.resolve(localStorage.getItem('user_email'));
-                if (currentPath !== '/login' && !userEmail) {
-                    window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
-                }
-            } catch (error) {
-               alert('Auth check failed:', error);
-                window.location.href = '/login';
-            }
-        });
-    </script>
+    
     {% block head %}{% endblock %}
 </head>
 <body class="bg-gray-900 text-white" x-data="{ saving: false }">
