@@ -16,6 +16,30 @@
     const response = await fetch('/api/jaffar/feedback/list');
     this.ideas = await response.json();
   },
+  async submitComment(ideaId, text, parentId = null) {
+    if (!text.trim()) return;
+    
+    await fetch('/api/jaffar/feedback/comment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        ideaId,
+        text: text.trim(),
+        parentId
+      })
+    });
+    
+    // Clear the input
+    if (parentId) {
+      document.getElementById('reply-text-' + parentId).value = '';
+      document.getElementById('reply-form-' + parentId).style.display = 'none';
+    } else {
+      document.getElementById('comment-text-' + ideaId).value = '';
+    }
+    
+    // Reload the ideas to show new comment
+    await this.loadIdeas();
+  },
   async submitIdea() {
     if (!this.title.trim()) return;
     await fetch('/api/jaffar/feedback/submit', {
