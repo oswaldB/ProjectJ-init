@@ -11,32 +11,7 @@
     
     {% block head %}{% endblock %}
 </head>
-<body class="bg-gray-900 text-white" x-data="{ saving: false, showTutorial: false }" x-init="showTutorial = !localStorage.getItem('tutorialComplete')">
-    <!-- Tutorial overlay -->
-    <div x-show="showTutorial" 
-         class="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-        <div class="bg-gray-800 p-6 rounded-lg max-w-2xl">
-            <h2 class="text-2xl font-bold mb-4">Welcome to Jaffar</h2>
-            
-            <div class="space-y-4 text-gray-300">
-                <p>Jaffar is your new global tool for recording and managing control errors, replacing the New Issue Loggers spreadsheet.</p>
-                
-                <p>With Jaffar, you can:</p>
-                <ul class="list-disc list-inside space-y-2 ml-4">
-                    <li>Record and track control errors centrally</li>
-                    <li>Manage escalation efficiently</li>
-                    <li>Escalate control issues to Aurora</li>
-                    <li>Coming soon: Helios integration</li>
-                </ul>
-            </div>
-
-            <button 
-                @click="localStorage.setItem('tutorialComplete', 'true'); showTutorial = false"
-                class="mt-6 bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">
-                Get Started
-            </button>
-        </div>
-    </div>
+<body class="bg-gray-900 text-white" x-data="{ saving: false }" x-init="!localStorage.getItem('tutorialComplete') && window.location.pathname !== '/tutorial' ? window.location.href = '/tutorial' : null">
     <!-- Save loader -->
     <div x-show="saving" class="fixed top-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 z-50">
         <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

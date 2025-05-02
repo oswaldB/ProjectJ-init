@@ -287,6 +287,10 @@ def get_changes_from_global_db(issue_id):
 
 
 # Jaffar Routes
+@app.route('/tutorial')
+def tutorial():
+    return render_template('jaffar/tutorial.html')
+
 @app.route('/')
 def index():
     return render_template('jaffar/index.html')

@@ -1,0 +1,30 @@
+
+{% extends "jaffar/base.html" %}
+
+{% block title %}Welcome to Jaffar{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center p-4">
+    <div class="bg-gray-800 p-6 rounded-lg max-w-2xl">
+        <h2 class="text-2xl font-bold mb-4">Welcome to Jaffar</h2>
+        
+        <div class="space-y-4 text-gray-300">
+            <p>Jaffar is your new global tool for recording and managing control errors, replacing the New Issue Loggers spreadsheet.</p>
+            
+            <p>With Jaffar, you can:</p>
+            <ul class="list-disc list-inside space-y-2 ml-4">
+                <li>Record and track control errors centrally</li>
+                <li>Manage escalation efficiently</li>
+                <li>Escalate control issues to Aurora</li>
+                <li>Coming soon: Helios integration</li>
+            </ul>
+        </div>
+
+        <a href="/"
+            @click="localStorage.setItem('tutorialComplete', 'true')"
+            class="mt-6 bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600 inline-block">
+            Get Started
+        </a>
+    </div>
+</div>
+{% endblock %}
