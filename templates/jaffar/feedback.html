@@ -86,10 +86,102 @@
               Posted by <span x-text="idea.author"></span>
               on <span x-text="new Date(idea.date).toLocaleDateString()"></span>
             </p>
+
+            <!-- Comments section -->
+            <div class="mt-4 border-t border-gray-700 pt-4">
+              <div class="space-y-4">
+                <template x-for="comment in idea.comments || []" :key="comment.id">
+                  <div class="pl-4 border-l-2 border-gray-700">
+                    <p class="text-gray-300" x-text="comment.text"></p>
+                    <p class="text-xs text-gray-500 mt-1">
+                      <span x-text="comment.author"></span> •
+                      <span x-text="new Date(comment.date).toLocaleDateString()"></span>
+                    </p>
+                    
+                    <!-- Replies -->
+                    <div class="ml-6 mt-2 space-y-2">
+                      <template x-for="reply in comment.replies || []" :key="reply.id">
+                        <div class="border-l border-gray-700 pl-4">
+                          <p class="text-gray-300" x-text="reply.text"></p>
+                          <p class="text-xs text-gray-500 mt-1">
+                            <span x-text="reply.author"></span> •
+                            <span x-text="new Date(reply.date).toLocaleDateString()"></span>
+                          </p>
+                        </div>
+                      </template>
+                      
+                      <!-- Reply form -->
+                      <div x-show="false" :id="'reply-form-' + comment.id" class="mt-2">
+                        <textarea
+                          :id="'reply-text-' + comment.id"
+                          class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 text-sm"
+                          rows="2"
+                          placeholder="Write a reply..."
+                        ></textarea>
+                        <button 
+                          @click="submitComment(idea.id, $el.previousElementSibling.value, comment.id)"
+                          class="mt-1 bg-gray-700 text-white px-3 py-1 rounded text-sm hover:bg-gray-600"
+                        >
+                          Reply
+                        </button>
+                      </div>
+                      <button 
+                        @click="$el.previousElementSibling.style.display = 'block'; $el.style.display = 'none'"
+                        class="text-gray-400 text-sm hover:text-white"
+                      >
+                        Reply
+                      </button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+
+              <!-- New comment form -->
+              <div class="mt-4">
+                <textarea
+                  :id="'comment-text-' + idea.id"
+                  class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
+                  rows="2"
+                  placeholder="Write a comment..."
+                ></textarea>
+                <button 
+                  @click="submitComment(idea.id, $el.previousElementSibling.value)"
+                  class="mt-2 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500"
+                >
+                  Add Comment
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </template>
     </div>
   </div>
+
+  <script>
+    function submitComment(ideaId, text, parentId = null) {
+      if (!text.trim()) return;
+      
+      fetch('/api/jaffar/feedback/comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          ideaId,
+          text: text.trim(),
+          parentId
+        })
+      }).then(() => {
+        // Clear the input
+        if (parentId) {
+          document.getElementById('reply-text-' + parentId).value = '';
+          document.getElementById('reply-form-' + parentId).style.display = 'none';
+        } else {
+          document.getElementById('comment-text-' + ideaId).value = '';
+        }
+        // Reload the ideas
+        Alpine.store('ideas').loadIdeas();
+      });
+    }
+  </script>
 </div>
 {% endblock %}
