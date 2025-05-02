@@ -552,6 +552,7 @@ def submit_feedback():
         new_idea = {
             'id': f'IDEA-{int(datetime.datetime.now().timestamp() * 1000)}',
             'text': data['text'],
+            'description': data.get('description', ''),
             'author': 'oswald.bernard@gmail.com',
             'date': datetime.datetime.now().isoformat(),
             'votes': 0

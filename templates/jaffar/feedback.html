@@ -6,7 +6,8 @@
 {% block content %}
 <div x-data="{
   ideas: [],
-  newIdea: '',
+  title: '',
+  description: '',
   searchQuery: '',
   async init() {
     await this.loadIdeas();
@@ -16,13 +17,17 @@
     this.ideas = await response.json();
   },
   async submitIdea() {
-    if (!this.newIdea.trim()) return;
+    if (!this.title.trim()) return;
     await fetch('/api/jaffar/feedback/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: this.newIdea })
+      body: JSON.stringify({ 
+        text: this.title,
+        description: this.description 
+      })
     });
-    this.newIdea = '';
+    this.title = '';
+    this.description = '';
     await this.loadIdeas();
   },
   async vote(id, type) {
@@ -49,9 +54,15 @@
     </div>
 
     <div class="mb-6 flex gap-2">
-      <input type="text" x-model="newIdea"
-             class="flex-1 bg-gray-800 border border-gray-700 rounded p-2"
-             placeholder="Share your idea...">
+      <div class="flex-1 space-y-2">
+        <input type="text" x-model="title"
+               class="w-full bg-gray-800 border border-gray-700 rounded p-2"
+               placeholder="Title of your idea...">
+        <textarea x-model="description"
+                  class="w-full bg-gray-800 border border-gray-700 rounded p-2"
+                  rows="3"
+                  placeholder="Describe your idea in detail..."></textarea>
+      </div>
       <button @click="submitIdea()"
               class="bg-red-600 text-white px-4 py-2 rounded">
         Submit
@@ -69,8 +80,9 @@
                     class="text-gray-400 hover:text-white">▼</button>
           </div>
           <div class="flex-1">
-            <p x-text="idea.text"></p>
-            <p class="text-sm text-gray-400 mt-1">
+            <p class="font-semibold" x-text="idea.text"></p>
+            <p class="text-gray-300 mt-1" x-text="idea.description"></p>
+            <p class="text-sm text-gray-400 mt-2">
               Posted by <span x-text="idea.author"></span>
               on <span x-text="new Date(idea.date).toLocaleDateString()"></span>
             </p>
