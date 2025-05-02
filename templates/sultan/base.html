@@ -32,13 +32,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/plugins/table/trumbowyg.table.min.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!localStorage.getItem('user_email')) {
-                window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-            }
-        });
-    </script>
+    
     {% block head %}{% endblock %}
 </head>
 <body class="bg-gray-900 text-white">
