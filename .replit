@@ -6,6 +6,7 @@ hidden = [".pythonlibs"]
 
 [nix]
 channel = "stable-24_05"
+packages = ["bash", "glibcLocales"]
 
 [deployment]
 run =  ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
@@ -16,12 +17,25 @@ localPort = 5000
 externalPort = 80
 
 [workflows]
-runButton = "Run"
+runButton = "Run Both Servers"
 
 [[workflows.workflow]]
 name = "Run"
 author = 37562832
 mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "gunicorn --bind 0.0.0.0:5000 main:app"
+
+[[workflows.workflow]]
+name = "Run Both Servers"
+author = 37562832
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python fastapi_server.py"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
