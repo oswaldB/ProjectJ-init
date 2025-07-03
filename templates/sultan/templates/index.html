@@ -23,10 +23,9 @@
       await this.loadTemplates();
     },
     async loadTemplates() {
-      const userEmail = localStorage.getItem('user_email');
       try {
         this.state.loading = true;
-        const response = await fetch(`/api/sultan/templates?email=${userEmail}`);
+        const response = await fetch('/api/sultan/templates');
         if (!response.ok) throw new Error('Failed to load templates');
         this.templates = await response.json();
       } catch (error) {

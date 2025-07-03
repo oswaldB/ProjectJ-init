@@ -787,5 +787,90 @@ def api_escalation_list():
     return jsonify(escalations)
 
 
+@app.route('/api/sultan/templates')
+def api_templates_list():
+    templates = []
+    prefix = 'sultan/templates/'
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        for obj in response.get('Contents', []):
+            try:
+                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                content = response['Body'].read().decode('utf-8')
+                template = json.loads(content)
+                templates.append(template)
+            except Exception as e:
+                logger.error(f"Failed to load template {obj['Key']}: {e}")
+    except Exception as e:
+        logger.error(f"Failed to list templates: {e}")
+        return jsonify({"error": str(e)}), 500
+    return jsonify(templates)
+
+
+@app.route('/api/sultan/templates/save', methods=['POST'])
+def api_templates_save():
+    try:
+        data = request.json
+        template = data.get('template')
+        
+        if not template or 'id' not in template:
+            return jsonify({"error": "Invalid template data"}), 400
+        
+        template['last_modified'] = datetime.datetime.now().isoformat()
+        template['user_email'] = 'oswald.bernard@gmail.com'
+        
+        key = f'sultan/templates/{template["id"]}.json'
+        save_in_global_db(key, template)
+        
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to save template: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/sultan/templates/delete/<template_id>', methods=['DELETE'])
+def api_templates_delete(template_id):
+    try:
+        key = f'sultan/templates/{template_id}.json'
+        delete(key)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to delete template: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/sultan/templates/duplicate', methods=['POST'])
+def api_templates_duplicate():
+    try:
+        data = request.json
+        original_id = data.get('id')
+        
+        if not original_id:
+            return jsonify({"error": "Missing template ID"}), 400
+        
+        # Get original template
+        original_key = f'sultan/templates/{original_id}.json'
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=original_key)
+        original_template = json.loads(response['Body'].read().decode('utf-8'))
+        
+        # Create duplicate with new ID
+        new_id = f'templates-{int(datetime.datetime.now().timestamp() * 1000)}'
+        new_template = original_template.copy()
+        new_template['id'] = new_id
+        new_template['name'] = f"{original_template.get('name', 'Template')} (Copy)"
+        new_template['status'] = 'draft'
+        new_template['last_modified'] = datetime.datetime.now().isoformat()
+        new_template['user_email'] = 'oswald.bernard@gmail.com'
+        
+        # Save duplicate
+        new_key = f'sultan/templates/{new_id}.json'
+        save_in_global_db(new_key, new_template)
+        
+        return jsonify(new_template)
+    except Exception as e:
+        logger.error(f"Failed to duplicate template: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

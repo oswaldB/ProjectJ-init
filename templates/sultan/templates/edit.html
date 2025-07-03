@@ -1,154 +1,167 @@
+
 {% extends "sultan/base.html" %}
 
-{% block title %}Excel Template Manager{% endblock %}
+{% block title %}Template Editor{% endblock %}
 
 {% block alpine_component %}
   {
-    page: 'excel-manager',
-    files: [],
+    page: 'template-edit',
+    template: {
+      id: '',
+      name: '',
+      status: 'draft',
+      content: '',
+      user_email: 'oswald.bernard@gmail.com',
+      last_modified: new Date().toISOString()
+    },
+    templateId: '',
+    state: {
+      loading: false,
+      saving: false,
+      error: null
+    },
     async init() {
-      await this.loadFiles();
+      const pathParts = window.location.pathname.split('/');
+      this.templateId = pathParts[pathParts.length - 1];
+      
+      if (this.templateId !== 'new') {
+        await this.loadTemplate();
+      } else {
+        this.template.id = 'templates-' + Date.now();
+      }
     },
-    async loadFiles() {
+    async loadTemplate() {
       try {
-        const response = await fetch('/api/sultan/templates/excel/list');
-        this.files = await response.json();
+        this.state.loading = true;
+        const response = await fetch(`/api/sultan/templates`);
+        if (!response.ok) throw new Error('Failed to load templates');
+        const templates = await response.json();
+        const foundTemplate = templates.find(t => t.id === this.templateId);
+        if (foundTemplate) {
+          this.template = foundTemplate;
+        } else {
+          this.state.error = 'Template not found';
+        }
       } catch (error) {
-        console.error('Failed to load files:', error);
-        this.files = [];
+        console.error('Failed to load template:', error);
+        this.state.error = error.message;
+      } finally {
+        this.state.loading = false;
       }
     },
-    async uploadFile(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-        alert('Please select an Excel file (.xlsx or .xls)');
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('file', file);
-
+    async saveTemplate() {
       try {
-        const response = await fetch('/api/sultan/templates/excel/upload', {
+        this.state.saving = true;
+        this.template.last_modified = new Date().toISOString();
+        
+        const response = await fetch('/api/sultan/templates/save', {
           method: 'POST',
-          body: formData
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ template: this.template })
         });
-
-        if (response.ok) {
-          await this.loadFiles();
-        } else {
-          throw new Error('Upload failed');
-        }
+        
+        if (!response.ok) throw new Error('Failed to save template');
+        
+        showNotification('Template saved successfully', 'success');
       } catch (error) {
-        console.error('Failed to upload file:', error);
-        alert('Failed to upload file');
+        console.error('Failed to save template:', error);
+        showNotification('Failed to save template', 'error');
+      } finally {
+        this.state.saving = false;
       }
     },
-    async downloadFile(filename) {
-      try {
-        const response = await fetch(`/api/sultan/templates/excel/download/${filename}`);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
-      } catch (error) {
-        console.error('Failed to download file:', error);
-        alert('Failed to download file');
-      }
-    },
-    async deleteFile(filename) {
-      if (!confirm('Are you sure you want to delete this file?')) return;
-
-      try {
-        const response = await fetch(`/api/sultan/templates/excel/delete/${filename}`, {
-          method: 'DELETE'
-        });
-
-        if (response.ok) {
-          await this.loadFiles();
-        } else {
-          throw new Error('Delete failed');
-        }
-      } catch (error) {
-        console.error('Failed to delete file:', error);
-        alert('Failed to delete file');
-      }
+    formatDate(date) {
+      return new Date(date || Date.now()).toLocaleString();
     }
   }
 {% endblock %}
 
 {% block content %}
-<div class="h-screen bg-gray-900 text-white">
-  <!-- Top Bar -->
-  <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
-    <h1 class="text-2xl font-bold text-white">Excel Template Manager</h1>
+<div class="p-6">
+  <header class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-white">Template Editor</h1>
     <div class="flex space-x-4">
-      <a href="/sultan/templates" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Back</a>
+      <button @click="saveTemplate()" 
+              :disabled="state.saving"
+              class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition disabled:opacity-50">
+        <span x-show="!state.saving">Save Template</span>
+        <span x-show="state.saving">Saving...</span>
+      </button>
+      <a href="/sultan/templates" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
+        Back to List
+      </a>
     </div>
+  </header>
+
+  <!-- Loading State -->
+  <div x-show="state.loading" class="text-center py-8">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mx-auto"></div>
+    <p class="text-gray-400 mt-2">Loading template...</p>
   </div>
 
-  <!-- Main Content -->
-  <div class="p-6">
-    <div class="w-full space-y-6">
-      <!-- Upload Section -->
-      <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
-        <h2 class="text-xl font-semibold mb-4">Upload Excel File</h2>
-        <div class="flex items-center space-x-4">
-          <input 
-            type="file" 
-            @change="uploadFile"
-            accept=".xlsx,.xls"
-            class="bg-gray-700 text-white p-2 rounded border border-gray-600"
-          >
-        </div>
-      </div>
+  <!-- Error State -->
+  <div x-show="state.error" class="bg-red-500 bg-opacity-10 border border-red-500 text-red-500 px-4 py-3 rounded mb-6">
+    <p x-text="state.error"></p>
+  </div>
 
-      <!-- Files List -->
-      <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
-        <h2 class="text-xl font-semibold mb-4">Excel Files</h2>
-        <div class="space-y-4">
-          <template x-if="files.length === 0">
-            <div class="text-gray-400 text-center py-4">
-              No Excel files uploaded yet
-            </div>
-          </template>
-          <template x-for="file in files" :key="file.name">
-            <div class="flex items-center justify-between bg-gray-700 p-4 rounded-lg">
-              <div class="flex items-center space-x-4">
-                <svg class="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                <div>
-                  <span class="text-white font-medium" x-text="file.name"></span>
-                  <span class="text-gray-400 text-sm block" x-text="'Size: ' + file.size"></span>
-                </div>
-              </div>
-              <div class="flex space-x-2">
-                <button 
-                  @click="downloadFile(file.name)"
-                  class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                >
-                  Download
-                </button>
-                <button 
-                  @click="deleteFile(file.name)"
-                  class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </template>
+  <!-- Template Form -->
+  <div x-show="!state.loading && !state.error" class="space-y-6">
+    <!-- Basic Info -->
+    <div class="bg-gray-800 p-6 rounded-lg">
+      <h2 class="text-xl font-semibold text-white mb-4">Template Information</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Template Name</label>
+          <input type="text" 
+                 x-model="template.name" 
+                 @input="saveTemplate()"
+                 class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+                 placeholder="Enter template name">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
+          <select x-model="template.status" 
+                  @change="saveTemplate()"
+                  class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-red-500">
+            <option value="draft">Draft</option>
+            <option value="prod">Production</option>
+            <option value="old version">Old Version</option>
+          </select>
         </div>
       </div>
+      
+      <div class="mt-4 text-sm text-gray-400">
+        <p>ID: <span x-text="template.id"></span></p>
+        <p>Last Modified: <span x-text="formatDate(template.last_modified)"></span></p>
+        <p>Author: <span x-text="template.user_email"></span></p>
+      </div>
+    </div>
+
+    <!-- Template Content -->
+    <div class="bg-gray-800 p-6 rounded-lg">
+      <h2 class="text-xl font-semibold text-white mb-4">Template Content</h2>
+      
+      <textarea x-model="template.content" 
+                @input="saveTemplate()"
+                class="w-full h-96 bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-red-500 font-mono text-sm"
+                placeholder="Enter your template content here..."></textarea>
     </div>
   </div>
 </div>
+
+<script>
+function showNotification(message, type) {
+  // Simple notification system
+  const notification = document.createElement('div');
+  notification.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+  notification.textContent = message;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.remove();
+  }, 3000);
+}
+</script>
 {% endblock %}
