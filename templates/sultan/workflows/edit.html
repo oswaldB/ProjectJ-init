@@ -16,6 +16,7 @@
   formKeys: [],
   showTestModal: false,
   testData: {},
+  testDataJson: '{}',
   testExecution: {
     isRunning: false,
     currentStep: -1,
@@ -407,6 +408,16 @@
     }
   },
 
+  updateTestData(jsonString) {
+    try {
+      this.testData = JSON.parse(jsonString);
+      this.testDataJson = jsonString;
+    } catch(e) {
+      // Invalid JSON, keep the string for editing but don't update testData
+      this.testDataJson = jsonString;
+    }
+  },
+
   initTestDataFromForm() {
     if (this.workflow.blocks.length > 0 && this.workflow.blocks[0].type === 'trigger' && this.workflow.blocks[0].formId) {
       const formId = this.workflow.blocks[0].formId;
@@ -435,6 +446,7 @@
           }
         });
         this.testData = testData;
+        this.testDataJson = JSON.stringify(testData, null, 2);
       }
     }
   },
@@ -554,10 +566,9 @@
             </button>
             <div class="bg-gray-700 p-3 rounded">
               <label class="block text-sm font-medium mb-2">Test Data (JSON)</label>
-              <textarea x-model="testData" rows="10" 
+              <textarea x-model="testDataJson" rows="10" 
                         class="w-full bg-gray-600 text-white p-2 rounded font-mono text-sm"
-                        :value="JSON.stringify(testData, null, 2)"
-                        @input="try { testData = JSON.parse($event.target.value) } catch(e) {}"></textarea>
+                        @input="updateTestData($event.target.value)"></textarea>
             </div>
             <div class="flex space-x-2">
               <button @click="runTest()" 
