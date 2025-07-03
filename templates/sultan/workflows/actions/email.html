@@ -60,7 +60,43 @@
     
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Email Body</label>
-      <textarea x-model="block.body" rows="6" placeholder="Write your email content here..." class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 resize-vertical"></textarea>
+      <div x-init="
+        if (!window.quillInstances) window.quillInstances = {};
+        $nextTick(() => {
+          if (!window.quillInstances[block.id]) {
+            const quill = new Quill($refs.emailBodyEditor, {
+              theme: 'snow',
+              modules: {
+                toolbar: [
+                  [{ 'header': [1, 2, 3, false] }],
+                  ['bold', 'italic', 'underline', 'strike'],
+                  [{ 'color': [] }, { 'background': [] }],
+                  [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                  [{ 'align': [] }],
+                  ['link', 'image'],
+                  ['table'],
+                  ['clean']
+                ],
+                table: true
+              }
+            });
+            
+            // Set initial content
+            if (block.body) {
+              quill.root.innerHTML = block.body;
+            }
+            
+            // Update model on text change
+            quill.on('text-change', function() {
+              block.body = quill.root.innerHTML;
+            });
+            
+            window.quillInstances[block.id] = quill;
+          }
+        })
+      " class="bg-gray-700 rounded border border-gray-600">
+        <div x-ref="emailBodyEditor" style="height: 200px;"></div>
+      </div>
     </div>
     
     <div class="text-xs text-gray-400 bg-gray-800 p-2 rounded">
