@@ -1,0 +1,74 @@
+logger.js:6 quill Cannot import modules/better-table. Are you sure it was registered?
+r @ logger.js:6
+value @ quill.js:29
+(anonymous) @ quill.js:399
+l @ quill.js:398
+t @ quill.js:60
+eval @ VM4462:9
+(anonymous) @ cdn.min.js:5
+je @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+setTimeout
+(anonymous) @ cdn.min.js:5
+logger.js:6 quill Cannot load better-table module. Are you sure you registered it?
+r @ logger.js:6
+(anonymous) @ quill.js:401
+l @ quill.js:398
+t @ quill.js:60
+eval @ VM4462:9
+(anonymous) @ cdn.min.js:5
+je @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+setTimeout
+(anonymous) @ cdn.min.js:5
+scroll.js:25 [Deprecation] Listener added for a 'DOMNodeInserted' mutation event. Support for this event type has been removed, and this event will no longer be fired. See https://chromestatus.com/feature/5083947249172480 for more information.
+e @ scroll.js:25
+r @ registry.ts:54
+t @ quill.js:77
+eval @ VM4462:9
+(anonymous) @ cdn.min.js:5
+je @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+setTimeout
+(anonymous) @ cdn.min.js:5
+logger.js:6 quill:toolbar ignoring attaching to nonexistent format table <button type=​"button" class=​"ql-table" value=​"TD">​</button>​
+r @ logger.js:6
+value @ toolbar.js:65
+(anonymous) @ toolbar.js:33
+e @ toolbar.js:32
+value @ theme.js:18
+value @ base.js:52
+(anonymous) @ theme.js:11
+value @ theme.js:9
+t @ quill.js:87
+eval @ VM4462:9
+(anonymous) @ cdn.min.js:5
+je @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+setTimeout
+(anonymous) @ cdn.min.js:5
+logger.js:6 quill Cannot import modules/better-table. Are you sure it was registered?
+r @ logger.js:6
+value @ quill.js:29
+value @ theme.js:17
+value @ base.js:52
+(anonymous) @ theme.js:11
+value @ theme.js:9
+t @ quill.js:87
+eval @ VM4462:9
+(anonymous) @ cdn.min.js:5
+je @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+setTimeout
+(anonymous) @ cdn.min.js:5
+theme.js:18 Uncaught TypeError: e is not a constructor
+    at e.value (theme.js:18:26)
+    at e.value (base.js:52:9)
+    at theme.js:11:14
+    at Array.forEach (<anonymous>)
+    at e.value (theme.js:9:39)
+    at new t (quill.js:87:16)
+    at eval (eval at <anonymous> (cdn.min.js:5:665), <anonymous>:9:27)
+    at cdn.min.js:5:5713
+    at je (cdn.min.js:5:5770)
+    at cdn.min.js:5:5675
