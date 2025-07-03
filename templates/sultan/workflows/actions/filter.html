@@ -1,4 +1,5 @@
 
+
 <div class="bg-purple-900 border-2 border-purple-600 rounded-lg p-4 mb-4">
   <div class="flex items-center justify-between mb-3">
     <div class="flex items-center space-x-2">
@@ -52,12 +53,12 @@
   </div>
   
   <!-- Drop Zones for TRUE/FALSE branches -->
-  <div class="flex justify-between mt-4 gap-4">
+  <div class="grid grid-cols-2 gap-4 mt-4">
     <!-- TRUE Branch -->
-    <div class="flex-1">
+    <div class="w-full">
       <div class="text-center">
-        <span class="text-xs text-green-400 mb-2 block">TRUE Branch</span>
-        <div class="min-h-32 bg-green-900/20 border-2 border-green-600 border-dashed rounded-lg p-2"
+        <span class="text-sm text-green-400 mb-2 block font-medium">TRUE Branch</span>
+        <div class="min-h-40 bg-green-900/20 border-2 border-green-600 border-dashed rounded-lg p-3"
              @drop="dropBlock($event, blockIndex, 'true')"
              @dragover.prevent
              @dragenter.prevent
@@ -65,28 +66,28 @@
           
           <!-- Show existing blocks in TRUE branch -->
           <template x-if="block.trueBranch && block.trueBranch.length > 0">
-            <div class="space-y-2">
+            <div class="space-y-4">
               <template x-for="(branchBlock, branchIndex) in block.trueBranch" :key="branchBlock.id">
                 <div class="relative" draggable="true" @dragstart="startDrag(branchBlock, blockIndex, 'true', branchIndex)">
                   
                   <!-- Email Block -->
                   <template x-if="branchBlock.type === 'email'">
-                    <div class="bg-green-900 border-2 border-green-600 rounded-lg p-3 mb-2">
-                      <div class="flex items-center justify-between mb-2">
+                    <div class="bg-green-900 border-2 border-green-600 rounded-lg p-4">
+                      <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center space-x-2">
-                          <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <h4 class="text-white font-medium text-sm">Send Email</h4>
+                          <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <h4 class="text-white font-semibold">Send Email</h4>
                           <button @click="removeFromBranch(blockIndex, 'true', branchIndex)" class="text-red-400 hover:text-red-300">
-                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                               <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
                             </svg>
                           </button>
                         </div>
                       </div>
-                      <div class="space-y-2">
+                      <div class="space-y-3">
                         <div>
-                          <label class="block text-xs font-medium text-gray-300 mb-1">Template</label>
-                          <select x-model="branchBlock.templateId" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Template</label>
+                          <select x-model="branchBlock.templateId" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
                             <option value="">Select template</option>
                             <template x-for="template in templates">
                               <option :value="template.id" x-text="template.name || template.id"></option>
@@ -94,17 +95,70 @@
                           </select>
                         </div>
                         <div>
-                          <label class="block text-xs font-medium text-gray-300 mb-1">Email Group</label>
-                          <select x-model="branchBlock.emailGroupId" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Email Group</label>
+                          <select x-model="branchBlock.emailGroupId" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
                             <option value="">Select group</option>
                             <template x-for="group in emailGroups">
                               <option :value="group.id" x-text="group.name || group.id"></option>
                             </template>
                           </select>
                         </div>
+                        <div class="grid grid-cols-3 gap-2">
+                          <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">To</label>
+                            <input type="text" x-model="branchBlock.to" placeholder="email@example.com" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                          </div>
+                          <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">CC</label>
+                            <input type="text" x-model="branchBlock.cc" placeholder="cc@example.com" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                          </div>
+                          <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">BCC</label>
+                            <input type="text" x-model="branchBlock.bcc" placeholder="bcc@example.com" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                          </div>
+                        </div>
                         <div>
-                          <label class="block text-xs font-medium text-gray-300 mb-1">Delay (seconds)</label>
-                          <input type="number" x-model="branchBlock.delay" value="0" min="0" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Subject</label>
+                          <input type="text" x-model="branchBlock.subject" placeholder="Email subject" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Email Body</label>
+                          <div class="mb-2">
+                            <button @click="insertDataGrid()" type="button" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
+                              Insert Data Grid
+                            </button>
+                          </div>
+                          <div x-init="
+                            if (!window.quillInstances) window.quillInstances = {};
+                            $nextTick(() => {
+                              if (!window.quillInstances[branchBlock.id]) {
+                                const quill = new Quill($el, {
+                                  theme: 'snow',
+                                  modules: {
+                                    toolbar: [
+                                      ['bold', 'italic', 'underline'],
+                                      [{'list': 'ordered'}, {'list': 'bullet'}],
+                                      ['link'],
+                                      [{'header': [1, 2, 3, false]}],
+                                      ['clean']
+                                    ]
+                                  }
+                                });
+                                
+                                if (branchBlock.body) {
+                                  quill.root.innerHTML = branchBlock.body;
+                                }
+                                
+                                quill.on('text-change', function() {
+                                  branchBlock.body = quill.root.innerHTML;
+                                });
+                                
+                                window.quillInstances[branchBlock.id] = quill;
+                              }
+                            })
+                          " class="bg-gray-700 rounded border border-gray-600">
+                            <div x-ref="editor" style="min-height: 120px;"></div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -112,43 +166,43 @@
 
                   <!-- Code Block -->
                   <template x-if="branchBlock.type === 'code'">
-                    <div class="bg-yellow-900 border-2 border-yellow-600 rounded-lg p-3 mb-2">
-                      <div class="flex items-center justify-between mb-2">
+                    <div class="bg-yellow-900 border-2 border-yellow-600 rounded-lg p-4">
+                      <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center space-x-2">
-                          <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                          <h4 class="text-white font-medium text-sm">Execute Code</h4>
+                          <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                          <h4 class="text-white font-semibold">Execute Code</h4>
                           <button @click="removeFromBranch(blockIndex, 'true', branchIndex)" class="text-red-400 hover:text-red-300">
-                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                               <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
                             </svg>
                           </button>
                         </div>
                       </div>
                       <div>
-                        <label class="block text-xs font-medium text-gray-300 mb-1">Python Code</label>
-                        <textarea x-model="branchBlock.code" rows="4" placeholder="# Write your Python code here" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs font-mono"></textarea>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Python Code</label>
+                        <textarea x-model="branchBlock.code" rows="6" placeholder="# Write your Python code here&#10;print('Hello from workflow!')" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 font-mono text-sm"></textarea>
                       </div>
                     </div>
                   </template>
 
                   <!-- Search Block -->
                   <template x-if="branchBlock.type === 'search'">
-                    <div class="bg-cyan-900 border-2 border-cyan-600 rounded-lg p-3 mb-2">
-                      <div class="flex items-center justify-between mb-2">
+                    <div class="bg-cyan-900 border-2 border-cyan-600 rounded-lg p-4">
+                      <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center space-x-2">
-                          <div class="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                          <h4 class="text-white font-medium text-sm">Search Engine</h4>
+                          <div class="w-3 h-3 bg-cyan-500 rounded-full"></div>
+                          <h4 class="text-white font-semibold">Search Engine</h4>
                           <button @click="removeFromBranch(blockIndex, 'true', branchIndex)" class="text-red-400 hover:text-red-300">
-                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                               <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
                             </svg>
                           </button>
                         </div>
                       </div>
-                      <div class="space-y-2">
+                      <div class="space-y-3">
                         <div>
-                          <label class="block text-xs font-medium text-gray-300 mb-1">Search Type</label>
-                          <select x-model="branchBlock.searchType" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Search Type</label>
+                          <select x-model="branchBlock.searchType" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
                             <option value="forms">Search in Forms</option>
                             <option value="issues">Search in Issues</option>
                             <option value="escalations">Search in Escalations</option>
@@ -156,17 +210,17 @@
                           </select>
                         </div>
                         <div>
-                          <label class="block text-xs font-medium text-gray-300 mb-1">Search Query</label>
-                          <input type="text" x-model="branchBlock.query" placeholder="Enter search terms" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Search Query</label>
+                          <input type="text" x-model="branchBlock.query" placeholder="Enter search terms" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
                         </div>
-                        <div class="grid grid-cols-2 gap-1">
+                        <div class="grid grid-cols-2 gap-3">
                           <div>
-                            <label class="block text-xs font-medium text-gray-300 mb-1">Max Results</label>
-                            <input type="number" x-model="branchBlock.maxResults" value="10" min="1" max="100" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Max Results</label>
+                            <input type="number" x-model="branchBlock.maxResults" value="10" min="1" max="100" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
                           </div>
                           <div>
-                            <label class="block text-xs font-medium text-gray-300 mb-1">Sort By</label>
-                            <select x-model="branchBlock.sortBy" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Sort By</label>
+                            <select x-model="branchBlock.sortBy" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
                               <option value="relevance">Relevance</option>
                               <option value="date_desc">Newest First</option>
                               <option value="date_asc">Oldest First</option>
@@ -174,6 +228,91 @@
                             </select>
                           </div>
                         </div>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Delay Block -->
+                  <template x-if="branchBlock.type === 'delay'">
+                    <div class="bg-orange-900 border-2 border-orange-600 rounded-lg p-4">
+                      <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+                          <h4 class="text-white font-semibold">Delay</h4>
+                          <button @click="removeFromBranch(blockIndex, 'true', branchIndex)" class="text-red-400 hover:text-red-300">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="grid grid-cols-2 gap-3">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Delay Amount</label>
+                          <input type="number" x-model="branchBlock.delayAmount" value="5" min="1" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Unit</label>
+                          <select x-model="branchBlock.delayUnit" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                            <option value="seconds">Seconds</option>
+                            <option value="minutes">Minutes</option>
+                            <option value="hours">Hours</option>
+                            <option value="days">Days</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Ask Scheherazade Block -->
+                  <template x-if="branchBlock.type === 'ask_scheherazade'">
+                    <div class="bg-pink-900 border-2 border-pink-600 rounded-lg p-4">
+                      <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-3 h-3 bg-pink-500 rounded-full"></div>
+                          <h4 class="text-white font-semibold">Ask Scheherazade</h4>
+                          <button @click="removeFromBranch(blockIndex, 'true', branchIndex)" class="text-red-400 hover:text-red-300">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="space-y-3">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Question</label>
+                          <textarea x-model="branchBlock.question" rows="3" placeholder="What would you like to ask Scheherazade?" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"></textarea>
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Context</label>
+                          <textarea x-model="branchBlock.context" rows="3" placeholder="Provide additional context for the question" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"></textarea>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Call Workflow Block -->
+                  <template x-if="branchBlock.type === 'call_workflow'">
+                    <div class="bg-indigo-900 border-2 border-indigo-600 rounded-lg p-4">
+                      <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                          <h4 class="text-white font-semibold">Call Workflow</h4>
+                          <button @click="removeFromBranch(blockIndex, 'true', branchIndex)" class="text-red-400 hover:text-red-300">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Workflow to Call</label>
+                        <select x-model="branchBlock.workflowId" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                          <option value="">Select workflow</option>
+                          <template x-for="workflow in availableWorkflows">
+                            <option :value="workflow.id" x-text="workflow.name || workflow.id"></option>
+                          </template>
+                        </select>
                       </div>
                     </div>
                   </template>
@@ -185,7 +324,7 @@
           
           <!-- Empty state -->
           <template x-if="!block.trueBranch || block.trueBranch.length === 0">
-            <div class="text-center text-green-300 text-xs py-4">
+            <div class="text-center text-green-300 text-sm py-8">
               Glissez des blocs ici pour la condition TRUE
             </div>
           </template>
@@ -194,10 +333,10 @@
     </div>
 
     <!-- FALSE Branch -->
-    <div class="flex-1">
+    <div class="w-full">
       <div class="text-center">
-        <span class="text-xs text-red-400 mb-2 block">FALSE Branch</span>
-        <div class="min-h-32 bg-red-900/20 border-2 border-red-600 border-dashed rounded-lg p-2"
+        <span class="text-sm text-red-400 mb-2 block font-medium">FALSE Branch</span>
+        <div class="min-h-40 bg-red-900/20 border-2 border-red-600 border-dashed rounded-lg p-3"
              @drop="dropBlock($event, blockIndex, 'false')"
              @dragover.prevent
              @dragenter.prevent
@@ -205,28 +344,28 @@
           
           <!-- Show existing blocks in FALSE branch -->
           <template x-if="block.falseBranch && block.falseBranch.length > 0">
-            <div class="space-y-2">
+            <div class="space-y-4">
               <template x-for="(branchBlock, branchIndex) in block.falseBranch" :key="branchBlock.id">
                 <div class="relative" draggable="true" @dragstart="startDrag(branchBlock, blockIndex, 'false', branchIndex)">
                   
                   <!-- Email Block -->
                   <template x-if="branchBlock.type === 'email'">
-                    <div class="bg-green-900 border-2 border-green-600 rounded-lg p-3 mb-2">
-                      <div class="flex items-center justify-between mb-2">
+                    <div class="bg-green-900 border-2 border-green-600 rounded-lg p-4">
+                      <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center space-x-2">
-                          <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <h4 class="text-white font-medium text-sm">Send Email</h4>
+                          <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <h4 class="text-white font-semibold">Send Email</h4>
                           <button @click="removeFromBranch(blockIndex, 'false', branchIndex)" class="text-red-400 hover:text-red-300">
-                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                               <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
                             </svg>
                           </button>
                         </div>
                       </div>
-                      <div class="space-y-2">
+                      <div class="space-y-3">
                         <div>
-                          <label class="block text-xs font-medium text-gray-300 mb-1">Template</label>
-                          <select x-model="branchBlock.templateId" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Template</label>
+                          <select x-model="branchBlock.templateId" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
                             <option value="">Select template</option>
                             <template x-for="template in templates">
                               <option :value="template.id" x-text="template.name || template.id"></option>
@@ -234,17 +373,70 @@
                           </select>
                         </div>
                         <div>
-                          <label class="block text-xs font-medium text-gray-300 mb-1">Email Group</label>
-                          <select x-model="branchBlock.emailGroupId" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Email Group</label>
+                          <select x-model="branchBlock.emailGroupId" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
                             <option value="">Select group</option>
                             <template x-for="group in emailGroups">
                               <option :value="group.id" x-text="group.name || group.id"></option>
                             </template>
                           </select>
                         </div>
+                        <div class="grid grid-cols-3 gap-2">
+                          <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">To</label>
+                            <input type="text" x-model="branchBlock.to" placeholder="email@example.com" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                          </div>
+                          <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">CC</label>
+                            <input type="text" x-model="branchBlock.cc" placeholder="cc@example.com" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                          </div>
+                          <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">BCC</label>
+                            <input type="text" x-model="branchBlock.bcc" placeholder="bcc@example.com" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                          </div>
+                        </div>
                         <div>
-                          <label class="block text-xs font-medium text-gray-300 mb-1">Delay (seconds)</label>
-                          <input type="number" x-model="branchBlock.delay" value="0" min="0" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Subject</label>
+                          <input type="text" x-model="branchBlock.subject" placeholder="Email subject" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Email Body</label>
+                          <div class="mb-2">
+                            <button @click="insertDataGrid()" type="button" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
+                              Insert Data Grid
+                            </button>
+                          </div>
+                          <div x-init="
+                            if (!window.quillInstances) window.quillInstances = {};
+                            $nextTick(() => {
+                              if (!window.quillInstances[branchBlock.id]) {
+                                const quill = new Quill($el, {
+                                  theme: 'snow',
+                                  modules: {
+                                    toolbar: [
+                                      ['bold', 'italic', 'underline'],
+                                      [{'list': 'ordered'}, {'list': 'bullet'}],
+                                      ['link'],
+                                      [{'header': [1, 2, 3, false]}],
+                                      ['clean']
+                                    ]
+                                  }
+                                });
+                                
+                                if (branchBlock.body) {
+                                  quill.root.innerHTML = branchBlock.body;
+                                }
+                                
+                                quill.on('text-change', function() {
+                                  branchBlock.body = quill.root.innerHTML;
+                                });
+                                
+                                window.quillInstances[branchBlock.id] = quill;
+                              }
+                            })
+                          " class="bg-gray-700 rounded border border-gray-600">
+                            <div x-ref="editor" style="min-height: 120px;"></div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -252,43 +444,43 @@
 
                   <!-- Code Block -->
                   <template x-if="branchBlock.type === 'code'">
-                    <div class="bg-yellow-900 border-2 border-yellow-600 rounded-lg p-3 mb-2">
-                      <div class="flex items-center justify-between mb-2">
+                    <div class="bg-yellow-900 border-2 border-yellow-600 rounded-lg p-4">
+                      <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center space-x-2">
-                          <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                          <h4 class="text-white font-medium text-sm">Execute Code</h4>
+                          <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                          <h4 class="text-white font-semibold">Execute Code</h4>
                           <button @click="removeFromBranch(blockIndex, 'false', branchIndex)" class="text-red-400 hover:text-red-300">
-                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                               <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
                             </svg>
                           </button>
                         </div>
                       </div>
                       <div>
-                        <label class="block text-xs font-medium text-gray-300 mb-1">Python Code</label>
-                        <textarea x-model="branchBlock.code" rows="4" placeholder="# Write your Python code here" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs font-mono"></textarea>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Python Code</label>
+                        <textarea x-model="branchBlock.code" rows="6" placeholder="# Write your Python code here&#10;print('Hello from workflow!')" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 font-mono text-sm"></textarea>
                       </div>
                     </div>
                   </template>
 
                   <!-- Search Block -->
                   <template x-if="branchBlock.type === 'search'">
-                    <div class="bg-cyan-900 border-2 border-cyan-600 rounded-lg p-3 mb-2">
-                      <div class="flex items-center justify-between mb-2">
+                    <div class="bg-cyan-900 border-2 border-cyan-600 rounded-lg p-4">
+                      <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center space-x-2">
-                          <div class="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                          <h4 class="text-white font-medium text-sm">Search Engine</h4>
+                          <div class="w-3 h-3 bg-cyan-500 rounded-full"></div>
+                          <h4 class="text-white font-semibold">Search Engine</h4>
                           <button @click="removeFromBranch(blockIndex, 'false', branchIndex)" class="text-red-400 hover:text-red-300">
-                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                               <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
                             </svg>
                           </button>
                         </div>
                       </div>
-                      <div class="space-y-2">
+                      <div class="space-y-3">
                         <div>
-                          <label class="block text-xs font-medium text-gray-300 mb-1">Search Type</label>
-                          <select x-model="branchBlock.searchType" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Search Type</label>
+                          <select x-model="branchBlock.searchType" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
                             <option value="forms">Search in Forms</option>
                             <option value="issues">Search in Issues</option>
                             <option value="escalations">Search in Escalations</option>
@@ -296,17 +488,17 @@
                           </select>
                         </div>
                         <div>
-                          <label class="block text-xs font-medium text-gray-300 mb-1">Search Query</label>
-                          <input type="text" x-model="branchBlock.query" placeholder="Enter search terms" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Search Query</label>
+                          <input type="text" x-model="branchBlock.query" placeholder="Enter search terms" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
                         </div>
-                        <div class="grid grid-cols-2 gap-1">
+                        <div class="grid grid-cols-2 gap-3">
                           <div>
-                            <label class="block text-xs font-medium text-gray-300 mb-1">Max Results</label>
-                            <input type="number" x-model="branchBlock.maxResults" value="10" min="1" max="100" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Max Results</label>
+                            <input type="number" x-model="branchBlock.maxResults" value="10" min="1" max="100" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
                           </div>
                           <div>
-                            <label class="block text-xs font-medium text-gray-300 mb-1">Sort By</label>
-                            <select x-model="branchBlock.sortBy" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Sort By</label>
+                            <select x-model="branchBlock.sortBy" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
                               <option value="relevance">Relevance</option>
                               <option value="date_desc">Newest First</option>
                               <option value="date_asc">Oldest First</option>
@@ -318,6 +510,91 @@
                     </div>
                   </template>
 
+                  <!-- Delay Block -->
+                  <template x-if="branchBlock.type === 'delay'">
+                    <div class="bg-orange-900 border-2 border-orange-600 rounded-lg p-4">
+                      <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+                          <h4 class="text-white font-semibold">Delay</h4>
+                          <button @click="removeFromBranch(blockIndex, 'false', branchIndex)" class="text-red-400 hover:text-red-300">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="grid grid-cols-2 gap-3">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Delay Amount</label>
+                          <input type="number" x-model="branchBlock.delayAmount" value="5" min="1" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Unit</label>
+                          <select x-model="branchBlock.delayUnit" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                            <option value="seconds">Seconds</option>
+                            <option value="minutes">Minutes</option>
+                            <option value="hours">Hours</option>
+                            <option value="days">Days</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Ask Scheherazade Block -->
+                  <template x-if="branchBlock.type === 'ask_scheherazade'">
+                    <div class="bg-pink-900 border-2 border-pink-600 rounded-lg p-4">
+                      <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-3 h-3 bg-pink-500 rounded-full"></div>
+                          <h4 class="text-white font-semibold">Ask Scheherazade</h4>
+                          <button @click="removeFromBranch(blockIndex, 'false', branchIndex)" class="text-red-400 hover:text-red-300">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="space-y-3">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Question</label>
+                          <textarea x-model="branchBlock.question" rows="3" placeholder="What would you like to ask Scheherazade?" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"></textarea>
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Context</label>
+                          <textarea x-model="branchBlock.context" rows="3" placeholder="Provide additional context for the question" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"></textarea>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Call Workflow Block -->
+                  <template x-if="branchBlock.type === 'call_workflow'">
+                    <div class="bg-indigo-900 border-2 border-indigo-600 rounded-lg p-4">
+                      <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                          <h4 class="text-white font-semibold">Call Workflow</h4>
+                          <button @click="removeFromBranch(blockIndex, 'false', branchIndex)" class="text-red-400 hover:text-red-300">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Workflow to Call</label>
+                        <select x-model="branchBlock.workflowId" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                          <option value="">Select workflow</option>
+                          <template x-for="workflow in availableWorkflows">
+                            <option :value="workflow.id" x-text="workflow.name || workflow.id"></option>
+                          </template>
+                        </select>
+                      </div>
+                    </div>
+                  </template>
+
                 </div>
               </template>
             </div>
@@ -325,7 +602,7 @@
           
           <!-- Empty state -->
           <template x-if="!block.falseBranch || block.falseBranch.length === 0">
-            <div class="text-center text-red-300 text-xs py-4">
+            <div class="text-center text-red-300 text-sm py-8">
               Glissez des blocs ici pour la condition FALSE
             </div>
           </template>
@@ -334,3 +611,4 @@
     </div>
   </div>
 </div>
+
