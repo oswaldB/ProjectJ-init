@@ -1,3 +1,4 @@
+
 {% extends "sultan/base.html" %}
 
 {% block title %}Workflow Editor{% endblock %}
@@ -58,31 +59,6 @@
   async loadTemplates() {
     try {
       const response = await fetch('/api/sultan/templates');
-      this.templates = await response.json();
-    } catch (error) {
-      console.error('Failed to load templates:', error);
-    }
-  },
-
-  async loadEmailGroups() {
-    try {
-      const response = await fetch('/api/sultan/emailgroups/list');
-      this.emailGroups = await response.json();
-    } catch (error) {
-      console.error('Failed to load email groups:', error);
-    }
-  },
-
-  async loadForms() {
-    try {
-      const response = await fetch('/api/sultan/forms/list');
-      this.forms = await response.json();
-    } catch (error) {
-      console.error('Failed to load forms:', error);
-    }
-  }
-}{% endblock %}ry {
-      const response = await fetch('/api/sultan/templates/list');
       this.templates = await response.json();
     } catch (error) {
       console.error('Failed to load templates:', error);
@@ -199,10 +175,10 @@
 
   async save() {
     try {
-      const response = await fetch('/sultan/workflows/api/save', {
+      const response = await fetch('/api/sultan/workflows/save', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(this.workflow)
+        body: JSON.stringify({workflows: [this.workflow]})
       });
 
       if (response.ok) {
@@ -227,8 +203,7 @@
     link.click();
     URL.revokeObjectURL(url);
   }
-}
-{% endblock %}
+}{% endblock %}
 
 {% block content %}
 <div class="h-screen bg-gray-900 text-white flex">

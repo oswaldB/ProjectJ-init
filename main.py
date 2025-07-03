@@ -499,6 +499,26 @@ def api_escalation_list():
         logger.error(f"Failed to list escalations: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/sultan/forms/list')
+def api_forms_list():
+    try:
+        forms = list_sultan_objects('forms')
+        return jsonify(forms)
+    except Exception as e:
+        logger.error(f"Failed to list forms: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/sultan/forms/<form_id>')
+def api_form_get(form_id):
+    try:
+        form = get_sultan_object('forms', form_id)
+        if form:
+            return jsonify(form)
+        return jsonify({'error': 'Form not found'}), 404
+    except Exception as e:
+        logger.error(f"Error getting form {form_id}: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/sultan/templates')
 def api_templates_list():
     try:
