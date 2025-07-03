@@ -60,6 +60,11 @@
     
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Email Body</label>
+      <div class="mb-2">
+        <button @click="insertDataGrid()" type="button" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
+          Insert Data Grid
+        </button>
+      </div>
       <div x-init="
         if (!window.quillInstances) window.quillInstances = {};
         $nextTick(() => {
@@ -91,7 +96,57 @@
               block.body = quill.root.innerHTML;
             });
             
+            // Store quill instance for data grid insertion
             window.quillInstances[block.id] = quill;
+            
+            // Add data grid insertion function
+            window.insertDataGrid = function() {
+              const quillInstance = window.quillInstances[block.id];
+              if (quillInstance) {
+                const range = quillInstance.getSelection();
+                const index = range ? range.index : quillInstance.getLength();
+                
+                const dataGridHtml = `
+                  <div class='data-grid-container' style='margin: 20px 0; border: 1px solid #ddd; border-radius: 4px; overflow: hidden;'>
+                    <div style='background-color: #f5f5f5; padding: 10px; border-bottom: 1px solid #ddd; font-weight: bold;'>
+                      Data Grid
+                    </div>
+                    <table style='width: 100%; border-collapse: collapse;'>
+                      <thead>
+                        <tr style='background-color: #f9f9f9;'>
+                          <th style='padding: 8px; border: 1px solid #ddd; text-align: left;'>Header 1</th>
+                          <th style='padding: 8px; border: 1px solid #ddd; text-align: left;'>Header 2</th>
+                          <th style='padding: 8px; border: 1px solid #ddd; text-align: left;'>Header 3</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td style='padding: 8px; border: 1px solid #ddd;'>{data.field1}</td>
+                          <td style='padding: 8px; border: 1px solid #ddd;'>{data.field2}</td>
+                          <td style='padding: 8px; border: 1px solid #ddd;'>{data.field3}</td>
+                        </tr>
+                        <tr>
+                          <td style='padding: 8px; border: 1px solid #ddd;'>{data.field1}</td>
+                          <td style='padding: 8px; border: 1px solid #ddd;'>{data.field2}</td>
+                          <td style='padding: 8px; border: 1px solid #ddd;'>{data.field3}</td>
+                        </tr>
+                        <tr>
+                          <td style='padding: 8px; border: 1px solid #ddd;'>{data.field1}</td>
+                          <td style='padding: 8px; border: 1px solid #ddd;'>{data.field2}</td>
+                          <td style='padding: 8px; border: 1px solid #ddd;'>{data.field3}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div style='background-color: #f5f5f5; padding: 8px; font-size: 12px; color: #666;'>
+                      Variables: Use {data.fieldName} for dynamic data. Example: {form.name}, {form.email}, {workflow.result}
+                    </div>
+                  </div>
+                `;
+                
+                quillInstance.clipboard.dangerouslyPasteHTML(index, dataGridHtml);
+                quillInstance.setSelection(index + dataGridHtml.length);
+              }
+            };
           }
         })
       " class="bg-gray-700 rounded border border-gray-600">

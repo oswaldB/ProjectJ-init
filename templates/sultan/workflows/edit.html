@@ -420,6 +420,12 @@
     }
   },
 
+  insertDataGrid() {
+    if (window.insertDataGrid) {
+      window.insertDataGrid();
+    }
+  },
+
   initTestDataFromForm() {
     if (this.workflow.blocks.length > 0 && this.workflow.blocks[0].type === 'trigger' && this.workflow.blocks[0].formId) {
       const formId = this.workflow.blocks[0].formId;
