@@ -55,11 +55,21 @@
   <div class="flex justify-between mt-4">
     <div class="flex flex-col items-center">
       <span class="text-xs text-green-400 mb-1">TRUE</span>
-      <div class="w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+      <div class="w-4 h-4 bg-green-500 rounded-full border-2 border-white cursor-pointer hover:bg-green-400"
+           @click="connectOutput(blockIndex, 'true')"></div>
+      <div class="mt-2 text-xs text-gray-300">
+        <span x-show="block.connections && block.connections.true">→ Connected</span>
+        <span x-show="!block.connections || !block.connections.true">Click to connect</span>
+      </div>
     </div>
     <div class="flex flex-col items-center">
       <span class="text-xs text-red-400 mb-1">FALSE</span>
-      <div class="w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
+      <div class="w-4 h-4 bg-red-500 rounded-full border-2 border-white cursor-pointer hover:bg-red-400"
+           @click="connectOutput(blockIndex, 'false')"></div>
+      <div class="mt-2 text-xs text-gray-300">
+        <span x-show="block.connections && block.connections.false">→ Connected</span>
+        <span x-show="!block.connections || !block.connections.false">Click to connect</span>
+      </div>
     </div>
   </div>
 </div>

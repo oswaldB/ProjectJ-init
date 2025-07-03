@@ -52,6 +52,13 @@
       const response = await fetch(`/api/sultan/workflows/${id}`);
       const data = await response.json();
       this.workflow = data;
+      
+      // Initialize connections for filter blocks if not present
+      this.workflow.blocks.forEach(block => {
+        if (block.type === 'filter' && !block.connections) {
+          block.connections = { true: null, false: null };
+        }
+      });
     } catch (error) {
       console.error('Failed to load workflow:', error);
     }
@@ -134,6 +141,7 @@
       case 'filter':
         newBlock.operator = 'AND';
         newBlock.conditions = [{ key: '', operator: 'equals', value: '' }];
+        newBlock.connections = { true: null, false: null };
         break;
       case 'email':
         newBlock.templateId = '';
@@ -191,6 +199,38 @@
     } catch (error) {
       console.error('Failed to save workflow:', error);
       alert('Error saving workflow');
+    }
+  },
+
+  connectOutput(blockIndex, outputType) {
+    const currentBlock = this.workflow.blocks[blockIndex];
+    
+    // Show available blocks to connect to
+    const availableBlocks = this.workflow.blocks
+      .slice(blockIndex + 1) // Only blocks after current one
+      .map((block, index) => ({
+        ...block,
+        originalIndex: blockIndex + 1 + index
+      }));
+    
+    if (availableBlocks.length === 0) {
+      alert('No blocks available to connect to. Add more blocks first.');
+      return;
+    }
+    
+    // Simple prompt for now - in a real implementation you'd want a proper UI
+    const blockNames = availableBlocks.map((block, index) => 
+      `${index}: ${block.type} (${block.name || block.id})`
+    ).join('\n');
+    
+    const selection = prompt(`Connect ${outputType.toUpperCase()} output to:\n${blockNames}\n\nEnter block number:`);
+    
+    if (selection !== null && selection !== '') {
+      const selectedIndex = parseInt(selection);
+      if (selectedIndex >= 0 && selectedIndex < availableBlocks.length) {
+        currentBlock.connections = currentBlock.connections || {};
+        currentBlock.connections[outputType] = availableBlocks[selectedIndex].id;
+      }
     }
   },
 
