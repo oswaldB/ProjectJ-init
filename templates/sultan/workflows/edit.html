@@ -1,4 +1,3 @@
-
 {% extends "sultan/base.html" %}
 
 {% block title %}Workflow Editor{% endblock %}
@@ -11,7 +10,7 @@
     description: '',
     blocks: []
   },
-  templates: [],
+  availableWorkflows: [],
   emailGroups: [],
   forms: [],
   formKeys: [],
@@ -22,7 +21,8 @@
     { type: 'code', name: 'Execute Code', icon: 'code', color: 'yellow' },
     { type: 'search', name: 'Search Engine', icon: 'search', color: 'cyan' },
     { type: 'delay', name: 'Delay', icon: 'clock', color: 'orange' },
-    { type: 'ask_scheherazade', name: 'Ask Scheherazade', icon: 'message', color: 'pink' }
+    { type: 'ask_scheherazade', name: 'Ask Scheherazade', icon: 'message', color: 'pink' },
+    { type: 'call_workflow', name: 'Call Workflow', icon: 'call', color: 'indigo' } // Added Call Workflow block
   ],
   draggedBlock: null,
 
@@ -47,6 +47,7 @@
     await this.loadTemplates();
     await this.loadEmailGroups();
     await this.loadForms();
+    await this.loadAvailableWorkflows();
   },
 
   async loadWorkflow(id) {
@@ -54,7 +55,7 @@
       const response = await fetch(`/api/sultan/workflows/${id}`);
       const data = await response.json();
       this.workflow = data;
-      
+
       // Initialize branches for filter blocks if not present
       this.workflow.blocks.forEach(block => {
         if (block.type === 'filter') {
@@ -94,6 +95,16 @@
     } catch (error) {
       console.error('Failed to load forms:', error);
       this.forms = [];
+    }
+  },
+
+  async loadAvailableWorkflows() {
+    try {
+      const response = await fetch('/api/sultan/workflows/list');
+      this.availableWorkflows = await response.json();
+    } catch (error) {
+      console.error('Failed to load available workflows:', error);
+      this.availableWorkflows = [];
     }
   },
 
@@ -169,6 +180,9 @@
         newBlock.question = '';
         newBlock.context = '';
         break;
+      case 'call_workflow': // Added call_workflow case
+        newBlock.workflowId = '';
+        break;
     }
 
     this.workflow.blocks.push(newBlock);
@@ -192,6 +206,7 @@
       case 'search': return 'templates/sultan/workflows/actions/search.html';
       case 'delay': return 'templates/sultan/workflows/actions/delay.html';
       case 'ask_scheherazade': return 'templates/sultan/workflows/actions/ask_scheherazade.html';
+      case 'call_workflow': return 'templates/sultan/workflows/actions/call_workflow.html'; // Added call_workflow case
       default: return '';
     }
   },
@@ -235,18 +250,18 @@
 
   dropBlock(event, filterIndex, branch) {
     event.preventDefault();
-    
+
     if (!this.draggedBlock) return;
-    
+
     const filterBlock = this.workflow.blocks[filterIndex];
-    
+
     if (this.draggedBlock.source === 'palette') {
       // Create new block from palette
       const newBlock = {
         id: `block-${Date.now()}`,
         type: this.draggedBlock.blockType
       };
-      
+
       // Initialize block-specific properties
       switch(this.draggedBlock.blockType) {
         case 'email':
@@ -271,8 +286,11 @@
           newBlock.question = '';
           newBlock.context = '';
           break;
+          case 'call_workflow': // Added call_workflow case
+            newBlock.workflowId = '';
+            break;
       }
-      
+
       if (branch === 'true') {
         filterBlock.trueBranch = filterBlock.trueBranch || [];
         filterBlock.trueBranch.push(newBlock);
@@ -285,7 +303,7 @@
       const sourceFilter = this.workflow.blocks[this.draggedBlock.filterIndex];
       const sourceArray = this.draggedBlock.branch === 'true' ? sourceFilter.trueBranch : sourceFilter.falseBranch;
       const block = sourceArray.splice(this.draggedBlock.branchIndex, 1)[0];
-      
+
       if (branch === 'true') {
         filterBlock.trueBranch = filterBlock.trueBranch || [];
         filterBlock.trueBranch.push(block);
@@ -294,7 +312,7 @@
         filterBlock.falseBranch.push(block);
       }
     }
-    
+
     this.draggedBlock = null;
   },
 
@@ -307,7 +325,7 @@
     }
   },
 
-  
+
 }">
   <!-- Sidebar with block palette -->
   <div class="w-64 bg-gray-800 border-r border-gray-700 p-4">
@@ -385,6 +403,11 @@
             <!-- Ask Scheherazade Block -->
             <template x-if="block.type === 'ask_scheherazade'">
               {% include 'sultan/workflows/actions/ask_scheherazade.html' %}
+            </template>
+
+            <!-- Call Workflow Block -->
+            <template x-if="block.type === 'call_workflow'">
+              {% include 'sultan/workflows/actions/call_workflow.html' %}
             </template>
           </div>
         </template>

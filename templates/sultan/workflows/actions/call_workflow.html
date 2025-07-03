@@ -1,0 +1,57 @@
+
+<div class="bg-indigo-900 border-2 border-indigo-600 rounded-lg p-4 mb-4">
+  <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center space-x-2">
+      <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
+      <h3 class="text-white font-semibold">Call Workflow</h3>
+      <button @click="removeBlock(blockIndex)" class="text-red-400 hover:text-red-300">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Input connector -->
+  <div class="flex justify-start mb-4">
+    <div class="w-4 h-4 bg-gray-500 rounded-full border-2 border-white"></div>
+  </div>
+  
+  <div class="space-y-3">
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Workflow to Call</label>
+      <select x-model="block.workflowId" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+        <option value="">Select a workflow</option>
+        <template x-for="workflow in availableWorkflows" :key="workflow.id">
+          <option :value="workflow.id" x-text="workflow.name || workflow.id"></option>
+        </template>
+      </select>
+    </div>
+    
+    <div class="space-y-2">
+      <div class="flex items-center">
+        <input type="checkbox" x-model="block.waitForCompletion" id="waitForCompletion" class="mr-2 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
+        <label for="waitForCompletion" class="text-sm text-gray-300">Wait for workflow completion before continuing</label>
+      </div>
+      
+      <div class="flex items-center">
+        <input type="checkbox" x-model="block.passData" id="passData" class="mr-2 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
+        <label for="passData" class="text-sm text-gray-300">Pass current workflow data to called workflow</label>
+      </div>
+    </div>
+    
+    <div class="bg-gray-800 p-3 rounded">
+      <h4 class="text-sm font-medium text-gray-300 mb-2">Behavior:</h4>
+      <ul class="text-xs text-gray-400 space-y-1">
+        <li>• The selected workflow will be executed with the current form data</li>
+        <li>• If "Wait for completion" is checked, this workflow pauses until the called workflow finishes</li>
+        <li>• If "Pass data" is checked, the called workflow receives all current workflow variables</li>
+      </ul>
+    </div>
+  </div>
+  
+  <!-- Output connector -->
+  <div class="flex justify-end mt-4">
+    <div class="w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+  </div>
+</div>
