@@ -2,7 +2,7 @@
 import json
 import os
 import logging
-from main import s3, BUCKET_NAME, LOCAL_BUCKET_DIR, CircularRefEncoder
+from config import s3, BUCKET_NAME, LOCAL_BUCKET_DIR, CircularRefEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +15,14 @@ def get_max_from_global_db(prefix):
             return json.loads(response['Body'].read().decode('utf-8'))
     except Exception as e:
         logger.error(f"Failed to get max from DB: {e}")
+        return None
+
+def load_from_global_db(key):
+    try:
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+        return json.loads(response['Body'].read().decode('utf-8'))
+    except Exception as e:
+        logger.error(f"Failed to load from DB: {e}")
         return None
 
 def save_in_global_db(key, obj):
@@ -31,7 +39,10 @@ def save_in_global_db(key, obj):
         return False
 
 def delete(key):
-    s3.delete_object(Bucket=BUCKET_NAME, Key=key)
-    full_path = os.path.join(LOCAL_BUCKET_DIR, key)
-    if os.path.exists(full_path):
-        os.remove(full_path)
+    try:
+        s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+        full_path = os.path.join(LOCAL_BUCKET_DIR, key)
+        if os.path.exists(full_path):
+            os.remove(full_path)
+    except Exception as e:
+        logger.error(f"Failed to delete {key}: {e}")
