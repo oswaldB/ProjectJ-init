@@ -73,16 +73,6 @@
     <!-- Quill Better Table Module -->
     <script src="https://unpkg.com/quill-better-table@1.2.10/dist/quill-better-table.min.js"></script>
     <link href="https://unpkg.com/quill-better-table@1.2.10/dist/quill-better-table.css" rel="stylesheet">
-    <script>
-      // Wait for both Quill and quillBetterTable to load
-      document.addEventListener('DOMContentLoaded', function() {
-        if (typeof Quill !== 'undefined' && typeof quillBetterTable !== 'undefined') {
-          Quill.register({
-            'modules/better-table': quillBetterTable
-          }, true);
-        }
-      });
-    </script>
     
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 

@@ -130,7 +130,12 @@
                             if (!window.quillInstances) window.quillInstances = {};
                             $nextTick(() => {
                               if (!window.quillInstances[branchBlock.id]) {
-                                // Better-table module is already registered globally
+                                // Register better-table module locally
+                                if (typeof quillBetterTable !== 'undefined') {
+                                  Quill.register({
+                                    'modules/better-table': quillBetterTable
+                                  }, true);
+                                }
 
                                 const quill = new Quill($el, {
                                   theme: 'snow',
@@ -501,10 +506,14 @@
                             if (!window.quillInstances) window.quillInstances = {};
                             $nextTick(() => {
                               if (!window.quillInstances[branchBlock.id]) {
-                                // Better-table module is already registered globally
+                                // Register better-table module locally
+                                if (typeof quillBetterTable !== 'undefined') {
+                                  Quill.register({
+                                    'modules/better-table': quillBetterTable
+                                  }, true);
+                                }
 
-                                const quill = new Quill($el, {
-                                  theme: 'snow',
+                                const quill = new Quill($el, {                                  theme: 'snow',
                                   modules: {
                                     toolbar: [
                                       ['bold', 'italic', 'underline'],
