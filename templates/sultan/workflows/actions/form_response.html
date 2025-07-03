@@ -1,0 +1,80 @@
+
+<div class="bg-purple-900 border-2 border-purple-600 rounded-lg p-4 mb-4">
+  <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center space-x-2">
+      <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
+      <h3 class="text-white font-semibold">Form Response</h3>
+      <button @click="removeBlock(blockIndex)" class="text-red-400 hover:text-red-300">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Input connector -->
+  <div class="flex justify-start mb-4">
+    <div class="w-4 h-4 bg-gray-500 rounded-full border-2 border-white"></div>
+  </div>
+  
+  <div class="space-y-3">
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Target Form</label>
+      <select x-model="block.formId" @change="loadFormFields(block.formId)" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+        <option value="">Select a form to respond to</option>
+        <template x-for="form in forms">
+          <option :value="form.id" x-text="form.name || form.id"></option>
+        </template>
+      </select>
+    </div>
+    
+    <div x-show="block.formId">
+      <label class="block text-sm font-medium text-gray-300 mb-1">Response Data Mapping</label>
+      <div class="space-y-2">
+        <template x-for="(mapping, index) in block.fieldMappings" :key="index">
+          <div class="flex items-center space-x-2 bg-gray-800 p-2 rounded">
+            <select x-model="mapping.formField" class="flex-1 bg-gray-700 text-white p-1 rounded border border-gray-600">
+              <option value="">Select form field</option>
+              <template x-for="key in formKeys">
+                <option :value="key" x-text="key"></option>
+              </template>
+            </select>
+            <span class="text-gray-400">=</span>
+            <input type="text" x-model="mapping.value" placeholder="Value or {variable}" class="flex-1 bg-gray-700 text-white p-1 rounded border border-gray-600">
+            <button @click="block.fieldMappings.splice(index, 1)" class="text-red-400 hover:text-red-300">×</button>
+          </div>
+        </template>
+        <button @click="block.fieldMappings.push({formField:'', value:''})" class="text-blue-400 hover:text-blue-300 text-sm">+ Add Field Mapping</button>
+      </div>
+    </div>
+    
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Response Options</label>
+      <div class="space-y-2">
+        <label class="flex items-center space-x-2">
+          <input type="checkbox" x-model="block.submitImmediately" class="bg-gray-700 border-gray-600">
+          <span class="text-sm text-gray-300">Submit form immediately</span>
+        </label>
+        <label class="flex items-center space-x-2">
+          <input type="checkbox" x-model="block.saveAsDraft" class="bg-gray-700 border-gray-600">
+          <span class="text-sm text-gray-300">Save as draft only</span>
+        </label>
+      </div>
+    </div>
+    
+    <div class="bg-gray-800 p-3 rounded">
+      <h4 class="text-sm font-medium text-gray-300 mb-2">Variables Available:</h4>
+      <ul class="text-xs text-gray-400 space-y-1">
+        <li>• Use {form_data.field_name} for trigger form data</li>
+        <li>• Use {workflow_data.variable} for workflow variables</li>
+        <li>• Use static values or combine with variables</li>
+        <li>• Example: "{form_data.user_name} - Processed"</li>
+      </ul>
+    </div>
+  </div>
+  
+  <!-- Output connector -->
+  <div class="flex justify-end mt-4">
+    <div class="w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+  </div>
+</div>

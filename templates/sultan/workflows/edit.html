@@ -33,7 +33,8 @@
     { type: 'search', name: 'Search Engine', icon: 'search', color: 'cyan' },
     { type: 'delay', name: 'Delay', icon: 'clock', color: 'orange' },
     { type: 'ask_scheherazade', name: 'Ask Scheherazade', icon: 'message', color: 'pink' },
-    { type: 'call_workflow', name: 'Call Workflow', icon: 'call', color: 'indigo' } // Added Call Workflow block
+    { type: 'call_workflow', name: 'Call Workflow', icon: 'call', color: 'indigo' },
+    { type: 'form_response', name: 'Form Response', icon: 'form', color: 'violet' }
   ],
   draggedBlock: null,
 
@@ -198,6 +199,12 @@
       case 'call_workflow': // Added call_workflow case
         newBlock.workflowId = '';
         break;
+      case 'form_response':
+        newBlock.formId = '';
+        newBlock.fieldMappings = [];
+        newBlock.submitImmediately = true;
+        newBlock.saveAsDraft = false;
+        break;
     }
 
     this.workflow.blocks.push(newBlock);
@@ -222,6 +229,7 @@
       case 'delay': return 'templates/sultan/workflows/actions/delay.html';
       case 'ask_scheherazade': return 'templates/sultan/workflows/actions/ask_scheherazade.html';
       case 'call_workflow': return 'templates/sultan/workflows/actions/call_workflow.html'; // Added call_workflow case
+      case 'form_response': return 'templates/sultan/workflows/actions/form_response.html';
       default: return '';
     }
   },
@@ -307,6 +315,12 @@
           break;
           case 'call_workflow': // Added call_workflow case
             newBlock.workflowId = '';
+            break;
+          case 'form_response':
+            newBlock.formId = '';
+            newBlock.fieldMappings = [];
+            newBlock.submitImmediately = true;
+            newBlock.saveAsDraft = false;
             break;
       }
 
@@ -405,6 +419,10 @@
       case 'call_workflow':
         return { status: 'success', message: `Called workflow: ${block.workflowId || 'test-workflow'}` };
       
+      case 'form_response':
+        const submitType = block.saveAsDraft ? 'draft' : 'submitted';
+        return { status: 'success', message: `Form response ${submitType} to form: ${block.formId || 'test-form'}` };
+      
       default:
         return { status: 'unknown', message: 'Unknown block type' };
     }
@@ -424,6 +442,10 @@
     if (window.insertDataGrid) {
       window.insertDataGrid();
     }
+  },
+
+  loadFormFields(formId) {
+    this.loadFormKeys(formId);
   },
 
   initTestDataFromForm() {
@@ -545,6 +567,11 @@
             <!-- Call Workflow Block -->
             <template x-if="block.type === 'call_workflow'">
               {% include 'sultan/workflows/actions/call_workflow.html' %}
+            </template>
+
+            <!-- Form Response Block -->
+            <template x-if="block.type === 'form_response'">
+              {% include 'sultan/workflows/actions/form_response.html' %}
             </template>
           </div>
         </template>
