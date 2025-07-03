@@ -316,6 +316,8 @@
           break;
           case 'call_workflow': // Added call_workflow case
             newBlock.workflowId = '';
+            newBlock.waitForCompletion = false;
+            newBlock.passData = false;
             break;
           case 'form_response':
             newBlock.formId = '';
