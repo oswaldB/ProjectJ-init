@@ -20,7 +20,9 @@
     { type: 'filter', name: 'Filter', icon: 'filter', color: 'purple' },
     { type: 'email', name: 'Send Email', icon: 'mail', color: 'green' },
     { type: 'code', name: 'Execute Code', icon: 'code', color: 'yellow' },
-    { type: 'search', name: 'Search Engine', icon: 'search', color: 'cyan' }
+    { type: 'search', name: 'Search Engine', icon: 'search', color: 'cyan' },
+    { type: 'delay', name: 'Delay', icon: 'clock', color: 'orange' },
+    { type: 'ask_scheherazade', name: 'Ask Scheherazade', icon: 'message', color: 'pink' }
   ],
   draggedBlock: null,
 
@@ -159,6 +161,14 @@
         newBlock.maxResults = 10;
         newBlock.sortBy = 'relevance';
         break;
+      case 'delay':
+        newBlock.delayAmount = 5;
+        newBlock.delayUnit = 'seconds';
+        break;
+      case 'ask_scheherazade':
+        newBlock.question = '';
+        newBlock.context = '';
+        break;
     }
 
     this.workflow.blocks.push(newBlock);
@@ -180,6 +190,8 @@
       case 'email': return 'templates/sultan/workflows/actions/email.html';
       case 'code': return 'templates/sultan/workflows/actions/code.html';
       case 'search': return 'templates/sultan/workflows/actions/search.html';
+      case 'delay': return 'templates/sultan/workflows/actions/delay.html';
+      case 'ask_scheherazade': return 'templates/sultan/workflows/actions/ask_scheherazade.html';
       default: return '';
     }
   },
@@ -250,6 +262,14 @@
           newBlock.query = '';
           newBlock.maxResults = 10;
           newBlock.sortBy = 'relevance';
+          break;
+        case 'delay':
+          newBlock.delayAmount = 5;
+          newBlock.delayUnit = 'seconds';
+          break;
+        case 'ask_scheherazade':
+          newBlock.question = '';
+          newBlock.context = '';
           break;
       }
       
@@ -355,6 +375,16 @@
             <!-- Search Block -->
             <template x-if="block.type === 'search'">
               {% include 'sultan/workflows/actions/search.html' %}
+            </template>
+
+            <!-- Delay Block -->
+            <template x-if="block.type === 'delay'">
+              {% include 'sultan/workflows/actions/delay.html' %}
+            </template>
+
+            <!-- Ask Scheherazade Block -->
+            <template x-if="block.type === 'ask_scheherazade'">
+              {% include 'sultan/workflows/actions/ask_scheherazade.html' %}
             </template>
           </div>
         </template>

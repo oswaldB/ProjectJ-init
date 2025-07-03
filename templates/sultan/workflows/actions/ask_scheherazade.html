@@ -1,0 +1,38 @@
+
+<div class="bg-pink-900 border-2 border-pink-600 rounded-lg p-4 mb-4">
+  <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center space-x-2">
+      <div class="w-3 h-3 bg-pink-500 rounded-full"></div>
+      <h3 class="text-white font-semibold">Ask Scheherazade</h3>
+      <button @click="removeBlock(blockIndex)" class="text-red-400 hover:text-red-300">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Input connector -->
+  <div class="flex justify-start mb-4">
+    <div class="w-4 h-4 bg-gray-500 rounded-full border-2 border-white"></div>
+  </div>
+  
+  <div class="space-y-3">
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Question to Ask</label>
+      <textarea x-model="block.question" rows="3" placeholder="What would you like to ask Scheherazade?"
+        class="w-full bg-gray-700 text-white p-3 rounded border border-gray-600"></textarea>
+    </div>
+    
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Context (Optional)</label>
+      <textarea x-model="block.context" rows="2" placeholder="Provide additional context for the question..."
+        class="w-full bg-gray-700 text-white p-3 rounded border border-gray-600"></textarea>
+    </div>
+  </div>
+  
+  <!-- Output connector -->
+  <div class="flex justify-end mt-4">
+    <div class="w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+  </div>
+</div>
