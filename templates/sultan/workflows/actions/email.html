@@ -69,10 +69,7 @@
         if (!window.quillInstances) window.quillInstances = {};
         $nextTick(() => {
           if (!window.quillInstances[block.id]) {
-            // Register the table module
-            if (window.QuillBetterTable) {
-              Quill.register('modules/better-table', window.QuillBetterTable.default);
-            }
+            // Better-table module is already registered globally
             
             const quill = new Quill($refs.emailBodyEditor, {
               theme: 'snow',
