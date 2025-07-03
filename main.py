@@ -601,8 +601,18 @@ def api_workflows_list():
             try:
                 response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
                 content = response['Body'].read().decode('utf-8')
-                workflow = json.loads(content)
-                workflows.append(workflow)
+                workflow_data = json.loads(content)
+                
+                # Handle backward compatibility
+                if 'workflows' in workflow_data and workflow_data['workflows']:
+                    # Old format - extract workflows and add metadata
+                    for old_workflow in workflow_data['workflows']:
+                        old_workflow['last_modified'] = workflow_data.get('last_modified', '')
+                        old_workflow['user_email'] = workflow_data.get('user_email', '')
+                        workflows.append(old_workflow)
+                else:
+                    # New format - add directly
+                    workflows.append(workflow_data)
             except Exception as e:
                 logger.error(f"Failed to load workflow {obj['Key']}: {e}")
     except Exception as e:
@@ -619,11 +629,13 @@ def api_workflow_get(workflow_id):
             timestamp = int(datetime.datetime.now().timestamp() * 1000)
             new_workflow_id = f'workflows-{timestamp}'
             
-            # Create empty workflow structure
-            empty_workflow = {
+            # Create empty workflow structure with ID at root level
+            workflow_data = {
                 'id': new_workflow_id,
                 'name': 'New Workflow',
                 'description': '',
+                'last_modified': datetime.datetime.now().isoformat(),
+                'user_email': 'oswald.bernard@gmail.com',
                 'blocks': [{
                     'id': f'block-{timestamp}',
                     'type': 'trigger',
@@ -635,25 +647,24 @@ def api_workflow_get(workflow_id):
             
             # Save to S3
             key = f'sultan/workflows/{new_workflow_id}.json'
-            workflow_data = {
-                'last_modified': datetime.datetime.now().isoformat(),
-                'user_email': 'oswald.bernard@gmail.com',
-                'workflows': [empty_workflow]
-            }
-            
             save_in_global_db(key, workflow_data)
             
-            return jsonify(empty_workflow)
+            return jsonify(workflow_data)
         
         # Regular workflow loading
         key = f'sultan/workflows/{workflow_id}.json'
         response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
         workflow_data = json.loads(response['Body'].read().decode('utf-8'))
         
-        # Return the first workflow if it's in the old format
+        # Handle backward compatibility with old format
         if 'workflows' in workflow_data and workflow_data['workflows']:
-            return jsonify(workflow_data['workflows'][0])
+            # Old format - extract first workflow and add metadata
+            old_workflow = workflow_data['workflows'][0]
+            old_workflow['last_modified'] = workflow_data.get('last_modified', '')
+            old_workflow['user_email'] = workflow_data.get('user_email', '')
+            return jsonify(old_workflow)
         
+        # New format - return as is
         return jsonify(workflow_data)
     except s3.exceptions.NoSuchKey:
         return jsonify({'error': 'Workflow not found'}), 404
@@ -666,27 +677,20 @@ def api_workflow_get(workflow_id):
 def api_workflows_save():
     try:
         data = request.json
-        
-        # Handle both single workflow and workflows array
-        if 'workflows' in data:
-            workflows = data.get('workflows')
-        else:
-            # Single workflow - wrap in array
-            workflows = [data]
 
-        if not workflows:
+        if not data:
             return jsonify({"error": "Invalid workflow data"}), 400
 
         # Use the workflow ID for the filename, or generate new timestamp
-        workflow_id = workflows[0].get('id', f'workflows-{int(datetime.datetime.now().timestamp() * 1000)}')
+        workflow_id = data.get('id', f'workflows-{int(datetime.datetime.now().timestamp() * 1000)}')
         key = f'sultan/workflows/{workflow_id}.json'
 
-        # Add metadata
-        workflow_data = {
-            'last_modified': datetime.datetime.now().isoformat(),
-            'user_email': 'oswald.bernard@gmail.com',
-            'workflows': workflows
-        }
+        # Add metadata directly to workflow data
+        data['last_modified'] = datetime.datetime.now().isoformat()
+        data['user_email'] = 'oswald.bernard@gmail.com'
+        data['id'] = workflow_id
+        
+        workflow_data = data
 
         save_in_global_db(key, workflow_data)
 
