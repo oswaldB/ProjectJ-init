@@ -29,7 +29,22 @@
     </div>
     
     <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">Recipients</label>
+      <label class="block text-sm font-medium text-gray-300 mb-1">To (recipients)</label>
+      <input type="text" x-model="block.to" placeholder="email1@example.com, email2@example.com" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+    </div>
+    
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">CC (carbon copy)</label>
+      <input type="text" x-model="block.cc" placeholder="email1@example.com, email2@example.com" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+    </div>
+    
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">BCC (blind carbon copy)</label>
+      <input type="text" x-model="block.bcc" placeholder="email1@example.com, email2@example.com" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+    </div>
+    
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Email Group (optional)</label>
       <select x-model="block.emailGroupId" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
         <option value="">Select email group</option>
         <template x-for="group in emailGroups">
@@ -39,15 +54,17 @@
     </div>
     
     <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">Delay (minutes)</label>
-      <select x-model="block.delay" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-        <option value="0">Send immediately</option>
-        <option value="5">5 minutes</option>
-        <option value="10">10 minutes</option>
-        <option value="15">15 minutes</option>
-        <option value="30">30 minutes</option>
-        <option value="60">1 hour</option>
-      </select>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Subject</label>
+      <input type="text" x-model="block.subject" placeholder="Email subject" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+    </div>
+    
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Email Body</label>
+      <textarea x-model="block.body" rows="6" placeholder="Write your email content here..." class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 resize-vertical"></textarea>
+    </div>
+    
+    <div class="text-xs text-gray-400 bg-gray-800 p-2 rounded">
+      <strong>Note:</strong> You can use variables from the form data like {form.field_name} in the subject and body.
     </div>
   </div>
   

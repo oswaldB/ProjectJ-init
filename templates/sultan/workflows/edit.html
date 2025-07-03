@@ -169,7 +169,11 @@
       case 'email':
         newBlock.templateId = '';
         newBlock.emailGroupId = '';
-        newBlock.delay = 0;
+        newBlock.to = '';
+        newBlock.cc = '';
+        newBlock.bcc = '';
+        newBlock.subject = '';
+        newBlock.body = '';
         break;
       case 'code':
         newBlock.code = '# Write your Python code here\nprint(\'Hello from workflow!\')';
@@ -275,7 +279,11 @@
         case 'email':
           newBlock.templateId = '';
           newBlock.emailGroupId = '';
-          newBlock.delay = 0;
+          newBlock.to = '';
+          newBlock.cc = '';
+          newBlock.bcc = '';
+          newBlock.subject = '';
+          newBlock.body = '';
           break;
         case 'code':
           newBlock.code = '# Write your Python code here\nprint(\'Hello from workflow!\')';
