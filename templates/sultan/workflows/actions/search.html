@@ -1,0 +1,65 @@
+
+<div class="bg-cyan-900 border-2 border-cyan-600 rounded-lg p-4 mb-4">
+  <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center space-x-2">
+      <div class="w-3 h-3 bg-cyan-500 rounded-full"></div>
+      <h3 class="text-white font-semibold">Search Engine</h3>
+      <button @click="removeBlock(blockIndex)" class="text-red-400 hover:text-red-300">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Input connector -->
+  <div class="flex justify-start mb-4">
+    <div class="w-4 h-4 bg-gray-500 rounded-full border-2 border-white"></div>
+  </div>
+  
+  <div class="space-y-3">
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Search Type</label>
+      <select x-model="block.searchType" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+        <option value="forms">Search in Forms</option>
+        <option value="issues">Search in Issues</option>
+        <option value="escalations">Search in Escalations</option>
+        <option value="templates">Search in Templates</option>
+      </select>
+    </div>
+    
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Search Query</label>
+      <input type="text" x-model="block.query" placeholder="Enter search terms or use {field_name} for dynamic values" 
+        class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+    </div>
+    
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Max Results</label>
+        <input type="number" x-model="block.maxResults" value="10" min="1" max="100"
+          class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Sort By</label>
+        <select x-model="block.sortBy" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+          <option value="relevance">Relevance</option>
+          <option value="date_desc">Newest First</option>
+          <option value="date_asc">Oldest First</option>
+          <option value="name">Name</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="bg-gray-800 p-2 rounded">
+      <h4 class="text-sm font-medium text-gray-300 mb-2">Dynamic Values:</h4>
+      <p class="text-xs text-gray-400">Use {field_name} to insert form field values into your search query.</p>
+      <p class="text-xs text-gray-400">Example: "status:{status} AND priority:{priority_level}"</p>
+    </div>
+  </div>
+  
+  <!-- Output connector -->
+  <div class="flex justify-end mt-4">
+    <div class="w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+  </div>
+</div>

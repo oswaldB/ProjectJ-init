@@ -1,0 +1,65 @@
+
+<div class="bg-purple-900 border-2 border-purple-600 rounded-lg p-4 mb-4">
+  <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center space-x-2">
+      <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
+      <h3 class="text-white font-semibold">Filter</h3>
+      <button @click="removeBlock(blockIndex)" class="text-red-400 hover:text-red-300">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Input connector -->
+  <div class="flex justify-start mb-4">
+    <div class="w-4 h-4 bg-gray-500 rounded-full border-2 border-white"></div>
+  </div>
+  
+  <div class="space-y-3">
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Condition operator</label>
+      <select x-model="block.operator" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+        <option value="AND">AND (all conditions)</option>
+        <option value="OR">OR (any condition)</option>
+      </select>
+    </div>
+    
+    <div class="space-y-2">
+      <label class="block text-sm font-medium text-gray-300">Conditions</label>
+      <template x-for="(condition, condIndex) in block.conditions" :key="condIndex">
+        <div class="flex items-center space-x-2 bg-gray-800 p-2 rounded">
+          <select x-model="condition.key" class="flex-1 bg-gray-700 text-white p-1 rounded border border-gray-600">
+            <option value="">Select field</option>
+            <template x-for="key in formKeys">
+              <option :value="key" x-text="key"></option>
+            </template>
+          </select>
+          <select x-model="condition.operator" class="flex-1 bg-gray-700 text-white p-1 rounded border border-gray-600">
+            <option value="equals">Equals</option>
+            <option value="not_equals">Not Equals</option>
+            <option value="contains">Contains</option>
+            <option value="greater_than">Greater Than</option>
+            <option value="less_than">Less Than</option>
+          </select>
+          <input type="text" x-model="condition.value" placeholder="Value" class="flex-1 bg-gray-700 text-white p-1 rounded border border-gray-600">
+          <button @click="block.conditions.splice(condIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
+        </div>
+      </template>
+      <button @click="block.conditions.push({key:'', operator:'', value:''})" class="text-blue-400 hover:text-blue-300 text-sm">+ Add Condition</button>
+    </div>
+  </div>
+  
+  <!-- Output connectors -->
+  <div class="flex justify-between mt-4">
+    <div class="flex flex-col items-center">
+      <span class="text-xs text-green-400 mb-1">TRUE</span>
+      <div class="w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+    </div>
+    <div class="flex flex-col items-center">
+      <span class="text-xs text-red-400 mb-1">FALSE</span>
+      <div class="w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
+    </div>
+  </div>
+</div>
