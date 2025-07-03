@@ -383,7 +383,7 @@
         return { status: 'success', message: 'Python code executed', output: 'Test code execution result' };
       
       case 'search':
-        return { status: 'success', message: `Search performed: "${block.query || 'test query'}"`, results: 3 };
+        return { status: 'success', message: `Search performed: ${block.query}`, results: 3 };
       
       case 'delay':
         return { status: 'success', message: `Delayed for ${block.delayAmount || 5} ${block.delayUnit || 'seconds'}` };
