@@ -1,1 +1,0 @@
-{"last_modified":"2025-07-03T13:43:34.357737","user_email":"oswald.bernard@gmail.com","workflows":[{"id":"workflow-1751549358811","name":"TEST2","description":"","blocks":[{"id":"block-1751549358811","type":"trigger","position":{"x":100,"y":100},"formId":"","event":"on_submit"}]}]}
