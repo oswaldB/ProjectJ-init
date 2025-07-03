@@ -69,6 +69,11 @@
         if (!window.quillInstances) window.quillInstances = {};
         $nextTick(() => {
           if (!window.quillInstances[block.id]) {
+            // Register the table module
+            if (window.QuillBetterTable) {
+              Quill.register('modules/better-table', window.QuillBetterTable.default);
+            }
+            
             const quill = new Quill($refs.emailBodyEditor, {
               theme: 'snow',
               modules: {
@@ -79,10 +84,18 @@
                   [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                   [{ 'align': [] }],
                   ['link', 'image'],
-                  ['table'],
+                  [{ 'table': 'TD' }],
                   ['clean']
                 ],
-                table: true
+                'better-table': {
+                  operationMenu: {
+                    items: {
+                      unmergeCells: {
+                        text: 'Another unmerge cells name'
+                      }
+                    }
+                  }
+                }
               }
             });
             

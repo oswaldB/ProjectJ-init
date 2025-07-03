@@ -1,5 +1,3 @@
-
-
 <div class="bg-purple-900 border-2 border-purple-600 rounded-lg p-4 mb-4">
   <div class="flex items-center justify-between mb-3">
     <div class="flex items-center space-x-2">
@@ -12,12 +10,12 @@
       </button>
     </div>
   </div>
-  
+
   <!-- Input connector -->
   <div class="flex justify-start mb-4">
     <div class="w-4 h-4 bg-gray-500 rounded-full border-2 border-white"></div>
   </div>
-  
+
   <div class="space-y-3">
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Condition operator</label>
@@ -26,7 +24,7 @@
         <option value="OR">OR (any condition)</option>
       </select>
     </div>
-    
+
     <div class="space-y-2">
       <label class="block text-sm font-medium text-gray-300">Conditions</label>
       <template x-for="(condition, condIndex) in block.conditions" :key="condIndex">
@@ -51,7 +49,7 @@
       <button @click="block.conditions.push({key:'', operator:'', value:''})" class="text-blue-400 hover:text-blue-300 text-sm">+ Add Condition</button>
     </div>
   </div>
-  
+
   <!-- Drop Zones for TRUE/FALSE branches -->
   <div class="space-y-4 mt-4">
     <!-- TRUE Branch -->
@@ -63,13 +61,13 @@
              @dragover.prevent
              @dragenter.prevent
              :class="{'bg-green-800/40 border-green-400': draggedBlock}">
-          
+
           <!-- Show existing blocks in TRUE branch -->
           <template x-if="block.trueBranch && block.trueBranch.length > 0">
             <div class="space-y-4">
               <template x-for="(branchBlock, branchIndex) in block.trueBranch" :key="branchBlock.id">
                 <div class="relative" draggable="true" @dragstart="startDrag(branchBlock, blockIndex, 'true', branchIndex)">
-                  
+
                   <!-- Email Block -->
                   <template x-if="branchBlock.type === 'email'">
                     <div class="bg-green-900 border-2 border-green-600 rounded-lg p-4">
@@ -132,6 +130,11 @@
                             if (!window.quillInstances) window.quillInstances = {};
                             $nextTick(() => {
                               if (!window.quillInstances[branchBlock.id]) {
+                                // Register the table module
+                                if (window.QuillBetterTable) {
+                                  Quill.register('modules/better-table', window.QuillBetterTable.default);
+                                }
+
                                 const quill = new Quill($el, {
                                   theme: 'snow',
                                   modules: {
@@ -140,19 +143,29 @@
                                       [{'list': 'ordered'}, {'list': 'bullet'}],
                                       ['link'],
                                       [{'header': [1, 2, 3, false]}],
+                                      [{ 'table': 'TD' }],
                                       ['clean']
-                                    ]
+                                    ],
+                                    'better-table': {
+                                      operationMenu: {
+                                        items: {
+                                          unmergeCells: {
+                                            text: 'Another unmerge cells name'
+                                          }
+                                        }
+                                      }
+                                    }
                                   }
                                 });
-                                
+
                                 if (branchBlock.body) {
                                   quill.root.innerHTML = branchBlock.body;
                                 }
-                                
+
                                 quill.on('text-change', function() {
                                   branchBlock.body = quill.root.innerHTML;
                                 });
-                                
+
                                 window.quillInstances[branchBlock.id] = quill;
                               }
                             })
@@ -315,19 +328,19 @@
                             </template>
                           </select>
                         </div>
-                        
+
                         <div class="space-y-2">
                           <div class="flex items-center">
                             <input type="checkbox" x-model="branchBlock.waitForCompletion" class="mr-2 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
                             <label class="text-sm text-gray-300">Wait for workflow completion before continuing</label>
                           </div>
-                          
+
                           <div class="flex items-center">
                             <input type="checkbox" x-model="branchBlock.passData" class="mr-2 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
                             <label class="text-sm text-gray-300">Pass current workflow data to called workflow</label>
                           </div>
                         </div>
-                        
+
                         <div class="bg-gray-800 p-3 rounded">
                           <h4 class="text-sm font-medium text-gray-300 mb-2">Behavior:</h4>
                           <ul class="text-xs text-gray-400 space-y-1">
@@ -364,7 +377,7 @@
                             </template>
                           </select>
                         </div>
-                        
+
                         <div x-show="branchBlock.formId">
                           <label class="block text-sm font-medium text-gray-300 mb-2">Field Mappings</label>
                           <div class="space-y-2 max-h-40 overflow-y-auto">
@@ -383,7 +396,7 @@
                             <button @click="branchBlock.fieldMappings = branchBlock.fieldMappings || []; branchBlock.fieldMappings.push({field:'', value:''})" class="text-blue-400 hover:text-blue-300 text-sm">+ Add Mapping</button>
                           </div>
                         </div>
-                        
+
                         <div class="space-y-2">
                           <label class="flex items-center space-x-2">
                             <input type="checkbox" x-model="branchBlock.submitImmediately" class="bg-gray-700 border-gray-600">
@@ -394,11 +407,12 @@
                             <span class="text-sm text-gray-300">Save as draft only</span>
                           </label>
                         </div>
-                        
+
                         <div class="bg-gray-800 p-3 rounded">
                           <h4 class="text-sm font-medium text-gray-300 mb-2">Variables Available:</h4>
                           <ul class="text-xs text-gray-400 space-y-1">
                             <li>• Use {form_data.field_name} for trigger form data</li>
+                            <li>• Use {workflow_data.variable} for workflow variables</li>
                             <li>• Use {workflow_data.variable} for workflow variables</li>
                             <li>• Use static values or combine with variables</li>
                             <li>• Example: "{form_data.user_name} - Processed"</li>
@@ -412,7 +426,7 @@
               </template>
             </div>
           </template>
-          
+
           <!-- Empty state -->
           <template x-if="!block.trueBranch || block.trueBranch.length === 0">
             <div class="text-center text-green-300 text-sm py-8">
@@ -432,13 +446,13 @@
              @dragover.prevent
              @dragenter.prevent
              :class="{'bg-red-800/40 border-red-400': draggedBlock}">
-          
+
           <!-- Show existing blocks in FALSE branch -->
           <template x-if="block.falseBranch && block.falseBranch.length > 0">
             <div class="space-y-4">
               <template x-for="(branchBlock, branchIndex) in block.falseBranch" :key="branchBlock.id">
                 <div class="relative" draggable="true" @dragstart="startDrag(branchBlock, blockIndex, 'false', branchIndex)">
-                  
+
                   <!-- Email Block -->
                   <template x-if="branchBlock.type === 'email'">
                     <div class="bg-green-900 border-2 border-green-600 rounded-lg p-4">
@@ -501,6 +515,11 @@
                             if (!window.quillInstances) window.quillInstances = {};
                             $nextTick(() => {
                               if (!window.quillInstances[branchBlock.id]) {
+                                // Register the table module
+                                if (window.QuillBetterTable) {
+                                  Quill.register('modules/better-table', window.QuillBetterTable.default);
+                                }
+
                                 const quill = new Quill($el, {
                                   theme: 'snow',
                                   modules: {
@@ -509,19 +528,29 @@
                                       [{'list': 'ordered'}, {'list': 'bullet'}],
                                       ['link'],
                                       [{'header': [1, 2, 3, false]}],
+                                      [{ 'table': 'TD' }],
                                       ['clean']
-                                    ]
+                                    ],
+                                    'better-table': {
+                                      operationMenu: {
+                                        items: {
+                                          unmergeCells: {
+                                            text: 'Another unmerge cells name'
+                                          }
+                                        }
+                                      }
+                                    }
                                   }
                                 });
-                                
+
                                 if (branchBlock.body) {
                                   quill.root.innerHTML = branchBlock.body;
                                 }
-                                
+
                                 quill.on('text-change', function() {
                                   branchBlock.body = quill.root.innerHTML;
                                 });
-                                
+
                                 window.quillInstances[branchBlock.id] = quill;
                               }
                             })
@@ -684,19 +713,19 @@
                             </template>
                           </select>
                         </div>
-                        
+
                         <div class="space-y-2">
                           <div class="flex items-center">
                             <input type="checkbox" x-model="branchBlock.waitForCompletion" class="mr-2 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
                             <label class="text-sm text-gray-300">Wait for workflow completion before continuing</label>
                           </div>
-                          
+
                           <div class="flex items-center">
                             <input type="checkbox" x-model="branchBlock.passData" class="mr-2 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
                             <label class="text-sm text-gray-300">Pass current workflow data to called workflow</label>
                           </div>
                         </div>
-                        
+
                         <div class="bg-gray-800 p-3 rounded">
                           <h4 class="text-sm font-medium text-gray-300 mb-2">Behavior:</h4>
                           <ul class="text-xs text-gray-400 space-y-1">
@@ -733,7 +762,7 @@
                             </template>
                           </select>
                         </div>
-                        
+
                         <div x-show="branchBlock.formId">
                           <label class="block text-sm font-medium text-gray-300 mb-2">Field Mappings</label>
                           <div class="space-y-2 max-h-40 overflow-y-auto">
@@ -752,7 +781,7 @@
                             <button @click="branchBlock.fieldMappings = branchBlock.fieldMappings || []; branchBlock.fieldMappings.push({field:'', value:''})" class="text-blue-400 hover:text-blue-300 text-sm">+ Add Mapping</button>
                           </div>
                         </div>
-                        
+
                         <div class="space-y-2">
                           <label class="flex items-center space-x-2">
                             <input type="checkbox" x-model="branchBlock.submitImmediately" class="bg-gray-700 border-gray-600">
@@ -763,7 +792,7 @@
                             <span class="text-sm text-gray-300">Save as draft only</span>
                           </label>
                         </div>
-                        
+
                         <div class="bg-gray-800 p-3 rounded">
                           <h4 class="text-sm font-medium text-gray-300 mb-2">Variables Available:</h4>
                           <ul class="text-xs text-gray-400 space-y-1">
@@ -782,7 +811,7 @@
               </template>
             </div>
           </template>
-          
+
           <!-- Empty state -->
           <template x-if="!block.falseBranch || block.falseBranch.length === 0">
             <div class="text-center text-red-300 text-sm py-8">
@@ -794,4 +823,3 @@
     </div>
   </div>
 </div>
-
