@@ -14,6 +14,14 @@
   emailGroups: [],
   forms: [],
   formKeys: [],
+  showTestModal: false,
+  testData: {},
+  testExecution: {
+    isRunning: false,
+    currentStep: -1,
+    results: [],
+    logs: []
+  },
   availableBlocks: [
     { type: 'trigger', name: 'Trigger', icon: 'play', color: 'blue' },
     { type: 'filter', name: 'Filter', icon: 'filter', color: 'purple' },
@@ -325,6 +333,104 @@
     }
   },
 
+  async runTest() {
+    this.testExecution.isRunning = true;
+    this.testExecution.currentStep = 0;
+    this.testExecution.results = [];
+    this.testExecution.logs = [];
+
+    try {
+      // Simulate workflow execution
+      for (let i = 0; i < this.workflow.blocks.length; i++) {
+        this.testExecution.currentStep = i;
+        const block = this.workflow.blocks[i];
+        
+        this.testExecution.logs.push(`Executing ${block.type} block...`);
+        
+        // Simulate processing time
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Simulate block execution
+        const result = await this.simulateBlockExecution(block, i);
+        this.testExecution.results.push(result);
+        
+        this.testExecution.logs.push(`${block.type} block completed: ${result.status}`);
+      }
+      
+      this.testExecution.logs.push('Workflow execution completed successfully!');
+    } catch (error) {
+      this.testExecution.logs.push(`Error: ${error.message}`);
+    } finally {
+      this.testExecution.isRunning = false;
+      this.testExecution.currentStep = -1;
+    }
+  },
+
+  async simulateBlockExecution(block, index) {
+    switch(block.type) {
+      case 'trigger':
+        return { status: 'success', message: 'Trigger activated with test data', data: this.testData };
+      
+      case 'filter':
+        // Simulate filter evaluation
+        const passed = Math.random() > 0.5; // Random for demo
+        return { status: 'success', message: `Filter evaluated: ${passed ? 'PASSED' : 'FAILED'}`, passed };
+      
+      case 'email':
+        return { status: 'success', message: `Email sent to group ${block.emailGroupId || 'test-group'}` };
+      
+      case 'code':
+        return { status: 'success', message: 'Python code executed', output: 'Test code execution result' };
+      
+      case 'search':
+        return { status: 'success', message: `Search performed: "${block.query || 'test query'}"`, results: 3 };
+      
+      case 'delay':
+        return { status: 'success', message: `Delayed for ${block.delayAmount || 5} ${block.delayUnit || 'seconds'}` };
+      
+      case 'ask_scheherazade':
+        return { status: 'success', message: 'Question sent to Scheherazade', response: 'AI response simulation' };
+      
+      case 'call_workflow':
+        return { status: 'success', message: `Called workflow: ${block.workflowId || 'test-workflow'}` };
+      
+      default:
+        return { status: 'unknown', message: 'Unknown block type' };
+    }
+  },
+
+  initTestDataFromForm() {
+    if (this.workflow.blocks.length > 0 && this.workflow.blocks[0].type === 'trigger' && this.workflow.blocks[0].formId) {
+      const formId = this.workflow.blocks[0].formId;
+      const form = this.forms.find(f => f.id === formId);
+      if (form && form.fields) {
+        const testData = {};
+        form.fields.forEach(field => {
+          if (field.key) {
+            switch(field.type) {
+              case 'text':
+              case 'textarea':
+                testData[field.key] = `Test ${field.label || field.key}`;
+                break;
+              case 'single_select':
+                testData[field.key] = field.options?.[0]?.name || 'test-option';
+                break;
+              case 'multiple_checkbox':
+                testData[field.key] = field.options?.slice(0, 2).map(o => o.name) || ['test-option'];
+                break;
+              case 'date':
+                testData[field.key] = new Date().toISOString().split('T')[0];
+                break;
+              default:
+                testData[field.key] = 'test-value';
+            }
+          }
+        });
+        this.testData = testData;
+      }
+    }
+  },
+
 
 }">
   <!-- Sidebar with block palette -->
@@ -358,6 +464,9 @@
           <input type="text" x-model="workflow.description" placeholder="Workflow description" class="bg-gray-700 text-white px-3 py-2 rounded border border-gray-600">
         </div>
         <div class="flex space-x-2">
+          <button @click="showTestModal = true" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            Test Workflow
+          </button>
           <button @click="save()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
             Save
           </button>
@@ -411,6 +520,98 @@
             </template>
           </div>
         </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Test Modal -->
+  <div x-show="showTestModal" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-gray-800 text-white p-6 rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Test Workflow: <span x-text="workflow.name"></span></h2>
+        <button @click="showTestModal = false" class="text-gray-400 hover:text-white">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Test Data Input -->
+        <div>
+          <h3 class="text-lg font-semibold mb-3">Test Data</h3>
+          <div class="space-y-3">
+            <button @click="initTestDataFromForm()" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
+              Auto-fill from Form
+            </button>
+            <div class="bg-gray-700 p-3 rounded">
+              <label class="block text-sm font-medium mb-2">Test Data (JSON)</label>
+              <textarea x-model="testData" rows="10" 
+                        class="w-full bg-gray-600 text-white p-2 rounded font-mono text-sm"
+                        :value="JSON.stringify(testData, null, 2)"
+                        @input="try { testData = JSON.parse($event.target.value) } catch(e) {}"></textarea>
+            </div>
+            <div class="flex space-x-2">
+              <button @click="runTest()" 
+                      :disabled="testExecution.isRunning"
+                      class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50">
+                <span x-show="!testExecution.isRunning">Run Test</span>
+                <span x-show="testExecution.isRunning">Running...</span>
+              </button>
+              <button @click="testExecution.logs = []; testExecution.results = []" 
+                      class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                Clear Results
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Execution Results -->
+        <div>
+          <h3 class="text-lg font-semibold mb-3">Execution Results</h3>
+          
+          <!-- Progress Indicator -->
+          <div x-show="testExecution.isRunning" class="mb-4">
+            <div class="bg-gray-600 rounded-full h-2">
+              <div class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                   :style="`width: ${((testExecution.currentStep + 1) / workflow.blocks.length) * 100}%`"></div>
+            </div>
+            <p class="text-sm text-gray-300 mt-1">
+              Step <span x-text="testExecution.currentStep + 1"></span> of <span x-text="workflow.blocks.length"></span>
+            </p>
+          </div>
+
+          <!-- Execution Logs -->
+          <div class="bg-gray-900 p-3 rounded h-64 overflow-y-auto">
+            <template x-for="(log, index) in testExecution.logs" :key="index">
+              <div class="text-sm py-1" 
+                   :class="log.includes('Error') ? 'text-red-400' : log.includes('completed') ? 'text-green-400' : 'text-gray-300'">
+                <span class="text-gray-500" x-text="`[${new Date().toLocaleTimeString()}]`"></span>
+                <span x-text="log"></span>
+              </div>
+            </template>
+            <div x-show="testExecution.logs.length === 0" class="text-gray-500 text-sm">
+              Click "Run Test" to see execution logs here...
+            </div>
+          </div>
+
+          <!-- Block Results -->
+          <div x-show="testExecution.results.length > 0" class="mt-4">
+            <h4 class="font-medium mb-2">Block Results:</h4>
+            <div class="space-y-2 max-h-40 overflow-y-auto">
+              <template x-for="(result, index) in testExecution.results" :key="index">
+                <div class="bg-gray-700 p-2 rounded text-sm">
+                  <div class="flex justify-between items-center">
+                    <span class="font-medium" x-text="`Block ${index + 1} (${workflow.blocks[index]?.type})`"></span>
+                    <span :class="result.status === 'success' ? 'text-green-400' : 'text-red-400'" 
+                          x-text="result.status"></span>
+                  </div>
+                  <div class="text-gray-300 mt-1" x-text="result.message"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
