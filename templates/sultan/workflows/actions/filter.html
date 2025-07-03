@@ -139,19 +139,8 @@
                                       ['bold', 'italic', 'underline'],
                                       [{'list': 'ordered'}, {'list': 'bullet'}],
                                       ['link'],
-                                      [{'header': [1, 2, 3, false]}],
-                                      [{ 'table': 'TD' }],
-                                      ['clean']
-                                    ],
-                                    'better-table': {
-                                      operationMenu: {
-                                        items: {
-                                          unmergeCells: {
-                                            text: 'Another unmerge cells name'
-                                          }
-                                        }
-                                      }
-                                    }
+                                      [{'header': [1, 2, 3, false]}]
+                                    ]
                                   }
                                 });
 
@@ -517,23 +506,13 @@
                                 const quill = new Quill($el, {
                                   theme: 'snow',
                                   modules: {
-                                    toolbar: [['bold', 'italic', 'underline'],
+                                    toolbar: [
+                                      ['bold', 'italic', 'underline'],
                                       [{'list': 'ordered'}, {'list': 'bullet'}],
                                       ['link'],
-                                      [{'header': [1, 2, 3, false]}],
-                                      [{ 'table': 'TD' }],
-                                      ['clean']
-                                    ],
-                                    'better-table': {
-                                      operationMenu: {
-                                        items: {
-                                          unmergeCells: {
-                                            text: 'Another unmerge cells name'
-                                          }
-                                        }
-                                      }
-                                    }
-                                  }
+                                      [{'header': [1, 2, 3, false]}]
+                                    ]
+                                                    }
                                 });
 
                                 if (branchBlock.body) {
