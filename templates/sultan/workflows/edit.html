@@ -53,10 +53,11 @@
       const data = await response.json();
       this.workflow = data;
       
-      // Initialize connections for filter blocks if not present
+      // Initialize branches for filter blocks if not present
       this.workflow.blocks.forEach(block => {
-        if (block.type === 'filter' && !block.connections) {
-          block.connections = { true: null, false: null };
+        if (block.type === 'filter') {
+          if (!block.trueBranch) block.trueBranch = [];
+          if (!block.falseBranch) block.falseBranch = [];
         }
       });
     } catch (error) {
@@ -141,7 +142,8 @@
       case 'filter':
         newBlock.operator = 'AND';
         newBlock.conditions = [{ key: '', operator: 'equals', value: '' }];
-        newBlock.connections = { true: null, false: null };
+        newBlock.trueBranch = [];
+        newBlock.falseBranch = [];
         break;
       case 'email':
         newBlock.templateId = '';
@@ -202,35 +204,86 @@
     }
   },
 
-  connectOutput(blockIndex, outputType) {
-    const currentBlock = this.workflow.blocks[blockIndex];
+  startDrag(block, filterIndex, branch, branchIndex) {
+    this.draggedBlock = {
+      block: block,
+      source: 'branch',
+      filterIndex: filterIndex,
+      branch: branch,
+      branchIndex: branchIndex
+    };
+  },
+
+  startDragFromPalette(blockType) {
+    this.draggedBlock = {
+      blockType: blockType,
+      source: 'palette'
+    };
+  },
+
+  dropBlock(event, filterIndex, branch) {
+    event.preventDefault();
     
-    // Show available blocks to connect to
-    const availableBlocks = this.workflow.blocks
-      .slice(blockIndex + 1) // Only blocks after current one
-      .map((block, index) => ({
-        ...block,
-        originalIndex: blockIndex + 1 + index
-      }));
+    if (!this.draggedBlock) return;
     
-    if (availableBlocks.length === 0) {
-      alert('No blocks available to connect to. Add more blocks first.');
-      return;
+    const filterBlock = this.workflow.blocks[filterIndex];
+    
+    if (this.draggedBlock.source === 'palette') {
+      // Create new block from palette
+      const newBlock = {
+        id: `block-${Date.now()}`,
+        type: this.draggedBlock.blockType
+      };
+      
+      // Initialize block-specific properties
+      switch(this.draggedBlock.blockType) {
+        case 'email':
+          newBlock.templateId = '';
+          newBlock.emailGroupId = '';
+          newBlock.delay = 0;
+          break;
+        case 'code':
+          newBlock.code = '# Write your Python code here\nprint(\'Hello from workflow!\')';
+          break;
+        case 'search':
+          newBlock.searchType = 'forms';
+          newBlock.query = '';
+          newBlock.maxResults = 10;
+          newBlock.sortBy = 'relevance';
+          break;
+      }
+      
+      if (branch === 'true') {
+        filterBlock.trueBranch = filterBlock.trueBranch || [];
+        filterBlock.trueBranch.push(newBlock);
+      } else {
+        filterBlock.falseBranch = filterBlock.falseBranch || [];
+        filterBlock.falseBranch.push(newBlock);
+      }
+    } else if (this.draggedBlock.source === 'branch') {
+      // Move block from one branch to another
+      const sourceFilter = this.workflow.blocks[this.draggedBlock.filterIndex];
+      const sourceArray = this.draggedBlock.branch === 'true' ? sourceFilter.trueBranch : sourceFilter.falseBranch;
+      const block = sourceArray.splice(this.draggedBlock.branchIndex, 1)[0];
+      
+      if (branch === 'true') {
+        filterBlock.trueBranch = filterBlock.trueBranch || [];
+        filterBlock.trueBranch.push(block);
+      } else {
+        filterBlock.falseBranch = filterBlock.falseBranch || [];
+        filterBlock.falseBranch.push(block);
+      }
     }
     
-    // Simple prompt for now - in a real implementation you'd want a proper UI
-    const blockNames = availableBlocks.map((block, index) => 
-      `${index}: ${block.type} (${block.name || block.id})`
-    ).join('\n');
-    
-    const selection = prompt(`Connect ${outputType.toUpperCase()} output to:\n${blockNames}\n\nEnter block number:`);
-    
-    if (selection !== null && selection !== '') {
-      const selectedIndex = parseInt(selection);
-      if (selectedIndex >= 0 && selectedIndex < availableBlocks.length) {
-        currentBlock.connections = currentBlock.connections || {};
-        currentBlock.connections[outputType] = availableBlocks[selectedIndex].id;
-      }
+    this.draggedBlock = null;
+  },
+
+  removeFromBranch(filterIndex, branch, branchIndex) {
+    const filterBlock = this.workflow.blocks[filterIndex];
+    if (branch === 'true') {
+      filterBlock.trueBranch.splice(branchIndex, 1);
+    } else {
+      filterBlock.falseBranch.splice(branchIndex, 1);
     }
   },
 
@@ -252,11 +305,15 @@
       <template x-for="blockType in availableBlocks.slice(1)" :key="blockType.type">
         <button 
           @click="addBlock(blockType.type)"
-          :class="`w-full text-left p-3 rounded border-2 border-${blockType.color}-600 bg-${blockType.color}-900 hover:bg-${blockType.color}-800 transition-colors`">
+          draggable="true"
+          @dragstart="startDragFromPalette(blockType.type)"
+          @dragend="draggedBlock = null"
+          :class="`w-full text-left p-3 rounded border-2 border-${blockType.color}-600 bg-${blockType.color}-900 hover:bg-${blockType.color}-800 transition-colors cursor-grab active:cursor-grabbing`">
           <div class="flex items-center space-x-2">
             <div :class="`w-3 h-3 bg-${blockType.color}-500 rounded-full`"></div>
             <span x-text="blockType.name"></span>
           </div>
+          <div class="text-xs text-gray-400 mt-1">Click to add or drag to filter</div>
         </button>
       </template>
     </div>

@@ -51,24 +51,75 @@
     </div>
   </div>
   
-  <!-- Output connectors -->
-  <div class="flex justify-between mt-4">
-    <div class="flex flex-col items-center">
-      <span class="text-xs text-green-400 mb-1">TRUE</span>
-      <div class="w-4 h-4 bg-green-500 rounded-full border-2 border-white cursor-pointer hover:bg-green-400"
-           @click="connectOutput(blockIndex, 'true')"></div>
-      <div class="mt-2 text-xs text-gray-300">
-        <span x-show="block.connections && block.connections.true">→ Connected</span>
-        <span x-show="!block.connections || !block.connections.true">Click to connect</span>
+  <!-- Drop Zones for TRUE/FALSE branches -->
+  <div class="flex justify-between mt-4 gap-4">
+    <!-- TRUE Branch -->
+    <div class="flex-1">
+      <div class="text-center">
+        <span class="text-xs text-green-400 mb-2 block">TRUE Branch</span>
+        <div class="min-h-32 bg-green-900/20 border-2 border-green-600 border-dashed rounded-lg p-2"
+             @drop="dropBlock($event, blockIndex, 'true')"
+             @dragover.prevent
+             @dragenter.prevent
+             :class="{'bg-green-800/40 border-green-400': draggedBlock}">
+          
+          <!-- Show existing blocks in TRUE branch -->
+          <template x-if="block.trueBranch && block.trueBranch.length > 0">
+            <div class="space-y-2">
+              <template x-for="(branchBlock, branchIndex) in block.trueBranch" :key="branchBlock.id">
+                <div class="bg-gray-700 p-2 rounded text-xs text-center relative group"
+                     draggable="true"
+                     @dragstart="startDrag(branchBlock, blockIndex, 'true', branchIndex)">
+                  <span x-text="branchBlock.type"></span>
+                  <button @click="removeFromBranch(blockIndex, 'true', branchIndex)"
+                          class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                </div>
+              </template>
+            </div>
+          </template>
+          
+          <!-- Empty state -->
+          <template x-if="!block.trueBranch || block.trueBranch.length === 0">
+            <div class="text-center text-green-300 text-xs py-4">
+              Glissez des blocs ici pour la condition TRUE
+            </div>
+          </template>
+        </div>
       </div>
     </div>
-    <div class="flex flex-col items-center">
-      <span class="text-xs text-red-400 mb-1">FALSE</span>
-      <div class="w-4 h-4 bg-red-500 rounded-full border-2 border-white cursor-pointer hover:bg-red-400"
-           @click="connectOutput(blockIndex, 'false')"></div>
-      <div class="mt-2 text-xs text-gray-300">
-        <span x-show="block.connections && block.connections.false">→ Connected</span>
-        <span x-show="!block.connections || !block.connections.false">Click to connect</span>
+
+    <!-- FALSE Branch -->
+    <div class="flex-1">
+      <div class="text-center">
+        <span class="text-xs text-red-400 mb-2 block">FALSE Branch</span>
+        <div class="min-h-32 bg-red-900/20 border-2 border-red-600 border-dashed rounded-lg p-2"
+             @drop="dropBlock($event, blockIndex, 'false')"
+             @dragover.prevent
+             @dragenter.prevent
+             :class="{'bg-red-800/40 border-red-400': draggedBlock}">
+          
+          <!-- Show existing blocks in FALSE branch -->
+          <template x-if="block.falseBranch && block.falseBranch.length > 0">
+            <div class="space-y-2">
+              <template x-for="(branchBlock, branchIndex) in block.falseBranch" :key="branchBlock.id">
+                <div class="bg-gray-700 p-2 rounded text-xs text-center relative group"
+                     draggable="true"
+                     @dragstart="startDrag(branchBlock, blockIndex, 'false', branchIndex)">
+                  <span x-text="branchBlock.type"></span>
+                  <button @click="removeFromBranch(blockIndex, 'false', branchIndex)"
+                          class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                </div>
+              </template>
+            </div>
+          </template>
+          
+          <!-- Empty state -->
+          <template x-if="!block.falseBranch || block.falseBranch.length === 0">
+            <div class="text-center text-red-300 text-xs py-4">
+              Glissez des blocs ici pour la condition FALSE
+            </div>
+          </template>
+        </div>
       </div>
     </div>
   </div>
