@@ -3,63 +3,65 @@
 
 {% block title %}Sites{% endblock %}
 
-{% block alpine_component %}
-  {
-    page: 'sites-list',
-    sites: [],
-    searchQuery: '',
-    showNewSiteModal: false,
-    newSite: {
-      id: null,
+{% block alpine_component %}{
+  page: 'sites-list',
+  sites: [],
+  searchQuery: '',
+  showNewSiteModal: false,
+  newSite: {
+    id: null,
+    name: '',
+    form: '',
+    status: 'draft',
+    entities: [],
+    locations: []
+  },
+  forms: [],
+  async init() {
+    try {
+      const response = await fetch('/api/sultan/sites/list');
+      this.sites = await response.json();
+      await this.loadForms();
+    } catch (error) {
+      console.error('Failed to load sites:', error);
+      this.sites = [];
+    }
+  },
+  async loadForms() {
+    try {
+      const response = await fetch('/api/sultan/forms/list');
+      this.forms = await response.json();
+    } catch (error) {
+      console.error('Failed to load forms:', error);
+    }
+  },
+  createNewSite() {
+    this.newSite = {
+      id: `sites-${Date.now()}`,
       name: '',
       form: '',
       status: 'draft',
       entities: [],
       locations: []
-    },
-    forms: [],
-    async init() {
-      try {
-        const response = await fetch('/api/sultan/sites/list');
-        this.sites = await response.json();
-        await this.loadForms();
-      } catch (error) {
-        console.error('Failed to load sites:', error);
-        this.sites = [];
+    };
+    this.showNewSiteModal = true;
+  },
+  async saveSite() {
+    try {
+      const response = await fetch('/api/sultan/sites/save', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({site: this.newSite})
+      });
+      if (response.ok) {
+        this.showNewSiteModal = false;
+        this.sites.push(this.newSite);
       }
-    },
-    async loadForms() {
-      try {
-        const response = await fetch('/api/sultan/forms/list');
-        this.forms = await response.json();
-      } catch (error) {
-        console.error('Failed to load forms:', error);
-      }
-    },
-    createNewSite() {
-      this.newSite = {
-        id: `sites-${Date.now()}`,
-        name: '',
-        form: '',
-        status: 'draft',
-        entities: [],
-        locations: []
-      };
-      this.showNewSiteModal = true;
-    },
-    async saveSite() {
-      try {
-        const response = await fetch('/api/sultan/sites/save', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({site: this.newSite})
-        });
-        if (response.ok) {
-          this.showNewSiteModal = false;
-          this.sites.push(this.newSite);
-        }
-      } catch (error) {
-        console.error('Failed to save site:', error);
+    } catch (error) {
+      console.error('Failed to save site:', error);
+    }
+  }
+}{% endblock %} site:', error);
       }
     }
   }

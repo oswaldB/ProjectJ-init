@@ -60,7 +60,7 @@
 </script>
 </head>
 <body class="bg-black">
-    <div class="mx-auto flex min-h-screen min-w-screen" x-data="{% block alpine_component %}{% endblock %}">
+    <div class="mx-auto flex min-h-screen min-w-screen" x-data="{% block alpine_component %}jaffar(){% endblock %}">
         {% include 'sultan/menu.html' %}
         {% block content %}{% endblock %}
     </div>

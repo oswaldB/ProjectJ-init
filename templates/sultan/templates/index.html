@@ -2,47 +2,52 @@
 
 {% block title %}Templates{% endblock %}
 
-{% block alpine_component %}
-  {
-    page: 'templates',
-    templates: [],
-    searchQuery: '',
-    statuses: ['draft', 'prod', 'old version'],
-    state: {
-      loading: true,
-      error: null
-    },
-    filteredTemplates() {
-      return this.templates.filter(template => 
-        template.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        template.id?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        template.user_email?.toLowerCase().includes(this.searchQuery.toLowerCase())
-      );
-    },
-    async init() {
-      await this.loadTemplates();
-    },
-    async loadTemplates() {
-      try {
-        this.state.loading = true;
-        const response = await fetch('/api/sultan/templates');
-        if (!response.ok) throw new Error('Failed to load templates');
-        this.templates = await response.json();
-      } catch (error) {
-        console.error('Failed to load templates:', error);
-        this.state.error = error.message;
-        this.templates = [];
-      } finally {
-        this.state.loading = false;
-      }
-    },
-    async deleteTemplate(id) {
-      if (!confirm('Are you sure you want to delete this template?')) return;
-      try {
-        const response = await fetch(`/api/sultan/templates/delete/${id}`, { method: 'DELETE' });
-        if (!response.ok) throw new Error('Failed to delete template');
-        this.templates = this.templates.filter(t => t.id !== id);
-        showNotification('Template deleted successfully', 'success');
+{% block alpine_component %}{
+  page: 'templates',
+  templates: [],
+  searchQuery: '',
+  statuses: ['draft', 'prod', 'old version'],
+  state: {
+    loading: true,
+    error: null
+  },
+  filteredTemplates() {
+    return this.templates.filter(template => 
+      template.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+      template.id?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+      template.user_email?.toLowerCase().includes(this.searchQuery.toLowerCase())
+    );
+  },
+  async init() {
+    await this.loadTemplates();
+  },
+  async loadTemplates() {
+    try {
+      this.state.loading = true;
+      const response = await fetch('/api/sultan/templates');
+      if (!response.ok) throw new Error('Failed to load templates');
+      this.templates = await response.json();
+    } catch (error) {
+      console.error('Failed to load templates:', error);
+      this.state.error = error.message;
+      this.templates = [];
+    } finally {
+      this.state.loading = false;
+    }
+  },
+  async deleteTemplate(id) {
+    if (!confirm('Are you sure you want to delete this template?')) return;
+    try {
+      const response = await fetch(`/api/sultan/templates/delete/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete template');
+      this.templates = this.templates.filter(t => t.id !== id);
+      showNotification('Template deleted successfully', 'success');
+    } catch (error) {
+      console.error('Failed to delete template:', error);
+      showNotification('Failed to delete template', 'error');
+    }
+  }
+}{% endblock %}Template deleted successfully', 'success');
       } catch (error) {
         console.error('Failed to delete template:', error);
         showNotification('Failed to delete template', 'error');

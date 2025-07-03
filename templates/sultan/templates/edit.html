@@ -3,56 +3,70 @@
 
 {% block title %}Template Editor{% endblock %}
 
-{% block alpine_component %}
-  {
-    page: 'template-edit',
-    template: {
-      id: '',
-      name: '',
-      status: 'draft',
-      content: '',
-      user_email: 'oswald.bernard@gmail.com',
-      last_modified: new Date().toISOString()
-    },
-    templateId: '',
-    state: {
-      loading: false,
-      saving: false,
-      error: null
-    },
-    async init() {
-      const pathParts = window.location.pathname.split('/');
-      this.templateId = pathParts[pathParts.length - 1];
-      
-      if (this.templateId !== 'new') {
-        await this.loadTemplate();
+{% block alpine_component %}{
+  page: 'template-edit',
+  template: {
+    id: '',
+    name: '',
+    status: 'draft',
+    content: '',
+    user_email: 'oswald.bernard@gmail.com',
+    last_modified: new Date().toISOString()
+  },
+  templateId: '',
+  state: {
+    loading: false,
+    saving: false,
+    error: null
+  },
+  async init() {
+    const pathParts = window.location.pathname.split('/');
+    this.templateId = pathParts[pathParts.length - 1];
+    
+    if (this.templateId !== 'new') {
+      await this.loadTemplate();
+    } else {
+      this.template.id = 'templates-' + Date.now();
+    }
+  },
+  async loadTemplate() {
+    try {
+      this.state.loading = true;
+      const response = await fetch(`/api/sultan/templates`);
+      if (!response.ok) throw new Error('Failed to load templates');
+      const templates = await response.json();
+      const foundTemplate = templates.find(t => t.id === this.templateId);
+      if (foundTemplate) {
+        this.template = foundTemplate;
       } else {
-        this.template.id = 'templates-' + Date.now();
+        this.state.error = 'Template not found';
       }
-    },
-    async loadTemplate() {
-      try {
-        this.state.loading = true;
-        const response = await fetch(`/api/sultan/templates`);
-        if (!response.ok) throw new Error('Failed to load templates');
-        const templates = await response.json();
-        const foundTemplate = templates.find(t => t.id === this.templateId);
-        if (foundTemplate) {
-          this.template = foundTemplate;
-        } else {
-          this.state.error = 'Template not found';
-        }
-      } catch (error) {
-        console.error('Failed to load template:', error);
-        this.state.error = error.message;
-      } finally {
-        this.state.loading = false;
-      }
-    },
-    async saveTemplate() {
-      try {
-        this.state.saving = true;
-        this.template.last_modified = new Date().toISOString();
+    } catch (error) {
+      console.error('Failed to load template:', error);
+      this.state.error = error.message;
+    } finally {
+      this.state.loading = false;
+    }
+  },
+  async saveTemplate() {
+    try {
+      this.state.saving = true;
+      this.template.last_modified = new Date().toISOString();
+      const response = await fetch('/api/sultan/templates/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ template: this.template })
+      });
+      if (!response.ok) throw new Error('Failed to save template');
+      showNotification('Template saved successfully', 'success');
+    } catch (error) {
+      console.error('Failed to save template:', error);
+      showNotification('Failed to save template', 'error');
+    } finally {
+      this.state.saving = false;
+    }
+  }
+}{% endblock %}tring();
         
         const response = await fetch('/api/sultan/templates/save', {
           method: 'POST',

@@ -2,8 +2,7 @@
 
 {% block title %}Escalation Editor{% endblock %}
 
-{% block alpine_component %}
-{
+{% block alpine_component %}{
   emailGroups: [],
   selectedGroupEmails: [],
   escalation: {
@@ -38,7 +37,6 @@
       if (field.key) {
         keys.push(field.key);
       }
-      // Check for nested questions in options
       if (field.options) {
         field.options.forEach(option => {
           if (option.questions) {
@@ -66,7 +64,41 @@
   },
   filteredBlocks() {
     return this.escalation.blocks.filter(block => {
-      const matchesEmail = !this.filters.email || block.triggers.some(t => 
+      const matchesEmail = !this.filters.email || block.email?.toLowerCase().includes(this.filters.email.toLowerCase());
+      const matchesName = !this.filters.name || block.name?.toLowerCase().includes(this.filters.name.toLowerCase());
+      return matchesEmail && matchesName;
+    });
+  },
+  async init() {
+    await this.loadTemplates();
+    await this.loadEmailGroups();
+    await this.loadSites();
+  },
+  async loadTemplates() {
+    try {
+      const response = await fetch('/api/sultan/templates');
+      this.templates = await response.json();
+    } catch (error) {
+      console.error('Failed to load templates:', error);
+    }
+  },
+  async loadEmailGroups() {
+    try {
+      const response = await fetch('/api/sultan/emailgroups/list');
+      this.emailGroups = await response.json();
+    } catch (error) {
+      console.error('Failed to load email groups:', error);
+    }
+  },
+  async loadSites() {
+    try {
+      const response = await fetch('/api/sultan/sites/list');
+      this.sites = await response.json();
+    } catch (error) {
+      console.error('Failed to load sites:', error);
+    }
+  }
+}{% endblock %}l || block.triggers.some(t => 
         t.emailList && t.emailList.some(email => email.toLowerCase().includes(this.filters.email.toLowerCase()))
       );
       const matchesName = !this.filters.name || this.escalation.name.toLowerCase().includes(this.filters.name.toLowerCase());

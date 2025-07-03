@@ -2,8 +2,7 @@
 
 {% block title %}Workflow Editor{% endblock %}
 
-{% block alpine_component %}
-{
+{% block alpine_component %}{
   workflow: {
     id: '',
     name: '',
@@ -48,7 +47,7 @@
 
   async loadWorkflow(id) {
     try {
-      const response = await fetch(`/sultan/workflows/api/${id}`);
+      const response = await fetch(`/api/sultan/workflows/${id}`);
       const data = await response.json();
       this.workflow = data;
     } catch (error) {
@@ -58,6 +57,31 @@
 
   async loadTemplates() {
     try {
+      const response = await fetch('/api/sultan/templates');
+      this.templates = await response.json();
+    } catch (error) {
+      console.error('Failed to load templates:', error);
+    }
+  },
+
+  async loadEmailGroups() {
+    try {
+      const response = await fetch('/api/sultan/emailgroups/list');
+      this.emailGroups = await response.json();
+    } catch (error) {
+      console.error('Failed to load email groups:', error);
+    }
+  },
+
+  async loadForms() {
+    try {
+      const response = await fetch('/api/sultan/forms/list');
+      this.forms = await response.json();
+    } catch (error) {
+      console.error('Failed to load forms:', error);
+    }
+  }
+}{% endblock %}ry {
       const response = await fetch('/api/sultan/templates/list');
       this.templates = await response.json();
     } catch (error) {

@@ -2,8 +2,7 @@
 
 {% block title %}Excel Grid{% endblock %}
 
-{% block alpine_component %}
-{
+{% block alpine_component %}{
   columns: [],
   gridData: [{}],
   forms: [],
@@ -15,6 +14,11 @@
   selectedSite: null,
   selectedTemplate: null,
   selectedEmailGroup: null,
+  sites: [],
+  templates: [],
+  emailGroups: [],
+  newListName: '',
+  showNewListForm: false,
 
   async init() {
     await Promise.all([
@@ -24,9 +28,6 @@
       this.loadEmailGroups()
     ]);
   },
-
-  newListName: '',
-  showNewListForm: false,
 
   createCustomList() {
     if (this.newListName.trim()) {
@@ -60,16 +61,21 @@
     this.forms = await response.json();
   },
 
-  sites: [],
-  templates: [],
-  emailGroups: [],
-
   async loadSites() {
     const response = await fetch('/api/sultan/sites/list');
     this.sites = await response.json();
   },
 
   async loadTemplates() {
+    const response = await fetch('/api/sultan/templates');
+    this.templates = await response.json();
+  },
+
+  async loadEmailGroups() {
+    const response = await fetch('/api/sultan/emailgroups/list');
+    this.emailGroups = await response.json();
+  }
+}{% endblock %}dTemplates() {
     const response = await fetch('/api/sultan/templates/list'); 
     this.templates = await response.json();
   },

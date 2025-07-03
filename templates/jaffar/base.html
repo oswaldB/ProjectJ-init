@@ -11,7 +11,7 @@
     
     {% block head %}{% endblock %}
 </head>
-<body class="bg-gray-900 text-white" x-data="{ saving: false }" x-init="!localStorage.getItem('tutorialComplete') && window.location.pathname !== '/tutorial' ? window.location.href = '/tutorial' : null">
+<body class="bg-gray-900 text-white" x-data="{% block alpine_component %}{ saving: false }{% endblock %}" x-init="!localStorage.getItem('tutorialComplete') && window.location.pathname !== '/tutorial' ? window.location.href = '/tutorial' : null">
     <!-- Save loader -->
     <div x-show="saving" class="fixed top-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 z-50">
         <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
