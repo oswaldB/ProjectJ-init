@@ -1,0 +1,355 @@
+
+{% extends "sultan/base.html" %}
+
+{% block title %}Éditeur de Workflows{% endblock %}
+
+{% block alpine_component %}
+{
+  workflows: [],
+  templates: [],
+  emailGroups: [],
+  forms: [],
+  formKeys: [],
+  operators: ['equals', 'not_equals', 'greater_than', 'less_than', 'contains', 'not_contains'],
+  whenOptions: ['now', 'now+5', 'now+10', 'now+15', 'now+30', 'now+60'],
+  async init() {
+    const id = window.location.pathname.split('/').pop();
+    if (id === 'new') {
+      this.workflows = [{
+        id: `Escalation-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+        name: '',
+        when: '',
+        triggers: {
+          operator: 'AND',
+          conditions: [{
+            key: '',
+            operator: '',
+            compareTo: ''
+          }]
+        },
+        actions: [{
+          type: 'sendEmail',
+          to: '',
+          template: ''
+        }]
+      }];
+    } else {
+      await this.loadWorkflow(id);
+    }
+    await this.loadTemplates();
+    await this.loadEmailGroups();
+    await this.loadForms();
+  },
+  async loadWorkflow(id) {
+    try {
+      const response = await fetch(`/api/sultan/workflows/${id}`);
+      const data = await response.json();
+      this.workflows = data.workflows || [];
+    } catch (error) {
+      console.error('Failed to load workflow:', error);
+      this.workflows = [];
+    }
+  },
+  async loadTemplates() {
+    try {
+      const response = await fetch('/api/sultan/templates/list');
+      this.templates = await response.json();
+    } catch (error) {
+      console.error('Failed to load templates:', error);
+      this.templates = [];
+    }
+  },
+  async loadEmailGroups() {
+    try {
+      const response = await fetch('/api/sultan/emailgroups/list');
+      this.emailGroups = await response.json();
+    } catch (error) {
+      console.error('Failed to load email groups:', error);
+      this.emailGroups = [];
+    }
+  },
+  async loadForms() {
+    try {
+      const response = await fetch('/api/sultan/forms/list');
+      this.forms = await response.json();
+    } catch (error) {
+      console.error('Failed to load forms:', error);
+      this.forms = [];
+    }
+  },
+  async loadFormKeys(formId) {
+    if (!formId) {
+      this.formKeys = [];
+      return;
+    }
+    try {
+      const response = await fetch(`/api/sultan/forms/${formId}`);
+      const formData = await response.json();
+      
+      const keys = [];
+      if (formData.fields) {
+        formData.fields.forEach(field => {
+          if (field.key) {
+            keys.push(field.key);
+          }
+          if (field.options) {
+            field.options.forEach(option => {
+              if (option.questions) {
+                option.questions.forEach(question => {
+                  if (question.key) {
+                    keys.push(question.key);
+                  }
+                });
+              }
+            });
+          }
+        });
+      }
+      this.formKeys = keys;
+    } catch (error) {
+      console.error('Failed to load form keys:', error);
+      this.formKeys = [];
+    }
+  },
+  addWorkflow() {
+    this.workflows.push({
+      id: `Escalation-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+      name: '',
+      when: '',
+      triggers: {
+        operator: 'AND',
+        conditions: [{
+          key: '',
+          operator: '',
+          compareTo: ''
+        }]
+      },
+      actions: [{
+        type: 'sendEmail',
+        to: '',
+        template: ''
+      }]
+    });
+  },
+  removeWorkflow(index) {
+    if (this.workflows.length > 1) {
+      this.workflows.splice(index, 1);
+    }
+  },
+  duplicateWorkflow(index) {
+    const original = this.workflows[index];
+    const duplicate = JSON.parse(JSON.stringify(original));
+    duplicate.id = `Escalation-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    duplicate.name = original.name + ' (Copie)';
+    this.workflows.splice(index + 1, 0, duplicate);
+  },
+  addCondition(workflow) {
+    workflow.triggers.conditions.push({
+      key: '',
+      operator: '',
+      compareTo: ''
+    });
+  },
+  removeCondition(workflow, conditionIndex) {
+    if (workflow.triggers.conditions.length > 1) {
+      workflow.triggers.conditions.splice(conditionIndex, 1);
+    }
+  },
+  addAction(workflow) {
+    workflow.actions.push({
+      type: 'sendEmail',
+      to: '',
+      template: ''
+    });
+  },
+  removeAction(workflow, actionIndex) {
+    if (workflow.actions.length > 1) {
+      workflow.actions.splice(actionIndex, 1);
+    }
+  },
+  async save() {
+    try {
+      const response = await fetch('/api/sultan/workflows/save', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({workflows: this.workflows})
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        alert('Workflows sauvegardés avec succès !');
+        window.location.href = '/sultan/workflows';
+      } else {
+        throw new Error('Erreur lors de la sauvegarde');
+      }
+    } catch (error) {
+      console.error('Failed to save workflows:', error);
+      alert('Erreur lors de la sauvegarde des workflows');
+    }
+  },
+  downloadJson() {
+    const dataStr = JSON.stringify(this.workflows, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `workflows-${Date.now()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+}
+{% endblock %}
+
+{% block content %}
+<div class="h-screen bg-gray-900 text-white overflow-y-auto">
+  <!-- Top Bar -->
+  <div class="p-4 bg-gray-800 border-b border-gray-700">
+    <div class="flex justify-between items-center">
+      <h1 class="text-xl font-semibold">Éditeur de Workflows</h1>
+      <div class="flex space-x-2">
+        <button @click="addWorkflow()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+          Ajouter Escalation
+        </button>
+        <button @click="downloadJson()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          Télécharger JSON
+        </button>
+        <button @click="save()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+          Sauvegarder
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="p-4 space-y-6">
+    <template x-for="(workflow, workflowIndex) in workflows" :key="workflow.id">
+      <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+        <!-- Workflow Header -->
+        <div class="flex justify-between items-center mb-6">
+          <div class="flex items-center space-x-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-300">ID</label>
+              <input type="text" x-model="workflow.id" readonly class="mt-1 w-64 bg-gray-700 text-gray-400 p-2 rounded border border-gray-600">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-300">Nom</label>
+              <input type="text" x-model="workflow.name" class="mt-1 w-64 bg-gray-700 text-white p-2 rounded border border-gray-600">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-300">Quand</label>
+              <select x-model="workflow.when" class="mt-1 w-32 bg-gray-700 text-white p-2 rounded border border-gray-600">
+                <option value="">Sélectionner</option>
+                <template x-for="option in whenOptions">
+                  <option :value="option" x-text="option"></option>
+                </template>
+              </select>
+            </div>
+          </div>
+          <div class="flex space-x-2">
+            <button @click="duplicateWorkflow(workflowIndex)" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm">
+              Dupliquer
+            </button>
+            <button x-show="workflows.length > 1" @click="removeWorkflow(workflowIndex)" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
+              Supprimer
+            </button>
+          </div>
+        </div>
+
+        <!-- Triggers Section -->
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold mb-4">Déclencheurs</h3>
+          <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
+            <div class="flex items-center space-x-4 mb-4">
+              <label class="block text-sm font-medium text-gray-300">Opérateur</label>
+              <select x-model="workflow.triggers.operator" class="bg-gray-700 text-white p-2 rounded border border-gray-600">
+                <option value="AND">AND</option>
+                <option value="OR">OR</option>
+              </select>
+            </div>
+            
+            <div class="space-y-3">
+              <template x-for="(condition, conditionIndex) in workflow.triggers.conditions" :key="conditionIndex">
+                <div class="flex items-center space-x-2 bg-gray-800 p-3 rounded">
+                  <div class="flex-1">
+                    <label class="block text-xs font-medium text-gray-300">Clé</label>
+                    <select x-model="condition.key" @change="loadFormKeys($event.target.value)" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                      <option value="">Sélectionner une clé</option>
+                      <template x-for="key in formKeys">
+                        <option :value="key" x-text="key"></option>
+                      </template>
+                    </select>
+                  </div>
+                  <div class="flex-1">
+                    <label class="block text-xs font-medium text-gray-300">Opérateur</label>
+                    <select x-model="condition.operator" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                      <option value="">Sélectionner</option>
+                      <template x-for="op in operators">
+                        <option :value="op" x-text="op"></option>
+                      </template>
+                    </select>
+                  </div>
+                  <div class="flex-1">
+                    <label class="block text-xs font-medium text-gray-300">Comparer à</label>
+                    <input type="text" x-model="condition.compareTo" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                  </div>
+                  <button @click="removeCondition(workflow, conditionIndex)" x-show="workflow.triggers.conditions.length > 1" class="bg-red-500 text-white px-2 py-2 rounded hover:bg-red-600">
+                    ×
+                  </button>
+                </div>
+              </template>
+            </div>
+            
+            <button @click="addCondition(workflow)" class="mt-3 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+              Ajouter Condition
+            </button>
+          </div>
+        </div>
+
+        <!-- Actions Section -->
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Actions</h3>
+          <div class="space-y-3">
+            <template x-for="(action, actionIndex) in workflow.actions" :key="actionIndex">
+              <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                <div class="flex items-center space-x-4">
+                  <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-300">Type</label>
+                    <select x-model="action.type" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                      <option value="sendEmail">Envoyer Email</option>
+                    </select>
+                  </div>
+                  <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-300">À</label>
+                    <select x-model="action.to" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                      <option value="">Sélectionner groupe email</option>
+                      <template x-for="group in emailGroups">
+                        <option :value="group.id" x-text="group.name"></option>
+                      </template>
+                    </select>
+                  </div>
+                  <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-300">Template</label>
+                    <select x-model="action.template" class="mt-1 w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
+                      <option value="">Sélectionner template</option>
+                      <template x-for="template in templates">
+                        <option :value="template.id" x-text="template.name"></option>
+                      </template>
+                    </select>
+                  </div>
+                  <button @click="removeAction(workflow, actionIndex)" x-show="workflow.actions.length > 1" class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            </template>
+          </div>
+          
+          <button @click="addAction(workflow)" class="mt-3 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            Ajouter Action
+          </button>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>
+{% endblock %}

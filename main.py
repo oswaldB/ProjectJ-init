@@ -727,6 +727,16 @@ def template_edit(template_id):
     return render_template('sultan/templates/edit.html')
 
 
+@app.route('/sultan/workflows')
+def workflows_list():
+    return render_template('sultan/workflows/index.html')
+
+
+@app.route('/sultan/workflows/edit/<workflow_id>')
+def workflow_edit(workflow_id):
+    return render_template('sultan/workflows/edit.html')
+
+
 @app.route('/api/sultan/emailgroups/list')
 def api_emailgroups_list():
     emailgroups = []
@@ -869,6 +879,78 @@ def api_templates_duplicate():
         return jsonify(new_template)
     except Exception as e:
         logger.error(f"Failed to duplicate template: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/sultan/workflows/list')
+def api_workflows_list():
+    workflows = []
+    prefix = 'sultan/workflows/'
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        for obj in response.get('Contents', []):
+            try:
+                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                content = response['Body'].read().decode('utf-8')
+                workflow = json.loads(content)
+                workflows.append(workflow)
+            except Exception as e:
+                logger.error(f"Failed to load workflow {obj['Key']}: {e}")
+    except Exception as e:
+        logger.error(f"Failed to list workflows: {e}")
+        return jsonify({"error": str(e)}), 500
+    return jsonify(workflows)
+
+
+@app.route('/api/sultan/workflows/<workflow_id>')
+def api_workflow_get(workflow_id):
+    try:
+        key = f'sultan/workflows/{workflow_id}.json'
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+        return jsonify(json.loads(response['Body'].read().decode('utf-8')))
+    except s3.exceptions.NoSuchKey:
+        return jsonify({'error': 'Workflow not found'}), 404
+    except Exception as e:
+        logger.error(f"Failed to get workflow {workflow_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/sultan/workflows/save', methods=['POST'])
+def api_workflows_save():
+    try:
+        data = request.json
+        workflows = data.get('workflows')
+        
+        if not workflows:
+            return jsonify({"error": "Invalid workflow data"}), 400
+        
+        # Generate filename with timestamp
+        timestamp = int(datetime.datetime.now().timestamp() * 1000)
+        key = f'sultan/workflows/workflows-{timestamp}.json'
+        
+        # Add metadata
+        workflow_data = {
+            'last_modified': datetime.datetime.now().isoformat(),
+            'user_email': 'oswald.bernard@gmail.com',
+            'workflows': workflows
+        }
+        
+        save_in_global_db(key, workflow_data)
+        
+        return jsonify({"status": "success", "key": key})
+    except Exception as e:
+        logger.error(f"Failed to save workflows: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/sultan/workflows/delete/<workflow_id>', methods=['DELETE'])
+def api_workflows_delete(workflow_id):
+    try:
+        key = f'sultan/workflows/{workflow_id}.json'
+        delete(key)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to delete workflow: {e}")
         return jsonify({"error": str(e)}), 500
 
 

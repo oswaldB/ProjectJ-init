@@ -1,0 +1,97 @@
+
+{% extends "sultan/base.html" %}
+
+{% block title %}Workflows Studio{% endblock %}
+
+{% block alpine_component %}
+{
+  workflows: [],
+  searchQuery: '',
+  async init() {
+    await this.loadWorkflows();
+  },
+  async loadWorkflows() {
+    try {
+      const response = await fetch('/api/sultan/workflows/list');
+      this.workflows = await response.json();
+    } catch (error) {
+      console.error('Failed to load workflows:', error);
+      this.workflows = [];
+    }
+  },
+  async deleteWorkflow(workflowId) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce workflow ?')) {
+      try {
+        await fetch(`/api/sultan/workflows/delete/${workflowId}`, {
+          method: 'DELETE'
+        });
+        await this.loadWorkflows();
+      } catch (error) {
+        console.error('Failed to delete workflow:', error);
+      }
+    }
+  },
+  filteredWorkflows() {
+    if (!this.searchQuery) return this.workflows;
+    return this.workflows.filter(workflow => 
+      JSON.stringify(workflow).toLowerCase().includes(this.searchQuery.toLowerCase())
+    );
+  }
+}
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+  <h1 class="text-2xl font-bold text-white mb-6">Workflows Studio</h1>
+  
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <div class="relative w-64">
+        <input 
+          type="text" 
+          x-model="searchQuery" 
+          placeholder="Rechercher..." 
+          class="w-full bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-red-500"
+        >
+      </div>
+      <a href="/sultan/workflows/edit/new" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+        Nouveau Workflow
+      </a>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-white">
+        <thead class="bg-gray-800">
+          <tr>
+            <th class="px-4 py-2 text-left">Nom du fichier</th>
+            <th class="px-4 py-2 text-left">Nombre d'escalations</th>
+            <th class="px-4 py-2 text-left">Dernière modification</th>
+            <th class="px-4 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="workflow in filteredWorkflows()" :key="workflow.id">
+            <tr class="border-b border-gray-700 hover:bg-gray-800">
+              <td class="px-4 py-2">
+                <span x-text="workflow.id || 'Sans nom'"></span>
+              </td>
+              <td class="px-4 py-2">
+                <span x-text="workflow.workflows?.length || 0"></span>
+              </td>
+              <td class="px-4 py-2">
+                <span x-text="workflow.last_modified ? new Date(workflow.last_modified).toLocaleString() : 'Inconnu'"></span>
+              </td>
+              <td class="px-4 py-2">
+                <div class="flex space-x-2">
+                  <a :href="'/sultan/workflows/edit/' + workflow.id" class="text-blue-400 hover:text-blue-300">Éditer</a>
+                  <button @click="deleteWorkflow(workflow.id)" class="text-red-400 hover:text-red-300">Supprimer</button>
+                </div>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
