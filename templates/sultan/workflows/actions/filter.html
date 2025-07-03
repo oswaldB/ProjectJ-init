@@ -67,12 +67,117 @@
           <template x-if="block.trueBranch && block.trueBranch.length > 0">
             <div class="space-y-2">
               <template x-for="(branchBlock, branchIndex) in block.trueBranch" :key="branchBlock.id">
-                <div class="bg-gray-700 p-2 rounded text-xs text-center relative group"
-                     draggable="true"
-                     @dragstart="startDrag(branchBlock, blockIndex, 'true', branchIndex)">
-                  <span x-text="branchBlock.type"></span>
-                  <button @click="removeFromBranch(blockIndex, 'true', branchIndex)"
-                          class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                <div class="relative" draggable="true" @dragstart="startDrag(branchBlock, blockIndex, 'true', branchIndex)">
+                  
+                  <!-- Email Block -->
+                  <template x-if="branchBlock.type === 'email'">
+                    <div class="bg-green-900 border-2 border-green-600 rounded-lg p-3 mb-2">
+                      <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <h4 class="text-white font-medium text-sm">Send Email</h4>
+                          <button @click="removeFromBranch(blockIndex, 'true', branchIndex)" class="text-red-400 hover:text-red-300">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="space-y-2">
+                        <div>
+                          <label class="block text-xs font-medium text-gray-300 mb-1">Template</label>
+                          <select x-model="branchBlock.templateId" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            <option value="">Select template</option>
+                            <template x-for="template in templates">
+                              <option :value="template.id" x-text="template.name || template.id"></option>
+                            </template>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-xs font-medium text-gray-300 mb-1">Email Group</label>
+                          <select x-model="branchBlock.emailGroupId" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            <option value="">Select group</option>
+                            <template x-for="group in emailGroups">
+                              <option :value="group.id" x-text="group.name || group.id"></option>
+                            </template>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-xs font-medium text-gray-300 mb-1">Delay (seconds)</label>
+                          <input type="number" x-model="branchBlock.delay" value="0" min="0" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Code Block -->
+                  <template x-if="branchBlock.type === 'code'">
+                    <div class="bg-yellow-900 border-2 border-yellow-600 rounded-lg p-3 mb-2">
+                      <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          <h4 class="text-white font-medium text-sm">Execute Code</h4>
+                          <button @click="removeFromBranch(blockIndex, 'true', branchIndex)" class="text-red-400 hover:text-red-300">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Python Code</label>
+                        <textarea x-model="branchBlock.code" rows="4" placeholder="# Write your Python code here" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs font-mono"></textarea>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Search Block -->
+                  <template x-if="branchBlock.type === 'search'">
+                    <div class="bg-cyan-900 border-2 border-cyan-600 rounded-lg p-3 mb-2">
+                      <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-2 h-2 bg-cyan-500 rounded-full"></div>
+                          <h4 class="text-white font-medium text-sm">Search Engine</h4>
+                          <button @click="removeFromBranch(blockIndex, 'true', branchIndex)" class="text-red-400 hover:text-red-300">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="space-y-2">
+                        <div>
+                          <label class="block text-xs font-medium text-gray-300 mb-1">Search Type</label>
+                          <select x-model="branchBlock.searchType" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            <option value="forms">Search in Forms</option>
+                            <option value="issues">Search in Issues</option>
+                            <option value="escalations">Search in Escalations</option>
+                            <option value="templates">Search in Templates</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-xs font-medium text-gray-300 mb-1">Search Query</label>
+                          <input type="text" x-model="branchBlock.query" placeholder="Enter search terms" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                        </div>
+                        <div class="grid grid-cols-2 gap-1">
+                          <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">Max Results</label>
+                            <input type="number" x-model="branchBlock.maxResults" value="10" min="1" max="100" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">Sort By</label>
+                            <select x-model="branchBlock.sortBy" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                              <option value="relevance">Relevance</option>
+                              <option value="date_desc">Newest First</option>
+                              <option value="date_asc">Oldest First</option>
+                              <option value="name">Name</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
                 </div>
               </template>
             </div>
@@ -102,12 +207,117 @@
           <template x-if="block.falseBranch && block.falseBranch.length > 0">
             <div class="space-y-2">
               <template x-for="(branchBlock, branchIndex) in block.falseBranch" :key="branchBlock.id">
-                <div class="bg-gray-700 p-2 rounded text-xs text-center relative group"
-                     draggable="true"
-                     @dragstart="startDrag(branchBlock, blockIndex, 'false', branchIndex)">
-                  <span x-text="branchBlock.type"></span>
-                  <button @click="removeFromBranch(blockIndex, 'false', branchIndex)"
-                          class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                <div class="relative" draggable="true" @dragstart="startDrag(branchBlock, blockIndex, 'false', branchIndex)">
+                  
+                  <!-- Email Block -->
+                  <template x-if="branchBlock.type === 'email'">
+                    <div class="bg-green-900 border-2 border-green-600 rounded-lg p-3 mb-2">
+                      <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <h4 class="text-white font-medium text-sm">Send Email</h4>
+                          <button @click="removeFromBranch(blockIndex, 'false', branchIndex)" class="text-red-400 hover:text-red-300">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="space-y-2">
+                        <div>
+                          <label class="block text-xs font-medium text-gray-300 mb-1">Template</label>
+                          <select x-model="branchBlock.templateId" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            <option value="">Select template</option>
+                            <template x-for="template in templates">
+                              <option :value="template.id" x-text="template.name || template.id"></option>
+                            </template>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-xs font-medium text-gray-300 mb-1">Email Group</label>
+                          <select x-model="branchBlock.emailGroupId" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            <option value="">Select group</option>
+                            <template x-for="group in emailGroups">
+                              <option :value="group.id" x-text="group.name || group.id"></option>
+                            </template>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-xs font-medium text-gray-300 mb-1">Delay (seconds)</label>
+                          <input type="number" x-model="branchBlock.delay" value="0" min="0" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Code Block -->
+                  <template x-if="branchBlock.type === 'code'">
+                    <div class="bg-yellow-900 border-2 border-yellow-600 rounded-lg p-3 mb-2">
+                      <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          <h4 class="text-white font-medium text-sm">Execute Code</h4>
+                          <button @click="removeFromBranch(blockIndex, 'false', branchIndex)" class="text-red-400 hover:text-red-300">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Python Code</label>
+                        <textarea x-model="branchBlock.code" rows="4" placeholder="# Write your Python code here" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs font-mono"></textarea>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Search Block -->
+                  <template x-if="branchBlock.type === 'search'">
+                    <div class="bg-cyan-900 border-2 border-cyan-600 rounded-lg p-3 mb-2">
+                      <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-2 h-2 bg-cyan-500 rounded-full"></div>
+                          <h4 class="text-white font-medium text-sm">Search Engine</h4>
+                          <button @click="removeFromBranch(blockIndex, 'false', branchIndex)" class="text-red-400 hover:text-red-300">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="space-y-2">
+                        <div>
+                          <label class="block text-xs font-medium text-gray-300 mb-1">Search Type</label>
+                          <select x-model="branchBlock.searchType" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            <option value="forms">Search in Forms</option>
+                            <option value="issues">Search in Issues</option>
+                            <option value="escalations">Search in Escalations</option>
+                            <option value="templates">Search in Templates</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-xs font-medium text-gray-300 mb-1">Search Query</label>
+                          <input type="text" x-model="branchBlock.query" placeholder="Enter search terms" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                        </div>
+                        <div class="grid grid-cols-2 gap-1">
+                          <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">Max Results</label>
+                            <input type="number" x-model="branchBlock.maxResults" value="10" min="1" max="100" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">Sort By</label>
+                            <select x-model="branchBlock.sortBy" class="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                              <option value="relevance">Relevance</option>
+                              <option value="date_desc">Newest First</option>
+                              <option value="date_asc">Oldest First</option>
+                              <option value="name">Name</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
                 </div>
               </template>
             </div>
