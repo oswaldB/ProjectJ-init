@@ -244,7 +244,7 @@
       const response = await fetch('/api/sultan/workflows/save', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({workflows: [this.workflow]})
+        body: JSON.stringify(this.workflow)
       });
 
       if (response.ok) {

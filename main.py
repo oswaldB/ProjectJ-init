@@ -614,9 +614,47 @@ def api_workflows_list():
 @app.route('/api/sultan/workflows/<workflow_id>')
 def api_workflow_get(workflow_id):
     try:
+        # If workflow_id is 'new', create a new empty workflow
+        if workflow_id == 'new':
+            timestamp = int(datetime.datetime.now().timestamp() * 1000)
+            new_workflow_id = f'workflows-{timestamp}'
+            
+            # Create empty workflow structure
+            empty_workflow = {
+                'id': new_workflow_id,
+                'name': 'New Workflow',
+                'description': '',
+                'blocks': [{
+                    'id': f'block-{timestamp}',
+                    'type': 'trigger',
+                    'position': {'x': 100, 'y': 100},
+                    'formId': '',
+                    'event': 'on_submit'
+                }]
+            }
+            
+            # Save to S3
+            key = f'sultan/workflows/{new_workflow_id}.json'
+            workflow_data = {
+                'last_modified': datetime.datetime.now().isoformat(),
+                'user_email': 'oswald.bernard@gmail.com',
+                'workflows': [empty_workflow]
+            }
+            
+            save_in_global_db(key, workflow_data)
+            
+            return jsonify(empty_workflow)
+        
+        # Regular workflow loading
         key = f'sultan/workflows/{workflow_id}.json'
         response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-        return jsonify(json.loads(response['Body'].read().decode('utf-8')))
+        workflow_data = json.loads(response['Body'].read().decode('utf-8'))
+        
+        # Return the first workflow if it's in the old format
+        if 'workflows' in workflow_data and workflow_data['workflows']:
+            return jsonify(workflow_data['workflows'][0])
+        
+        return jsonify(workflow_data)
     except s3.exceptions.NoSuchKey:
         return jsonify({'error': 'Workflow not found'}), 404
     except Exception as e:
@@ -628,14 +666,20 @@ def api_workflow_get(workflow_id):
 def api_workflows_save():
     try:
         data = request.json
-        workflows = data.get('workflows')
+        
+        # Handle both single workflow and workflows array
+        if 'workflows' in data:
+            workflows = data.get('workflows')
+        else:
+            # Single workflow - wrap in array
+            workflows = [data]
 
         if not workflows:
             return jsonify({"error": "Invalid workflow data"}), 400
 
-        # Generate filename with timestamp
-        timestamp = int(datetime.datetime.now().timestamp() * 1000)
-        key = f'sultan/workflows/workflows-{timestamp}.json'
+        # Use the workflow ID for the filename, or generate new timestamp
+        workflow_id = workflows[0].get('id', f'workflows-{int(datetime.datetime.now().timestamp() * 1000)}')
+        key = f'sultan/workflows/{workflow_id}.json'
 
         # Add metadata
         workflow_data = {
