@@ -3,7 +3,8 @@
 
 {% block title %}Workflow Editor{% endblock %}
 
-{% block alpine_component %}{
+{% block content %}
+<div class="h-screen bg-gray-900 text-white flex" x-data="{
   workflow: {
     id: '',
     name: '',
@@ -140,7 +141,7 @@
         newBlock.delay = 0;
         break;
       case 'code':
-        newBlock.code = '# Write your Python code here\nprint("Hello from workflow!")';
+        newBlock.code = '# Write your Python code here\nprint(\"Hello from workflow!\")';
         break;
       case 'search':
         newBlock.searchType = 'forms';
@@ -203,10 +204,7 @@
     link.click();
     URL.revokeObjectURL(url);
   }
-}{% endblock %}
-
-{% block content %}
-<div class="h-screen bg-gray-900 text-white flex">
+}">
   <!-- Sidebar with block palette -->
   <div class="w-64 bg-gray-800 border-r border-gray-700 p-4">
     <h2 class="text-lg font-semibold mb-4">Block Palette</h2>
