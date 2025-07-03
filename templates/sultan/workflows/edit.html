@@ -37,6 +37,7 @@
     { type: 'form_response', name: 'Form Response', icon: 'form', color: 'violet' }
   ],
   draggedBlock: null,
+  draggedBlockIndex: null,
 
   async init() {
     const id = window.location.pathname.split('/').pop();
@@ -358,6 +359,43 @@
     }
   },
 
+  startDragBlock(blockIndex, event) {
+    // Don't allow dragging the trigger block (first block)
+    if (blockIndex === 0) {
+      event.preventDefault();
+      return;
+    }
+    this.draggedBlockIndex = blockIndex;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/html', event.target.outerHTML);
+  },
+
+  dropBlockReorder(event, targetIndex) {
+    event.preventDefault();
+    
+    if (this.draggedBlockIndex === null || this.draggedBlockIndex === targetIndex) {
+      return;
+    }
+
+    // Don't allow dropping before trigger block
+    if (targetIndex === 0) {
+      return;
+    }
+
+    const sourceIndex = this.draggedBlockIndex;
+    const blocks = this.workflow.blocks;
+    
+    // Remove the dragged block from its original position
+    const draggedBlock = blocks.splice(sourceIndex, 1)[0];
+    
+    // Insert it at the new position
+    // Adjust target index if we removed an item before it
+    const newTargetIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    blocks.splice(newTargetIndex, 0, draggedBlock);
+    
+    this.draggedBlockIndex = null;
+  },
+
   async runTest() {
     this.testExecution.isRunning = true;
     this.testExecution.currentStep = 0;
@@ -528,7 +566,26 @@
     <div class="flex-1 p-6 overflow-y-auto">
       <div class="space-y-6">
         <template x-for="(block, blockIndex) in workflow.blocks" :key="block.id">
-          <div>
+          <div 
+            :draggable="blockIndex !== 0"
+            @dragstart="startDragBlock(blockIndex, $event)"
+            @dragover.prevent
+            @drop="dropBlockReorder($event, blockIndex)"
+            @dragend="draggedBlockIndex = null"
+            :class="{
+              'cursor-move': blockIndex !== 0,
+              'opacity-50': draggedBlockIndex === blockIndex,
+              'border-2 border-blue-400 border-dashed': draggedBlockIndex !== null && draggedBlockIndex !== blockIndex && blockIndex !== 0
+            }"
+            class="relative transition-all duration-200"
+          >
+            <!-- Drag Handle (only for non-trigger blocks) -->
+            <div x-show="blockIndex !== 0" class="absolute -left-6 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-300 cursor-move">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M7 19v-8l-2 2V9l2-2V5a1 1 0 011-1h1a1 1 0 011 1v2l2 2v4l-2-2v8a1 1 0 01-1 1H8a1 1 0 01-1-1zM17 5v8l2-2v4l-2 2v2a1 1 0 01-1 1h-1a1 1 0 01-1-1v-2l-2-2V9l2 2V5a1 1 0 011-1h1a1 1 0 011 1z"/>
+              </svg>
+            </div>
+
             <!-- Trigger Block -->
             <template x-if="block.type === 'trigger'">
               {% include 'sultan/workflows/actions/trigger.html' %}
