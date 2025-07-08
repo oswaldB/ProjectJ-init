@@ -315,6 +315,7 @@ def list_issues():
         issues = []
         for key, _ in page_keys:
             try:
+                response_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
                 issue = json.loads(response_obj['Body'].read().decode('utf-8'))
                 if 'changes' in issue:
                     del issue['changes']
@@ -374,6 +375,7 @@ def list_issues_v2():
         issues = []
         for key, _ in all_keys:
             try:
+                response_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
                 issue = json.loads(response_obj['Body'].read().decode('utf-8'))
                 if 'changes' in issue:
                     del issue['changes']
@@ -859,7 +861,7 @@ def list_grid_views():
     user = request.args.get('user', 'anonymous')
     prefix = f'jaffar/grid-views/{user}/'
     try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)<replit_final_file>
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
         views = []
         for obj in response.get('Contents', []):
             name = obj['Key'].split('/')[-1].replace('.json', '')
