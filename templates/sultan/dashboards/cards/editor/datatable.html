@@ -116,7 +116,7 @@ function initDataTableCard() {
     
     async loadAvailableForms() {
       try {
-        const response = await fetch('/sultan/forms/api/list');
+        const response = await fetch('/pc-analytics-jaffar/sultan/api/forms');
         if (response.ok) {
           this.availableForms = await response.json();
         }
@@ -166,8 +166,8 @@ function initDataTableCard() {
       }
     },
 
-    init() {
-      this.loadAvailableForms();
+    async init() {
+      await this.loadAvailableForms();
       
       // Initialize default config if not set
       if (!this.card.config.columns) {
