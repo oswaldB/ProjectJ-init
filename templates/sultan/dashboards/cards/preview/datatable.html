@@ -1,25 +1,69 @@
 
 <div class="bg-gray-800 p-4 rounded-lg h-full">
-  <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Data Table'"></h3>
+  <div class="flex justify-between items-center mb-3">
+    <h3 class="text-white font-semibold" x-text="card.config.title || 'Data Table'"></h3>
+    <div class="flex space-x-2">
+      <div x-show="card.config.enableSearch" class="text-xs text-gray-400">🔍</div>
+      <div x-show="card.config.enableExport" class="text-xs text-gray-400">📊</div>
+      <div x-show="card.config.saveToLocalDB" class="text-xs text-gray-400">💾</div>
+    </div>
+  </div>
+
+  <!-- Data Source Info -->
+  <div class="text-xs text-gray-400 mb-2">
+    <span x-show="card.config.dataSource === 'jaffar'">Source: Jaffar Issues</span>
+    <span x-show="card.config.dataSource && card.config.dataSource !== 'jaffar'">Source: Form Data</span>
+    <span x-show="card.config.saveToLocalDB"> → Local DB: <span x-text="card.config.localDBName"></span></span>
+  </div>
+
+  <!-- Search Bar -->
+  <div x-show="card.config.enableSearch" class="mb-3">
+    <input type="text" class="w-full bg-gray-700 text-white p-2 rounded text-sm" placeholder="Search...">
+  </div>
+
+  <!-- Table -->
   <div class="bg-gray-700 rounded">
+    <!-- Headers -->
     <div class="p-3 border-b border-gray-600">
       <div class="flex space-x-4">
-        <div class="bg-gray-600 h-4 rounded w-20"></div>
-        <div class="bg-gray-600 h-4 rounded w-16"></div>
-        <div class="bg-gray-600 h-4 rounded w-24"></div>
+        <template x-for="column in (card.config.columns || []).filter(col => col.visible)">
+          <div class="flex items-center space-x-1">
+            <div class="bg-gray-600 h-4 rounded" :class="column.key === 'id' ? 'w-16' : column.key === 'title' ? 'w-32' : 'w-20'"></div>
+            <span x-show="column.sortable" class="text-xs text-gray-400">↕</span>
+            <span x-show="column.filterable" class="text-xs text-gray-400">🔽</span>
+          </div>
+        </template>
       </div>
     </div>
+    
+    <!-- Data Rows -->
     <div class="p-3 space-y-2">
-      <div class="flex space-x-4">
-        <div class="bg-gray-600 h-3 rounded w-20"></div>
-        <div class="bg-gray-600 h-3 rounded w-16"></div>
-        <div class="bg-gray-600 h-3 rounded w-24"></div>
-      </div>
-      <div class="flex space-x-4">
-        <div class="bg-gray-600 h-3 rounded w-20"></div>
-        <div class="bg-gray-600 h-3 rounded w-16"></div>
-        <div class="bg-gray-600 h-3 rounded w-24"></div>
-      </div>
+      <template x-for="row in 3">
+        <div class="flex space-x-4">
+          <template x-for="column in (card.config.columns || []).filter(col => col.visible)">
+            <div class="bg-gray-600 h-3 rounded" :class="column.key === 'id' ? 'w-16' : column.key === 'title' ? 'w-32' : 'w-20'"></div>
+          </template>
+        </div>
+      </template>
     </div>
+  </div>
+
+  <!-- Pagination -->
+  <div x-show="card.config.pagination" class="flex justify-between items-center mt-3 text-xs text-gray-400">
+    <div>
+      Showing <span x-text="card.config.pageSize || 25"></span> entries
+    </div>
+    <div class="flex space-x-2">
+      <button class="bg-gray-600 px-2 py-1 rounded">«</button>
+      <button class="bg-red-500 px-2 py-1 rounded">1</button>
+      <button class="bg-gray-600 px-2 py-1 rounded">2</button>
+      <button class="bg-gray-600 px-2 py-1 rounded">»</button>
+    </div>
+  </div>
+
+  <!-- Export Options -->
+  <div x-show="card.config.enableExport" class="mt-2 flex space-x-2">
+    <button class="bg-green-600 text-white px-2 py-1 rounded text-xs">CSV</button>
+    <button class="bg-blue-600 text-white px-2 py-1 rounded text-xs">Excel</button>
   </div>
 </div>
