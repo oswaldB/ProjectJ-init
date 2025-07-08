@@ -8,7 +8,6 @@
       <label class="block text-sm font-medium text-gray-300 mb-2">Data Source</label>
       <select x-model="card.config.dataSource" @change="await loadFormColumns()" class="w-full bg-gray-700 text-white p-2 rounded">
         <option value="">Select data source...</option>
-        <option value="jaffar">Jaffar Issues</option>
         <template x-for="form in availableForms" :key="form.id">
           <option :value="form.id" x-text="form.name"></option>
         </template>
@@ -132,29 +131,17 @@ function initDataTableCard() {
       try {
         let columns = [];
         
-        if (this.card.config.dataSource === 'jaffar') {
-          // Jaffar issues columns
-          columns = [
-            { key: 'id', label: 'Issue ID', visible: true, filterable: true, sortable: true },
-            { key: 'title', label: 'Title', visible: true, filterable: true, sortable: true },
-            { key: 'status', label: 'Status', visible: true, filterable: true, sortable: true },
-            { key: 'priority', label: 'Priority', visible: true, filterable: true, sortable: true },
-            { key: 'created_at', label: 'Created', visible: true, filterable: true, sortable: true },
-            { key: 'assigned_to', label: 'Assigned To', visible: true, filterable: true, sortable: true }
-          ];
-        } else {
-          // Load form configuration to get questions
-          const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${this.card.config.dataSource}`);
-          if (response.ok) {
-            const formConfig = await response.json();
-            columns = formConfig.fields.map(field => ({
-              key: field.key,
-              label: field.label || field.key,
-              visible: true,
-              filterable: true,
-              sortable: true
-            }));
-          }
+        // Load form configuration to get questions
+        const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${this.card.config.dataSource}`);
+        if (response.ok) {
+          const formConfig = await response.json();
+          columns = formConfig.fields.map(field => ({
+            key: field.key,
+            label: field.label || field.key,
+            visible: true,
+            filterable: true,
+            sortable: true
+          }));
         }
         
         this.card.config.columns = columns;
