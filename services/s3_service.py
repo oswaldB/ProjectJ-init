@@ -3,24 +3,13 @@ import boto3
 import json
 import logging
 import os
+from config import BUCKET_NAME, s3
 
 logger = logging.getLogger(__name__)
 
-# AWS configuration
-REGION = os.environ.get('AWS_REGION') or 'eu-west-2'
-BUCKET_NAME = os.environ.get('BUCKET_NAME') or 'pc-analytics-jaffar'
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-
 # Local backup configuration
-LOCAL_BACKUP_ENABLED = os.environ.get('LOCAL_BACKUP_ENABLED', 'false').lower() == 'true'
+LOCAL_BACKUP_ENABLED = os.environ.get('LOCAL_BACKUP_ENABLED', 'true').lower() == 'true'
 LOCAL_BACKUP_DIR = os.environ.get('LOCAL_BACKUP_DIR', './local_bucket')
-
-# Initialize S3 client
-s3 = boto3.client('s3',
-                  region_name=REGION,
-                  aws_access_key_id=AWS_ACCESS_KEY_ID,
-                  aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
 def save_to_local_backup(key, data):
     """Save data to local file system if backup is enabled"""
