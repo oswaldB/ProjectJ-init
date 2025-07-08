@@ -116,7 +116,7 @@
   
   async loadAvailableForms() {
     try {
-      const response = await fetch('/sultan/forms/api/list');
+      const response = await fetch('/pc-analytics-jaffar/sultan/api/forms');
       if (response.ok) {
         this.availableForms = await response.json();
       }
@@ -143,7 +143,7 @@
         ];
       } else {
         // Load form configuration to get questions
-        const response = await fetch(`/sultan/forms/api/${card.config.dataSource}`);
+        const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${card.config.dataSource}`);
         if (response.ok) {
           const formConfig = await response.json();
           columns = formConfig.questions.map(question => ({
