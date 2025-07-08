@@ -1,10 +1,11 @@
+
 <div class="bg-gray-800 p-4 rounded-lg h-full">
   <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Data Table'"></h3>
 
   <!-- Data Source Info -->
   <div x-show="card.config.dataSource" class="mb-2">
     <div class="text-xs text-gray-400">
-      Source: <span x-text="card.config.dataSource === 'jaffar' ? 'Jaffar Issues' : card.config.dataSource"></span>
+      Source: <span x-text="card.config.dataSource"></span>
       <span x-show="card.config.saveToLocalDB" class="ml-2 text-green-400">
         → <span x-text="card.config.localDBName || 'local_db'"></span>
       </span>
@@ -13,43 +14,83 @@
 
   <!-- Table Preview -->
   <div x-show="card.config.dataSource" class="bg-gray-700 rounded overflow-hidden">
+    <!-- Search Bar (if enabled) -->
+    <div x-show="card.config.enableSearch" class="bg-gray-600 p-2 border-b border-gray-500">
+      <div class="flex items-center space-x-2">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input type="text" placeholder="Search..." class="bg-gray-700 text-white text-xs px-2 py-1 rounded border-none flex-1" disabled>
+      </div>
+    </div>
+
     <!-- Table Header -->
     <div x-show="card.config.columns && card.config.columns.length > 0" class="bg-gray-600 p-2">
-      <div class="flex space-x-2 text-xs">
-        <template x-for="column in card.config.columns.filter(col => col.visible)" :key="column.key">
-          <div class="flex-1 text-white font-medium min-w-0">
-            <div class="truncate" x-text="column.label"></div>
-            <div class="flex space-x-1 mt-1">
-              <span x-show="column.filterable" class="text-blue-300">F</span>
-              <span x-show="column.sortable" class="text-yellow-300">S</span>
-            </div>
+      <div class="grid gap-2 text-xs" :style="`grid-template-columns: repeat(${Math.min((card.config.columns || []).filter(col => col.visible).length, 4)}, 1fr)`">
+        <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible).slice(0, 4)" :key="column.key">
+          <div class="text-white font-medium truncate flex items-center">
+            <span x-text="column.label" class="truncate"></span>
+            <svg x-show="column.sortable" class="w-3 h-3 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+            </svg>
           </div>
         </template>
       </div>
     </div>
 
     <!-- Sample Data Rows -->
-    <div x-show="card.config.columns && card.config.columns.length > 0" class="p-2 space-y-1">
+    <div x-show="card.config.columns && card.config.columns.length > 0" class="p-2 space-y-1 max-h-32 overflow-y-auto">
       <template x-for="i in 3" :key="i">
-        <div class="flex space-x-2 text-xs text-gray-300 py-1 border-b border-gray-600">
-          <template x-for="column in card.config.columns.filter(col => col.visible)" :key="column.key">
-            <div class="flex-1 min-w-0">
-              <span class="truncate block" x-text="`Sample ${column.key}`"></span>
+        <div class="grid gap-2 text-xs text-gray-300 py-1 border-b border-gray-600" :style="`grid-template-columns: repeat(${Math.min((card.config.columns || []).filter(col => col.visible).length, 4)}, 1fr)`">
+          <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible).slice(0, 4)" :key="column.key">
+            <div class="truncate">
+              <template x-if="column.key === 'id' || column.key === 'issue_id'">
+                <span x-text="`ID-${1000 + i}`"></span>
+              </template>
+              <template x-if="column.key === 'title' || column.key === 'name'">
+                <span x-text="`Sample Title ${i}`"></span>
+              </template>
+              <template x-if="column.key === 'status'">
+                <span class="px-2 py-1 rounded text-xs" :class="i === 1 ? 'bg-green-600' : i === 2 ? 'bg-yellow-600' : 'bg-red-600'" x-text="i === 1 ? 'Completed' : i === 2 ? 'In Progress' : 'Open'"></span>
+              </template>
+              <template x-if="column.key === 'priority'">
+                <span x-text="i === 1 ? 'High' : i === 2 ? 'Medium' : 'Low'"></span>
+              </template>
+              <template x-if="column.key === 'created_at' || column.key === 'date'">
+                <span x-text="new Date(Date.now() - i * 86400000).toLocaleDateString()"></span>
+              </template>
+              <template x-if="column.key === 'assigned_to' || column.key === 'assignee'">
+                <span x-text="`User ${i}`"></span>
+              </template>
+              <template x-if="!['id', 'issue_id', 'title', 'name', 'status', 'priority', 'created_at', 'date', 'assigned_to', 'assignee'].includes(column.key)">
+                <span x-text="`Data ${i}`"></span>
+              </template>
             </div>
           </template>
         </div>
       </template>
+      <div x-show="(card.config.columns || []).filter(col => col.visible).length > 4" class="text-xs text-gray-400 text-center py-1">
+        <span x-text="`... et ${(card.config.columns || []).filter(col => col.visible).length - 4} autres colonnes`"></span>
+      </div>
     </div>
 
-    <!-- Table Options Preview -->
+    <!-- Table Footer with Controls -->
     <div x-show="card.config.columns && card.config.columns.length > 0" class="bg-gray-600 p-2 text-xs text-gray-300">
       <div class="flex justify-between items-center">
         <div class="flex space-x-3">
-          <span x-show="card.config.enableSearch" class="text-blue-300">🔍 Search</span>
-          <span x-show="card.config.enableExport" class="text-green-300">📤 Export</span>
+          <span x-show="card.config.enableExport" class="text-green-300 flex items-center">
+            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Export
+          </span>
+          <span class="text-gray-400">3 entrées</span>
         </div>
-        <div x-show="card.config.pagination">
-          <span x-text="`${card.config.pageSize || 25} per page`"></span>
+        <div x-show="card.config.pagination" class="flex items-center space-x-2">
+          <button class="px-2 py-1 bg-gray-700 rounded disabled:opacity-50" disabled>←</button>
+          <span>1 / 1</span>
+          <button class="px-2 py-1 bg-gray-700 rounded disabled:opacity-50" disabled>→</button>
+          <span x-text="`${card.config.pageSize || 25}/page`" class="ml-2"></span>
         </div>
       </div>
     </div>
@@ -59,7 +100,7 @@
   <div x-show="!card.config.dataSource" class="bg-gray-700 p-4 rounded h-32 flex items-center justify-center">
     <div class="text-center text-gray-400">
       <div class="text-3xl mb-2">📊</div>
-      <div class="text-sm">Select a data source</div>
+      <div class="text-sm">Sélectionnez une source de données</div>
     </div>
   </div>
 </div>
