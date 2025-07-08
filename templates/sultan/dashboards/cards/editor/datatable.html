@@ -8,7 +8,7 @@
       <label class="block text-sm font-medium text-gray-300 mb-2">Data Source</label>
       <select x-model="card.config.dataSource" @change="await loadFormColumns()" class="w-full bg-gray-700 text-white p-2 rounded" x-show="card && card.config">
         <option value="">Select data source...</option>
-        <template x-for="form in availableForms" :key="form.id">
+        <template x-for="form in availableForms">
           <option :value="form.id" x-text="form.name"></option>
         </template>
       </select>
