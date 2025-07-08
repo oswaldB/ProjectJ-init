@@ -1,0 +1,23 @@
+
+<div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
+  <h3 class="text-white font-semibold mb-3">Graph Configuration</h3>
+  <div class="space-y-3">
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Graph Type</label>
+      <select x-model="card.config.type" class="w-full bg-gray-700 text-white p-2 rounded">
+        <option value="line">Line Chart</option>
+        <option value="bar">Bar Chart</option>
+        <option value="pie">Pie Chart</option>
+        <option value="scatter">Scatter Plot</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
+      <input type="text" x-model="card.config.dataSource" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="API endpoint or data source">
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
+      <input type="text" x-model="card.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Graph title">
+    </div>
+  </div>
+</div>

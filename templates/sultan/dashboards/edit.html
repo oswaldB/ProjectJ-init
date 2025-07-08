@@ -1,0 +1,179 @@
+
+{% extends "sultan/base.html" %}
+
+{% block title %}Edit Dashboard{% endblock %}
+
+{% block alpine_component %}{
+  page: 'dashboard-edit',
+  dashboard: {
+    id: '',
+    name: '',
+    description: '',
+    cards: [],
+    layout: 'grid'
+  },
+  availableCards: [
+    { type: 'graph', name: 'Graph', icon: '📊' },
+    { type: 'datatable', name: 'Data Table', icon: '📋' },
+    { type: 'kanban', name: 'Kanban Board', icon: '📌' },
+    { type: 'actions', name: 'Actions', icon: '⚡' },
+    { type: 'chat', name: 'Chat', icon: '💬' },
+    { type: 'search', name: 'Search Bar', icon: '🔍' },
+    { type: 'stats', name: 'Stats Card', icon: '📈' }
+  ],
+  selectedCard: null,
+  gridColumns: Array.from({length: 12}, (_, i) => i + 1),
+  async init() {
+    const dashboardId = window.location.pathname.split('/').pop();
+    if (dashboardId !== 'new') {
+      await this.loadDashboard(dashboardId);
+    } else {
+      this.dashboard.id = 'dashboard-' + Date.now();
+    }
+  },
+  async loadDashboard(id) {
+    try {
+      const response = await fetch(`/sultan/dashboard/api/${id}`);
+      if (response.ok) {
+        this.dashboard = await response.json();
+      }
+    } catch (error) {
+      console.error('Failed to load dashboard:', error);
+    }
+  },
+  addCard(cardType) {
+    const newCard = {
+      id: 'card-' + Date.now(),
+      type: cardType,
+      position: { row: 1, col: 1 },
+      size: { width: 3, height: 2 },
+      config: {}
+    };
+    this.dashboard.cards.push(newCard);
+  },
+  removeCard(cardId) {
+    this.dashboard.cards = this.dashboard.cards.filter(card => card.id !== cardId);
+  },
+  async saveDashboard() {
+    try {
+      const response = await fetch('/sultan/dashboard/api/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(this.dashboard)
+      });
+      if (response.ok) {
+        window.location.href = '/sultan/dashboard';
+      }
+    } catch (error) {
+      console.error('Failed to save dashboard:', error);
+    }
+  }
+}{% endblock %}
+
+{% block content %}
+<div class="flex h-screen">
+  <!-- Sidebar -->
+  <div class="w-64 bg-gray-800 border-r border-gray-700 p-4 overflow-y-auto">
+    <h3 class="text-white font-semibold mb-4">Dashboard Cards</h3>
+    <div class="space-y-2">
+      <template x-for="cardType in availableCards">
+        <button 
+          @click="addCard(cardType.type)"
+          class="bg-red-500 p-3 rounded hover:bg-red-600 transition-colors w-full text-left"
+        >
+          <div class="flex items-center space-x-2">
+            <span x-text="cardType.icon"></span>
+            <span class="text-white text-sm font-medium" x-text="cardType.name"></span>
+          </div>
+        </button>
+      </template>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col">
+    <!-- Header -->
+    <div class="bg-gray-800 p-4 border-b border-gray-700">
+      <div class="flex justify-between items-center">
+        <div class="flex-1 mr-4">
+          <input 
+            type="text" 
+            x-model="dashboard.name" 
+            placeholder="Dashboard Name"
+            class="bg-gray-700 text-white px-3 py-2 rounded w-full"
+          >
+          <textarea 
+            x-model="dashboard.description" 
+            placeholder="Description"
+            class="bg-gray-700 text-white px-3 py-2 rounded w-full mt-2 h-20"
+          ></textarea>
+        </div>
+        <div class="flex space-x-2">
+          <a href="/sultan/dashboard" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+            Cancel
+          </a>
+          <button @click="saveDashboard()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+            Save Dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard Canvas -->
+    <div class="flex-1 p-4 bg-gray-900 overflow-auto">
+      <div class="grid grid-cols-12 gap-4 min-h-full">
+        <template x-for="card in dashboard.cards">
+          <div 
+            :class="`col-span-${card.size.width} bg-gray-800 p-4 rounded-lg border-2 border-gray-700 hover:border-red-500 transition-colors cursor-pointer`"
+            @click="selectedCard = card"
+          >
+            <div class="flex justify-between items-center mb-2">
+              <h4 class="text-white font-medium" x-text="card.type"></h4>
+              <button @click="removeCard(card.id)" class="text-red-500 hover:text-red-700">
+                ×
+              </button>
+            </div>
+            <div class="text-gray-400 text-sm">
+              <div x-show="card.type === 'graph'">📊 Graph visualization</div>
+              <div x-show="card.type === 'datatable'">📋 Data table display</div>
+              <div x-show="card.type === 'kanban'">📌 Kanban board</div>
+              <div x-show="card.type === 'actions'">⚡ Action buttons</div>
+              <div x-show="card.type === 'chat'">💬 Chat interface</div>
+              <div x-show="card.type === 'search'">🔍 Search functionality</div>
+              <div x-show="card.type === 'stats'">📈 Statistics display</div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card Configuration Panel -->
+  <div x-show="selectedCard" class="w-80 bg-gray-800 border-l border-gray-700 p-4 overflow-y-auto">
+    <h3 class="text-white font-semibold mb-4">Card Configuration</h3>
+    <div x-show="selectedCard">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Card Width (columns)</label>
+          <select x-model="selectedCard.size.width" class="w-full bg-gray-700 text-white p-2 rounded">
+            <template x-for="col in gridColumns">
+              <option :value="col" x-text="col"></option>
+            </template>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Card Height</label>
+          <select x-model="selectedCard.size.height" class="w-full bg-gray-700 text-white p-2 rounded">
+            <option value="1">Small</option>
+            <option value="2">Medium</option>
+            <option value="3">Large</option>
+            <option value="4">Extra Large</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -245,7 +245,7 @@ def api_save_issue():
             # Track changes if any exist
             if changes:
                 save_issue_changes(issue_id, changes)
-            
+
             # Add creation activity for new issues
             if is_new_issue:
                 activity = {
@@ -602,7 +602,7 @@ def api_workflows_list():
                 response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
                 content = response['Body'].read().decode('utf-8')
                 workflow_data = json.loads(content)
-                
+
                 # Handle backward compatibility
                 if 'workflows' in workflow_data and workflow_data['workflows']:
                     # Old format - extract workflows and add metadata
@@ -628,7 +628,7 @@ def api_workflow_get(workflow_id):
         if workflow_id == 'new':
             timestamp = int(datetime.datetime.now().timestamp() * 1000)
             new_workflow_id = f'workflows-{timestamp}'
-            
+
             # Create empty workflow structure with ID at root level
             workflow_data = {
                 'id': new_workflow_id,
@@ -644,18 +644,18 @@ def api_workflow_get(workflow_id):
                     'event': 'on_submit'
                 }]
             }
-            
+
             # Save to S3
             key = f'sultan/workflows/{new_workflow_id}.json'
             save_in_global_db(key, workflow_data)
-            
+
             return jsonify(workflow_data)
-        
+
         # Regular workflow loading
         key = f'sultan/workflows/{workflow_id}.json'
         response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
         workflow_data = json.loads(response['Body'].read().decode('utf-8'))
-        
+
         # Handle backward compatibility with old format
         if 'workflows' in workflow_data and workflow_data['workflows']:
             # Old format - extract first workflow and add metadata
@@ -663,7 +663,7 @@ def api_workflow_get(workflow_id):
             old_workflow['last_modified'] = workflow_data.get('last_modified', '')
             old_workflow['user_email'] = workflow_data.get('user_email', '')
             return jsonify(old_workflow)
-        
+
         # New format - return as is
         return jsonify(workflow_data)
     except s3.exceptions.NoSuchKey:
@@ -689,7 +689,7 @@ def api_workflows_save():
         data['last_modified'] = datetime.datetime.now().isoformat()
         data['user_email'] = 'oswald.bernard@gmail.com'
         data['id'] = workflow_id
-        
+
         workflow_data = data
 
         save_in_global_db(key, workflow_data)
@@ -710,6 +710,20 @@ def api_workflows_delete(workflow_id):
         logger.error(f"Failed to delete workflow: {e}")
         return jsonify({"error": str(e)}), 500
 
+# Dashboard Blueprint
+dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/sultan/dashboard')
+
+@dashboard_bp.route('/')
+def dashboard_index():
+    return render_template('sultan/dashboards/index.html')
+
+@dashboard_bp.route('/edit/<dashboard_id>')
+def dashboard_edit(dashboard_id):
+    return render_template('sultan/dashboards/edit.html')
+
+# Register blueprints
+app.register_blueprint(workflow_bp)
+app.register_blueprint(dashboard_bp)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

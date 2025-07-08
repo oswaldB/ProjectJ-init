@@ -1,0 +1,14 @@
+
+<div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
+  <h3 class="text-white font-semibold mb-3">Actions Configuration</h3>
+  <div class="space-y-3">
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
+      <input type="text" x-model="card.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Actions title">
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Actions (JSON)</label>
+      <textarea x-model="card.config.actions" class="w-full bg-gray-700 text-white p-2 rounded h-32" placeholder='[{"label": "Create New", "action": "create", "url": "/create"}, {"label": "Export", "action": "export", "url": "/export"}]'></textarea>
+    </div>
+  </div>
+</div>
