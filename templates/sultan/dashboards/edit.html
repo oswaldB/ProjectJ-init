@@ -22,9 +22,8 @@
     { type: 'stats', name: 'Stats Card', icon: '📈' }
   ],
   selectedCard: null,
-  draggedCard: null,
-  isDragging: false,
   gridColumns: Array.from({length: 12}, (_, i) => i + 1),
+  gridRows: Array.from({length: 6}, (_, i) => i + 1),
   async init() {
     const dashboardId = window.location.pathname.split('/').pop();
     if (dashboardId !== 'new') {
@@ -56,43 +55,28 @@
   removeCard(cardId) {
     this.dashboard.cards = this.dashboard.cards.filter(card => card.id !== cardId);
   },
-  startDrag(event, card) {
-    this.draggedCard = card;
-    this.isDragging = true;
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/html', event.target.outerHTML);
-    event.target.style.opacity = '0.5';
+  moveCard(card, direction) {
+    switch(direction) {
+      case 'left':
+        if (card.position.col > 1) card.position.col--;
+        break;
+      case 'right':
+        if (card.position.col + card.size.width <= 12) card.position.col++;
+        break;
+      case 'up':
+        if (card.position.row > 1) card.position.row--;
+        break;
+      case 'down':
+        card.position.row++;
+        break;
+    }
   },
-  endDrag(event) {
-    event.target.style.opacity = '';
-    this.isDragging = false;
-    this.draggedCard = null;
-  },
-  allowDrop(event) {
-    event.preventDefault();
-  },
-  drop(event, targetCol, targetRow) {
-    event.preventDefault();
-    if (this.draggedCard) {
-      // Calculer la nouvelle position basée sur la zone de drop
-      const rect = event.target.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      
-      // Calculer la colonne et la ligne basées sur la position relative
-      const colWidth = rect.width / 12;
-      const newCol = Math.max(1, Math.min(12, Math.floor(x / colWidth) + 1));
-      
-      // Mettre à jour la position de la carte
-      this.draggedCard.position = {
-        col: newCol,
-        row: targetRow || 1
-      };
-      
-      // S'assurer que la carte ne dépasse pas la grille
-      if (this.draggedCard.position.col + this.draggedCard.size.width > 13) {
-        this.draggedCard.position.col = 13 - this.draggedCard.size.width;
-      }
+  updateCardPosition(card, field, value) {
+    const numValue = parseInt(value);
+    if (field === 'col') {
+      card.position.col = Math.max(1, Math.min(12 - card.size.width + 1, numValue));
+    } else if (field === 'row') {
+      card.position.row = Math.max(1, numValue);
     }
   },
   getCardStyle(card) {
@@ -172,9 +156,7 @@
 
     <!-- Dashboard Canvas -->
     <div class="flex-1 p-4 bg-gray-900 overflow-auto">
-      <div class="grid grid-cols-12 gap-4 min-h-full relative" 
-           @dragover="allowDrop($event)"
-           @drop="drop($event)">
+      <div class="grid grid-cols-12 gap-4 min-h-full relative">
         
         <!-- Grid lines for visual guidance -->
         <div class="absolute inset-0 pointer-events-none opacity-20">
@@ -188,21 +170,26 @@
         <template x-for="card in dashboard.cards">
           <div 
             :style="getCardStyle(card)"
-            class="bg-gray-800 p-4 rounded-lg border-2 border-gray-700 hover:border-red-500 transition-colors cursor-move relative z-10"
-            :class="{ 'opacity-50': isDragging && draggedCard?.id === card.id }"
-            draggable="true"
-            @dragstart="startDrag($event, card)"
-            @dragend="endDrag($event)"
+            class="bg-gray-800 p-4 rounded-lg border-2 border-gray-700 hover:border-red-500 transition-colors cursor-pointer relative z-10"
+            :class="{ 'border-red-500': selectedCard?.id === card.id }"
             @click="selectedCard = card"
           >
             <div class="flex justify-between items-center mb-2">
               <h4 class="text-white font-medium flex items-center">
-                <span class="mr-2 cursor-grab">⋮⋮</span>
                 <span x-text="card.type"></span>
               </h4>
-              <button @click.stop="removeCard(card.id)" class="text-red-500 hover:text-red-700 z-20">
-                ×
-              </button>
+              <div class="flex items-center space-x-1">
+                <!-- Position controls -->
+                <div class="flex space-x-1 bg-gray-700 rounded p-1" x-show="selectedCard?.id === card.id">
+                  <button @click.stop="moveCard(card, 'left')" class="text-white hover:text-red-500 px-1" title="Move Left">←</button>
+                  <button @click.stop="moveCard(card, 'up')" class="text-white hover:text-red-500 px-1" title="Move Up">↑</button>
+                  <button @click.stop="moveCard(card, 'down')" class="text-white hover:text-red-500 px-1" title="Move Down">↓</button>
+                  <button @click.stop="moveCard(card, 'right')" class="text-white hover:text-red-500 px-1" title="Move Right">→</button>
+                </div>
+                <button @click.stop="removeCard(card.id)" class="text-red-500 hover:text-red-700">
+                  ×
+                </button>
+              </div>
             </div>
             <div class="text-gray-400 text-sm">
               <div x-show="card.type === 'graph'">📊 Graph visualization</div>
@@ -216,14 +203,6 @@
             <div class="text-xs text-gray-500 mt-2">
               Position: Col <span x-text="card.position.col"></span>, Row <span x-text="card.position.row"></span>
             </div>
-          </div>
-        </template>
-        
-        <!-- Drop zones for empty areas -->
-        <template x-for="i in 12">
-          <div class="min-h-[100px] border-2 border-dashed border-transparent hover:border-gray-600 transition-colors"
-               @dragover="allowDrop($event)"
-               @drop="drop($event, i, 1)">
           </div>
         </template>
       </div>
@@ -251,6 +230,50 @@
             <option value="3">Large</option>
             <option value="4">Extra Large</option>
           </select>
+        </div>
+        
+        <!-- Position Controls -->
+        <div class="border-t border-gray-600 pt-4">
+          <h4 class="text-white font-medium mb-3">Position</h4>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-1">Column</label>
+              <input 
+                type="number" 
+                :value="selectedCard.position.col" 
+                @input="updateCardPosition(selectedCard, 'col', $event.target.value)"
+                min="1" 
+                :max="13 - selectedCard.size.width" 
+                class="w-full bg-gray-700 text-white p-2 rounded"
+              >
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-1">Row</label>
+              <input 
+                type="number" 
+                :value="selectedCard.position.row" 
+                @input="updateCardPosition(selectedCard, 'row', $event.target.value)"
+                min="1" 
+                class="w-full bg-gray-700 text-white p-2 rounded"
+              >
+            </div>
+          </div>
+          
+          <!-- Arrow Controls -->
+          <div class="mt-3">
+            <label class="block text-sm font-medium text-gray-300 mb-2">Move Card</label>
+            <div class="grid grid-cols-3 gap-1 w-20 mx-auto">
+              <div></div>
+              <button @click="moveCard(selectedCard, 'up')" class="bg-gray-600 hover:bg-red-500 text-white p-2 rounded text-sm">↑</button>
+              <div></div>
+              <button @click="moveCard(selectedCard, 'left')" class="bg-gray-600 hover:bg-red-500 text-white p-2 rounded text-sm">←</button>
+              <div></div>
+              <button @click="moveCard(selectedCard, 'right')" class="bg-gray-600 hover:bg-red-500 text-white p-2 rounded text-sm">→</button>
+              <div></div>
+              <button @click="moveCard(selectedCard, 'down')" class="bg-gray-600 hover:bg-red-500 text-white p-2 rounded text-sm">↓</button>
+              <div></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
