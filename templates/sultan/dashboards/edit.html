@@ -22,6 +22,8 @@
     { type: 'stats', name: 'Stats Card', icon: '📈' }
   ],
   selectedCard: null,
+  draggedCard: null,
+  isDragging: false,
   gridColumns: Array.from({length: 12}, (_, i) => i + 1),
   async init() {
     const dashboardId = window.location.pathname.split('/').pop();
@@ -53,6 +55,53 @@
   },
   removeCard(cardId) {
     this.dashboard.cards = this.dashboard.cards.filter(card => card.id !== cardId);
+  },
+  startDrag(event, card) {
+    this.draggedCard = card;
+    this.isDragging = true;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/html', event.target.outerHTML);
+    event.target.style.opacity = '0.5';
+  },
+  endDrag(event) {
+    event.target.style.opacity = '';
+    this.isDragging = false;
+    this.draggedCard = null;
+  },
+  allowDrop(event) {
+    event.preventDefault();
+  },
+  drop(event, targetCol, targetRow) {
+    event.preventDefault();
+    if (this.draggedCard) {
+      // Calculer la nouvelle position basée sur la zone de drop
+      const rect = event.target.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      
+      // Calculer la colonne et la ligne basées sur la position relative
+      const colWidth = rect.width / 12;
+      const newCol = Math.max(1, Math.min(12, Math.floor(x / colWidth) + 1));
+      
+      // Mettre à jour la position de la carte
+      this.draggedCard.position = {
+        col: newCol,
+        row: targetRow || 1
+      };
+      
+      // S'assurer que la carte ne dépasse pas la grille
+      if (this.draggedCard.position.col + this.draggedCard.size.width > 13) {
+        this.draggedCard.position.col = 13 - this.draggedCard.size.width;
+      }
+    }
+  },
+  getCardStyle(card) {
+    return {
+      'grid-column-start': card.position.col,
+      'grid-column-end': card.position.col + card.size.width,
+      'grid-row-start': card.position.row,
+      'grid-row-end': card.position.row + card.size.height
+    };
   },
   async saveDashboard() {
     try {
@@ -123,15 +172,35 @@
 
     <!-- Dashboard Canvas -->
     <div class="flex-1 p-4 bg-gray-900 overflow-auto">
-      <div class="grid grid-cols-12 gap-4 min-h-full">
+      <div class="grid grid-cols-12 gap-4 min-h-full relative" 
+           @dragover="allowDrop($event)"
+           @drop="drop($event)">
+        
+        <!-- Grid lines for visual guidance -->
+        <div class="absolute inset-0 pointer-events-none opacity-20">
+          <div class="grid grid-cols-12 h-full">
+            <template x-for="i in 12">
+              <div class="border-r border-gray-600 h-full"></div>
+            </template>
+          </div>
+        </div>
+        
         <template x-for="card in dashboard.cards">
           <div 
-            :class="`col-span-${card.size.width} bg-gray-800 p-4 rounded-lg border-2 border-gray-700 hover:border-red-500 transition-colors cursor-pointer`"
+            :style="getCardStyle(card)"
+            class="bg-gray-800 p-4 rounded-lg border-2 border-gray-700 hover:border-red-500 transition-colors cursor-move relative z-10"
+            :class="{ 'opacity-50': isDragging && draggedCard?.id === card.id }"
+            draggable="true"
+            @dragstart="startDrag($event, card)"
+            @dragend="endDrag($event)"
             @click="selectedCard = card"
           >
             <div class="flex justify-between items-center mb-2">
-              <h4 class="text-white font-medium" x-text="card.type"></h4>
-              <button @click="removeCard(card.id)" class="text-red-500 hover:text-red-700">
+              <h4 class="text-white font-medium flex items-center">
+                <span class="mr-2 cursor-grab">⋮⋮</span>
+                <span x-text="card.type"></span>
+              </h4>
+              <button @click.stop="removeCard(card.id)" class="text-red-500 hover:text-red-700 z-20">
                 ×
               </button>
             </div>
@@ -144,6 +213,17 @@
               <div x-show="card.type === 'search'">🔍 Search functionality</div>
               <div x-show="card.type === 'stats'">📈 Statistics display</div>
             </div>
+            <div class="text-xs text-gray-500 mt-2">
+              Position: Col <span x-text="card.position.col"></span>, Row <span x-text="card.position.row"></span>
+            </div>
+          </div>
+        </template>
+        
+        <!-- Drop zones for empty areas -->
+        <template x-for="i in 12">
+          <div class="min-h-[100px] border-2 border-dashed border-transparent hover:border-gray-600 transition-colors"
+               @dragover="allowDrop($event)"
+               @drop="drop($event, i, 1)">
           </div>
         </template>
       </div>
