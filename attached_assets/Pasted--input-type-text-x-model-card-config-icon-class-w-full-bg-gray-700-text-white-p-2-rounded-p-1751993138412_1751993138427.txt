@@ -1,0 +1,696 @@
+<input type=​"text" x-model=​"card.config.icon" class=​"w-full bg-gray-700 text-white p-2 rounded" placeholder=​"📊">​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'size')
+[Alpine] selectedCard.size.width @ VM6433:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'size')
+[Alpine] selectedCard.size.height @ VM6437:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'type')
+[Alpine] selectedCard.type === 'datatable' @ VM6439:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'config')
+[Alpine] selectedCard.config.dataSource @ VM6440:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'config')
+[Alpine] selectedCard.config.saveToLocalDB @ VM6446:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'config')
+[Alpine] selectedCard.config.saveToLocalDB @ VM6446:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'config')
+[Alpine] selectedCard.config.localDBName @ VM6448:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'config')
+[Alpine] selectedCard.config.title @ VM6450:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'config')
+[Alpine] (selectedCard.config.columns || []) @ VM6452:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+to @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'config')
+[Alpine] selectedCard.config.pagination @ VM6453:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'config')
+[Alpine] selectedCard.config.pagination @ VM6453:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'config')
+[Alpine] selectedCard.config.pageSize @ VM6455:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'config')
+[Alpine] selectedCard.config.enableSearch @ VM6457:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'config')
+[Alpine] selectedCard.config.enableExport @ VM6459:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'type')
+[Alpine] selectedCard.type === 'graph' @ VM6461:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.type @ VM6462:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.dataSource @ VM6464:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.title @ VM6466:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'type')
+[Alpine] selectedCard.type === 'kanban' @ VM6468:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.title @ VM6466:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.dataSource @ VM6464:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.columns @ VM6469:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'type')
+[Alpine] selectedCard.type === 'actions' @ VM6471:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.title @ VM6466:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.actions @ VM6472:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'type')
+[Alpine] selectedCard.type === 'chat' @ VM6474:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.title @ VM6466:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.wsUrl @ VM6475:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.defaultUser @ VM6477:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'type')
+[Alpine] selectedCard.type === 'search' @ VM6479:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.title @ VM6466:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.searchApi @ VM6480:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.placeholder @ VM6482:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.instantSearch @ VM6484:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of null (reading 'type')
+[Alpine] selectedCard.type === 'stats' @ VM6486:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.title @ VM6466:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.dataSource @ VM6464:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
+[Alpine] card.config.valueField @ VM6487:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: card is not defined
