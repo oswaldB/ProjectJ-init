@@ -315,7 +315,7 @@ def api_save_form():
         return jsonify({"error": "Invalid form data"}), 400
     key = f'sultan/forms/{form["id"]}.json'
     try:
-        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json.dumps(form))
+        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json.dumps(form, ensure_ascii=False))
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save form: {e}")
@@ -329,6 +329,21 @@ def api_delete_form(form_id):
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to delete form: {e}")
+        return jsonify({"error": str(e)}), 500
+
+# Add the missing API route for Sultan forms save
+@sultan_bp.route('/api/sultan/forms/save', methods=['POST'])
+def api_sultan_save_form():
+    data = request.json
+    form = data.get('form')
+    if not form:
+        return jsonify({"error": "Invalid form data"}), 400
+    key = f'sultan/forms/{form["id"]}.json'
+    try:
+        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json.dumps(form, ensure_ascii=False))
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to save form: {e}")
         return jsonify({"error": str(e)}), 500
 
 @sultan_bp.route('/api/templates/<template_id>')
