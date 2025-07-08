@@ -42,7 +42,51 @@
       alert('Failed to save form');
     }
   }
-}{% endblock %}c duplicateForm(form) {
+}{% endblock %}
+
+{% block content %}
+<div class="p-6" x-data="{
+  page: 'forms-list',
+  forms: [],
+  searchQuery: '',
+  statuses: ['DRAFT', 'PROD', 'OLD VERSION'],
+  importJson: '',
+  filteredForms() {
+    return this.forms.filter(form => 
+      form.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+      form.id.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+      form.status?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+      form.user_email.toLowerCase().includes(this.searchQuery.toLowerCase())
+    );
+  },
+  async init() {
+    const userEmail = localStorage.getItem('user_email');
+    try {
+      const response = await fetch(`/api/sultan/forms?email=${userEmail}&status=${this.form?.status || 'Draft'}`);
+      this.forms = await response.json();
+    } catch (error) {
+      console.error('Failed to load forms:', error);
+      this.forms = [];
+    }
+  },
+  async saveForm(form) {
+    const userEmail = localStorage.getItem('user_email');
+    try {
+      await fetch('/api/sultan/forms/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: userEmail, 
+          form: form,
+          status: form.status 
+        })
+      });
+    } catch (error) {
+      console.error('Failed to save form:', error);
+      alert('Failed to save form');
+    }
+  },
+  async duplicateForm(form) {</old_str>
       const userEmail = localStorage.getItem('user_email');
       const duplicate = {
         ...form,
@@ -74,11 +118,30 @@
         console.error('Failed to delete form:', error);
         alert('Failed to delete form');
       }
+    },
+    async importForm() {
+      if (!this.importJson.trim()) {
+        alert('Please paste form JSON');
+        return;
+      }
+      
+      try {
+        const formData = JSON.parse(this.importJson);
+        const userEmail = localStorage.getItem('user_email');
+        formData.user_email = userEmail;
+        formData.id = `forms-${Date.now()}`;
+        
+        await this.saveForm(formData);
+        this.forms.push(formData);
+        this.importJson = '';
+        this.page = 'forms-list';
+      } catch (error) {
+        console.error('Failed to import form:', error);
+        alert('Invalid JSON format');
+      }
     }
   }
-{% endblock %}
-
-{% block content %}
+}"&gt;</old_str>
 <div class="p-6">
   <h1 class="text-2xl font-bold text-white mb-6">Forms</h1>
 
