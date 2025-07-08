@@ -12,13 +12,13 @@
     layout: 'grid'
   },
   availableCards: [
-    { type: 'graph', name: 'Graph', icon: '📊' },
-    { type: 'datatable', name: 'Data Table', icon: '📋' },
-    { type: 'kanban', name: 'Kanban Board', icon: '📌' },
-    { type: 'actions', name: 'Actions', icon: '⚡' },
-    { type: 'chat', name: 'Chat', icon: '💬' },
-    { type: 'search', name: 'Search Bar', icon: '🔍' },
-    { type: 'stats', name: 'Stats Card', icon: '📈' }
+    { type: 'graph', name: 'Graph', icon: '' },
+    { type: 'datatable', name: 'Data Table', icon: '' },
+    { type: 'kanban', name: 'Kanban Board', icon: '' },
+    { type: 'actions', name: 'Actions', icon: '' },
+    { type: 'chat', name: 'Chat', icon: '' },
+    { type: 'search', name: 'Search Bar', icon: '' },
+    { type: 'stats', name: 'Stats Card', icon: '' }
   ],
   selectedCard: null,
   gridColumns: Array.from({length: 12}, (_, i) => i + 1),
@@ -155,13 +155,13 @@
               </div>
             </div>
             <div class="text-gray-400 text-sm">
-              <div x-show="card.type === 'graph'">📊 Graph visualization</div>
-              <div x-show="card.type === 'datatable'">📋 Data table display</div>
-              <div x-show="card.type === 'kanban'">📌 Kanban board</div>
-              <div x-show="card.type === 'actions'">⚡ Action buttons</div>
-              <div x-show="card.type === 'chat'">💬 Chat interface</div>
-              <div x-show="card.type === 'search'">🔍 Search functionality</div>
-              <div x-show="card.type === 'stats'">📈 Statistics display</div>
+              <div x-show="card.type === 'graph'">Graph visualization</div>
+              <div x-show="card.type === 'datatable'">Data table display</div>
+              <div x-show="card.type === 'kanban'">Kanban board</div>
+              <div x-show="card.type === 'actions'">Action buttons</div>
+              <div x-show="card.type === 'chat'">Chat interface</div>
+              <div x-show="card.type === 'search'">Search functionality</div>
+              <div x-show="card.type === 'stats'">Statistics display</div>
             </div>
           </div>
         </template>
