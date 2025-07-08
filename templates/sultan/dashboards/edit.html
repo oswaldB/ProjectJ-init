@@ -2,7 +2,10 @@
 
 {% block title %}Edit Dashboard{% endblock %}
 
-{% block alpine_component %}{
+{% block alpine_component %}{ page: 'dashboard-edit' }{% endblock %}
+
+{% block content %}
+<div class="flex h-screen" x-data="{
   page: 'dashboard-edit',
   dashboard: {
     id: '',
@@ -176,10 +179,7 @@
       card.config.columns = columns;
     }
   }
-}{% endblock %}
-
-{% block content %}
-<div class="flex h-screen">
+}" x-init="init()">
   <!-- Sidebar -->
   <div class="w-64 bg-gray-800 border-r border-gray-700 p-4 overflow-y-auto">
     <h3 class="text-white font-semibold mb-4">Dashboard Cards</h3>
