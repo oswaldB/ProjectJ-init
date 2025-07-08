@@ -6,7 +6,7 @@
     <!-- Data Source Selection -->
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-2">Data Source</label>
-      <select x-model="card.config.dataSource" @change="await loadFormColumns()" class="w-full bg-gray-700 text-white p-2 rounded">
+      <select x-model="card.config.dataSource" @change="await loadFormColumns()" class="w-full bg-gray-700 text-white p-2 rounded" x-show="card && card.config">
         <option value="">Select data source...</option>
         <template x-for="form in availableForms" :key="form.id">
           <option :value="form.id" x-text="form.name"></option>
@@ -15,7 +15,7 @@
     </div>
 
     <!-- Local DB Storage -->
-    <div x-show="card.config.dataSource">
+    <div x-show="card && card.config && card.config.dataSource">
       <label class="flex items-center text-gray-300 mb-2">
         <input type="checkbox" x-model="card.config.saveToLocalDB" class="mr-2">
         Save to Local DB (PouchDB)
@@ -33,10 +33,10 @@
     </div>
 
     <!-- Column Configuration -->
-    <div x-show="card.config.dataSource">
+    <div x-show="card && card.config && card.config.dataSource">
       <label class="block text-sm font-medium text-gray-300 mb-2">Column Configuration</label>
       <div class="bg-gray-700 p-3 rounded max-h-60 overflow-y-auto">
-        <template x-for="(column, index) in card.config.columns">
+        <template x-for="(column, index) in (card.config.columns || [])">
           <div class="flex items-center space-x-2 mb-2 p-2 bg-gray-600 rounded">
             <!-- Drag Handle -->
             <div class="cursor-move text-gray-400">⋮⋮</div>

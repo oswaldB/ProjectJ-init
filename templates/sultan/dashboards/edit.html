@@ -30,7 +30,7 @@
     } else {
       this.dashboard.id = 'dashboard-' + Date.now();
     }
-    
+
     // Load available forms for data table cards
     await this.loadAvailableForms();
   },
@@ -44,17 +44,28 @@
       console.error('Failed to load dashboard:', error);
     }
   },
-  addCard(cardType) {
-    const newCard = {
-      id: 'card-' + Date.now(),
-      type: cardType,
-      position: { row: 1, col: 1 },
-      size: { width: 3, height: 2 },
-      config: this.getDefaultConfig(cardType)
+  addCard(type) {
+    const card = {
+      id: Date.now().toString(),
+      type: type,
+      title: `New ${type}`,
+      size: { width: 4, height: 3 },
+      config: {
+        dataSource: '',
+        saveToLocalDB: false,
+        localDBName: '',
+        title: '',
+        columns: [],
+        pagination: true,
+        pageSize: 25,
+        enableSearch: true,
+        enableExport: false
+      }
     };
-    this.dashboard.cards.push(newCard);
+    this.dashboard.cards.push(card);
+    this.selectedCard = card;
   },
-  
+
   getDefaultConfig(cardType) {
     const defaults = {
       datatable: {
@@ -76,7 +87,7 @@
         actions: []
       }
     };
-    
+
     return defaults[cardType] || {};
   },
   removeCard(cardId) {
@@ -110,10 +121,10 @@
       console.error('Failed to save dashboard:', error);
     }
   },
-  
+
   // Form and data source management
   availableForms: [],
-  
+
   async loadAvailableForms() {
     try {
       const response = await fetch('/pc-analytics-jaffar/sultan/api/forms');
@@ -127,10 +138,10 @@
 
   async loadFormColumns(card) {
     if (!card.config.dataSource) return;
-    
+
     try {
       let columns = [];
-      
+
       if (card.config.dataSource === 'jaffar') {
         // Jaffar issues columns
         columns = [
@@ -155,7 +166,7 @@
           }));
         }
       }
-      
+
       card.config.columns = columns;
     } catch (error) {
       console.error('Failed to load columns:', error);
@@ -176,7 +187,25 @@
       [columns[index], columns[index + 1]] = [columns[index + 1], columns[index]];
       card.config.columns = columns;
     }
-  }
+  },
+  selectCard(card) {
+    this.selectedCard = {
+      ...card,
+      size: card.size || { width: 4, height: 3 },
+      config: {
+        dataSource: '',
+        saveToLocalDB: false,
+        localDBName: '',
+        title: '',
+        columns: [],
+        pagination: true,
+        pageSize: 25,
+        enableSearch: true,
+        enableExport: false,
+        ...card.config
+      }
+    };
+  },
 }" x-init="init()">
   <!-- Sidebar -->
   <div class="w-64 bg-gray-800 border-r border-gray-700 p-4 overflow-y-auto">
@@ -231,7 +260,7 @@
         <template x-for="(card, index) in dashboard.cards">
           <div 
             :class="`col-span-${card.size.width} bg-gray-800 p-4 rounded-lg border-2 border-gray-700 hover:border-red-500 transition-colors cursor-pointer`"
-            @click="selectedCard = card"
+            @click="selectCard(card)"
           >
             <div class="flex justify-between items-center mb-2">
               <h4 class="text-white font-medium" x-text="card.type"></h4>
@@ -285,11 +314,11 @@
             <option value="4">Extra Large</option>
           </select>
         </div>
-        
+
         <!-- Data Table Specific Configuration -->
         <div x-show="selectedCard.type === 'datatable'" class="space-y-3">
           <hr class="border-gray-600">
-          
+
           <!-- Data Source Selection -->
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
