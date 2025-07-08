@@ -3,27 +3,28 @@ import logging
 import json  # Add import for JSON
 import datetime  # Add import for datetime
 from werkzeug.utils import secure_filename
-from stratpy.utils.email import Email  # Replace Flask-Mail with stratpy.utils.email.Email
-from apps.pc_analytics_jaffar.services.s3_service import (
+from services.email_service import Email
+from services.s3_service import (
     save_in_global_db,
     delete,
     get_max_from_global_db,
     get_one_file,
     list_folder_with_filter,
-    upload_file_to_s3  # Import the new function
+    upload_file_to_s3
 )
-import boto3  # Add import for boto3
-from stratpy.engine import settings  # Import settings for S3 configuration
+import boto3
+import os
 
 # Initialize S3 client
-s3 = boto3.client(
-    "s3",
-    aws_access_key_id=settings.SG_ID_KEY,
-    aws_secret_access_key=settings.SG_SECRET,
-    endpoint_url=settings.SG_URL
-)
+REGION = os.environ.get('AWS_REGION') or 'eu-west-2'
+BUCKET_NAME = os.environ.get('BUCKET_NAME') or 'pc-analytics-jaffar'
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 
-BUCKET_NAME = settings.SG_BUCKET  # Add bucket name from settings
+s3 = boto3.client('s3',
+                  region_name=REGION,
+                  aws_access_key_id=AWS_ACCESS_KEY_ID,
+                  aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
 logger = logging.getLogger(__name__)
 

@@ -1,206 +1,186 @@
 
+import boto3
 import json
-import os
 import logging
-from config import s3, BUCKET_NAME, LOCAL_BUCKET_DIR, CircularRefEncoder
+import os
 
 logger = logging.getLogger(__name__)
 
-# Basic CRUD operations
-def get_max_from_global_db(prefix):
-    try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-        if 'Contents' in response:
-            max_value = max(response['Contents'], key=lambda x: x['LastModified'])
-            response = s3.get_object(Bucket=BUCKET_NAME, Key=max_value['Key'])
-            return json.loads(response['Body'].read().decode('utf-8'))
-    except Exception as e:
-        logger.error(f"Failed to get max from DB: {e}")
-        return None
+# AWS configuration
+REGION = os.environ.get('AWS_REGION') or 'eu-west-2'
+BUCKET_NAME = os.environ.get('BUCKET_NAME') or 'pc-analytics-jaffar'
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 
-def load_from_global_db(key):
-    try:
-        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-        return json.loads(response['Body'].read().decode('utf-8'))
-    except Exception as e:
-        logger.error(f"Failed to load from DB: {e}")
-        return None
+# Initialize S3 client
+s3 = boto3.client('s3',
+                  region_name=REGION,
+                  aws_access_key_id=AWS_ACCESS_KEY_ID,
+                  aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
-def save_in_global_db(key, obj):
-    json_object = json.dumps(obj, separators=(',', ':'), cls=CircularRefEncoder)
+
+def save_in_global_db(key, data):
+    """
+    Save data to S3. Supports both JSON and YAML formats.
+    """
     try:
-        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json_object)
-        full_path = os.path.join(LOCAL_BUCKET_DIR, key)
-        os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        with open(full_path, "w", encoding='utf-8') as f:
-            f.write(json_object)
-        return True
+        if key.endswith('.yml'):
+            content_type = 'application/x-yaml'
+        else:
+            content_type = 'application/json'
+            data = json.dumps(data, ensure_ascii=False)
+
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
+                      Body=data.encode('utf-8'),
+                      ContentType=content_type)
+        logger.info(f"Successfully saved data to {key}")
     except Exception as e:
-        logger.error(f"Failed to save data: {e}")
-        return False
+        logger.error(f"Failed to save data to {key}: {e}")
+        raise
+
+
+def get_one_from_global_db(filename):
+    try:
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=filename)
+        content = response['Body'].read().decode('utf-8')
+        return json.loads(content)
+    except Exception as e:
+        logger.error(f"Error getting file from db {filename}: {e}")
+        return {}
+
+
+def get_max_from_global_db(filename):
+    """
+    Returns the content of the file ending with the highest number for a given filename prefix in S3.
+    """
+    max_number = -1
+    max_filename = None
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=filename)
+        for obj in response.get('Contents', []):
+            try:
+                file = obj['Key']
+                parts = file.split('-')
+                if len(parts) > 1:
+                    number = parts[-1].split('.')[0]
+                    if number.isdigit() and int(number) > max_number:
+                        max_number = int(number)
+                        max_filename = file
+            except Exception:
+                continue
+        if max_filename:
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=max_filename)
+            content = response['Body'].read().decode('utf-8')
+            return json.loads(content)
+        else:
+            return {}
+    except Exception as e:
+        logger.error(f"Error getting max file from db {filename}: {e}")
+        return {}
+
 
 def delete(key):
+    """Delete an object from S3"""
     try:
         s3.delete_object(Bucket=BUCKET_NAME, Key=key)
-        full_path = os.path.join(LOCAL_BUCKET_DIR, key)
-        if os.path.exists(full_path):
-            os.remove(full_path)
+        logger.info(f"Successfully deleted {key}")
     except Exception as e:
         logger.error(f"Failed to delete {key}: {e}")
+        raise
 
-def list_objects(prefix):
+
+def get_one_file(key):
+    """Get a single file from S3"""
     try:
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+        content = response['Body'].read().decode('utf-8')
+        return json.loads(content)
+    except Exception as e:
+        logger.error(f"Error getting file {key}: {e}")
+        return None
+
+
+def list_folder_with_filter(prefix):
+    """List objects in S3 with a given prefix"""
+    try:
+        objects = []
         response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-        return response.get('Contents', [])
+        for obj in response.get('Contents', []):
+            try:
+                content = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                data = json.loads(content['Body'].read().decode('utf-8'))
+                objects.append(data)
+            except Exception as e:
+                logger.error(f"Failed to load object {obj['Key']}: {e}")
+        return objects
     except Exception as e:
         logger.error(f"Failed to list objects with prefix {prefix}: {e}")
         return []
 
-def object_exists(key):
+
+def upload_file_to_s3(file, key):
+    """Upload a file to S3"""
     try:
-        s3.head_object(Bucket=BUCKET_NAME, Key=key)
-        return True
-    except:
-        return False
+        s3.upload_fileobj(file, BUCKET_NAME, key)
+        logger.info(f"Successfully uploaded file to {key}")
+    except Exception as e:
+        logger.error(f"Failed to upload file to {key}: {e}")
+        raise
 
-# Issue-specific operations
-def get_issue(issue_id):
-    for status in ['draft', 'new']:
-        try:
-            key = f'jaffar/issues/{status}/{issue_id}.json'
-            return load_from_global_db(key)
-        except:
-            continue
-    return None
 
-def list_issues():
-    issues = []
-    for status in ['draft', 'new']:
-        prefix = f'jaffar/issues/{status}/'
-        objects = list_objects(prefix)
-        for obj in objects:
+def list_sultan_objects(object_type):
+    """List Sultan objects by type"""
+    try:
+        objects = []
+        prefix = f'sultan/{object_type}/'
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        for obj in response.get('Contents', []):
             try:
-                issue = load_from_global_db(obj['Key'])
-                if issue and 'changes' in issue:
-                    del issue['changes']  # Remove changes to reduce payload
-                if issue:
-                    issues.append(issue)
+                content = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
+                data = json.loads(content['Body'].read().decode('utf-8'))
+                objects.append(data)
             except Exception as e:
-                logger.error(f"Error loading issue {obj['Key']}: {e}")
-    return issues
-
-def save_issue(issue_id, status, data):
-    # Check if issue already exists in 'new' status
-    new_key = f'jaffar/issues/new/{issue_id}.json'
-    if object_exists(new_key) and status == 'draft':
-        key = new_key
-    else:
-        key = f'jaffar/issues/{status}/{issue_id}.json'
-    
-    # Add config array
-    config = []
-    configs = {
-        "escalation": get_max_filename_from_global_db("escalationRules.json"),
-        "questions": get_max_filename_from_global_db("jaffarConfig.json"),
-        "templates": get_max_filename_from_global_db("templates.json"),
-        "rules": get_max_filename_from_global_db("rules.json")
-    }
-    
-    for key_name, value in configs.items():
-        if value:
-            config.append({key_name: value})
-    
-    data['config'] = config
-    return save_in_global_db(key, data)
-
-def get_issue_changes(issue_id):
-    key = f'jaffar/issues/changes/{issue_id}-changes.json'
-    try:
-        return load_from_global_db(key) or []
-    except:
+                logger.error(f"Failed to load object {obj['Key']}: {e}")
+        return objects
+    except Exception as e:
+        logger.error(f"Failed to list {object_type}: {e}")
         return []
 
-def save_issue_changes(issue_id, new_changes):
-    if not isinstance(new_changes, list):
-        new_changes = [new_changes]
-    
-    if not new_changes:
-        return
-    
-    key = f'jaffar/issues/changes/{issue_id}-changes.json'
-    
-    try:
-        existing_changes = load_from_global_db(key) or []
-        if not isinstance(existing_changes, list):
-            existing_changes = [existing_changes]
-        
-        for change in new_changes:
-            if change not in existing_changes:
-                existing_changes.append(change)
-        
-        save_in_global_db(key, existing_changes)
-    except Exception as e:
-        logger.error(f"Error saving changes: {e}")
 
-def get_max_filename_from_global_db(suffix):
-    prefix = 'jaffar/configs/'
+def get_sultan_object(object_type, object_id):
+    """Get a Sultan object by type and ID"""
     try:
-        objects = list_objects(prefix)
-        max_num = 0
-        max_key = None
-        
-        for obj in objects:
-            if obj['Key'].endswith(suffix):
-                num = int(obj['Key'].split('/')[-1].split('-')[0])
-                if num > max_num:
-                    max_num = num
-                    max_key = obj['Key']
-        return max_key
+        key = f'sultan/{object_type}/{object_id}.json'
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+        content = response['Body'].read().decode('utf-8')
+        return json.loads(content)
     except Exception as e:
-        logger.error(f"Failed to get max filename: {e}")
+        logger.error(f"Error getting {object_type} {object_id}: {e}")
         return None
 
-# Sultan module operations
-def list_sultan_objects(module_type):
-    """Generic function to list Sultan objects (escalations, sites, emailgroups, etc.)"""
-    objects = []
-    prefix = f'sultan/{module_type}/'
+
+def save_sultan_object(object_type, object_id, data):
+    """Save a Sultan object"""
     try:
-        s3_objects = list_objects(prefix)
-        for obj in s3_objects:
-            try:
-                content = load_from_global_db(obj['Key'])
-                if content:
-                    objects.append(content)
-            except Exception as e:
-                logger.error(f"Failed to load {module_type} {obj['Key']}: {e}")
+        key = f'sultan/{object_type}/{object_id}.json'
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
+                      Body=json.dumps(data, ensure_ascii=False),
+                      ContentType='application/json')
+        logger.info(f"Successfully saved {object_type} {object_id}")
+        return True
     except Exception as e:
-        logger.error(f"Failed to list {module_type}: {e}")
-    return objects
+        logger.error(f"Failed to save {object_type} {object_id}: {e}")
+        return False
 
-def get_sultan_object(module_type, object_id):
-    """Generic function to get a Sultan object"""
-    key = f'sultan/{module_type}/{object_id}.json'
-    return load_from_global_db(key)
 
-def save_sultan_object(module_type, object_id, data):
-    """Generic function to save a Sultan object"""
-    key = f'sultan/{module_type}/{object_id}.json'
-    return save_in_global_db(key, data)
-
-def delete_sultan_object(module_type, object_id):
-    """Generic function to delete a Sultan object"""
-    key = f'sultan/{module_type}/{object_id}.json'
-    return delete(key)
-
-# Feedback operations
-def get_feedback_list():
-    key = 'users_feedbacks/ideas.json'
+def delete_sultan_object(object_type, object_id):
+    """Delete a Sultan object"""
     try:
-        return load_from_global_db(key) or []
-    except:
-        return []
-
-def save_feedback_list(ideas):
-    key = 'users_feedbacks/ideas.json'
-    return save_in_global_db(key, ideas)
+        key = f'sultan/{object_type}/{object_id}.json'
+        s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+        logger.info(f"Successfully deleted {object_type} {object_id}")
+    except Exception as e:
+        logger.error(f"Failed to delete {object_type} {object_id}: {e}")
+        raise

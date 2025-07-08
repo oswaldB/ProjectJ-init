@@ -1,16 +1,52 @@
 
+import boto3
 import logging
-from concurrent.futures import ThreadPoolExecutor
+import os
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-email_executor = ThreadPoolExecutor(max_workers=2)
 
-def send_confirmation_if_needed(issue_data):
-    """Send confirmation email if needed based on issue data"""
-    try:
-        logger.info(f"Processing confirmation email for issue: {issue_data.get('id', 'unknown')}")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to send confirmation email: {e}")
-        return False
+# AWS configuration
+REGION = os.environ.get('AWS_REGION') or 'eu-west-2'
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+
+
+class Email:
+    def __init__(self, to, subject, content, cc=None):
+        self.to = to if isinstance(to, list) else [to]
+        self.subject = subject
+        self.content = content
+        self.cc = cc or []
+
+    def send(self):
+        client = boto3.client(
+            'ses',
+            region_name=REGION,
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+
+        try:
+            destination = {'ToAddresses': self.to}
+            if self.cc:
+                destination['CcAddresses'] = self.cc
+
+            response = client.send_email(
+                Destination=destination,
+                Message={
+                    'Body': {
+                        'Html': {
+                            'Charset': 'UTF-8',
+                            'Data': self.content,
+                        },
+                    },
+                    'Subject': {
+                        'Charset': 'UTF-8',
+                        'Data': self.subject,
+                    },
+                },
+                Source="palms.reporting@noexternalmail.hsbc.com",
+            )
+            logger.info(f"Email sent! Message ID: {response['MessageId']}")
+        except Exception as e:
+            logger.error(f"Error sending email: {e}")
+            raise
