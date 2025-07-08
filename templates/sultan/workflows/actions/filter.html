@@ -70,10 +70,10 @@
 
                   <!-- Email Block -->
                   <template x-if="branchBlock.type === 'email'">
-                    <div class="bg-green-900 border-2 border-green-600 rounded-lg p-4">
+                    <div class="bg-red-500 border-2 border-red-600 rounded-lg p-4">
                       <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center space-x-2">
-                          <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <div class="w-3 h-3 bg-red-500 rounded-full"></div>
                           <h4 class="text-white font-semibold">Send Email</h4>
                           <button @click="removeFromBranch(blockIndex, 'true', branchIndex)" class="text-red-400 hover:text-red-300">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -446,10 +446,10 @@
 
                   <!-- Email Block -->
                   <template x-if="branchBlock.type === 'email'">
-                    <div class="bg-green-900 border-2 border-green-600 rounded-lg p-4">
+                    <div class="bg-red-500 border-2 border-red-600 rounded-lg p-4">
                       <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center space-x-2">
-                          <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <div class="w-3 h-3 bg-red-500 rounded-full"></div>
                           <h4 class="text-white font-semibold">Send Email</h4>
                           <button @click="removeFromBranch(blockIndex, 'false', branchIndex)" class="text-red-400 hover:text-red-300">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -513,7 +513,7 @@
                                   }, true);
                                 }
 
-                                const quill = new Quill($el, {                                  theme: 'snow',
+const quill = new Quill($el, {                                  theme: 'snow',
                                   modules: {
                                     toolbar: [
                                       ['bold', 'italic', 'underline'],
