@@ -1,4 +1,3 @@
-
 {% extends "sultan/base.html" %}
 
 {% block title %}Edit Dashboard{% endblock %}
@@ -53,6 +52,18 @@
   },
   removeCard(cardId) {
     this.dashboard.cards = this.dashboard.cards.filter(card => card.id !== cardId);
+  },
+  moveCardLeft(cardIndex) {
+    if (cardIndex > 0) {
+      const card = this.dashboard.cards.splice(cardIndex, 1)[0];
+      this.dashboard.cards.splice(cardIndex - 1, 0, card);
+    }
+  },
+  moveCardRight(cardIndex) {
+    if (cardIndex < this.dashboard.cards.length - 1) {
+      const card = this.dashboard.cards.splice(cardIndex, 1)[0];
+      this.dashboard.cards.splice(cardIndex + 1, 0, card);
+    }
   },
   async saveDashboard() {
     try {
@@ -124,16 +135,24 @@
     <!-- Dashboard Canvas -->
     <div class="flex-1 p-4 bg-gray-900 overflow-auto">
       <div class="grid grid-cols-12 gap-4 min-h-full">
-        <template x-for="card in dashboard.cards">
+        <template x-for="(card, index) in dashboard.cards">
           <div 
             :class="`col-span-${card.size.width} bg-gray-800 p-4 rounded-lg border-2 border-gray-700 hover:border-red-500 transition-colors cursor-pointer`"
             @click="selectedCard = card"
           >
             <div class="flex justify-between items-center mb-2">
               <h4 class="text-white font-medium" x-text="card.type"></h4>
-              <button @click="removeCard(card.id)" class="text-red-500 hover:text-red-700">
-                ×
-              </button>
+              <div>
+                <button @click.stop="moveCardLeft(index)" :disabled="index === 0" class="text-gray-500 hover:text-white disabled:text-gray-700 mr-2">
+                  &lt;
+                </button>
+                <button @click.stop="moveCardRight(index)" :disabled="index === dashboard.cards.length - 1" class="text-gray-500 hover:text-white disabled:text-gray-700">
+                  &gt;
+                </button>
+                <button @click.stop="removeCard(card.id)" class="text-red-500 hover:text-red-700">
+                  ×
+                </button>
+              </div>
             </div>
             <div class="text-gray-400 text-sm">
               <div x-show="card.type === 'graph'">📊 Graph visualization</div>
