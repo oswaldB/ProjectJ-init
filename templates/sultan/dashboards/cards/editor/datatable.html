@@ -4,9 +4,9 @@
   <div class="space-y-4">
     
     <!-- Data Source Selection -->
-    <div>
+    <div x-show="selectedCard && selectedCard.config">
       <label class="block text-sm font-medium text-gray-300 mb-2">Data Source</label>
-      <select x-model="selectedCard.config.dataSource" @change="await loadFormColumns(selectedCard)" class="w-full bg-gray-700 text-white p-2 rounded" x-show="selectedCard && selectedCard.config">
+      <select x-model="selectedCard.config.dataSource" @change="await loadFormColumns(selectedCard)" class="w-full bg-gray-700 text-white p-2 rounded">
         <option value="">Select data source...</option>
         <template x-for="form in availableForms">
           <option :value="form.id" x-text="form.name"></option>
@@ -17,19 +17,19 @@
     <!-- Local DB Storage -->
     <div x-show="selectedCard && selectedCard.config && selectedCard.config.dataSource">
       <label class="flex items-center text-gray-300 mb-2">
-        <input type="checkbox" x-model="selectedCard.config.saveToLocalDB" class="mr-2">
+        <input type="checkbox" x-model="selectedCard.config.saveToLocalDB" class="mr-2" x-show="selectedCard && selectedCard.config">
         Save to Local DB (PouchDB)
       </label>
       <div x-show="selectedCard.config.saveToLocalDB" class="ml-6">
         <label class="block text-sm font-medium text-gray-300 mb-1">Local DB Name</label>
-        <input type="text" x-model="selectedCard.config.localDBName" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="table_name">
+        <input type="text" x-model="selectedCard.config.localDBName" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="table_name" x-show="selectedCard && selectedCard.config">
       </div>
     </div>
 
     <!-- Table Title -->
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Table Title</label>
-      <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Table title">
+      <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Table title" x-show="selectedCard && selectedCard.config">
     </div>
 
     <!-- Column Configuration -->
