@@ -17,6 +17,7 @@ import uuid
 from blueprint.forms import forms_blueprint
 from blueprint.workflow import workflow_bp
 from blueprint.dashboard import dashboard_bp
+from blueprint.jaffar import jaffar_blueprint
 
 # Import services
 from services.s3_service import save_in_global_db, get_one_from_global_db, get_max_from_global_db
@@ -28,6 +29,7 @@ app = Flask(__name__)
 app.register_blueprint(forms_blueprint)
 app.register_blueprint(workflow_bp)
 app.register_blueprint(dashboard_bp)
+app.register_blueprint(jaffar_blueprint)
 
 logger = logging.getLogger(__name__)
 # Configure logging
@@ -162,75 +164,7 @@ def validate_save_request(data):
     return True
 
 
-@app.route('/')
-def index():
-    return render_template('jaffar/index.html')
-
-
-@app.route('/grid')
-def grid():
-    return render_template('jaffar/grid.html')
-
-
-@app.route('/dashboard/<dashboard_id>')
-def dashboard_grid(dashboard_id):
-    return render_template('jaffar/dashboard.html')
-
-
-@app.route('/edit')
-def edit():
-    return render_template('jaffar/edit.html')
-
-
-@app.route('/acknowledge')
-def acknowledge():
-    return render_template('jaffar/acknowledge.html')
-
-
-@app.route('/search')
-def search_page():
-    return render_template('jaffar/search.html')
-
-
-@app.route('/new-issue', methods=['POST'])
-def new_issue():
-    """
-    Create a new issue with a provided description.
-    """
-    try:
-        data = request.json
-        description = data.get('description', '').strip()
-
-        if not description:
-            return jsonify({'error': 'Description is required'}), 400
-
-        now = datetime.datetime.now()
-        issue_id = f'JAFF-ISS-{int(now.timestamp() * 1000)}'
-
-        issue_data = {
-            'id': issue_id,
-            'author': data.get('author', 'system'),
-            'status': 'draft',
-            'created_at': now.isoformat(),
-            'updated_at': now.isoformat(),
-            'issue-description': description
-        }
-
-        save_issue_to_storage(issue_id, 'draft', issue_data)
-        return jsonify({'status': 'success', 'issue_id': issue_id}), 201
-    except Exception as e:
-        logger.error(f"Failed to create new issue: {e}")
-        return jsonify({'error': str(e)}), 500
-
-
-@app.route('/edit/<issue_id>')
-def edit_with_id(issue_id):
-    return render_template('jaffar/edit.html')
-
-
-@app.route('/issue/<issue_id>')
-def view_issue(issue_id):
-    return render_template('jaffar/issue.html')
+# Main routes now handled by blueprints
 
 
 @app.route('/api/jaffar/templates/list')
@@ -869,14 +803,7 @@ def add_feedback_comment():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/feedback')
-def feedback():
-    return render_template('jaffar/feedbacks.html')
-
-
-@app.route('/login')
-def tutorial():
-    return render_template('jaffar/login.html')
+# Feedback and login routes now in Jaffar blueprint
 
 
 @app.route('/api/jaffar/grid-views/save', methods=['POST'])
@@ -919,52 +846,7 @@ def get_grid_view():
         return jsonify({}), 404
 
 
-@app.route('/escalation')
-def escalation():
-    issue_id = request.args.get('issueId')
-    issue = None
-    if issue_id:
-        # Cherche l'issue dans tous les statuts
-        for status in ['draft', 'new', 'open', 'failed']:
-            key = f'jaffar/issues/{status}/{issue_id}.json'
-            try:
-                response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-                issue = json.loads(response['Body'].read().decode('utf-8'))
-                break
-            except Exception:
-                continue
-    # Récupère le template email ayant le plus grand nombre
-    template_key = get_max_filename_from_global_db("templates")
-    template_subject = ""
-    template_message = ""
-    if template_key:
-        try:
-            content = s3.get_object(
-                Bucket=BUCKET_NAME,
-                Key=template_key)['Body'].read().decode('utf-8')
-            template_data = json.loads(content)
-            # On suppose que le template est un tableau ou un objet avec subject/message
-            if isinstance(template_data, list) and template_data:
-                template = template_data[0]
-            elif isinstance(template_data, dict):
-                template = template_data
-            else:
-                template = {}
-            # Utilise la fonction pour peupler les variables
-            populated = populate_template_vars(template, issue)
-            template_subject = populated["subject"]
-            template_message = populated["body"]
-        except Exception:
-            pass
-    return render_template('jaffar/escalation.html',
-                           issue=issue,
-                           template_subject=template_subject,
-                           template_message=template_message)
-
-
-@app.route('/remediation-board')
-def remediation_board():
-    return render_template('jaffar/remediation_board.html')
+# Escalation and remediation routes now in Jaffar blueprint
 
 
 def populate_template_vars(template: dict, issue: dict) -> dict:
@@ -1101,12 +983,7 @@ def save_escalation(issue_id):
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/close/<issue_id>')
-def close_issue_form(issue_id):
-    """
-    Render the close issue form.
-    """
-    return render_template('jaffar/close.html', issue_id=issue_id)
+# Close issue route now in Jaffar blueprint
 
 
 @app.route('/api/jaffar/issues/<issue_id>/close', methods=['POST'])
