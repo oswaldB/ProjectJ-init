@@ -2,36 +2,6 @@
 
 {% block title %}Form Editor{% endblock %}
 
-{% block alpine_component %}{ page: 'form-editor' }{% endblock %}
-        try {
-          await fetch('/api/sultan/forms/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: userEmail, form: this.form })
-          });
-        } catch (error) {
-          console.error('Failed to save form:', error);
-          alert('Failed to save form');
-        }
-      }, 1000); // Attendre 1 seconde avant de sauvegarder
-    },
-    addField() {
-      this.form.fields.push({
-        type: 'text',
-        label: '',
-        description: '',
-        required: false,
-        key: '',
-        options: [],
-        open: true // Added: Initially open
-      });
-    },
-    toggleField(index) {
-      this.form.fields[index].open = !this.form.fields[index].open;
-    }
-  }
-{% endblock %}
-
 {% block content %}
 <div class="h-screen bg-gray-900 text-white" x-data="{
   page: 'form-editor',
