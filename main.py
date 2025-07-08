@@ -5,8 +5,6 @@ import boto3
 import json
 import logging
 from flask import Response, redirect, request, jsonify, render_template, flash
-from stratpy.engine import Blueprint, settings
-from stratpy.utils.email import Email
 import pandas as pd
 from typing import Dict
 import os
@@ -14,64 +12,35 @@ import datetime
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import uuid
-from apps.pc_analytics_jaffar.blueprints.clones import clones_blueprint
-import requests
-from apps.pc_analytics_jaffar.blueprints.forms import forms_blueprint
-from apps.pc_analytics_jaffar.blueprints.sultan import sultan_blueprint
-from apps.pc_analytics_jaffar.blueprints.flows import flows_bp
-from apps.pc_analytics_jaffar.services.s3_service import (
-    get_max_from_global_db,
-    save_in_global_db,
-    delete,
-    get_max_filename_from_global_db,
-    save_issue_to_storage,
-    save_issue_changes,
-    get_changes_from_global_db,
-    move_draft_to_deleted
-)
+
 
 logger = logging.getLogger(__name__)
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # Initialize a thread pool executor for handling email tasks
 email_executor = ThreadPoolExecutor(max_workers=5)
+
 
 # Custom health check
 def custom_health_check():
     return Response(status=200, response="Custom health check OK")
 
 
-app = Blueprint(__name__, health_check_func=custom_health_check)
-
-# S3 bucket configuration
-endpoint = settings.SG_URL
-access_key = settings.SG_ID_KEY
-secret_key = settings.SG_SECRET
-BUCKET_NAME = settings.SG_BUCKET
-
-logger.info(f"BUCKET_NAME: {BUCKET_NAME}")
-
-storage_obj_config = {
-    "aws_access_key_id": access_key,
-    "aws_secret_access_key": secret_key,
-    "endpoint_url": endpoint
-}
-s3 = boto3.client("s3", **storage_obj_config)
-
-
 class CircularRefEncoder(json.JSONEncoder):
+
     def default(self, obj):
         try:
             return super().default(obj)
         except:
             return str(obj)
 
+
 # Email Service Functions
-def sendConfirmationEmail(email_address: str, subject: str, issue: dict) -> bool:
+def sendConfirmationEmail(email_address: str, subject: str,
+                          issue: dict) -> bool:
     """
     Send the confirmation email to the author email address.
     """
@@ -127,7 +96,10 @@ def sendConfirmationEmail(email_address: str, subject: str, issue: dict) -> bool
 
     # create an email
     email = Email(
-        to=[email_address, "global.control.remediation.programme@noexternalmail.hsbc.com"],
+        to=[
+            email_address,
+            "global.control.remediation.programme@noexternalmail.hsbc.com"
+        ],
         subject=subject,
         content=content,
     )
@@ -139,10 +111,13 @@ def flatten_dict(dd: Dict, separator='_', prefix=''):
     """
     Flattens a nested dictionary and concatenates the keys with a separator.
     """
-    return {f"{prefix}{separator}{k}" if prefix else k: v
-            for kk, vv in dd.items()
-            for k, v in flatten_dict(vv, separator, kk).items()
-            } if isinstance(dd, dict) else {prefix: dd}
+    return {
+        f"{prefix}{separator}{k}" if prefix else k: v
+        for kk, vv in dd.items()
+        for k, v in flatten_dict(vv, separator, kk).items()
+    } if isinstance(dd, dict) else {
+        prefix: dd
+    }
 
 
 def process_issue_data(issue_data):
@@ -163,6 +138,7 @@ def process_issue_data(issue_data):
 
 
 # Jaffar Section
+
 
 def validate_save_request(data):
     if not data or 'id' not in data:
@@ -250,14 +226,20 @@ def api_jaffar_templates_list():
         response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
         for obj in response.get('Contents', []):
             try:
-                content = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])['Body'].read().decode('utf-8')
+                content = s3.get_object(
+                    Bucket=BUCKET_NAME,
+                    Key=obj['Key'])['Body'].read().decode('utf-8')
                 # On suppose que chaque fichier est un objet ou un tableau d'un objet
                 data = json.loads(content)
                 if isinstance(data, list):
                     for t in data:
                         if 'id' in t and 'name' in t:
-                            templates.append({'id': t['id'], 'name': t['name']})
-                elif isinstance(data, dict) and 'id' in data and 'name' in data:
+                            templates.append({
+                                'id': t['id'],
+                                'name': t['name']
+                            })
+                elif isinstance(data,
+                                dict) and 'id' in data and 'name' in data:
                     templates.append({'id': data['id'], 'name': data['name']})
             except Exception as e:
                 logger.error(f"Failed to load template {obj['Key']}: {e}")
@@ -295,7 +277,8 @@ def list_issues():
         for status in statuses:
             prefix = f'jaffar/issues/{status}/'
             try:
-                response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+                response = s3.list_objects_v2(Bucket=BUCKET_NAME,
+                                              Prefix=prefix)
                 for obj in response.get('Contents', []):
                     key = obj['Key']
                     if key.endswith('/'):
@@ -353,13 +336,17 @@ def list_issues_v2():
         sort_col = request.args.get('sort_col')
         sort_dir = request.args.get('sort_dir', 'asc')
         # Récupère tous les filtres de type filter_<col>
-        filters = {k[7:]: v for k, v in request.args.items() if k.startswith('filter_') and v}
+        filters = {
+            k[7:]: v
+            for k, v in request.args.items() if k.startswith('filter_') and v
+        }
 
         all_keys = []
         for status in ['draft', 'new', 'open', 'failed']:
             prefix = f'jaffar/issues/{status}/'
             try:
-                response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+                response = s3.list_objects_v2(Bucket=BUCKET_NAME,
+                                              Prefix=prefix)
                 for obj in response.get('Contents', []):
                     key = obj['Key']
                     if key.endswith('/'):
@@ -388,14 +375,17 @@ def list_issues_v2():
 
         # Filtrage par colonnes
         for col, val in filters.items():
-            issues = [iss for iss in issues if val.lower() in str(iss.get(col, '')).lower()]
+            issues = [
+                iss for iss in issues
+                if val.lower() in str(iss.get(col, '')).lower()
+            ]
 
         # Tri par colonne si demandé
         if sort_col:
             issues.sort(
-                key=lambda x: (x.get(sort_col) or '').lower() if isinstance(x.get(sort_col), str) else x.get(sort_col),
-                reverse=(sort_dir == 'desc')
-            )
+                key=lambda x: (x.get(sort_col) or '').lower()
+                if isinstance(x.get(sort_col), str) else x.get(sort_col),
+                reverse=(sort_dir == 'desc'))
 
         total = len(issues)
         start = (page - 1) * page_size
@@ -416,7 +406,7 @@ def list_issues_v2():
 
 @app.route('/api/jaffar/issues/<issue_id>', methods=['GET'])
 def get_issue(issue_id):
-    for status in ['draft', 'new', 'open', 'failed','closed']:
+    for status in ['draft', 'new', 'open', 'failed', 'closed']:
         try:
             key = f'jaffar/issues/{status}/{issue_id}.json'
             response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
@@ -463,7 +453,9 @@ def add_comment(issue_id):
         changes.append(comment)
 
         json_data = json.dumps(changes, ensure_ascii=False)
-        s3.put_object(Bucket=BUCKET_NAME, Key=changes_key, Body=json_data.encode('utf-8'))
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=changes_key,
+                      Body=json_data.encode('utf-8'))
 
         return jsonify({"status": "success"})
     except Exception as e:
@@ -518,16 +510,19 @@ def get_issue_data(issue_id):
             key = f'jaffar/issues/{folder}/{issue_id}.json'
             try:
                 response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-                issue_data = json.loads(response['Body'].read().decode('utf-8'))
+                issue_data = json.loads(
+                    response['Body'].read().decode('utf-8'))
                 if folder == 'draft':
                     issue_data['status'] = 'submitted'
-                    issue_data['submitted_at'] = datetime.datetime.now().isoformat()
+                    issue_data['submitted_at'] = datetime.datetime.now(
+                    ).isoformat()
                     issue_data['version'] = 0
                     delete(key)  # Supprimer le brouillon après récupération
                 return issue_data
             except s3.exceptions.NoSuchKey:
                 continue
-        raise s3.exceptions.NoSuchKey(f"Issue {issue_id} not found in any folder")
+        raise s3.exceptions.NoSuchKey(
+            f"Issue {issue_id} not found in any folder")
     except Exception as e:
         logger.error(f"Failed to retrieve issue data for {issue_id}: {e}")
         raise
@@ -561,8 +556,10 @@ def send_confirmation_email(issue_data):
     """
     Envoie un e-mail de confirmation à l'auteur de l'issue.
     """
-    email_address = issue_data.get('author', 'system').rsplit(' - ', 1)[-1].strip()
-    sendConfirmationEmail(email_address, f"Issue Submitted: {issue_data['id']}", issue_data)
+    email_address = issue_data.get('author', 'system').rsplit(' - ',
+                                                              1)[-1].strip()
+    sendConfirmationEmail(email_address,
+                          f"Issue Submitted: {issue_data['id']}", issue_data)
 
 
 def trigger_escalation(issue_id):
@@ -572,13 +569,20 @@ def trigger_escalation(issue_id):
     try:
         escalation_service_url = settings.NOW_ESCALATION_ENDPOINT
         issue_id = f"{issue_id}.json"
-        escalation_response = requests.get(escalation_service_url, params={"issueId": issue_id})
+        escalation_response = requests.get(escalation_service_url,
+                                           params={"issueId": issue_id})
         if escalation_response.status_code == 200:
-            logger.info(f"Successfully called escalation service for issue {issue_id}.")
+            logger.info(
+                f"Successfully called escalation service for issue {issue_id}."
+            )
         else:
-            logger.error(f"Failed to call escalation service for issue {issue_id}: {escalation_response.status_code} - {escalation_response.text}")
+            logger.error(
+                f"Failed to call escalation service for issue {issue_id}: {escalation_response.status_code} - {escalation_response.text}"
+            )
     except Exception as e:
-        logger.error(f"Error while calling escalation service for issue {issue_id}: {e}")
+        logger.error(
+            f"Error while calling escalation service for issue {issue_id}: {e}"
+        )
 
 
 @app.route('/api/jaffar/save', methods=['POST'])
@@ -626,8 +630,10 @@ def api_acknowledge():
                 issue['acknowledge-escalation'] = []
 
             issue['acknowledge-escalation'].append({
-                'author': author,
-                'date': datetime.datetime.now().isoformat()
+                'author':
+                author,
+                'date':
+                datetime.datetime.now().isoformat()
             })
 
             # Log the acknowledge activity
@@ -663,16 +669,20 @@ def move_draft_to_deleted(issue_id):
         destination_key = f'jaffar/issues/delete/{issue_id}.json'
 
         # Copy the object to the 'delete' folder
-        s3.copy_object(
-            Bucket=BUCKET_NAME,
-            CopySource={'Bucket': BUCKET_NAME, 'Key': source_key},
-            Key=destination_key
-        )
+        s3.copy_object(Bucket=BUCKET_NAME,
+                       CopySource={
+                           'Bucket': BUCKET_NAME,
+                           'Key': source_key
+                       },
+                       Key=destination_key)
 
         # Delete the original draft
         s3.delete_object(Bucket=BUCKET_NAME, Key=source_key)
 
-        return jsonify({'status': 'success', 'message': f'Draft {issue_id} moved to delete folder'}), 200
+        return jsonify({
+            'status': 'success',
+            'message': f'Draft {issue_id} moved to delete folder'
+        }), 200
     except Exception as e:
         logger.error(f"Failed to move draft {issue_id} to delete folder: {e}")
         return jsonify({'error': str(e)}), 500
@@ -699,24 +709,30 @@ def similarity_search():
             "s3_key": "jaffar/issues/embeddings/embeddings.parquet",
             "similarity_threshold": 0.7
         }
-        logger.info(f"Constructed payload for similarity search API: {payload}")
+        logger.info(
+            f"Constructed payload for similarity search API: {payload}")
 
         response = requests.post(
             "https://palms-jaffar-similaritysearch-api-uat.ikp102s.cloud.uk.hsbc/similarity",
-            json=payload
-        )
+            json=payload)
 
-        logger.info(f"Similarity search API response status: {response.status_code}")
+        logger.info(
+            f"Similarity search API response status: {response.status_code}")
         logger.info(f"Similarity search API response body: {response.text}")
 
         if response.status_code != 200:
-            logger.error(f"Similarity search API failed with status {response.status_code}")
-            return jsonify({"error": "Failed to fetch similar issues"}), response.status_code
+            logger.error(
+                f"Similarity search API failed with status {response.status_code}"
+            )
+            return jsonify({"error": "Failed to fetch similar issues"
+                            }), response.status_code
 
         return jsonify(response.json()), 200
     except Exception as e:
         logger.error(f"Error in similarity search: {e}", exc_info=True)
-        return jsonify({"error": "An error occurred while searching for similar issues"}), 500
+        return jsonify(
+            {"error":
+             "An error occurred while searching for similar issues"}), 500
 
 
 @app.route('/api/jaffar/feedback/list')
@@ -757,7 +773,8 @@ def submit_feedback():
         }
         ideas.append(new_idea)
 
-        s3.put_object(Bucket=BUCKET_NAME, Key=key,
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
                       Body=json.dumps(ideas, ensure_ascii=False))
         return jsonify({"status": "success"})
     except Exception as e:
@@ -781,7 +798,8 @@ def vote_feedback():
                 idea['votes'] += 1 if data['type'] == 'up' else -1
                 break
 
-        s3.put_object(Bucket=BUCKET_NAME, Key=key,
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
                       Body=json.dumps(ideas, ensure_ascii=False))
         return jsonify({"status": "success"})
     except Exception as e:
@@ -806,9 +824,11 @@ def add_feedback_comment():
                     idea['comments'] = []
 
                 comment = {
-                    'id': f"COMMENT-{int(datetime.datetime.now().timestamp() * 1000)}",
+                    'id':
+                    f"COMMENT-{int(datetime.datetime.now().timestamp() * 1000)}",
                     'text': data['text'],
-                    'author': data.get('author', ''),  # <-- utilise l'auteur envoyé
+                    'author': data.get('author',
+                                       ''),  # <-- utilise l'auteur envoyé
                     'date': datetime.datetime.now().isoformat(),
                     'parentId': data.get('parentId', None),
                     'replies': []
@@ -825,7 +845,8 @@ def add_feedback_comment():
                     idea['comments'].append(comment)
                 break
 
-        s3.put_object(Bucket=BUCKET_NAME, Key=key,
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
                       Body=json.dumps(ideas, ensure_ascii=False))
         return jsonify({"status": "success"})
     except Exception as e:
@@ -903,7 +924,9 @@ def escalation():
     template_message = ""
     if template_key:
         try:
-            content = s3.get_object(Bucket=BUCKET_NAME, Key=template_key)['Body'].read().decode('utf-8')
+            content = s3.get_object(
+                Bucket=BUCKET_NAME,
+                Key=template_key)['Body'].read().decode('utf-8')
             template_data = json.loads(content)
             # On suppose que le template est un tableau ou un objet avec subject/message
             if isinstance(template_data, list) and template_data:
@@ -935,6 +958,7 @@ def populate_template_vars(template: dict, issue: dict) -> dict:
     Supporte les clés imbriquées avec {{foo.bar}}.
     Si une valeur est un tableau, elle est convertie en chaîne de caractères.
     """
+
     def get_value(key, data):
         parts = key.split('.')
         value = data
@@ -950,7 +974,8 @@ def populate_template_vars(template: dict, issue: dict) -> dict:
     def replace_vars(text, data):
         if not text:
             return text
-        return re.sub(r'{{\s*([\w\-\_\.]+)\s*}}', lambda m: str(get_value(m.group(1), data)), text)
+        return re.sub(r'{{\s*([\w\-\_\.]+)\s*}}',
+                      lambda m: str(get_value(m.group(1), data)), text)
 
     return {
         "subject": replace_vars(template.get("subject", ""), issue or {}),
@@ -1006,10 +1031,13 @@ def send_escalation_email(recipients, subject, message, issue_id):
     Envoie un email d'escalade à la liste de destinataires + l'adresse globale.
     """
     # Nettoie et split les emails
-    recipient_list = [email.strip() for email in recipients.split(',') if email.strip()]
+    recipient_list = [
+        email.strip() for email in recipients.split(',') if email.strip()
+    ]
     # Ajoute le destinataire obligatoire
     if "global.control.remediation.programme@noexternalmail.hsbc.com" not in recipient_list:
-        recipient_list.append("global.control.remediation.programme@noexternalmail.hsbc.com")
+        recipient_list.append(
+            "global.control.remediation.programme@noexternalmail.hsbc.com")
     # Optionnel : Ajoute un lien vers l'issue si issue_id fourni
     if issue_id:
         issue_link = f"<br><br><a href='/pc-analytics-jaffar/issue/{issue_id}'>View Issue {issue_id}</a>"
@@ -1041,19 +1069,14 @@ def save_escalation(issue_id):
                 if 'escalation' not in issue:
                     issue['escalation'] = []
 
-                issue['escalation'].append({
-                    'user': user,
-                    'date': date
-                })
+                issue['escalation'].append({'user': user, 'date': date})
                 logger.info(f"Issue escalation data: {issue}")
                 logger.info(f"Issue located: {key}")
 
-                s3.put_object(
-                    Bucket=BUCKET_NAME,
-                    Key=key,
-                    Body=json.dumps(issue, ensure_ascii=False),
-                    ContentType='application/json'
-                )
+                s3.put_object(Bucket=BUCKET_NAME,
+                              Key=key,
+                              Body=json.dumps(issue, ensure_ascii=False),
+                              ContentType='application/json')
                 return jsonify({'status': 'success'})
             except s3.exceptions.NoSuchKey:
                 continue
@@ -1078,7 +1101,8 @@ def close_issue(issue_id):
     """
     data = request.json
     reason = data.get('reason', '').strip()
-    closed_by = data.get('closed_by', 'system')  # Get the user who closed the issue
+    closed_by = data.get('closed_by',
+                         'system')  # Get the user who closed the issue
 
     if not reason:
         return jsonify({'error': 'Reason is required'}), 400
@@ -1113,17 +1137,18 @@ def close_issue(issue_id):
 
     # Move issue to 'closed' folder
     closed_key = f'jaffar/issues/closed/{issue_id}.json'
-    s3.put_object(
-        Bucket=BUCKET_NAME,
-        Key=closed_key,
-        Body=json.dumps(issue_data, ensure_ascii=False),
-        ContentType='application/json'
-    )
+    s3.put_object(Bucket=BUCKET_NAME,
+                  Key=closed_key,
+                  Body=json.dumps(issue_data, ensure_ascii=False),
+                  ContentType='application/json')
 
     # Delete the original issue
     s3.delete_object(Bucket=BUCKET_NAME, Key=key)
 
-    return jsonify({'status': 'success', 'message': f'Issue {issue_id} closed successfully'}), 200
+    return jsonify({
+        'status': 'success',
+        'message': f'Issue {issue_id} closed successfully'
+    }), 200
 
 
 # Sultan Section
@@ -1159,12 +1184,10 @@ def escalation_create():
     # Structure vide ou par défaut
     escalation = []
     key = f"sultan/escalations/{new_id}.json"
-    s3.put_object(
-        Bucket=BUCKET_NAME,
-        Key=key,
-        Body=json.dumps(escalation, ensure_ascii=False),
-        ContentType='application/json'
-    )
+    s3.put_object(Bucket=BUCKET_NAME,
+                  Key=key,
+                  Body=json.dumps(escalation, ensure_ascii=False),
+                  ContentType='application/json')
     # Redirige vers la page d'édition
     return redirect(f"/pc-analytics-jaffar/sultan/escalation/edit/{new_id}")
 
@@ -1212,7 +1235,8 @@ def template_edit_datatable(template_id):
 @app.route('/sultan/dashboard/<dashboard_id>')
 def sultan_dashboard_edit(dashboard_id):
     # Render the datatable editor for a given dashboard
-    return render_template('sultan/dashboards/edit.html', dashboard_id=dashboard_id)
+    return render_template('sultan/dashboards/edit.html',
+                           dashboard_id=dashboard_id)
 
 
 @app.route('/api/sultan/dashboard/<dashboard_id>', methods=['GET'])
@@ -1258,12 +1282,10 @@ def api_sultan_dashboard_create():
         if source_id:
             dashboard['source_id'] = source_id
         key = f'sultan/dashboards/{dashboard_id}.json'
-        s3.put_object(
-            Bucket=BUCKET_NAME,
-            Key=key,
-            Body=json.dumps(dashboard, ensure_ascii=False),
-            ContentType='application/json'
-        )
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
+                      Body=json.dumps(dashboard, ensure_ascii=False),
+                      ContentType='application/json')
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to create dashboard: {e}")
@@ -1289,7 +1311,8 @@ def api_sultan_dashboards_list():
             if not key.endswith('.json'):
                 continue
             try:
-                content = s3.get_object(Bucket=BUCKET_NAME, Key=key)['Body'].read().decode('utf-8')
+                content = s3.get_object(Bucket=BUCKET_NAME,
+                                        Key=key)['Body'].read().decode('utf-8')
                 dashboard = json.loads(content)
                 dashboards.append(dashboard)
             except Exception as e:
@@ -1377,15 +1400,14 @@ def api_escalation_save():
 
         # Accept empty list as valid
         if not escalation_id or not isinstance(escalations, list):
-            return jsonify({"error": "Missing escalation ID or escalations array"}), 400
+            return jsonify(
+                {"error": "Missing escalation ID or escalations array"}), 400
 
         key = f"sultan/escalations/{escalation_id}.json"
-        s3.put_object(
-            Bucket=BUCKET_NAME,
-            Key=key,
-            Body=json.dumps(escalations, ensure_ascii=False),
-            ContentType='application/json'
-        )
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
+                      Body=json.dumps(escalations, ensure_ascii=False),
+                      ContentType='application/json')
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save escalation: {e}")
@@ -1470,7 +1492,8 @@ def api_sultan_delete_form(form_id):
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/api/sultan/forms/list')  # Keep old route for backward compatibility
+@app.route(
+    '/api/sultan/forms/list')  # Keep old route for backward compatibility
 def api_forms_list():
     forms = []
     prefix = 'sultan/forms/'
@@ -1506,9 +1529,8 @@ def api_template_get(template_id):
         else:
             key = f'sultan/templates/{template_id}.json'
 
-        content = s3.get_object(
-            Bucket=BUCKET_NAME,
-            Key=key)['Body'].read().decode('utf-8')
+        content = s3.get_object(Bucket=BUCKET_NAME,
+                                Key=key)['Body'].read().decode('utf-8')
         return jsonify(json.loads(content))
     except Exception as e:
         logger.error(f"Failed to load template {template_id}: {e}")
@@ -1529,18 +1551,25 @@ def api_template_delete(template_id):
         destination_key = f'sultan/templates/delete/{template_id}.json'
 
         # Copy the object to the 'delete' folder
-        s3.copy_object(
-            Bucket=BUCKET_NAME,
-            CopySource={'Bucket': BUCKET_NAME, 'Key': source_key},
-            Key=destination_key
-        )
+        s3.copy_object(Bucket=BUCKET_NAME,
+                       CopySource={
+                           'Bucket': BUCKET_NAME,
+                           'Key': source_key
+                       },
+                       Key=destination_key)
 
         # Delete the original template
         s3.delete_object(Bucket=BUCKET_NAME, Key=source_key)
 
-        return jsonify({"status": "success", "message": f"Template {template_id} moved to delete folder"}), 200
+        return jsonify({
+            "status":
+            "success",
+            "message":
+            f"Template {template_id} moved to delete folder"
+        }), 200
     except Exception as e:
-        logger.error(f"Failed to move template {template_id} to delete folder: {e}")
+        logger.error(
+            f"Failed to move template {template_id} to delete folder: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -1576,13 +1605,15 @@ def api_template_duplicate():
 
     try:
         # Get original template
-        template = get_one_from_global_db(f'sultan/templates/{template_id}.json')
+        template = get_one_from_global_db(
+            f'sultan/templates/{template_id}.json')
         new_template = template.copy()
         new_template['id'] = f'templates-{str(uuid.uuid4())}'
         new_template['name'] = f'{template["name"]} (Copy)'
 
         # Save new template
-        save_in_global_db(f'sultan/templates/{new_template["id"]}.json', new_template)
+        save_in_global_db(f'sultan/templates/{new_template["id"]}.json',
+                          new_template)
 
         return jsonify(new_template)
     except Exception as e:
@@ -1635,8 +1666,10 @@ def api_pc_analytics_jaffar_svc_search():
             response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
             for obj in response.get('Contents', []):
                 try:
-                    issue_obj = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                    issue = json.loads(issue_obj['Body'].read().decode('utf-8'))
+                    issue_obj = s3.get_object(Bucket=BUCKET_NAME,
+                                              Key=obj['Key'])
+                    issue = json.loads(
+                        issue_obj['Body'].read().decode('utf-8'))
                     desc = issue.get('issue-description', '')
                     if query.lower() in desc.lower():
                         results.append(issue)
@@ -1659,14 +1692,16 @@ def sultan_save_dashboard():
     try:
         data = request.json
         dashboard = data.get('dashboard')
-        dashboard_id = data.get('dashboard_id') or (dashboard and dashboard.get('id'))
+        dashboard_id = data.get('dashboard_id') or (dashboard
+                                                    and dashboard.get('id'))
         if not dashboard or not dashboard_id:
             return jsonify({"error": "Missing dashboard or dashboard_id"}), 400
         # Save form_id, form_name, source_id, and configFilters if present
         form_id = dashboard.get('form_id') or dashboard.get('selectedFormKey')
         form_name = dashboard.get('form_name')
         source_id = dashboard.get('source_id') or form_id
-        config_filters = dashboard.get('configFilters', {})  # Save configFilters
+        config_filters = dashboard.get('configFilters',
+                                       {})  # Save configFilters
         if form_id:
             dashboard['form_id'] = form_id
         if form_name:
@@ -1676,12 +1711,10 @@ def sultan_save_dashboard():
         if config_filters:
             dashboard['configFilters'] = config_filters
         key = f'sultan/dashboards/{dashboard_id}.json'
-        s3.put_object(
-            Bucket=BUCKET_NAME,
-            Key=key,
-            Body=json.dumps(dashboard, ensure_ascii=False),
-            ContentType='application/json'
-        )
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
+                      Body=json.dumps(dashboard, ensure_ascii=False),
+                      ContentType='application/json')
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save dashboard: {e}")
@@ -1713,7 +1746,9 @@ def initialize_pouchdb():
     try:
         page_size = int(10000000)
         all_keys = []
-        for status in ['draft', 'new', 'open', 'failed', 'submitted', 'closed']:
+        for status in [
+                'draft', 'new', 'open', 'failed', 'submitted', 'closed'
+        ]:
             prefix = f'jaffar/issues/{status}/'
             response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
             for obj in response.get('Contents', []):
@@ -1729,14 +1764,20 @@ def initialize_pouchdb():
 
         all_issues = []
         with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = {executor.submit(fetch_issue, key): key for key in all_keys}
+            futures = {
+                executor.submit(fetch_issue, key): key
+                for key in all_keys
+            }
             for future in as_completed(futures):
                 issue = future.result()
                 if issue is not None:
                     all_issues.append(issue)
 
         # Split issues into chunks for parallel processing
-        chunks = [all_issues[i:i + page_size] for i in range(0, len(all_issues), page_size)]
+        chunks = [
+            all_issues[i:i + page_size]
+            for i in range(0, len(all_issues), page_size)
+        ]
         return jsonify({"status": "success", "chunks": chunks}), 200
     except Exception as e:
         logger.error(f"Error initializing PouchDB: {e}")
@@ -1754,25 +1795,11 @@ def save_in_global_db(key, data):
             content_type = 'application/json'
             data = json.dumps(data, ensure_ascii=False)
 
-        s3.put_object(
-            Bucket=BUCKET_NAME,
-            Key=key,
-            Body=data.encode('utf-8'),
-            ContentType=content_type
-        )
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
+                      Body=data.encode('utf-8'),
+                      ContentType=content_type)
         logger.info(f"Successfully saved data to {key}")
     except Exception as e:
         logger.error(f"Failed to save data to {key}: {e}")
         raise
-
-
-# Register the forms blueprint
-app.register_blueprint(forms_blueprint)
-
-# Register the sultan blueprint
-app.register_blueprint(sultan_blueprint)
-
-app.register_blueprint(clones_blueprint)
-
-# Register the flows blueprint
-app.register_blueprint(flows_bp)
