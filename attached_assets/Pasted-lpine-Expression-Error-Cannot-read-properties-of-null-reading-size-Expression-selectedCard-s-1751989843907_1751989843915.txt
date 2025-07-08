@@ -1,0 +1,379 @@
+lpine Expression Error: Cannot read properties of null (reading 'size')
+
+Expression: "selectedCard.size.width"
+
+ <select x-model=​"selectedCard.size.width" class=​"w-full bg-gray-700 text-white p-2 rounded">​…​</select>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of null (reading 'size')
+
+Expression: "selectedCard.size.height"
+
+ <select x-model=​"selectedCard.size.height" class=​"w-full bg-gray-700 text-white p-2 rounded">​…​</select>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of null (reading 'type')
+
+Expression: "selectedCard.type === 'datatable'"
+
+ <div x-show=​"selectedCard.type === 'datatable'" class=​"space-y-3">​…​</div>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of null (reading 'config')
+
+Expression: "selectedCard.config.dataSource"
+
+ <select x-model=​"selectedCard.config.dataSource" @change=​"loadFormColumns(selectedCard)​" class=​"w-full bg-gray-700 text-white p-2 rounded">​…​</select>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of null (reading 'config')
+
+Expression: "selectedCard.config.dataSource"
+
+ <div x-show=​"selectedCard.config.dataSource" style=​"display:​ none;​">​…​</div>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of null (reading 'config')
+
+Expression: "selectedCard.config.saveToLocalDB"
+
+ <input type=​"checkbox" x-model=​"selectedCard.config.saveToLocalDB" class=​"mr-2" value>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of null (reading 'config')
+
+Expression: "selectedCard.config.saveToLocalDB"
+
+ <div x-show=​"selectedCard.config.saveToLocalDB" class=​"ml-6" style=​"display:​ none;​">​…​</div>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of null (reading 'config')
+
+Expression: "selectedCard.config.localDBName"
+
+ <input type=​"text" x-model=​"selectedCard.config.localDBName" class=​"w-full bg-gray-700 text-white p-2 rounded text-sm" placeholder=​"Local DB name">​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of null (reading 'config')
+
+Expression: "selectedCard.config.title"
+
+ <input type=​"text" x-model=​"selectedCard.config.title" class=​"w-full bg-gray-700 text-white p-2 rounded" placeholder=​"Table title">​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of null (reading 'config')
+
+Expression: "selectedCard.config.columns && selectedCard.config.columns.length > 0"
+
+ <div x-show=​"selectedCard.config.columns && selectedCard.config.columns.length > 0" style=​"display:​ none;​">​…​</div>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of null (reading 'config')
+
+Expression: "selectedCard.config.columns"
+
+ <template x-for=​"(column, index)​ in selectedCard.config.columns" :key=​"index">​…​</template>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+to @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of null (reading 'config')
+
+Expression: "selectedCard.config.pagination"
+
+ <input type=​"checkbox" x-model=​"selectedCard.config.pagination" class=​"mr-2" value>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of null (reading 'config')
+
+Expression: "selectedCard.config.enableSearch"
+
+ <input type=​"checkbox" x-model=​"selectedCard.config.enableSearch" class=​"mr-2" value>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of null (reading 'config')
+
+Expression: "selectedCard.config.enableExport"
+
+ <input type=​"checkbox" x-model=​"selectedCard.config.enableExport" class=​"mr-2" value>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of null (reading 'config')
+
+Expression: "selectedCard.config.pagination"
+
+ <div x-show=​"selectedCard.config.pagination">​…​</div>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of null (reading 'config')
+
+Expression: "selectedCard.config.pageSize"
+
+ <select x-model=​"selectedCard.config.pageSize" class=​"w-full bg-gray-700 text-white p-2 rounded">​…​</select>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
