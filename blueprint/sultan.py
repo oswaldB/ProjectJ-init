@@ -6,21 +6,12 @@ from services.s3_service import (
     save_in_global_db,
     get_one_from_global_db,
     get_max_from_global_db,
-    list_folder_with_filter
+    list_folder_with_filter,
+    get_sultan_object,
+    save_sultan_object,
+    delete_sultan_object,
+    list_sultan_objects
 )
-import boto3
-import os
-
-# Initialize S3 client
-REGION = os.environ.get('AWS_REGION') or 'eu-west-2'
-BUCKET_NAME = os.environ.get('BUCKET_NAME') or 'pc-analytics-jaffar'
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-
-s3 = boto3.client('s3',
-                  region_name=REGION,
-                  aws_access_key_id=AWS_ACCESS_KEY_ID,
-                  aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
 logger = logging.getLogger(__name__)
 
@@ -52,11 +43,7 @@ def escalation_create():
     new_id = f"Escalation-{uuid.uuid4()}"
     # Structure vide ou par défaut
     escalation = []
-    key = f"sultan/escalations/{new_id}.json"
-    s3.put_object(Bucket=BUCKET_NAME,
-                  Key=key,
-                  Body=json.dumps(escalation, ensure_ascii=False),
-                  ContentType='application/json')
+    save_sultan_object('escalations', new_id, escalation)
     # Redirige vers la page d'édition
     return redirect(f"/pc-analytics-jaffar/sultan/escalation/edit/{new_id}")
 
@@ -112,13 +99,12 @@ def workflow_edit(workflow_id):
 @sultan_bp.route('/api/dashboard/<dashboard_id>', methods=['GET'])
 def api_dashboard_get(dashboard_id):
     """Get a dashboard config from S3"""
-    key = f'sultan/dashboards/{dashboard_id}.json'
     try:
-        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-        dashboard = json.loads(response['Body'].read().decode('utf-8'))
-        return jsonify(dashboard)
-    except s3.exceptions.NoSuchKey:
-        return jsonify({"error": "Dashboard not found"}), 404
+        dashboard = get_sultan_object('dashboards', dashboard_id)
+        if dashboard:
+            return jsonify(dashboard)
+        else:
+            return jsonify({"error": "Dashboard not found"}), 404
     except Exception as e:
         logger.error(f"Failed to get dashboard {dashboard_id}: {e}")
         return jsonify({"error": str(e)}), 500
@@ -147,11 +133,7 @@ def api_dashboard_create():
         if source_id:
             dashboard['source_id'] = source_id
 
-        key = f'sultan/dashboards/{dashboard_id}.json'
-        s3.put_object(Bucket=BUCKET_NAME,
-                      Key=key,
-                      Body=json.dumps(dashboard, ensure_ascii=False),
-                      ContentType='application/json')
+        save_sultan_object('dashboards', dashboard_id, dashboard)
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to create dashboard: {e}")
@@ -160,81 +142,40 @@ def api_dashboard_create():
 @sultan_bp.route('/api/dashboards/list')
 def api_dashboards_list():
     """List all dashboards"""
-    dashboards = []
-    prefix = 'sultan/dashboards/'
     try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-        for obj in response.get('Contents', []):
-            key = obj['Key']
-            if not key.endswith('.json'):
-                continue
-            try:
-                content = s3.get_object(Bucket=BUCKET_NAME,
-                                        Key=key)['Body'].read().decode('utf-8')
-                dashboard = json.loads(content)
-                dashboards.append(dashboard)
-            except Exception as e:
-                logger.error(f"Failed to load dashboard {key}: {e}")
+        dashboards = list_sultan_objects('dashboards')
+        return jsonify(dashboards)
     except Exception as e:
         logger.error(f"Failed to list dashboards: {e}")
         return jsonify({"error": str(e)}), 500
-    return jsonify(dashboards)
 
 @sultan_bp.route('/api/emailgroups/list')
 def api_emailgroups_list():
-    emailgroups = []
-    prefix = 'sultan/emailgroups/'
     try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-        for obj in response.get('Contents', []):
-            try:
-                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                content = response['Body'].read().decode('utf-8')
-                emailgroup = json.loads(content)
-                emailgroups.append(emailgroup)
-            except Exception as e:
-                logger.error(f"Failed to load emailgroup {obj['Key']}: {e}")
+        emailgroups = list_sultan_objects('emailgroups')
+        return jsonify(emailgroups)
     except Exception as e:
         logger.error(f"Failed to list emailgroups: {e}")
         return jsonify({"error": str(e)}), 500
-    return jsonify(emailgroups)
 
 @sultan_bp.route('/api/sites/list')
 def api_sites_list():
-    sites = []
-    prefix = 'sultan/sites/'
     try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-        for obj in response.get('Contents', []):
-            try:
-                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                content = response['Body'].read().decode('utf-8')
-                site = json.loads(content)
-                sites.append(site)
-            except Exception as e:
-                logger.error(f"Failed to load site {obj['Key']}: {e}")
+        sites = list_sultan_objects('sites')
+        return jsonify(sites)
     except Exception as e:
         logger.error(f"Failed to list sites: {e}")
         return jsonify({"error": str(e)}), 500
-    return jsonify(sites)
 
 @sultan_bp.route('/api/escalation/list')
 def api_escalation_list():
-    escalation_names = []
-    prefix = 'sultan/escalations/'
     try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-        for obj in response.get('Contents', []):
-            try:
-                key = obj['Key']
-                name = key.split('/')[-1]
-                escalation_names.append(name)
-            except Exception as e:
-                logger.error(f"Failed to process escalation {obj['Key']}: {e}")
+        escalations = list_sultan_objects('escalations')
+        escalation_names = [f"{escalation.get('id', '')}.json" for escalation in escalations if escalation.get('id')]
+        return jsonify(escalation_names)
     except Exception as e:
         logger.error(f"Failed to list escalations: {e}")
         return jsonify({"error": str(e)}), 500
-    return jsonify(escalation_names)
 
 @sultan_bp.route('/api/escalation/save', methods=['POST'])
 def api_escalation_save():
@@ -253,11 +194,7 @@ def api_escalation_save():
         if not escalation_id or not isinstance(escalations, list):
             return jsonify({"error": "Missing escalation ID or escalations array"}), 400
 
-        key = f"sultan/escalations/{escalation_id}.json"
-        s3.put_object(Bucket=BUCKET_NAME,
-                      Key=key,
-                      Body=json.dumps(escalations, ensure_ascii=False),
-                      ContentType='application/json')
+        save_sultan_object('escalations', escalation_id, escalations)
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save escalation: {e}")
@@ -265,43 +202,34 @@ def api_escalation_save():
 
 @sultan_bp.route('/api/escalation/<escalation_id>')
 def api_escalation_get(escalation_id):
-    key = f"sultan/escalations/{escalation_id}.json"
     try:
-        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-        content = response['Body'].read().decode('utf-8')
-        return jsonify(json.loads(content))
+        escalation = get_sultan_object('escalations', escalation_id)
+        if escalation is not None:
+            return jsonify(escalation)
+        else:
+            return jsonify({"error": "Escalation not found"}), 404
     except Exception as e:
         logger.error(f"Failed to load escalation {escalation_id}: {e}")
         return jsonify({"error": str(e)}), 404
 
 @sultan_bp.route('/api/forms', methods=['GET'])
 def api_forms():
-    forms = []
     try:
-        prefix = f'sultan/forms/'
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-        for obj in response.get('Contents', []):
-            try:
-                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                form = json.loads(response['Body'].read().decode('utf-8'))
-                forms.append(form)
-            except Exception as e:
-                logger.error(f"Failed to load form {obj['Key']}: {e}")
+        forms = list_sultan_objects('forms')
+        return jsonify(forms)
     except Exception as e:
         logger.error(f"Failed to list forms: {e}")
         return jsonify({"error": str(e)}), 500
-    return jsonify(forms)
 
 @sultan_bp.route('/api/forms/<form_id>', methods=['GET'])
 def api_form_by_id(form_id):
     """Fetch a specific form by its ID"""
     try:
-        key = f'sultan/forms/{form_id}.json'
-        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-        form = json.loads(response['Body'].read().decode('utf-8'))
-        return jsonify(form)
-    except s3.exceptions.NoSuchKey:
-        return jsonify({"error": "Form not found"}), 404
+        form = get_sultan_object('forms', form_id)
+        if form:
+            return jsonify(form)
+        else:
+            return jsonify({"error": "Form not found"}), 404
     except Exception as e:
         logger.error(f"Failed to fetch form {form_id}: {e}")
         return jsonify({"error": str(e)}), 500
@@ -312,9 +240,8 @@ def api_save_form():
     form = data.get('form')
     if not form:
         return jsonify({"error": "Invalid form data"}), 400
-    key = f'sultan/forms/{form["id"]}.json'
     try:
-        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json.dumps(form, ensure_ascii=False))
+        save_sultan_object('forms', form["id"], form)
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save form: {e}")
@@ -322,9 +249,8 @@ def api_save_form():
 
 @sultan_bp.route('/api/forms/delete/<form_id>', methods=['DELETE'])
 def api_delete_form(form_id):
-    key = f'sultan/forms/{form_id}.json'
     try:
-        s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+        delete_sultan_object('forms', form_id)
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to delete form: {e}")
@@ -337,9 +263,8 @@ def api_sultan_save_form():
     form = data.get('form')
     if not form:
         return jsonify({"error": "Invalid form data"}), 400
-    key = f'sultan/forms/{form["id"]}.json'
     try:
-        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json.dumps(form, ensure_ascii=False))
+        save_sultan_object('forms', form["id"], form)
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save form: {e}")
@@ -422,70 +347,9 @@ def save_dashboard():
         if config_filters:
             dashboard['configFilters'] = config_filters
 
-        key = f'sultan/dashboards/{dashboard_id}.json'
-        s3.put_object(Bucket=BUCKET_NAME,
-                      Key=key,
-                      Body=json.dumps(dashboard, ensure_ascii=False),
-                      ContentType='application/json')
+        save_sultan_object('dashboards', dashboard_id, dashboard)
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to save dashboard: {e}")
         return jsonify({"error": str(e)}), 500
 
-def get_sultan_object(object_type, object_id):
-    """Centralized function to get a Sultan object from S3."""
-    key = f'sultan/{object_type}/{object_id}.json'
-    try:
-        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-        content = response['Body'].read().decode('utf-8')
-        return json.loads(content)
-    except s3.exceptions.NoSuchKey:
-        return None
-    except Exception as e:
-        logger.error(f"Failed to get {object_type} {object_id}: {e}")
-        return None
-
-def save_sultan_object(object_type, object_id, data):
-    """Centralized function to save a Sultan object to S3."""
-    key = f'sultan/{object_type}/{object_id}.json'
-    try:
-        s3.put_object(Bucket=BUCKET_NAME,
-                      Key=key,
-                      Body=json.dumps(data, ensure_ascii=False),
-                      ContentType='application/json')
-        return True
-    except Exception as e:
-        logger.error(f"Failed to save {object_type} {object_id}: {e}")
-        return False
-
-def delete_sultan_object(object_type, object_id):
-    """Centralized function to delete a Sultan object from S3."""
-    key = f'sultan/{object_type}/{object_id}.json'
-    try:
-        s3.delete_object(Bucket=BUCKET_NAME, Key=key)
-        return True
-    except Exception as e:
-        logger.error(f"Failed to delete {object_type} {object_id}: {e}")
-        return False
-
-def list_sultan_objects(object_type):
-    """Centralized function to list Sultan objects from S3."""
-    objects = []
-    prefix = f'sultan/{object_type}/'
-    try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-        for obj in response.get('Contents', []):
-            key = obj['Key']
-            if not key.endswith('.json'):
-                continue
-            try:
-                content = s3.get_object(Bucket=BUCKET_NAME,
-                                        Key=key)['Body'].read().decode('utf-8')
-                sultan_object = json.loads(content)
-                objects.append(sultan_object)
-            except Exception as e:
-                logger.error(f"Failed to load {object_type} {key}: {e}")
-    except Exception as e:
-        logger.error(f"Failed to list {object_type}: {e}")
-        return []
-    return objects
