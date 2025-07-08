@@ -1,4 +1,3 @@
-
 from flask import Blueprint, render_template, request, jsonify, redirect
 import json
 import logging
@@ -133,21 +132,21 @@ def api_dashboard_create():
         dashboard = data.get('dashboard', {})
         if not dashboard_id:
             return jsonify({"error": "Missing dashboard_id"}), 400
-        
+
         if 'name' not in dashboard:
             dashboard['name'] = dashboard_id
-        
+
         form_id = dashboard.get('form_id') or dashboard.get('selectedFormKey')
         form_name = dashboard.get('form_name')
         source_id = dashboard.get('source_id') or form_id
-        
+
         if form_id:
             dashboard['form_id'] = form_id
         if form_name:
             dashboard['form_name'] = form_name
         if source_id:
             dashboard['source_id'] = source_id
-        
+
         key = f'sultan/dashboards/{dashboard_id}.json'
         s3.put_object(Bucket=BUCKET_NAME,
                       Key=key,
@@ -241,7 +240,7 @@ def api_escalation_list():
 def api_escalation_save():
     try:
         data = request.json
-        
+
         if isinstance(data, dict):
             escalation_id = data.get('id')
             escalations = data.get('escalations')
@@ -250,10 +249,10 @@ def api_escalation_save():
             escalation_id = request.args.get('id')
         else:
             return jsonify({"error": "Invalid payload"}), 400
-        
+
         if not escalation_id or not isinstance(escalations, list):
             return jsonify({"error": "Missing escalation ID or escalations array"}), 400
-        
+
         key = f"sultan/escalations/{escalation_id}.json"
         s3.put_object(Bucket=BUCKET_NAME,
                       Key=key,
@@ -350,13 +349,16 @@ def api_sultan_save_form():
 def api_template_get(template_id):
     try:
         if template_id.endswith('.json'):
-            key = f'sultan/templates/{template_id}'
+            template_id = template_id[:-5]  # Remove .json extension
+
+        template = get_sultan_object('templates', template_id)
+        if template:
+            return jsonify(template)
         else:
-            key = f'sultan/templates/{template_id}.json'
-        
-        content = s3.get_object(Bucket=BUCKET_NAME,
-                                Key=key)['Body'].read().decode('utf-8')
-        return jsonify(json.loads(content))
+            return jsonify({
+                "error": "Template not found",
+                "redirect": "/pc-analytics-jaffar/sultan/templates/list"
+            }), 404
     except Exception as e:
         logger.error(f"Failed to load template {template_id}: {e}")
         return jsonify({
@@ -368,83 +370,32 @@ def api_template_get(template_id):
 def api_template_delete(template_id):
     """Move a template to the 'sultan/templates/delete/' folder"""
     try:
-        source_key = f'sultan/templates/{template_id}.json'
-        destination_key = f'sultan/templates/delete/{template_id}.json'
-        
-        s3.copy_object(Bucket=BUCKET_NAME,
-                       CopySource={
-                           'Bucket': BUCKET_NAME,
-                           'Key': source_key
-                       },
-                       Key=destination_key)
-        
-        s3.delete_object(Bucket=BUCKET_NAME, Key=source_key)
-        
-        return jsonify({
-            "status": "success",
-            "message": f"Template {template_id} moved to delete folder"
-        }), 200
+        # Get the template first
+        template = get_sultan_object('templates', template_id)
+        if template:
+            # Save to delete folder
+            save_sultan_object('templates/delete', template_id, template)
+            # Delete from main folder
+            delete_sultan_object('templates', template_id)
+            return jsonify({
+                "status": "success",
+                "message": f"Template {template_id} moved to delete folder"
+            }), 200
+        else:
+            return jsonify({"error": "Template not found"}), 404
     except Exception as e:
         logger.error(f"Failed to move template {template_id} to delete folder: {e}")
         return jsonify({"error": str(e)}), 500
 
-@sultan_bp.route('/api/templates/save', methods=['POST'])
-def api_template_save():
-    data = request.json
-    template = data.get('template')
-    
-    if not template:
-        return jsonify({"error": "Template required"}), 400
-    
-    try:
-        template['author'] = data.get('author', 'system')
-        template['email'] = data.get('email', 'system')
-        template_array = [template]
-        template_path = f'sultan/templates/{template["id"]}.json'
-        save_in_global_db(template_path, template_array)
-        return jsonify({"status": "success"})
-    except Exception as e:
-        logger.error(f"Failed to save template: {e}")
-        return jsonify({"error": "Failed to save template"}), 500
-
-@sultan_bp.route('/api/templates/duplicate', methods=['POST'])
-def api_template_duplicate():
-    data = request.json
-    template_id = data.get('id')
-    
-    try:
-        template = get_one_from_global_db(f'sultan/templates/{template_id}.json')
-        new_template = template.copy()
-        new_template['id'] = f'templates-{str(uuid.uuid4())}'
-        new_template['name'] = f'{template["name"]} (Copy)'
-        
-        save_in_global_db(f'sultan/templates/{new_template["id"]}.json', new_template)
-        return jsonify(new_template)
-    except Exception as e:
-        logger.error(f"Failed to duplicate template: {e}")
-        return jsonify({"error": "Failed to duplicate template"}), 500
-
 @sultan_bp.route('/api/templates', methods=['GET'])
 def api_templates_list():
     """Fetch the list of templates from the S3 bucket"""
-    templates = []
-    prefix = 'sultan/templates/'
-    
     try:
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-        for obj in response.get('Contents', []):
-            try:
-                response = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                content = response['Body'].read().decode('utf-8')
-                template = json.loads(content)
-                templates.append(template)
-            except Exception as e:
-                logger.error(f"Failed to load template {obj['Key']}: {e}")
+        templates = list_sultan_objects('templates')
+        return jsonify(templates)
     except Exception as e:
         logger.error(f"Failed to list templates: {e}")
         return jsonify({"error": str(e)}), 500
-    
-    return jsonify(templates)
 
 @sultan_bp.route('/save/dashboard', methods=['POST'])
 def save_dashboard():
@@ -453,15 +404,15 @@ def save_dashboard():
         data = request.json
         dashboard = data.get('dashboard')
         dashboard_id = data.get('dashboard_id') or (dashboard and dashboard.get('id'))
-        
+
         if not dashboard or not dashboard_id:
             return jsonify({"error": "Missing dashboard or dashboard_id"}), 400
-        
+
         form_id = dashboard.get('form_id') or dashboard.get('selectedFormKey')
         form_name = dashboard.get('form_name')
         source_id = dashboard.get('source_id') or form_id
         config_filters = dashboard.get('configFilters', {})
-        
+
         if form_id:
             dashboard['form_id'] = form_id
         if form_name:
@@ -470,7 +421,7 @@ def save_dashboard():
             dashboard['source_id'] = source_id
         if config_filters:
             dashboard['configFilters'] = config_filters
-        
+
         key = f'sultan/dashboards/{dashboard_id}.json'
         s3.put_object(Bucket=BUCKET_NAME,
                       Key=key,
@@ -480,3 +431,61 @@ def save_dashboard():
     except Exception as e:
         logger.error(f"Failed to save dashboard: {e}")
         return jsonify({"error": str(e)}), 500
+
+def get_sultan_object(object_type, object_id):
+    """Centralized function to get a Sultan object from S3."""
+    key = f'sultan/{object_type}/{object_id}.json'
+    try:
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+        content = response['Body'].read().decode('utf-8')
+        return json.loads(content)
+    except s3.exceptions.NoSuchKey:
+        return None
+    except Exception as e:
+        logger.error(f"Failed to get {object_type} {object_id}: {e}")
+        return None
+
+def save_sultan_object(object_type, object_id, data):
+    """Centralized function to save a Sultan object to S3."""
+    key = f'sultan/{object_type}/{object_id}.json'
+    try:
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
+                      Body=json.dumps(data, ensure_ascii=False),
+                      ContentType='application/json')
+        return True
+    except Exception as e:
+        logger.error(f"Failed to save {object_type} {object_id}: {e}")
+        return False
+
+def delete_sultan_object(object_type, object_id):
+    """Centralized function to delete a Sultan object from S3."""
+    key = f'sultan/{object_type}/{object_id}.json'
+    try:
+        s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to delete {object_type} {object_id}: {e}")
+        return False
+
+def list_sultan_objects(object_type):
+    """Centralized function to list Sultan objects from S3."""
+    objects = []
+    prefix = f'sultan/{object_type}/'
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        for obj in response.get('Contents', []):
+            key = obj['Key']
+            if not key.endswith('.json'):
+                continue
+            try:
+                content = s3.get_object(Bucket=BUCKET_NAME,
+                                        Key=key)['Body'].read().decode('utf-8')
+                sultan_object = json.loads(content)
+                objects.append(sultan_object)
+            except Exception as e:
+                logger.error(f"Failed to load {object_type} {key}: {e}")
+    except Exception as e:
+        logger.error(f"Failed to list {object_type}: {e}")
+        return []
+    return objects
