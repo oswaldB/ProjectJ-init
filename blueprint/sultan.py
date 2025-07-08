@@ -26,7 +26,7 @@ s3 = boto3.client('s3',
 logger = logging.getLogger(__name__)
 
 # Create Sultan blueprint with prefix
-sultan_blueprint = Blueprint('sultan', __name__, url_prefix='/pc-analytics-jaffar/sultan')
+sultan_bp = Blueprint('sultan', __name__, url_prefix='/pc-analytics-jaffar/sultan')
 
 @sultan_blueprint.route('/')
 def index():
