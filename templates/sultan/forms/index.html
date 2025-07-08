@@ -28,6 +28,9 @@
     },
     async saveForm(form) {
       try {
+        // Update the last_modified timestamp
+        form.last_modified = new Date().toISOString();
+        
         await fetch('/pc-analytics-jaffar/sultan/api/forms/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
