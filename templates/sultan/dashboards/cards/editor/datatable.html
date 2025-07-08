@@ -135,18 +135,21 @@ function initDataTableCard() {
         const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${card.config.dataSource}`);
         if (response.ok) {
           const formConfig = await response.json();
-          columns = formConfig.fields.map(field => ({
-            key: field.key,
-            label: field.label || field.key,
-            visible: true,
-            filterable: true,
-            sortable: true
-          }));
+          if (formConfig && formConfig.fields && Array.isArray(formConfig.fields)) {
+            columns = formConfig.fields.map(field => ({
+              key: field.key,
+              label: field.label || field.key,
+              visible: true,
+              filterable: true,
+              sortable: true
+            }));
+          }
         }
         
         card.config.columns = columns;
       } catch (error) {
         console.error('Failed to load columns:', error);
+        card.config.columns = [];
       }
     },
 
