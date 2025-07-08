@@ -4,7 +4,7 @@ App name: pc_analytics_jaffar
 import boto3
 import json
 import logging
-from flask import Response, redirect, request, jsonify, render_template, flash
+from flask import Flask, Response, redirect, request, jsonify, render_template, flash
 import pandas as pd
 from typing import Dict
 import os
@@ -12,6 +12,9 @@ import datetime
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import uuid
+
+# Initialize Flask app
+app = Flask(__name__)
 
 
 logger = logging.getLogger(__name__)
@@ -1803,10 +1806,6 @@ def save_in_global_db(key, data):
     except Exception as e:
         logger.error(f"Failed to save data to {key}: {e}")
         raise
-# Initialize Flask app
-from flask import Flask
-app = Flask(__name__)
-
 # AWS configuration - Replace with your actual AWS credentials and region
 REGION = os.environ.get('AWS_REGION') or 'eu-west-2'
 BUCKET_NAME = os.environ.get('BUCKET_NAME') or 'pc-analytics-jaffar'
