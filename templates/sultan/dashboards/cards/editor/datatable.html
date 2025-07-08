@@ -37,7 +37,7 @@
     <div x-show="card.config.dataSource">
       <label class="block text-sm font-medium text-gray-300 mb-2">Column Configuration</label>
       <div class="bg-gray-700 p-3 rounded max-h-60 overflow-y-auto">
-        <template x-for="(column, index) in card.config.columns" :key="index">
+        <template x-for="(column, index) in card.config.columns">
           <div class="flex items-center space-x-2 mb-2 p-2 bg-gray-600 rounded">
             <!-- Drag Handle -->
             <div class="cursor-move text-gray-400">⋮⋮</div>
