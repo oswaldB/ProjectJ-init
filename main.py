@@ -1,4 +1,4 @@
-    """
+"""
         App name: pc_analytics_jaffar
     """
     import boto3
@@ -315,10 +315,12 @@
             issues = []
             for key, _ in page_keys:
                 try:
-                    response_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
                     issue = json.loads(response_obj['Body'].read().decode('utf-8'))
                     if 'changes' in issue:
                         del issue['changes']
+                    # Ensure comments property exists
+                    if 'comments' not in issue:
+                        issue['comments'] = []
                     issues.append(issue)
                 except Exception as e:
                     logger.error(f"Error loading issue {key}: {e}")
@@ -372,10 +374,12 @@
             issues = []
             for key, _ in all_keys:
                 try:
-                    response_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
                     issue = json.loads(response_obj['Body'].read().decode('utf-8'))
                     if 'changes' in issue:
                         del issue['changes']
+                    # Ensure comments property exists
+                    if 'comments' not in issue:
+                        issue['comments'] = []
                     issues.append(issue)
                 except Exception as e:
                     logger.error(f"Error loading issue {key}: {e}")
@@ -414,7 +418,11 @@
             try:
                 key = f'jaffar/issues/{status}/{issue_id}.json'
                 response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-                return jsonify(json.loads(response['Body'].read().decode('utf-8')))
+                issue = json.loads(response['Body'].read().decode('utf-8'))
+                # Ensure comments property exists
+                if 'comments' not in issue:
+                    issue['comments'] = []
+                return jsonify(issue)
             except s3.exceptions.NoSuchKey:
                 continue
         return jsonify({'error': 'Issue not found'}), 404
@@ -842,7 +850,8 @@
         if not name or not config:
             return jsonify({'error': 'Missing name or config'}), 400
         key = f'jaffar/grid-views/{user}/{name}.json'
-        s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json.dumps(config))
+        s3.put_```python
+object(Bucket=BUCKET_NAME, Key=key, Body=json.dumps(config))
         return jsonify({'status': 'success'})
 
 

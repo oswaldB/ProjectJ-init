@@ -17,7 +17,7 @@ localPort = 5000
 externalPort = 80
 
 [workflows]
-runButton = "Run Both Servers"
+runButton = "Run Flask App"
 
 [[workflows.workflow]]
 name = "Run"
@@ -36,6 +36,15 @@ mode = "parallel"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python fastapi_server.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "gunicorn --bind 0.0.0.0:5000 main:app"
+
+[[workflows.workflow]]
+name = "Run Flask App"
+author = 37562832
+mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
