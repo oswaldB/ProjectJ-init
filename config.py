@@ -7,6 +7,7 @@ from moto import mock_aws
 # Local storage configuration
 LOCAL_BUCKET_DIR = "./local_bucket"
 BUCKET_NAME = "jaffar-bucket"
+LOCAL_BACKUP_ENABLED=true
 os.makedirs(LOCAL_BUCKET_DIR, exist_ok=True)
 
 # Initialize mocked AWS
