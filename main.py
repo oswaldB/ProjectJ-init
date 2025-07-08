@@ -166,6 +166,9 @@ def validate_save_request(data):
 
 # Main routes now handled by blueprints
 
+@app.route('/')
+def root_redirect():
+    return redirect('/pc-analytics-jaffar/')
 
 @app.route('/api/jaffar/templates/list')
 def api_jaffar_templates_list():
