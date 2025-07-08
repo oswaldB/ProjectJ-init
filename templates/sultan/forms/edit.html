@@ -2,66 +2,7 @@
 
 {% block title %}Form Editor{% endblock %}
 
-{% block alpine_component %}{
-  page: 'form-editor',
-  form: { id: '', name: '', fields: [], status: 'Draft' },
-  preview: true,
-  saveFormDebounced: null,
-  async init() {
-    this.$watch('form', () => {
-      this.saveForm();
-    }, { deep: true });
-    const formId = window.location.pathname.split('/').pop();
-    if (formId !== 'new') {
-      try {
-        const isFilename = formId.endsWith('.json');
-        const response = await fetch(`/api/sultan/forms/${formId}`);
-        const data = await response.json();
-        if (!response.ok) {
-          showNotification('Form not found', 'error');
-          setTimeout(() => {
-            window.location.href = '/sultan/forms';
-          }, 2000);
-          return;
-        }
-        this.form = data;
-      } catch (error) {
-        console.error('Failed to load form:', error);
-        showNotification('Form not found', 'error');
-        window.location.href = '/sultan/forms';
-      }
-    }
-  },
-  async saveForm() {
-    if (this.saveFormDebounced) {
-      clearTimeout(this.saveFormDebounced);
-    }
-
-    this.saveFormDebounced = setTimeout(async () => {
-      if (!this.form.id) {
-        this.form.id = `forms-${Date.now()}`;
-      }
-      const userEmail = localStorage.getItem('user_email');
-      if (!userEmail) {
-        console.error('User email not found');
-        return;
-      }
-      this.form.user_email = userEmail;
-      try {
-        const response = await fetch('/api/sultan/forms/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ form: this.form })
-        });
-        if (!response.ok) {
-          throw new Error('Failed to save form');
-        }
-      } catch (error) {
-        console.error('Failed to save form:', error);
-      }
-    }, 1000);
-  }
-}{% endblock %}
+{% block alpine_component %}{ page: 'form-editor' }{% endblock %}
         try {
           await fetch('/api/sultan/forms/save', {
             method: 'POST',
@@ -172,7 +113,7 @@
     toggleField(index) {
       this.form.fields[index].open = !this.form.fields[index].open;
     }
-  }">
+  }" x-init="init()">
   <!-- Editor -->
   <div class="w-1/2">
     <div class="flex justify-between items-center mb-6">
