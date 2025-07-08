@@ -1,0 +1,86 @@
+<template x-if="field.type === 'single_select'">
+  <div class="mt-4 space-y-2">
+    <button @click="field.options = field.options || []; field.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+    <template x-for="(option, optIndex) in field.options">
+      <div class="space-y-2 p-2 border border-gray-600 rounded">
+        <div class="flex space-x-2 items-center">
+          <div class="flex flex-col space-y-1">
+            <button @click="if(optIndex > 0) { const items = [...field.options]; const item = items[optIndex]; items.splice(optIndex, 1); items.splice(optIndex - 1, 0, item); field.options = items; }"
+                    class="text-gray-400 hover:text-white"
+                    :class="{ 'opacity-50 cursor-not-allowed': optIndex === 0 }">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+              </svg>
+            </button>
+            <button @click="if(optIndex < field.options.length - 1) { const items = [...field.options]; const item = items[optIndex]; items.splice(optIndex, 1); items.splice(optIndex + 1, 0, item); field.options = items; }"
+                    class="text-gray-400 hover:text-white"
+                    :class="{ 'opacity-50 cursor-not-allowed': optIndex === field.options.length - 1 }">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+          </div>
+          <input type="text" x-model.debounce.500ms="option.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+          <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
+        </div>
+      </div>
+    </template>
+  </div>
+</template>
+                <!-- Bloc Auto-select pour single_select -->
+                <template x-if="field.type === 'single_select'">
+                  <div class="mt-2 p-2 border border-blue-700 rounded bg-gray-900">
+                    <label class="flex items-center space-x-2 text-blue-300 font-semibold">
+                      <input type="checkbox" x-model="field.autoSelect">
+                      <span>Auto-select option based on previous answers</span>
+                    </label>
+                    <template x-if="field.autoSelect">
+                      <div class="mt-2 space-y-2">
+                        <div>
+                          <label class="block text-sm text-gray-300">Previous Question Key</label>
+                          <select x-model="field.autoSelectKey" class="bg-gray-800 text-white p-2 rounded border border-gray-600 w-full">
+                            <option value="">-- Select a previous question --</option>
+                            <template x-for="(prevField, prevIdx) in form.fields.slice(0, index)">
+                              <option :value="prevField.key" x-text="prevField.label + (prevField.key ? ' (' + prevField.key + ')' : '')"></option>
+                            </template>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-sm text-gray-300">Comparator</label>
+                          <select x-model="field.autoSelectComparator" class="bg-gray-800 text-white p-2 rounded border border-gray-600 w-full">
+                            <option value="equals">Equals</option>
+                            <option value="not_equals">Not equals</option>
+                            <option value="greater">Greater than</option>
+                            <option value="less">Less than</option>
+                            <option value="contains">Contains</option>
+                            <option value="not_contains">Does not contain</option>
+                            <option value="is_empty">Is empty</option>
+                            <option value="not_empty">Is not empty</option>
+                          </select>
+                        </div>
+                        <div x-show="!['is_empty','not_empty'].includes(field.autoSelectComparator)">
+                          <label class="block text-sm text-gray-300">Comparison Value</label>
+                          <input type="text" x-model="field.autoSelectValue" class="bg-gray-800 text-white p-2 rounded border border-gray-600 w-full" placeholder="Value to compare">
+                        </div>
+                        <div>
+                          <label class="block text-sm text-gray-300">Option to auto-select</label>
+                          <select x-model="field.autoSelectOption" class="bg-gray-800 text-white p-2 rounded border border-gray-600 w-full">
+                            <option value="">-- Select an option --</option>
+                            <template x-for="option in field.options">
+                              <option :value="option.name" x-text="option.name"></option>
+                            </template>
+                          </select>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+
+<template x-if="question.type === 'single_select'">
+<select x-model="question.value" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+  <option value="">Select an option</option>
+  <template x-for="option in question.options">
+    <option x-text="option.name" :value="option.name"></option>
+  </template>
+</select>
+</template>

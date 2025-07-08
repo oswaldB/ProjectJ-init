@@ -1,0 +1,51 @@
+<template x-if="field.type === 'submit_issue'">
+    <div class="relative p-4 border border-red-500 rounded bg-gray-900 space-y-4" x-data="{ successMessage: '', errorMessage: '', config: typeof config !== 'undefined' ? config : false }">
+
+        <div x-show="successMessage" class="fixed top-0 left-0 z-20 p-[10%] border border-white rounded bg-gray-900 text-white h-screen w-screen ">
+          <div x-html="successMessage"></div>
+          <div x-html="window.marked ? marked(field.markdown || '') : (field.markdown || '')"></div>
+          <div class="flex flex-wrap gap-2 mt-5">
+            <template x-for="btn in field.buttons || []">
+              <a :href="btn.url" target="_blank" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition" x-text="btn.label"></a>
+            </template>
+            <button x-show="field.recordAnotherForm"
+              type="button" 
+              class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition"
+              @click="location.href = `/pc-analytics-jaffar/forms/edit/${config.id}`"
+            >
+              Submit Another Answer
+            </button>
+          </div>
+        </div>
+        <div x-show="errorMessage" class="p-4 border border-red-500 rounded bg-red-100 text-red-800" x-text="errorMessage"></div>
+        <button x-show="!successMessage && !errorMessage"
+          type="button"
+          class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition"
+          :disabled="!config?.fields?.slice(0, config.fields.indexOf(field)).every(f => !f.required || formData[f.key])"
+          :class="{'opacity-50 cursor-not-allowed': !config?.fields?.slice(0, config.fields.indexOf(field)).every(f => !f.required || formData[f.key])}"
+          @click="async () => {
+            successMessage = '';
+            errorMessage = '';
+            try {
+              const response = await fetch(`/pc-analytics-jaffar/forms/api/submit/${config.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ responseId: responseId, answers: formData, author: userName })
+              });
+              const result = await response.json();
+              if (field.successMessage?.enabled && field.successMessage?.content) {
+                successMessage = field.successMessage.content;
+              } else {
+                successMessage = result.message || 'Submission successful!';
+              }
+            } catch (error) {
+              console.error('Error submitting form:', error);
+              errorMessage = 'An error occurred while submitting the form.';
+            }
+          }"
+        >
+          Submit
+        </button>
+
+    </div>
+</template>

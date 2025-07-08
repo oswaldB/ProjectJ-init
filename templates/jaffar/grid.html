@@ -1,158 +1,514 @@
-
 {% extends "jaffar/base.html" %}
 
 {% block title %}Issues Grid{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
 <style>
-  .dataTables_wrapper {
-    background-color: #111827;
-    padding: 20px;
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #1f2836;
+    color: #FFF;
+  }
+
+  .container-fluid {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  header {
+    padding: 20px 0;
+  }
+
+  h1 {
+    color: #FFF;
+    font-weight: 600;
+  }
+
+  .card {
     border-radius: 8px;
-    color: white;
-    overflow-x: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    border: none;
+    background-color: #2b394b;
+  }
+
+  .card-header {
+    background-color: #2b394b;
+    border-bottom: 1px solid #3a495c;
+    padding: 15px 20px;
+    color: #FFF;
+  }
+
+  .card-body {
+    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+  }
+
+  #filter-text-box {
+    border-radius: 4px;
+    border: 1px solid #3a495c;
+    padding: 8px 12px;
+    width: 250px;
+    background-color: #2b394b;
+    color: #fff;
+  }
+
+  @media (max-width: 768px) {
+    .card-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .controls {
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    #filter-text-box {
+      width: 100%;
+    }
+
+    #issuesGrid {
+      height: 400px;
+    }
+  }
+
+  .draggable {
+    cursor: move;
+    user-select: none;
+  }
+
+  .drag-over {
+    background: #444 !important;
+    opacity: 0.8;
+  }
+
+  .resizer {
+    display: inline-block;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 2;
+    user-select: none;
+  }
+
+  th {
     position: relative;
   }
-  
-  .dataTables_wrapper .dataTables_scroll {
-    margin-bottom: 1em;
+
+  #issuesGridContainer {
+    max-width: 100vw;
+    overflow-x: auto;
+    padding-bottom: 8px;
   }
-  
-  .dataTables_wrapper .dataTables_length, 
-  .dataTables_wrapper .dataTables_filter {
-    position: sticky;
-    left: 0;
-    background: #111827;
-    padding: 8px 0;
-    z-index: 1;
+
+  #issuesGrid {
+    min-width: 300px;
+    table-layout: fixed;
   }
-  table.dataTable tbody tr {
-    background-color: #1f2937;
-    color: white;
+
+  #issuesGrid th, #issuesGrid td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
   }
-  table.dataTable tbody tr:hover {
-    background-color: #374151;
+
+  #issuesGrid th {
+    background: #253143;
+    font-size: 0.98em;
+    font-weight: 500;
   }
-  .dataTables_filter input, .dataTables_length select {
-    background-color: #374151 !important;
-    color: white !important;
-    border: 1px solid #4b5563 !important;
-    border-radius: 4px;
-    padding: 4px 8px;
-  }
-  .dataTables_info {
-    color: #9ca3af !important;
-  }
-  .paginate_button {
-    color: white !important;
-  }
-  .paginate_button.current {
-    background: #3b82f6 !important;
-    border: none !important;
+
+  #issuesGrid td {
+    font-size: 0.96em;
+    padding: 0.45rem 0.5rem;
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="p-6">
-  <div class="fixed top-0 left-64 right-0 bg-gray-900 z-10 p-6 border-b border-gray-800">
-    <h1 class="text-2xl font-bold text-white">Issues Grid</h1>
-  </div>
+<div 
+  x-data="issuesGrid()" 
+  x-init="init()"
+>
+  <header>
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-white">Issues</h1>
+      <div class="d-flex gap-2 align-items-center">
+        <!-- Views dropdown -->
+        <select id="viewsDropdown" class="form-select" style="width:auto;display:none"
+          x-ref="viewsDropdown"
+          x-show="views.length > 0"
+          x-model="selectedView"
+          @change="loadView(selectedView)"
+        >
+          <option value="">-- Views --</option>
+          <template x-for="v in views" :key="v">
+            <option x-text="v" :value="v"></option>
+          </template>
+        </select>
+        <!-- Columns button -->
+        <div class="dropdown">
+          <button class="btn btn-outline-light" id="columnsBtn" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa fa-columns"></i> Columns
+          </button>
+          <ul class="dropdown-menu dropdown-menu-dark" id="columnsMenu" style="max-height:300px;overflow:auto">
+            <template x-for="(col, idx) in columns" :key="col.key">
+              <li
+                draggable="true"
+                @dragstart="dragColStart(idx)"
+                @dragover.prevent="dragColOver(idx)"
+                @dragleave="dragColLeave(idx)"
+                @drop="dropCol(idx)"
+                :class="{'draggable': true, 'drag-over': dragOverIdx === idx}"
+              >
+                <label class="dropdown-item">
+                  <input type="checkbox" :value="col.key" :checked="visibleColumns.includes(col.key)"
+                    @change="toggleColumn(col.key)">
+                  <span x-text="col.header"></span>
+                  <span class="ms-2 text-muted" style="font-size:0.9em;cursor:grab;">&#9776;</span>
+                </label>
+              </li>
+            </template>
+          </ul>
+        </div>
+        <!-- Save view UI -->
+        <input id="viewNameInput" class="form-control" type="text" placeholder="View name" style="width:150px;" x-model="viewName">
+        <button id="saveViewBtn" class="btn btn-secondary" @click="saveView">Save View</button>
+        <button id="exportCsvBtn" class="btn btn-danger" 
+                @click="exportToCsv" 
+                :disabled="exportingCsv">
+          <span x-show="exportingCsv" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          <span x-text="exportingCsv ? 'Exporting...' : 'Export to CSV'"></span>
+        </button>
+      </div>
+    </div>
+  </header>
 
-  <div class="sheet-container mt-20">
-    <table id="issuesTable" class="display">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Status</th>
-          <th>Version</th>
-          <th>Name</th>
-          <th>Description</th>
-          <th>Asset Class</th>
-          <th>Business Unit</th>
-          <th>Region</th>
-          <th>PC Function</th>
-          <th>Issue Family</th>
-          <th>Control Pillar</th>
-          <th>Date Identification</th>
-          <th>Impact Breach Start Date</th>
-          <th>Author</th>
-          <th>Created At</th>
-          <th>Updated At</th>
-          <th>Submitted At</th>
-        </tr>
-      </thead>
-    </table>
+  <div style="width:80vw;margin:0 auto;">
+    <!-- Pagination controls -->
+    <div class="d-flex justify-content-between align-items-center mb-2" x-show="totalPages > 1">
+      <button class="btn btn-sm btn-secondary" :disabled="page <= 1" @click="prevPage">Previous</button>
+      <span>Page <span x-text="page"></span> / <span x-text="totalPages"></span></span>
+      <button class="btn btn-sm btn-secondary" :disabled="page >= totalPages" @click="nextPage">Next</button>
+    </div>
+
+    <div class="row mb-4">
+      <div class="card-body">
+        <div id="issuesGridContainer">
+          <table id="issuesGrid" class="table table-dark table-hover table-bordered table-sm" style="border-radius:8px;overflow:hidden;">
+            <thead>
+              <tr>
+                <template x-for="(col, idx) in columns.filter(c => visibleColumns.includes(c.key))" :key="col.key">
+                  <th
+                    :style="'width:' + (columnWidths[col.key] || 60) + 'px; min-width:40px; position:relative;'"
+                    :class="{'draggable': true, 'drag-over': dragOverKey === col.key}"
+                  >
+                    <!-- Only this span triggers sort -->
+                    <span style="cursor:pointer;display:inline-flex;align-items:center;" @click="sort(col.key)">
+                      <i 
+                        class="fa"
+                        :class="{
+                          'fa-sort': sortState.col !== col.key,
+                          'fa-caret-up': sortState.col === col.key && sortState.asc,
+                          'fa-caret-down': sortState.col === col.key && !sortState.asc
+                        }"
+                        style="margin-right: 6px;"
+                      ></i>
+                      <span x-text="col.header"></span>
+                    </span>
+                    <!-- Filter icon (remains clickable) -->
+                    <i class="fa fa-filter ms-2" style="cursor:pointer"
+                       @click.stop="toggleFilter(col.key)"></i>
+                    <!-- Resizer handle -->
+                    <span class="resizer"
+                      @mousedown.prevent="startResize($event, col.key)">
+                    </span>
+                    <!-- Filter input dropdown -->
+                    <div x-show="showFilterFor === col.key"
+                         @click.away="showFilterFor = null"
+                         style="position:absolute;top:100%;left:0;z-index:20;background:#253143;padding:8px;border-radius:4px;box-shadow:0 2px 8px #0008;min-width:220px;"
+                    >
+                      <!-- Select filter type (ENGLISH) -->
+                      <select class="form-select form-select-sm mb-2"
+                        x-model="columnFilterTypes[col.key]"
+                        style="min-width: 120px;">
+                        <option value="contains">Contains</option>
+                        <option value="not_contains">Does not contain</option>
+                        <option value="equals">Equals</option>
+                        <option value="not_equals">Not equals</option>
+                        <option value="starts_with">Starts with</option>
+                        <option value="ends_with">Ends with</option>
+                      </select>
+                      <input 
+                        class="form-control form-control-sm"
+                        :placeholder="'Filter ' + col.header"
+                        x-model="columnFilters[col.key]"
+                        @input="onFilterInput"
+                        style="min-width: 120px;"
+                        @keydown.escape="showFilterFor = null"
+                        autofocus
+                      >
+                    </div>
+                  </th>
+                </template>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="row in filteredIssues">
+                <tr style="cursor:pointer" @click="row.id && goToIssue(row.id)">
+                  <template x-for="col in columns.filter(c => visibleColumns.includes(c.key))" :key="col.key">
+                    <td x-text="col.formatter(row[col.key], row)" :title="row[col.key]"></td>
+                  </template>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-async function loadData() {
-  const response = await fetch('/api/jaffar/issues/list');
-  if (response.ok) {
-    const data = await response.json();
-    const issuesData = data.filter(issue => issue.version);
-    
-    $('#issuesTable').DataTable({
-      data: issuesData,
-      columns: [
-        { data: 'id' },
-        { data: 'status' },
-        { data: 'version' },
-        { data: 'name' },
-        { data: 'issue-description' },
-        { 
-          data: 'asset-class',
-          render: data => Array.isArray(data) ? data.join(', ') : data || ''
-        },
-        { 
-          data: 'business-unit',
-          render: data => Array.isArray(data) ? data.join(', ') : data || ''
-        },
-        { 
-          data: 'region',
-          render: data => Array.isArray(data) ? data.join(', ') : data || ''
-        },
-        { data: 'pc-function' },
-        { data: 'issue-family' },
-        { 
-          data: 'control-pillar',
-          render: data => Array.isArray(data) ? data.join(', ') : data || ''
-        },
-        { data: 'date-identification' },
-        { data: 'impact-breach-start-date' },
-        { data: 'author' },
-        { 
-          data: 'created_at',
-          render: data => data ? new Date(data).toLocaleString() : ''
-        },
-        { 
-          data: 'updated_at',
-          render: data => data ? new Date(data).toLocaleString() : ''
-        },
-        { 
-          data: 'submitted_at',
-          render: data => data ? new Date(data).toLocaleString() : ''
-        }
-      ],
-      dom: 'Bfrtip',
-      buttons: ['copy', 'csv', 'excel'],
-      scrollX: true,
-      pageLength: 25,
-      order: [[14, 'desc']], // Sort by Created At by default
-      initComplete: function() {
-        $(this).show();
+function issuesGrid() {
+  return {
+    issues: [],
+    columns: [],
+    visibleColumns: [],
+    sortState: { col: null, asc: true },
+    viewName: '',
+    views: [],
+    selectedView: '',
+    currentUser: "{{ current_user.email if current_user else 'anonymous' }}",
+    filteredIssues: [],
+    columnFilters: {},
+    columnFilterTypes: {},
+    showFilterFor: null,
+    dragIdx: null,
+    dragOverIdx: null,
+    dragKey: null,
+    dragOverKey: null,
+    columnWidths: {},
+    resizingCol: null,
+    startX: 0,
+    startWidth: 0,
+    exportingCsv: false,
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+    total: 0,
+    startResize(e, key) {
+      this.resizingCol = key;
+      this.startX = e.clientX;
+      this.startWidth = this.columnWidths[key] || 60;
+
+      // Utiliser des fonctions fléchées pour garder le bon 'this'
+      this._onMouseMove = (event) => {
+        if (!this.resizingCol) return;
+        const delta = event.clientX - this.startX;
+        // Utiliser Object.assign pour la réactivité Alpine
+        this.columnWidths = Object.assign({}, this.columnWidths, { [key]: Math.max(40, this.startWidth + delta) });
+      };
+      this._onMouseUp = () => {
+        this.resizingCol = null;
+        document.body.style.cursor = '';
+        document.removeEventListener('mousemove', this._onMouseMove);
+        document.removeEventListener('mouseup', this._onMouseUp);
+      };
+
+      document.body.style.cursor = 'col-resize';
+      document.addEventListener('mousemove', this._onMouseMove);
+      document.addEventListener('mouseup', this._onMouseUp);
+    },
+    dragColStart(idx) {
+      this.dragIdx = idx;
+    },
+    dragColOver(idx) {
+      this.dragOverIdx = idx;
+    },
+    dragColLeave(idx) {
+      if (this.dragOverIdx === idx) this.dragOverIdx = null;
+    },
+    dropCol(idx) {
+      if (this.dragIdx === null || this.dragIdx === idx) return;
+      const col = this.columns.splice(this.dragIdx, 1)[0];
+      this.columns.splice(idx, 0, col);
+      // Met à jour l'ordre des colonnes visibles
+      this.visibleColumns = this.columns.map(c => c.key);
+      this.dragIdx = null;
+      this.dragOverIdx = null;
+    },
+    toggleColumn(key) {
+      if (this.visibleColumns.includes(key)) {
+        this.visibleColumns = this.visibleColumns.filter(k => k !== key);
+      } else {
+        this.visibleColumns = [...this.visibleColumns, key];
       }
-    });
+    },
+    goToIssue(id) {
+      if (id) {
+        window.location.href = `/pc-analytics-jaffar/issues/${id}`;
+      }
+    },
+    doResize: null,
+    stopResize: null,
+    init() {
+      this.loadData();
+      // Rien à faire ici pour le resize, tout est géré dans startResize
+    },
+    renderTable() {
+      // Désormais, le filtrage et le tri sont faits côté serveur
+      this.filteredIssues = this.issues;
+    },
+    sort(colKey) {
+      if (this.sortState.col === colKey) {
+        this.sortState.asc = !this.sortState.asc;
+      } else {
+        this.sortState.col = colKey;
+        this.sortState.asc = true;
+      }
+      this.page = 1;
+      this.loadData();
+    },
+    onFilterInput() {
+      this.page = 1;
+      this.loadData();
+    },
+    toggleFilter(key) {
+      this.showFilterFor = this.showFilterFor === key ? null : key;
+      // Optionally focus input after DOM update
+      this.$nextTick(() => {
+        const input = document.querySelector(`th[style*="width"][style*="position:relative;"] [x-show="showFilterFor === '${key}'"] input`);
+        if (input) input.focus();
+      });
+    },
+    async loadData() {
+      // Construction des paramètres de requête
+      const params = new URLSearchParams();
+      params.append('page', this.page);
+      params.append('page_size', this.pageSize);
+      if (this.sortState.col) {
+        params.append('sort_col', this.sortState.col);
+        params.append('sort_dir', this.sortState.asc ? 'asc' : 'desc');
+      }
+      for (const key in this.columnFilters) {
+        if (this.columnFilters[key]) {
+          params.append('filter_' + key, this.columnFilters[key]);
+        }
+      }
+      for (const key in this.columnFilterTypes) {
+        if (this.columnFilterTypes[key]) {
+          params.append('filter_type_' + key, this.columnFilterTypes[key]);
+        }
+      }
+      const response = await fetch(`/pc-analytics-jaffar/api/jaffar/issues/list?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        this.issues = (data.issues || []).filter(issue => issue.version);
+        this.total = data.total || this.issues.length;
+        this.totalPages = data.total_pages || 1;
+        if (this.issues.length > 0) {
+          this.columns = this.generateColumns(this.issues[this.issues.length - 1]);
+          // Ne pas réinitialiser columnWidths, juste compléter pour les nouvelles colonnes
+          this.columns.forEach(c => {
+            if (!(c.key in this.columnWidths)) this.columnWidths[c.key] = 60;
+          });
+          this.visibleColumns = this.columns.map(c => c.key);
+        }
+        this.filteredIssues = this.issues;
+      }
+    },
+    prevPage() {
+      if (this.page > 1) {
+        this.page--;
+        this.loadData();
+      }
+    },
+    nextPage() {
+      if (this.page < this.totalPages) {
+        this.page++;
+        this.loadData();
+      }
+    },
+    generateColumns(obj) {
+      if (!obj) return [];
+      // Exclure configs et createdAt
+      const exclude = ['configs', 'createdAt'];
+      return Object.keys(obj)
+        .filter(key => !exclude.includes(key))
+        .map(key => ({
+          key: key,
+          header: key.charAt(0).toUpperCase() + key.slice(1),
+          formatter: (val) => val === undefined || val === null ? '' : val
+        }));
+    },
+    async exportToCsv() {
+      this.exportingCsv = true;
+      try {
+        const params = new URLSearchParams();
+        params.append('page', 1);
+        params.append('page_size', 10000); // Ajustez si besoin
+        if (this.sortState.col) {
+          params.append('sort_col', this.sortState.col);
+          params.append('sort_dir', this.sortState.asc ? 'asc' : 'desc');
+        }
+        for (const key in this.columnFilters) {
+          if (this.columnFilters[key]) {
+            params.append('filter_' + key, this.columnFilters[key]);
+          }
+        }
+        for (const key in this.columnFilterTypes) {
+          if (this.columnFilterTypes[key]) {
+            params.append('filter_type_' + key, this.columnFilterTypes[key]);
+          }
+        }
+        const response = await fetch(`/pc-analytics-jaffar/api/jaffar/issues/list?${params.toString()}`);
+        let allIssues = [];
+        if (response.ok) {
+          const data = await response.json();
+          allIssues = (data.issues || []).filter(issue => issue.version);
+        } else {
+          alert("Error.");
+          return;
+        }
+
+        // Get visible columns
+        const cols = this.columns.filter(c => this.visibleColumns.includes(c.key));
+        // CSV header
+        const header = cols.map(c => `"${c.header}"`).join(',');
+        // CSV rows
+        const rows = allIssues.map(row =>
+          cols.map(c => {
+            let val = row[c.key];
+            if (val === undefined || val === null) val = '';
+            return `"${String(val).replace(/"/g, '""')}"`;
+          }).join(',')
+        );
+        const csv = [header, ...rows].join('\r\n');
+        // Download
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'issues.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } finally {
+        this.exportingCsv = false;
+      }
+    },
   }
 }
-
-document.addEventListener('DOMContentLoaded', loadData);
 </script>
 {% endblock %}

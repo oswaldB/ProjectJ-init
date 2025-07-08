@@ -2,60 +2,71 @@
 
 {% block title %}Templates{% endblock %}
 
-{% block alpine_component %}{
-  page: 'templates',
-  templates: [],
-  searchQuery: '',
-  statuses: ['draft', 'prod', 'old version'],
-  state: {
-    loading: true,
-    error: null
-  },
-  filteredTemplates() {
-    return this.templates.filter(template => 
-      template.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-      template.id?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-      template.user_email?.toLowerCase().includes(this.searchQuery.toLowerCase())
-    );
-  },
-  async init() {
-    await this.loadTemplates();
-  },
-  async loadTemplates() {
-    try {
-      this.state.loading = true;
-      const response = await fetch('/api/sultan/templates');
-      if (!response.ok) throw new Error('Failed to load templates');
-      this.templates = await response.json();
-    } catch (error) {
-      console.error('Failed to load templates:', error);
-      this.state.error = error.message;
-      this.templates = [];
-    } finally {
-      this.state.loading = false;
-    }
-  },
-  async deleteTemplate(id) {
-    if (!confirm('Are you sure you want to delete this template?')) return;
-    try {
-      const response = await fetch(`/api/sultan/templates/delete/${id}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete template');
-      this.templates = this.templates.filter(t => t.id !== id);
-      showNotification('Template deleted successfully', 'success');
-    } catch (error) {
-      console.error('Failed to delete template:', error);
-      showNotification('Failed to delete template', 'error');
-    }
-  }
-}{% endblock %}Template deleted successfully', 'success');
+{% block alpine_component %}
+  {
+    sidebarOpen: true,
+    page: 'templates',
+    templates: [],
+    searchQuery: '',
+    statuses: ['draft', 'prod', 'old version'],
+    types: ['email', 'datatable'],
+    newTemplateType: 'email',
+    state: {
+      loading: true,
+      error: null
+    },
+    showNotification(message, type) {
+      alert(message);
+    },
+    filteredTemplates() {
+      return this.templates.filter(template => 
+        template.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        template.id?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        template.user_email?.toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
+    },
+    async init() {
+      await this.loadTemplates();
+    },
+    async loadTemplates() {
+      try {
+        this.state.loading = true;
+        const response = await fetch(`/pc-analytics-jaffar/api/sultan/templates`);
+        if (!response.ok) throw new Error('Failed to load templates');
+        const data = await response.json();
+        // Flatten deeply nested arrays/objects
+        function flatten(arr) {
+          return arr.flatMap(item =>
+            Array.isArray(item) ? flatten(item) :
+            (typeof item === 'object' && item !== null) ? [item] : []
+          );
+        }
+        const flatTemplates = Array.isArray(data) ? flatten(data) : (data ? [data] : []);
+        console.log('Templates loaded:', flatTemplates);
+        this.templates = flatTemplates;
+      } catch (error) {
+        console.error('Failed to load templates:', error);
+        this.state.error = error.message;
+        this.templates = [];
+      } finally {
+        this.state.loading = false;
+      }
+    },
+    async deleteTemplate(id) {
+      if (!confirm('Are you sure you want to delete this template?')) return;
+      try {
+        const response = await fetch(`/pc-analytics-jaffar/api/sultan/templates/delete/${id}`, { method: 'POST' });
+        if (!response.ok) throw new Error('Failed to delete template');
+        this.templates = this.templates.filter(t => t.id !== id);
+        this.showNotification('Template deleted successfully', 'success');
       } catch (error) {
         console.error('Failed to delete template:', error);
-        showNotification('Failed to delete template', 'error');
+        this.showNotification('Failed to delete template', 'error');
       }
     },
     async duplicateTemplate(template) {
       try {
-        const response = await fetch('/api/sultan/templates/duplicate', {
+        const response = await fetch('/pc-analytics-jaffar/api/sultan/templates/duplicate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: template.id })
@@ -68,12 +79,41 @@
         alert('Failed to duplicate template');
       }
     },
+    async createNewTemplate() {
+      const timestamp = new Date().getTime();
+      const newTemplate = {
+        id: `template-${timestamp}`,
+        name: `New Template ${timestamp}`,
+        subject: '',
+        body: '',
+        status: 'draft',
+        type: this.newTemplateType || 'email',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        user_email: localStorage.getItem('user_email')
+      };
+
+      try {
+        const response = await fetch('/pc-analytics-jaffar/api/sultan/templates/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ template: newTemplate })
+        });
+
+        if (!response.ok) throw new Error('Failed to create template');
+        this.templates.push(newTemplate);
+        this.showNotification('Template created successfully', 'success');
+      } catch (error) {
+        console.error('Failed to create template:', error);
+        this.showNotification('Failed to create template', 'error');
+      }
+    },
     formatDate(date) {
       return new Date(date || Date.now()).toLocaleString();
     },
     async saveTemplate(template) {
       try {
-        const response = await fetch('/api/sultan/templates/save', {
+        const response = await fetch('/pc-analytics-jaffar/api/sultan/templates/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ template })
@@ -83,6 +123,17 @@
         console.error('Failed to save template:', error);
         alert('Failed to save template');
       }
+    },
+    editTemplate(template) {
+      if (template.type === 'email') {
+        window.location.href = `/pc-analytics-jaffar/sultan/templates/edit2/${template.id}`;
+      } else {
+        window.location.href = `/pc-analytics-jaffar/sultan/templates/edit-datatable/${template.id}`;
+      }
+    },
+    changeTemplateType(template, newType) {
+      template.type = newType;
+      this.saveTemplate(template);
     }
   }
 {% endblock %}
@@ -91,9 +142,16 @@
 <div class="p-6">
   <header class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-white">Templates</h1>
-    <a href="/sultan/templates/edit/new" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
-      Create Template
-    </a>
+    <div class="flex items-center space-x-2">
+      <select x-model="newTemplateType" class="bg-gray-700 text-white px-2 py-1 rounded">
+        <template x-for="type in types">
+          <option :value="type" x-text="type.charAt(0).toUpperCase() + type.slice(1)"></option>
+        </template>
+      </select>
+      <button @click="createNewTemplate()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
+        Create Template
+      </button>
+    </div>
   </header>
 
   <div class="space-y-6">
@@ -139,6 +197,13 @@
                       <option :value="status" :selected="template.status == status" x-text="status"></option>
                     </template>
                   </select>
+                  <select x-model="template.type"
+                          @change="changeTemplateType(template, $event.target.value)"
+                          class="bg-gray-700 text-xs text-white px-2 py-1 rounded ml-2">
+                    <template x-for="type in types">
+                      <option :value="type" x-text="type"></option>
+                    </template>
+                  </select>
                 </div>
                 <p class="flex items-center">
                   <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -161,7 +226,7 @@
               </div>
             </div>
             <div class="flex space-x-2">
-              <a :href="'/sultan/templates/edit/' + template.id" class="bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 transition text-sm">Edit</a>
+              <button @click="editTemplate(template)" class="bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 transition text-sm">Edit</button>
               <button @click="duplicateTemplate(template)" class="bg-gray-600 text-white px-3 py-1.5 rounded hover:bg-gray-500 transition text-sm">Duplicate</button>
               <button @click="deleteTemplate(template.id)" class="bg-gray-600 text-white px-3 py-1.5 rounded hover:bg-red-600 transition text-sm">Delete</button>
             </div>

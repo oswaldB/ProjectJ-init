@@ -1,0 +1,36 @@
+<!-- Bloc spécifique pouar le type Actions -->
+<template x-if="field.type === 'actions'">
+  <div class="mt-4 space-y-2 p-2 border border-yellow-600 rounded bg-gray-900">
+    <label class="block text-sm font-medium text-yellow-300">Content</label>
+    <div 
+      x-ref="actionsQuillField"
+      x-init="window.initQuill($refs.actionsQuillField, val => field.markdown = (val !== undefined ? val : field.markdown))"
+      class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+    <div class="mt-1 text-gray-400 text-sm border-l-4 border-yellow-700 pl-2" x-show="field.markdown">
+      <span class="font-semibold text-yellow-300">Preview:</span>
+      <div x-html="field.markdown"></div>
+    </div>
+    <div class="mt-2">
+      <h4 class="text-yellow-300 font-semibold mb-1">Buttons</h4>
+      <button @click="field.buttons = field.buttons || []; field.buttons.push({label: '', url: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Button</button>
+      <template x-for="(btn, btnIdx) in field.buttons">
+        <div class="flex space-x-2 items-center mb-2">
+          <input type="text" x-model="btn.label" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button Label">
+          <input type="text" x-model="btn.url" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button URL">
+          <button @click="field.buttons.splice(btnIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>
+
+<template x-if="question.type === 'actions'">
+  <div class="p-4 border border-yellow-600 rounded bg-gray-900">
+    <div x-html="question.markdown"></div>
+    <div class="flex flex-wrap gap-2">
+      <template x-for="button in question.buttons">
+        <a :href="button.url" target="_blank" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded" x-text="button.label"></a>
+      </template>
+    </div>
+  </div>
+</template>

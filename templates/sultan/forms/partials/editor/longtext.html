@@ -1,0 +1,15 @@
+<div class="space-y-2">
+  <label class="block text-sm font-medium text-gray-300">Long Text Input</label>
+  <div 
+    x-ref="longtextQuillField"
+    x-init="window.initQuill($refs.longtextQuillField, val => field.longtext = (val !== undefined ? val : field.longtext))"
+    class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+  <div class="mt-1 text-gray-400 text-sm border-l-4 border-blue-700 pl-2" x-show="field.longtext">
+    <span class="font-semibold text-blue-300">Preview:</span>
+    <div x-html="field.longtext"></div>
+  </div>
+</div>
+
+<template x-if="question.type === 'textarea'">
+  <textarea x-model="question.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Label"></textarea>
+</template>

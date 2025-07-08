@@ -1,0 +1,138 @@
+{% extends "forms/base.html" %}
+
+{% block title %}Form{% endblock %}
+
+{% block acontent %}
+<div class="flex justify-center items-center min-h-screen bg-gray-900">
+  <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-3xl" x-data="{
+    config: null,
+    formData: {},
+    loading: true,
+    saving: false,
+    responseId: null,
+    userName: localStorage.getItem('author2') || 'Anonymous',
+    formId: window.location.pathname.split('/').pop(),
+
+    async loadConfig() {
+      if (!this.formId) {
+        alert('Form ID is missing.');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/pc-analytics-jaffar/forms/api/config/${this.formId}`);
+        if (!response.ok) {
+          throw new Error('Failed to load form configuration.');
+        }
+        this.config = await response.json();
+        this.loading = false;
+      } catch (error) {
+        console.error('Error loading form configuration:', error);
+        alert('Error loading form configuration.');
+      }
+    },
+
+    async fetchOrCreateResponseId() {
+      const urlParts = window.location.pathname.split('/');
+      const lastPart = urlParts[urlParts.length - 1];
+      if (lastPart && !lastPart.startsWith('forms-')) {
+        this.responseId = lastPart;
+      } else {
+        try {
+          const response = await fetch('/pc-analytics-jaffar/forms/api/create-response', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ formId: this.formId })
+          });
+          if (!response.ok) {
+            throw new Error('Failed to create response ID.');
+          }
+          const data = await response.json();
+          this.responseId = data.responseId;
+          history.replaceState(null, '', `/pc-analytics-jaffar/forms/edit/${this.formId}/${this.responseId}`);
+        } catch (error) {
+          console.error('Error creating response ID:', error);
+          alert('Error creating response ID.');
+        }
+      }
+    },
+
+    async autoSave() {
+      if (!this.formId) {
+        console.error('Form ID is missing for auto-save.');
+        return;
+      }
+
+      if (!this.responseId) {
+        console.error('Response ID is missing for auto-save.');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/pc-analytics-jaffar/forms/api/auto-save/${this.formId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ responseId: this.responseId, answers: this.formData, author: this.userName })
+        });
+
+        if (!response.ok) {
+          throw new Error('Auto-save failed.');
+        }
+
+        console.log('Auto-save successful.');
+      } catch (error) {
+        console.error('Error during auto-save:', error);
+      }
+    },
+
+    async init() {
+      await this.fetchOrCreateResponseId();
+      await this.loadConfig();
+      this.$watch('formData', () => {
+        this.autoSave();
+      });
+    },
+
+    destroy() {
+      if (this.autoSaveInterval) {
+        clearInterval(this.autoSaveInterval);
+      }
+    }
+  }" x-init="init()" @destroy="destroy">
+    <template x-if="loading">
+      <div class="text-center">
+        <p class="text-gray-400">Loading form...</p>
+      </div>
+    </template>
+
+    <template x-if="!loading">
+      <div>
+        <h1 class="text-2xl font-bold mb-4 text-white" x-text="config.name || 'Form'"></h1>
+        <div class="space-y-6">
+          <template x-for="field in config.fields">
+            <div>
+              <label class="block mb-2">
+                <span class="text-lg font-medium text-white" x-text="field.label"></span>
+                <span x-show="field.required" class="text-red-500">*</span>
+              </label>
+              <p class="text-gray-400 text-sm mb-2" x-html="field.description"></p>
+
+              {% include "sultan/forms/partials/preview/input.html" %}
+              {% include "sultan/forms/partials/preview/number.html" %}
+              {% include "sultan/forms/partials/preview/longtext.html" %}
+              {% include "sultan/forms/partials/preview/single_select.html" %}
+              {% include "sultan/forms/partials/preview/multiple_checkbox.html" %}
+              {% include "sultan/forms/partials/preview/date.html" %}
+              {% include "sultan/forms/partials/preview/list.html" %}
+              {% include "sultan/forms/partials/preview/file_upload.html" %}
+              {% include "sultan/forms/partials/preview/actions.html" %}
+              {% include "sultan/forms/partials/preview/conditional.html" %}
+              {% include "sultan/forms/partials/preview/submit.html" %}
+            </div>
+          </template>
+        </div>
+    </div>
+    </template>
+  </div>
+</div>
+{% endblock %}

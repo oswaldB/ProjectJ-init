@@ -3,6 +3,11 @@
 {% block title %}Issue Form{% endblock %}
 
 {% block content %}
+<script>
+  // Inject the current user from the backend
+  const currentUser = "{{ current_user | escape }}";
+</script>
+
 <div x-data="{
   config: null,
   formData: null,
@@ -10,6 +15,10 @@
   changes: {},
   loading: true,
   saving: false,
+  searchResults: null,
+  searchError: null,
+  author: null, // Add author variable
+  searchText: '', // New x-model for search text
 
   async loadData() {
     const issueId = window.location.pathname.split('/').pop();
@@ -20,8 +29,8 @@
 
     try {
       const [configResponse, issueResponse] = await Promise.all([
-        fetch('/api/jaffar/config'),
-        fetch(`/api/jaffar/issues/${issueId}`)
+        fetch('/pc-analytics-jaffar/api/jaffar/config'),
+        fetch(`/pc-analytics-jaffar/api/jaffar/issues/${issueId}`)
       ]);
 
       this.config = await configResponse.json();
@@ -41,6 +50,77 @@
     }
   },
 
+  searchSimilarIssues() {
+    this.searchResults = null;
+    this.searchError = null;
+
+    const query = this.searchText.trim(); // Use searchText for query
+    if (!query) {
+      this.searchError = 'Please enter a description to search.';
+      return;
+    }
+
+    try {
+      const pouchDB = new PouchDB('issuesDB');
+      const currentIssueId = this.formData?.id; // Get current issue ID
+
+      // Update issueDB based on its state
+      pouchDB.info().then(info => {
+        const pageSize = info.doc_count === 0 ? 1000000 : 20;
+        this.searchError = 'Updating the index'; // Display message during index update
+        fetch(`/pc-analytics-jaffar/api/jaffar/issues/list?page_size=${pageSize}`)
+          .then(response => response.json())
+          .then(data => {
+            const bulkDocs = data.issues.map(issue => ({ _id: issue.id, ...issue }));
+            return pouchDB.bulkDocs(bulkDocs);
+          })
+          .catch(err => {
+            console.error('Failed to update issueDB:', err);
+          });
+      });
+
+      // Perform search
+      pouchDB.search({
+        query: query,
+        fields: ['issue-description'],
+        highlighting: true,
+      }).then(async res => {
+        if (res.rows.length === 0) {
+          this.searchError = 'No similar issues found.';
+          return;
+        }
+
+        // Retrieve details for each issue from PouchDB
+        const details = await Promise.all(res.rows.map(async row => {
+          try {
+            const issue = await pouchDB.get(row.id);
+            if (issue.id === currentIssueId) return null; // Exclude current issue
+            this.searchError=''
+            return {
+              id: issue.id,
+              title: issue.title || issue['issue-title'] || issue.id || 'No Title',
+              description: issue.description || issue['issue-description'] || 'No Description'
+            };
+          } catch {
+            return null;
+          }
+        }));
+
+        // Filter out null results
+        this.searchResults = details.filter(Boolean);
+        if (this.searchResults.length === 0) {
+          this.searchError = 'No similar issues found.';
+        }
+      }).catch(err => {
+        this.searchError = 'Error searching for similar issues.';
+        console.error('Search error:', err);
+      });
+    } catch (error) {
+      this.searchError = 'Error initializing search.';
+      console.error('Initialization error:', error);
+    }
+  },
+
   async submitForm() {
     try {
       // Validate required fields
@@ -55,10 +135,13 @@
         return;
       }
 
-      const response = await fetch('/api/jaffar/submit', {
+      const response = await fetch('/pc-analytics-jaffar/api/jaffar/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ issueId: this.formData.id })
+        body: JSON.stringify({ 
+          issueId: this.formData.id,
+          author: this.author // Use Alpine.js author variable
+        })
       });
 
       if (!response.ok) {
@@ -84,6 +167,9 @@
       // Skip the changes property itself to avoid circular references
       if (key === 'changes') continue;
 
+      // Ensure both oldValue[key] and value are defined and JSON-serializable
+      if (oldValue[key] === undefined || value === undefined) continue;
+
       if (JSON.stringify(oldValue[key]) !== JSON.stringify(value)) {
         if (!this.formData.changes) {
           this.formData.changes = {};
@@ -97,7 +183,7 @@
           previous: previous,
           new: newVal,
           timestamp,
-          author: localStorage.getItem('user_email')
+          author: this.author
         }];
       }
     }
@@ -105,10 +191,23 @@
 
   async init() {
     this.loading = true;
+    this.author = localStorage.getItem('author2'); // Initialize author variable
     try {
       await this.loadData();
+      // Call search on page load if description exists
+      if (this.formData && this.formData['issue-description']) {
+        this.searchSimilarIssues();
+      }
     } finally {
       this.loading = false;
+    }
+    // Strip HTML tags from 'issue-description' to get plain text
+    if (this.formData['issue-description']) {
+      const div = document.createElement('div');
+      div.innerHTML = this.formData['issue-description'];
+      this.searchText = div.textContent || div.innerText || '';
+    } else {
+      this.searchText = '';
     }
     this.$watch('formData', (value, oldValue) => {
       if (!oldValue || this.loading) return;
@@ -148,13 +247,13 @@
 
       const formToSave = {
         id: this.formData.id || `JAFF-ISS-${now.getTime()}`,
-        author: localStorage.getItem('user_email'),
+        author: this.author, // Use Alpine.js author variable
         ...cleanFormData,
         status: 'draft',
         created_at: this.formData.created_at || now.toISOString()
       };
 
-      const response = await fetch('/api/jaffar/save', {
+      const response = await fetch('/pc-analytics-jaffar/api/jaffar/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formToSave)
@@ -177,7 +276,7 @@
   <div class="fixed top-0 left-[280px] right-0 bg-gray-900 border-b border-gray-700 z-50">
     <div class="p-4 flex items-center justify-between">
       <div class="flex items-center space-x-4">
-        <button onclick="window.location.href = document.referrer || '/'" class="text-white hover:text-gray-200">
+        <button onclick="window.location.href = document.referrer || '/pc-analytics-jaffar/'" class="text-white hover:text-gray-200">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
@@ -221,204 +320,91 @@
           </template>
         </div>
       </div>
-      <button type="submit" 
-        @click.prevent="submitForm"
-        :disabled="config?.fields?.some(f => f.required && !formData?.[f.key])"
-        class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed">
-        Submit
-      </button>
+      <div class="flex gap-2">
+        <button type="submit" 
+          @click.prevent="if (localStorage.getItem('demoMode') === 'true') { alert('You are in Demo Mode. Your issue has not been raised.'); } else { submitForm(); }"
+          :disabled="config?.fields?.some(f => f.required && !formData?.[f.key])"
+          class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed">
+          Submit
+        </button>
+        <button
+          type="button"
+          class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700"
+          @click="window.location.href = `/pc-analytics-jaffar/escalation?issueId=${encodeURIComponent(formData?.id || '')}`"
+        >
+          Help me escalate it
+        </button>
+      </div>
     </div>
   </div>
-  <div class="pt-24">
+  <div class="pt-24 flex gap-6">
+    <!-- Left column for questions -->
+    <div class="flex-1 bg-gray-800 p-4 rounded-lg overflow-y-auto">
+      <template x-if="!loading && config && formData">
+        <div class="space-y-6">
+          <template x-for="field in config.fields.filter(f => !f.conditions || 
+            f.conditions.every(c => formData[c.field] === c.value))" :key="field.key">
+            <div class="bg-gray-800 p-4 rounded-lg">
+              <label class="block mb-2">
+                <span class="text-lg font-medium text-white" x-text="field.label"></span>
+                <span x-show="field.required" class="text-red-500 ml-1">*</span>
+              </label>
+              <p class="text-gray-400 text-sm mb-2" x-html="field.description"></p>
 
-  <template x-if="!loading && config && formData">
-    <div class="space-y-6">
-      <template x-for="field in config.fields.filter(f => !f.conditions || 
-        f.conditions.every(c => formData[c.field] === c.value))" :key="field.key">
-        <div class="bg-gray-800 p-4 rounded-lg">
-          <label class="block mb-2">
-            <span class="text-lg font-medium text-white" x-text="field.label"></span>
-            <span x-show="field.required" class="text-red-500 ml-1">*</span>
-          </label>
-          <p class="text-gray-400 text-sm mb-2" x-text="field.description"></p>
-
-          <!-- Text input -->
-          <template x-if="field.type === 'text' || field.type === 'text_input'">
-            <input type="text" 
-                   :name="field.key"
-                   x-model.debounce.500ms="formData[field.key]"
-                   :required="field.required"
-                   class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-          </template>
-
-          <!-- Single select -->
-          <template x-if="field.type === 'single_select'">
-            <select :name="field.key"
-                    x-model.debounce.500ms="formData[field.key]"
-                    :required="field.required"
-                    class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-              <option value="">Select an option</option>
-              <template x-for="option in field.options" :key="option.name">
-                <option :value="option.name" x-text="option.name"></option>
-              </template>
-            </select>
-          </template>
-
-          <!-- Multiple checkbox -->
-          <template x-if="field.type === 'multiple_checkbox'">
-            <div x-data="{ 
-              search: '',
-              selections: formData[field.key] || [],
-              init() {
-                this.$watch('selections', value => {
-                  formData[field.key] = value;
-                }, { deep: true });
-              }
-            }" x-init="init()">
-              <input type="text"
-                     x-model.debounce.500ms="search"
-                     placeholder="Search..."
-                     class="w-full mb-4 bg-gray-700 text-white p-2 rounded border border-gray-600">
-              <div class="grid grid-cols-3 gap-4 max-h-60 overflow-y-auto">
-                <template x-for="option in field.options.filter(opt => 
-                  opt.name.toLowerCase().includes(search.toLowerCase())
-                )" :key="option.name">
-                  <label class="flex items-center space-x-2 p-2 hover:bg-gray-700 rounded">
-                    <input type="checkbox" 
-                           :name="field.key" 
-                           :value="option.name"
-                           x-model="selections"
-                           class="bg-gray-700 border-gray-600">
-                    <span class="text-white text-sm" x-text="option.name"></span>
-                  </label>
-                </template>
-              </div>
-              <div class="flex flex-wrap gap-2 mt-2">
-                <template x-for="selected in selections" :key="selected">
-                  <div class="bg-red-500 text-white px-3 py-1 rounded-full flex items-center gap-2">
-                    <span x-text="selected"></span>
-                    <button @click="selections = selections.filter(item => item !== selected)" class="hover:text-gray-200">
-                      ×
-                    </button>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </template>
-
-          <!-- Date -->
-          <template x-if="field.type === 'date'">
-            <input type="date"
-                   :name="field.key"
-                   x-model.debounce.500ms="formData[field.key]"
-                   lang="en"
-                   :required="field.required"
-                   class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600">
-          </template>
-
-          <!-- Textarea -->
-          <template x-if="field.type === 'textarea'">
-            <textarea :name="field.key"
-                     x-model.debounce.500ms="formData[field.key]"
-                     :required="field.required"
-                     rows="3"
-                     class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"></textarea>
-          </template>
-
-          <!-- List input -->
-          <template x-if="field.type === 'list'">
-            <div x-data="{ newItem: '', items: formData[field.key] || [] }" @input="formData[field.key] = items">
-              <div class="flex gap-2 mb-2">
-                <input type="text" 
-                       x-model="newItem" 
-                       class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600"
-                       @keyup.enter="if(newItem.trim()) { items.push(newItem.trim()); newItem = ''; }">
-                <button @click="if(newItem.trim()) { items.push(newItem.trim()); newItem = ''; }"
-                        class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">Add</button>
-              </div>
-              <div class="space-y-2">
-                <template x-for="(item, index) in items" :key="index">
-                  <div class="flex items-center gap-2 bg-gray-700 p-2 rounded">
-                    <span x-text="item" class="flex-1"></span>
-                    <button @click="items.splice(index, 1)" class="text-red-400 hover:text-red-300">×</button>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </template>
-
-          <!-- Conditional Questions Section -->
-          <template x-if="field.type === 'conditional'">
-            <div>
-              <select 
-                x-model="formData[field.key]"
-                :required="field.required"
-                class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 mb-4">
-                <option value="">Select an option</option>
-                <template x-for="option in field.options" :key="option.name">
-                  <option :value="option.name" x-text="option.name"></option>
-                </template>
-              </select>
-
-              <template x-for="option in field.options" :key="option.name">
-                <div x-show="formData[field.key] === option.name" class="space-y-4">
-                  <template x-for="question in (option.questions || [])" :key="question.key">
-                    <div class="bg-gray-700 p-4 rounded-lg">
-                      <label class="block mb-2">
-                        <span class="text-lg font-medium text-white" x-text="question.label"></span>
-                      </label>
-                      <template x-if="question.type === 'text_input' || !question.type">
-                        <input type="text"
-                               x-model="formData[question.key]"
-                               class="w-full bg-gray-600 text-white p-2 rounded border border-gray-500">
-                      </template>
-                      <template x-if="question.type === 'textarea'">
-                        <textarea x-model="formData[question.key]"
-                                class="w-full bg-gray-600 text-white p-2 rounded border border-gray-500"
-                                rows="3"></textarea>
-                      </template>
-                      <template x-if="question.type === 'single_select'">
-                        <select x-model="formData[question.key]"
-                                :required="question.required"
-                                class="w-full bg-gray-600 text-white p-2 rounded border border-gray-500">
-                          <option value="">Select an option</option>
-                          <template x-for="option in question.options" :key="option.name">
-                            <option :value="option.name" x-text="option.name"></option>
-                          </template>
-                        </select>
-                      </template>
-                      <template x-if="question.type === 'list'">
-                        <div x-data="{ newItem: '', items: formData[question.key] || [] }" 
-                             @input="formData[question.key] = items">
-                          <div class="flex gap-2 mb-2">
-                            <input type="text" 
-                                   x-model="newItem" 
-                                   class="flex-1 bg-gray-600 text-white p-2 rounded border border-gray-500"
-                                   @keyup.enter="if(newItem.trim()) { items.push(newItem.trim()); newItem = ''; }">
-                            <button @click="if(newItem.trim()) { items.push(newItem.trim()); newItem = ''; }"
-                                    class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">Add</button>
-                          </div>
-                          <div class="space-y-2">
-                            <template x-for="(item, index) in items" :key="index">
-                              <div class="flex items-center gap-2 bg-gray-600 p-2 rounded">
-                                <span x-text="item" class="flex-1"></span>
-                                <button @click="items.splice(index, 1)" 
-                                        class="text-red-400 hover:text-red-300">×</button>
-                              </div>
-                            </template>
-                          </div>
-                        </div>
-                      </template>
-                    </div>
-                  </template>
-                </div>
-              </template>
+              {% include "sultan/forms/partials/preview/input.html" %}
+              {% include "sultan/forms/partials/preview/number.html" %}
+              {% include "sultan/forms/partials/preview/single_select.html" %}
+              {% include "sultan/forms/partials/preview/multiple_checkbox.html" %}
+              {% include "sultan/forms/partials/preview/date.html" %}
+              {% include "sultan/forms/partials/preview/longtext.html" %}
+              {% include "sultan/forms/partials/preview/list.html" %}
+              {% include "sultan/forms/partials/preview/conditional.html" %}
+              {% include "sultan/forms/partials/preview/file_upload.html" %}
+              {% include "sultan/forms/partials/preview/actions.html" %}
+              {% include "sultan/forms/partials/preview/submit.html" %}
             </div>
           </template>
         </div>
       </template>
     </div>
-  </template>
+
+    <!-- Right column for issue definition and search -->
+    <div class="w-1/3 bg-gray-800 p-4 rounded-lg flex flex-col gap-4">
+      <h2 class="text-xl font-bold text-white">Similar issues</h2>
+      <textarea 
+        x-model="searchText" \
+        placeholder="Enter text to search..." 
+        class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
+        rows="6"
+      ></textarea>
+      <button 
+        class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700"
+        @click="searchSimilarIssues"
+      >
+        Search
+      </button>
+      <div class="mt-4">
+        <template x-if="searchError">
+          <p class="text-red-500" x-text="searchError"></p>
+        </template>
+        <template x-if="searchResults">
+          <div class="space-y-4">
+            <template x-for="result in searchResults">
+              <div class="bg-gray-700 p-4 rounded-lg">
+                <h3 class="text-lg font-bold text-white" x-text="result.title"></h3>
+                <p class="text-gray-300" x-text="result.description"></p>
+                <button 
+                  class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 mt-2"
+                  @click="window.location.href = `/pc-analytics-jaffar/issue/${result.id}?raise_similar=${formData.id}`"
+                >
+                  See more
+                </button>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

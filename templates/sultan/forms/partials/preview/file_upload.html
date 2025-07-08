@@ -1,0 +1,103 @@
+<template x-if="field.type === 'file_upload'">
+  <div class="mt-2" 
+       x-data="{
+         files: [],
+         highlight: false,
+         handleFiles(e) {
+           let newFiles = Array.from(e.target.files || e.dataTransfer.files);
+           if (!field.multiple) newFiles = newFiles.slice(0, 1);
+           this.files = field.multiple ? [...this.files, ...newFiles.map(file => ({ file }))] : newFiles.map(file => ({ file }));
+           this.uploadFiles(newFiles);
+         },
+         async uploadFiles(newFiles) {
+           for (const file of newFiles) {
+             const formDataFile = new FormData();
+             formDataFile.append('file', file);
+             formDataFile.append('formId', formId); // Assuming formId is available in the field object
+             formDataFile.append('answerId', responseId); 
+             try {
+               const response = await fetch('/forms/api/upload', {
+                 method: 'POST',
+                 body: formDataFile
+               });
+               const result = await response.json();
+               if (result.status === 'success') {
+                 console.log(`File ${file.name} uploaded successfully.`);
+                 const fileEntry = this.files.find(f => f.file === file);
+                 if (fileEntry) fileEntry.s3Key = result.fileKey; // Save the S3 key for later deletion
+                 if (!Array.isArray(formData[field.key])) {
+                   formData[field.key] = []; // Ensure it's an array
+                 }
+                 formData[field.key].push(result.fileKey); // Append the S3 file path
+               } else {
+                 console.error(`Failed to upload file ${file.name}:`, result.error);
+               }
+             } catch (error) {
+               console.error(`Error uploading file ${file.name}:`, error);
+             }
+           }
+         },
+         async removeFile(idx) {
+           const fileEntry = this.files[idx];
+           if (fileEntry && fileEntry.s3Key) {
+             try {
+               const response = await fetch('/forms/api/delete-file', {
+                 method: 'DELETE',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ fileKey: fileEntry.s3Key })
+               });
+               const result = await response.json();
+               if (result.status === 'success') {
+                 console.log(`File ${fileEntry.file.name} deleted successfully.`);
+                 if (Array.isArray(formData[field.key])) {
+                   const index = formData[field.key].indexOf(fileEntry.s3Key);
+                   if (index > -1) {
+                     formData[field.key].splice(index, 1); // Remove the S3 file path
+                   }
+                 }
+               } else {
+                 console.error(`Failed to delete file ${fileEntry.file.name}:`, result.error);
+               }
+             } catch (error) {
+               console.error(`Error deleting file ${fileEntry.file.name}:`, error);
+             }
+           }
+           this.files.splice(idx, 1);
+         }
+       }"
+       @dragover.prevent="highlight = true"
+       @dragleave.prevent="highlight = false"
+       @drop.prevent="
+         highlight = false;
+         handleFiles($event);
+       ">
+    <label :class="[
+        'flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer transition',
+        highlight ? 'border-blue-400 bg-gray-700' : 'border-gray-600 bg-gray-800'
+      ]"
+      @click="$refs.fileInput.click()">
+      <svg class="w-10 h-10 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4a1 1 0 011-1h8a1 1 0 011 1v12m-5 4h.01M12 20a4 4 0 100-8 4 4 0 000 8z"/>
+      </svg>
+      <span class="text-gray-300">
+        <span x-text="field.multiple ? 'Drop files here or click to select (multiple allowed)' : 'Drop a file here or click to select'"></span>
+      </span>
+      <input type="file"
+             :multiple="field.multiple"
+             :required="field.required"
+             class="hidden"
+             x-ref="fileInput"
+             @change="handleFiles($event)">
+    </label>
+    <template x-if="formData[field.key].length">
+      <ul class="mt-3 space-y-1">
+        <template x-for="(file, idx) in files">
+          <li class="flex items-center justify-between bg-gray-700 rounded px-3 py-1">
+            <span class="truncate" x-text="file.file.name || file.split('/').pop()"></span>
+            <button type="button" @click.stop="removeFile(idx)" class="ml-2 text-red-400 hover:text-red-200 text-lg font-bold">×</button>
+          </li>
+        </template>
+      </ul>
+    </template>
+  </div>
+</template>

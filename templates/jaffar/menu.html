@@ -1,11 +1,11 @@
-<nav class="fixed bg-gray-900 text-white top-0 left-0 z-40 p-4 w-[280px] h-screen">
+<nav class="fixed bg-gray-900 text-white top-0 left-0 z-40 p-4 w-[280px] h-screen transition-transform -translate-x-full sm:translate-x-0">
   <div class="h-full px-3 py-4 overflow-y-auto bg-gray-900 text-white">
     <div class="items-center-space-x-4 flex">
       <h4 class="mb-4 text-center text-xl font-semibold">JAFFAR</h4>
     </div>
     <ul class="space-y-2 font-medium mt-4">
       <li>
-        <a href="/" class="cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group">
+        <a href="/pc-analytics-jaffar/" class="cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group">
           <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
             <path d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -13,45 +13,51 @@
         </a>
       </li>
       <li>
-        <a href="/grid" class="cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group">
+        <a href="/pc-analytics-jaffar/search" class="cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group">
           <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M11 19a8 8 0 100-16 8 8 0 000 16zm9-1.5l-3.5-3.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span class="ms-3">Grid View</span>
+          <span class="ms-3">Search</span>
         </a>
       </li>
-      <li>
-        <a href="/chat" class="cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group">
-          <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span class="ms-3">Talk to Jaffar</span>
-        </a>
-      </li>
-      <li>
-        <a href="/my-issues" class="cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group">
-          <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span class="ms-3">My issues</span>
-        </a>
-      </li>
+      <div x-data="{ dashboards: [], userEmail: (localStorage.getItem('author2').split('-').pop().trim().toLowerCase() || '').toLowerCase() }" 
+           x-init="fetch('/pc-analytics-jaffar/api/sultan/dashboards/list')
+            .then(res => res.json())
+            .then(data => dashboards = data.filter(d => d.active))">
+        <template x-for="dashboard in dashboards">
+          <li x-show="!dashboard.authorizedUsers || dashboard.authorizedUsers.split(',').includes(userEmail)">
+            <a :href="`/pc-analytics-jaffar/dashboard/${dashboard.id}`" class="cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group">
+              <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="ms-3" x-text="dashboard.name"></span>
+            </a>
+          </li>
+        </template>
+      </div>
     </ul>
     <ul class="space-y-2 font-medium absolute inset-x-0 bottom-10">
       <li>
-        <a href="/feedback" class="cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group">
-          <span class="ms-3">Feedbacks and Ideas</span>
+        <a href="/pc-analytics-jaffar/docs" target="_blank" class="cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group">
+          <span class="ms-3">Documentation</span>
         </a>
       </li>
       <li>
-        <a href="/get-jaffar-config" class="cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group">
-          <span class="ms-3">Get the config</span>
+        <a href="/pc-analytics-jaffar/feedback" class="cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group">
+          <span class="ms-3">Provide feedbacks</span>
         </a>
       </li>
       <li>
-        <a href="/sultan/" class="cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group">
+        <a href="/pc-analytics-jaffar/sultan" class="cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group">
           <span class="ms-3">Go to SULTAN</span>
         </a>
+      </li>
+      <!-- Demo Mode Toggle -->
+      <li>
+        <button @click="demoMode = !demoMode; localStorage.setItem('demoMode', demoMode)" 
+                class="cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group">
+          <span class="ms-3" x-text="demoMode ? 'Disable Demo Mode' : 'Enable Demo Mode'"></span>
+        </button>
       </li>
     </ul>
   </div>

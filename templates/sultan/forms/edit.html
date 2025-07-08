@@ -3,11 +3,15 @@
 {% block title %}Form Editor{% endblock %}
 
 {% block content %}
+<!-- comment -->
 <div class="h-screen bg-gray-900 text-white" x-data="{
+  formData: [],
+  sidebarOpen: true,
   page: 'form-editor',
   form: { id: '', name: '', fields: [], status: 'Draft' },
   preview: true,
   saveFormDebounced: null,
+  previewValues: {},
   async init() {
     this.$watch('form', () => {
       this.saveForm();
@@ -15,12 +19,12 @@
     const formId = window.location.pathname.split('/').pop();
     if (formId !== 'new') {
       try {
-        const response = await fetch(`/api/sultan/forms/${formId}`);
+        const response = await fetch(`/pc-analytics-jaffar/api/sultan/forms/${formId}`);
         const data = await response.json();
         if (!response.ok) {
           showNotification('Form not found', 'error');
           setTimeout(() => {
-            window.location.href = '/sultan/forms';
+            window.location.href = '/pc-analytics-jaffar/sultan/forms';
           }, 2000);
           return;
         }
@@ -28,9 +32,12 @@
       } catch (error) {
         console.error('Failed to load form:', error);
         showNotification('Form not found', 'error');
-        window.location.href = '/sultan/forms';
+        window.location.href = '/pc-analytics-jaffar/sultan/forms';
       }
     }
+    this.$watch('previewValues', () => {
+      this.applyAutoSelects();
+    }, { deep: true });
   },
   async saveForm() {
     if (this.saveFormDebounced) {
@@ -41,23 +48,56 @@
       if (!this.form.id) {
         this.form.id = `forms-${Date.now()}`;
       }
-      const userEmail = localStorage.getItem('user_email');
-      if (!userEmail) {
-        console.error('User email not found');
-        return;
-      }
-      this.form.user_email = userEmail;
       try {
-        await fetch('/api/sultan/forms/save', {
+        await fetch('/pc-analytics-jaffar/api/sultan/forms/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: userEmail, form: this.form })
+          body: JSON.stringify({ form: this.form })
         });
       } catch (error) {
         console.error('Failed to save form:', error);
         alert('Failed to save form');
       }
-    }, 1000); // Attendre 1 seconde avant de sauvegarder
+    }, 1000);
+  },
+  applyAutoSelects() {
+    this.form.fields.forEach((field, idx) => {
+      if (field.type === 'single_select' && field.autoSelect && field.autoSelectKey && field.autoSelectOption) {
+        const prevValue = this.previewValues[field.autoSelectKey];
+        let shouldSelect = false;
+        switch (field.autoSelectComparator) {
+          case 'equals':
+            shouldSelect = prevValue == field.autoSelectValue;
+            break;
+          case 'not_equals':
+            shouldSelect = prevValue != field.autoSelectValue;
+            break;
+          case 'greater':
+            shouldSelect = Number(prevValue) > Number(field.autoSelectValue);
+            break;
+          case 'less':
+            shouldSelect = Number(prevValue) < Number(field.autoSelectValue);
+            break;
+          case 'contains':
+            shouldSelect = (prevValue || '').toString().includes(field.autoSelectValue);
+            break;
+          case 'not_contains':
+            shouldSelect = !(prevValue || '').toString().includes(field.autoSelectValue);
+            break;
+          case 'is_empty':
+            shouldSelect = !prevValue;
+            break;
+          case 'not_empty':
+            shouldSelect = !!prevValue;
+            break;
+          default:
+            shouldSelect = false;
+        }
+        if (shouldSelect) {
+          this.previewValues[field.key] = field.autoSelectOption;
+        }
+      }
+    });
   },
   addField() {
     this.form.fields.push({
@@ -67,7 +107,12 @@
       required: false,
       key: '',
       options: [],
-      open: true
+      open: true,
+      autoSelect: false,
+      autoSelectKey: '',
+      autoSelectComparator: 'equals',
+      autoSelectValue: '',
+      autoSelectOption: ''
     });
   },
   toggleField(index) {
@@ -78,474 +123,237 @@
   <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
     <h1 class="text-2xl font-bold text-white">Form Editor</h1>
     <div class="flex space-x-4">
-      <a href="/sultan/forms" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Back</a>
+      <a href="/pc-analytics-jaffar/sultan/forms" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Back</a>
     </div>
   </div>
 
   <!-- Main Content -->
   <div class="p-6 flex gap-6">
-  <!-- Editor -->
-  <div class="w-1/2">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-white">Form Editor</h1>
-      <div class="flex items-center space-x-4">
-        <span class="text-gray-400 text-sm">Changes are saved automatically</span>
-        <select x-model="form.status" 
-                class="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600">
-          <option value="Draft">Draft</option>
-          <option value="Prod">Prod</option>
-          <option value="Old version">Old version</option>
-        </select>
+    <!-- Editor -->
+    <div class="w-1/2">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-white">Form Editor</h1>
+        <div class="flex items-center space-x-4">
+          <span class="text-gray-400 text-sm">Changes are saved automatically</span>
+          <select x-model="form.status" 
+                  class="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600">
+            <option value="Draft">Draft</option>
+            <option value="Prod">Prod</option>
+            <option value="Old version">Old version</option>
+          </select>
+        </div>
       </div>
-    </div>
-
-    <div class="space-y-4">
-      <input type="text" x-model.debounce.500ms="form.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Form Name">
 
       <div class="space-y-4">
-        <template x-for="(field, index) in form.fields" :key="index">
-          <div class="bg-gray-800 rounded-lg border border-gray-600 relative group">
-            <div class="bg-gray-700 p-2 flex items-center justify-between rounded-t-lg">
-              <span class="text-sm text-gray-300">Question #<span x-text="index + 1"></span></span>
-              <div class="flex space-x-2">
-                <button @click="if(index > 0) { const items = [...form.fields]; const item = items[index]; items.splice(index, 1); items.splice(index - 1, 0, item); form.fields = items; }"
-                        class="text-gray-400 hover:text-white"
-                        :class="{ 'opacity-50 cursor-not-allowed': index === 0 }">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
-                  </svg>
-                </button>
-                <button @click="if(index < form.fields.length - 1) { const items = [...form.fields]; const item = items[index]; items.splice(index, 1); items.splice(index + 1, 0, item); form.fields = items; }"
-                        class="text-gray-400 hover:text-white"
-                        :class="{ 'opacity-50 cursor-not-allowed': index === form.fields.length - 1 }">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="p-4">
-            <div class="absolute left-0 top-0 h-full w-1 cursor-move bg-gray-600 group-hover:bg-blue-500"></div>
-            <div class="flex justify-between items-center mb-2">
-              <div class="flex items-center space-x-4">
-                <button @click="toggleField(index)" class="text-blue-400 hover:text-blue-300">
-                  <svg x-show="!field.open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  <svg x-show="field.open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                  </svg>
-                </button>
-                <div class="flex flex-col">
-                  <span class="text-white font-medium" x-text="field.label || 'Nouvelle question'"></span>
-                  <span class="text-gray-400 text-xs" x-text="field.key || ''"></span>
+        <input type="text" x-model.debounce.500ms="form.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Form Name">
+
+        <div class="space-y-4">
+          <template x-for="(field, index) in form.fields">
+            <div 
+              class="bg-gray-800 rounded-lg border border-gray-600 relative group"
+              :class="{
+                'border-blue-600': field.type === 'conditional',
+                'border-gray-600': field.type !== 'conditional'
+              }"
+            >
+              <div class="bg-gray-700 p-2 flex items-center justify-between rounded-t-lg">
+                <span class="text-sm text-gray-300">
+                  Question #<span x-text="index + 1"></span>
+                  <span x-show="!field.key" class="ml-2 text-yellow-300 flex items-center space-x-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                    </svg>
+                    <span>Key is empty</span>
+                  </span>
+                </span>
+                <div class="flex space-x-2">
+                  <button @click="if(index > 0) { const items = [...form.fields]; const item = items[index]; items.splice(index, 1); items.splice(index - 1, 0, item); form.fields = items; }"
+                          class="text-gray-400 hover:text-white"
+                          :class="{ 'opacity-50 cursor-not-allowed': index === 0 }">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                    </svg>
+                  </button>
+                  <button @click="if(index < form.fields.length - 1) { const items = [...form.fields]; const item = items[index]; items.splice(index, 1); items.splice(index + 1, 0, item); form.fields = items; }"
+                          class="text-gray-400 hover:text-white"
+                          :class="{ 'opacity-50 cursor-not-allowed': index === form.fields.length - 1 }">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
-              <button @click="form.fields.splice(index, 1)" class="text-red-400 hover:text-red-300">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div class="space-y-2" x-show="field.open">
-              <div>
-                <select x-model="field.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
-                  <option value="text_input">Text Input</option>
-                  <option value="number">Number</option>
-                  <option value="single_select">Single Select</option>
-                  <option value="multiple_checkbox">Multiple Checkbox</option>
-                  <option value="textarea">Long Text</option>
-                  <option value="date">Date</option>
-                  <option value="list">List</option>
-                  <option value="conditional">Conditional</option>
-                </select>
-              </div>
-              <div class="space-y-2">
-                <label class="block text-sm font-medium text-gray-300">Question Title</label>
-                <input type="text" x-model.debounce.500ms="field.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question title">
-              </div>
-
-              <div class="mt-4 space-y-2">
-                <label class="block text-sm font-medium text-gray-300">Question Description</label>
-                <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
-                <textarea x-model.debounce.500ms="field.description" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question description" rows="3"></textarea>
-              </div>
-
-              <label class="flex items-center space-x-2 text-white mt-4">
-                <input type="checkbox" x-model="field.required" class="bg-gray-800 border-gray-600">
-                <span>Required</span>
-              </label>
-
-              <div class="mb-2">
-                <label class="block text-sm font-medium text-gray-300">Question Key</label>
-                <div class="relative">
-                  <input type="text" x-model="field.key"
-                         @input="field.key = field.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
-                         class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
-                         placeholder="Question Key (slug format)">
+              <div class="p-4">
+              <div class="absolute left-0 top-0 h-full w-1 cursor-move bg-gray-600 group-hover:bg-blue-500"></div>
+              <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center space-x-4">
+                  <button @click="toggleField(index)" class="text-blue-400 hover:text-blue-300">
+                    <svg x-show="!field.open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <svg x-show="field.open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  </button>
+                  <div class="flex flex-col">
+                    <span class="text-white font-medium" x-text="field.label || 'Nouvelle question'"></span>
+                    <span class="text-gray-400 text-xs" x-text="field.key || ''"></span>
+                  </div>
                 </div>
+                <button @click="form.fields.splice(index, 1)" class="text-red-400 hover:text-red-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
+              <div class="space-y-2" x-show="field.open">
+                <div>
+                  <select x-model="field.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
+                    <option value="text">Text Input</option>
+                    <option value="number">Number</option>
+                    <option value="single_select">Single Select</option>
+                    <option value="multiple_checkbox">Multiple Checkbox</option>
+                    <option value="textarea">Long Text</option>
+                    <option value="date">Date</option>
+                    <option value="list">List</option>
+                    <option value="conditional">Conditional</option>
+                    <option value="file_upload">File Upload</option>
+                    <option value="actions">Actions</option>
+<option value="submit_issue">Submit the Issue</option>
+                  </select>
+                </div>
 
+                {% include "sultan/forms/partials/editor/file_upload.html" %}
 
-              <template x-if="field.type === 'single_select'">
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-gray-300">Question Title</label>
+                  <input type="text" x-model.debounce.500ms="field.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question title">
+                </div>
+
                 <div class="mt-4 space-y-2">
-                  <button @click="field.options = field.options || []; field.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
-                  <template x-for="(option, optIndex) in field.options" :key="optIndex">
-                    <div class="space-y-2 p-2 border border-gray-600 rounded">
-                      <div class="flex space-x-2 items-center">
-                        <div class="flex flex-col space-y-1">
-                          <button @click="if(optIndex > 0) { const items = [...field.options]; const item = items[optIndex]; items.splice(optIndex, 1); items.splice(optIndex - 1, 0, item); field.options = items; }"
-                                  class="text-gray-400 hover:text-white"
-                                  :class="{ 'opacity-50 cursor-not-allowed': optIndex === 0 }">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
-                            </svg>
-                          </button>
-                          <button @click="if(optIndex < field.options.length - 1) { const items = [...field.options]; const item = items[optIndex]; items.splice(optIndex, 1); items.splice(optIndex + 1, 0, item); field.options = items; }"
-                                  class="text-gray-400 hover:text-white"
-                                  :class="{ 'opacity-50 cursor-not-allowed': optIndex === field.options.length - 1 }">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                          </button>
-                        </div>
-                        <input type="text" x-model.debounce.500ms="option.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
-                        <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
+                  <label class="block text-sm font-medium text-gray-300">Question Description</label>
+                  <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
+                  <div 
+                    x-ref="descQuillField"
+                    x-init="window.initQuill($refs.descQuillField, val => field.description = (val !== undefined ? val : field.description))"
+                    class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+                  <div class="mt-1 text-gray-400 text-sm border-l-4 border-blue-700 pl-2" x-show="field.description">
+                    <span class="font-semibold text-blue-300">Preview:</span>
+                    <div x-html="field.description"></div>
+                  </div>
+                </div>
+
+                <label class="flex items-center space-x-2 text-white mt-4">
+                  <input type="checkbox" x-model="field.required" class="bg-gray-800 border-gray-600">
+                  <span>Required</span>
+                </label>
+
+                <div class="mb-2">
+                  <label class="block text-sm font-medium text-gray-300">Question Key</label>
+                  <div class="relative">
+                    <input type="text" x-model="field.key"
+                           @input="field.key = field.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                           class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                           placeholder="Question Key (slug format)">
+                  </div>
+                  <div x-show="!field.key" class="mt-2 p-2 rounded border border-yellow-500 bg-black bg-[repeating-linear-gradient(45deg, black, black 10px, yellow 10px, yellow 20px)] text-yellow-300 flex items-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 10 0 100 20 10 10 0 000-20z" />
+                    </svg>
+                    <span>Question Key is required and cannot be empty.</span>
+                  </div>
+                </div>
+
+                {% include "sultan/forms/partials/editor/actions.html" %}
+                {% include "sultan/forms/partials/editor/submit.html" %}
+                {% include "sultan/forms/partials/editor/single_select.html" %}
+
+
+
+
+
+
+                <template x-if="['select', 'conditional', 'multiple_checkbox'].includes(field.type)">
+                  <div class="mt-2 space-y-4">
+                    <!-- Options Section -->
+                    <div class="border-b border-gray-600 pb-4">
+                      <h3 class="text-lg font-medium text-white mb-2">Options</h3>
+                      <div class="space-y-2">
+                        <button @click="field.options = field.options || []; field.options.push({name: '', show: '', questions: []})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                        <template x-for="(option, optIndex) in field.options">
+                          <div class="p-2 border border-green-600 rounded">
+                            <div class="flex space-x-2 items-center">
+                              <div class="flex flex-col space-y-1">
+                                <button @click="if(optIndex > 0) { const items = [...field.options]; const item = items[optIndex]; items.splice(optIndex, 1); items.splice(optIndex - 1, 0, item); field.options = items; }"
+                                        class="text-gray-400 hover:text-white"
+                                        :class="{ 'opacity-50 cursor-not-allowed': optIndex === 0 }">
+                                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                                  </svg>
+                                </button>
+                                <button @click="if(optIndex < field.options.length - 1) { const items = [...field.options]; const item = items[optIndex]; items.splice(optIndex, 1); items.splice(optIndex + 1, 0, item); field.options = items; }"
+                                        class="text-gray-400 hover:text-white"
+                                        :class="{ 'opacity-50 cursor-not-allowed': optIndex === field.options.length - 1 }">
+                                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                  </svg>
+                                </button>
+                              </div>
+                              <input type="text" x-model.debounce.500ms="option.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                              <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
+                            </div>
+                          </div>
+                        </template>
                       </div>
                     </div>
-                  </template>
-                </div>
-              </template>
 
-              <template x-if="['select', 'conditional', 'multiple_checkbox'].includes(field.type)">
-                <div class="mt-2 space-y-4">
-                  <!-- Options Section -->
-                  <div class="border-b border-gray-600 pb-4">
-                    <h3 class="text-lg font-medium text-white mb-2">Options</h3>
-                    <div class="space-y-2">
-                      <button @click="field.options = field.options || []; field.options.push({name: '', show: '', questions: []})" class="text-blue-400 hover:text-blue-300">Add Option</button>
-                      <template x-for="(option, optIndex) in field.options" :key="optIndex">
-                        <div class="p-2 border border-gray-600 rounded">
-                          <div class="flex space-x-2 items-center">
-                            <div class="flex flex-col space-y-1">
-                              <button @click="if(optIndex > 0) { const items = [...field.options]; const item = items[optIndex]; items.splice(optIndex, 1); items.splice(optIndex - 1, 0, item); field.options = items; }"
-                                      class="text-gray-400 hover:text-white"
-                                      :class="{ 'opacity-50 cursor-not-allowed': optIndex === 0 }">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
-                                </svg>
-                              </button>
-                              <button @click="if(optIndex < field.options.length - 1) { const items = [...field.options]; const item = items[optIndex]; items.splice(optIndex, 1); items.splice(optIndex + 1, 0, item); field.options = items; }"
-                                      class="text-gray-400 hover:text-white"
-                                      :class="{ 'opacity-50 cursor-not-allowed': optIndex === field.options.length - 1 }">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                              </button>
-                            </div>
-                            <input type="text" x-model.debounce.500ms="option.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
-                            <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
-                          </div>
-                        </div>
-                      </template>
-                    </div>
+                    {% include "sultan/forms/partials/editor/conditionnal_1.html" %}
+
                   </div>
-
-                  <!-- Conditional Questions Section -->
-                  <template x-if="field.type === 'conditional' && field.options && field.options.length > 0">
-                    <div class="space-y-4">
-                      <h3 class="text-lg font-medium text-white">Conditional Questions</h3>
-                      <template x-for="(option, optIndex) in field.options" :key="optIndex">
-                        <div class="p-4 border border-gray-600 rounded">
-                          <h4 class="text-white mb-2" x-text="'Questions for: ' + option.name"></h4>
-                          <button @click="option.questions = option.questions || []; option.questions.push({key: '', type: 'text_input', label: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Question</button>
-
-                          <template x-for="(question, qIndex) in option.questions" :key="qIndex">
-                            <div class="mt-2 p-2 border border-gray-600 rounded">
-                              <div class="flex justify-between mb-2">
-                                <select x-model="question.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                  <option value="text_input">Text Input</option>
-                                  <option value="number">Number</option>
-                                  <option value="single_select">Single Select</option>
-                                  <option value="multiple_checkbox">Multiple Checkbox</option>
-                                  <option value="textarea">Long Text</option>
-                                  <option value="date">Date</option>
-                                  <option value="list">List</option>
-                                  <option value="conditional">Conditional</option>
-                                </select>
-                                <button @click="option.questions.splice(qIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
-                              </div>
-
-                              <div class="space-y-2">
-                                <input type="text" x-model.debounce.500ms="question.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Label">
-
-                                <div class="relative">
-                                  <input type="text" 
-                                         x-model="question.key"
-                                         @input="question.key = question.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
-                                         class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
-                                         placeholder="Question Key (slug format)">
-                                </div>
-
-                                <label class="flex items-center space-x-2 text-white">
-                                  <input type="checkbox" x-model="question.required" class="bg-gray-800 border-gray-600">
-                                  <span>Required</span>
-                                </label>
-
-                                <!-- Options for select/multiple choice questions -->
-                                <template x-if="['single_select', 'multiple_checkbox'].includes(question.type)">
-                                  <div class="mt-2 space-y-2">
-                                    <button @click="question.options = question.options || []; question.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
-                                    <template x-for="(opt, optIdx) in question.options" :key="optIdx">
-                                      <div class="flex space-x-2">
-                                        <input type="text" x-model.debounce.500ms="opt.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
-                                        <button @click="question.options.splice(optIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
-                                      </div>
-                                    </template>
-                                  </div>
-                                </template>
-
-
-                                <template x-if="question.type === 'conditional'">
-                                  <div class="space-y-4" x-data="{ nestedSelected: '' }">
-                                    <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="nestedSelected">
-                                      <option value="">Select an option</option>
-                                      <template x-for="nestedOption in question.options" :key="nestedOption.name">
-                                        <option x-text="nestedOption.name" :value="nestedOption.name"></option>
-                                      </template>
-                                    </select>
-
-                                    <template x-for="nestedOption in question.options" :key="nestedOption.name">
-                                      <div x-show="nestedSelected === nestedOption.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
-                                        <template x-for="nestedQuestion in nestedOption.questions" :key="nestedQuestion.key">
-                                          <div class="space-y-2" x-data="{ thirdLevelSelected: '' }">
-                                            <label class="block">
-                                              <span class="text-lg font-medium text-white" x-text="nestedQuestion.label"></span>
-                                            </label>
-
-                                            <template x-if="nestedQuestion.type === 'text_input'">
-                                              <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                            </template>
-                                            <template x-if="nestedQuestion.type === 'number'">
-                                              <input type="number" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                            </template>
-                                            <template x-if="nestedQuestion.type === 'textarea'">
-                                              <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
-                                            </template>
-                                            <template x-if="nestedQuestion.type === 'conditional'">
-                                              <div class="space-y-4">
-                                                <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="thirdLevelSelected">
-                                                  <option value="">Select an option</option>
-                                                  <template x-for="thirdOption in nestedQuestion.options" :key="thirdOption.name">
-                                                    <option x-text="thirdOption.name" :value="thirdOption.name"></option>
-                                                  </template>
-                                                </select>
-
-                                                <template x-for="thirdOption in nestedQuestion.options" :key="thirdOption.name">
-                                                  <div x-show="thirdLevelSelected === thirdOption.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
-                                                    <template x-for="thirdQuestion in thirdOption.questions" :key="thirdQuestion.key">
-                                                      <div class="space-y-2">
-                                                        <label class="block">
-                                                          <span class="text-lg font-medium text-white" x-text="thirdQuestion.label"></span>
-                                                        </label>
-                                                        <template x-if="thirdQuestion.type === 'text_input'">
-                                                          <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                                        </template>
-                                                        <template x-if="thirdQuestion.type === 'number'">
-                                                          <input type="number" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                                        </template>
-                                                        <template x-if="thirdQuestion.type === 'textarea'">
-                                                          <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
-                                                        </template>
-                                                      </div>
-                                                    </template>
-                                                  </div>
-                                                </template>
-                                              </div>
-                                            </template>
-                                          </div>
-                                        </template>
-                                      </div>
-                                    </template>
-                                  </div>
-                                </template>
-
-
-                              </div>
-                            </div>
-                          </template>
-                        </div>
-                      </template>
-                    </div>
-                  </template>
-                </div>
-              </template>
+                </template>
+              </div>
             </div>
-          </div>
-          </div>
-        </template>
-      </div>
+          </template>
+        </div>
 
-      <div class="flex gap-2">
-        <button @click="addField()" class="flex-1 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Add Field</button>
-        <button @click="form.fields.forEach(field => field.open = false)" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-500">Close All</button>
+        <div class="flex gap-2">
+          <button @click="addField()" class="flex-1 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Add Field</button>
+          <button @click="form.fields.forEach(field => field.open = false)" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-500">Close All</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Preview -->
-  <div class="w-1/2">
-    <h2 class="text-xl font-bold mb-6 text-white">Preview</h2>
-    <div class="bg-gray-800 p-6 rounded-lg border border-gray-600">
-      <h3 class="text-xl font-bold text-white mb-4" x-text="form.name"></h3>
-      <form class="space-y-4">
-        <template x-for="field in form.fields" :key="field.label">
-          <div class="space-y-2">
-            <label class="block">
-              <span class="text-xl font-medium text-white" x-text="field.label"></span>
-              <span x-show="field.required" class="text-red-500">*</span>
-            </label>
-            <p class="text-gray-400 text-sm" x-text="field.description"></p>
+    <!-- Preview -->
+    <div class="w-1/2">
+      <h2 class="text-xl font-bold mb-6 text-white">Preview</h2>
+      <div class="bg-gray-800 p-6 rounded-lg border border-gray-600">
+        <h3 class="text-xl font-bold text-white mb-4" x-text="form.name"></h3>
+        <div class="space-y-4">
+          <template x-for="field in form.fields">
+            <div class="space-y-2">
+              <label class="block">
+                <span class="text-xl font-medium text-white" x-text="field.label"></span>
+                <span x-show="field.required" class="text-red-500">*</span>
+              </label>
+              <p class="text-gray-400 text-sm" x-show="field.description" x-html="field.description"></p>
 
-            <template x-if="field.type === 'single_select'">
-              <select :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                <option value="">Select an option</option>
-                <template x-for="option in field.options" :key="option.name">
-                  <option x-text="option.name" :value="option.name"></option>
-                </template>
-              </select>
-            </template>
+              {% include "sultan/forms/partials/preview/single_select.html" %}
+              {% include "sultan/forms/partials/preview/multiple_checkbox.html" %}
+              {% include "sultan/forms/partials/preview/date.html" %}
+              {% include "sultan/forms/partials/preview/list.html" %}
+              {% include "sultan/forms/partials/preview/file_upload.html" %}
+              {% include "sultan/forms/partials/preview/actions.html" %}
+              {% include "sultan/forms/partials/preview/submit.html" %}
+              {% include "sultan/forms/partials/preview/longtext.html" %}
+              {% include "sultan/forms/partials/preview/number.html" %}
+              {% include "sultan/forms/partials/preview/input.html" %}
+              {% include "sultan/forms/partials/preview/conditional.html" %}
 
-            <template x-if="field.type === 'conditional'">
-              <div class="space-y-4" x-data="{ selected: '' }">
-                <select :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="selected">
-                  <option value="">Select an option</option>
-                  <template x-for="option in field.options" :key="option.name">
-                    <option x-text="option.name" :value="option.name"></option>
-                  </template>
-                </select>
-
-                <template x-for="option in field.options" :key="option.name">
-                  <div x-show="selected === option.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
-                    <template x-for="question in option.questions" :key="question.key">
-                      <div class="space-y-2" x-data="{ nestedSelected: '' }">
-                        <label class="block">
-                          <span class="text-lg font-medium text-white" x-text="question.label"></span>
-                        </label>
-
-                        <template x-if="question.type === 'text_input'">
-                          <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                        </template>
-                        <template x-if="question.type === 'number'">
-                          <input type="number" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                        </template>
-                        <template x-if="question.type === 'textarea'">
-                          <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
-                        </template>
-                        <template x-if="question.type === 'conditional'">
-                          <div class="space-y-4" x-data="{ nestedSelected: '' }">
-                            <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="nestedSelected">
-                              <option value="">Select an option</option>
-                              <template x-for="nestedOption in question.options" :key="nestedOption.name">
-                                <option x-text="nestedOption.name" :value="nestedOption.name"></option>
-                              </template>
-                            </select>
-
-                            <template x-for="nestedOption in question.options" :key="nestedOption.name">
-                              <div x-show="nestedSelected === nestedOption.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
-                                <template x-for="nestedQuestion in nestedOption.questions" :key="nestedQuestion.key">
-                                  <div class="space-y-2" x-data="{ thirdLevelSelected: '' }">
-                                    <label class="block">
-                                      <span class="text-lg font-medium text-white" x-text="nestedQuestion.label"></span>
-                                    </label>
-
-                                    <template x-if="nestedQuestion.type === 'text_input'">
-                                      <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                    </template>
-                                    <template x-if="nestedQuestion.type === 'number'">
-                                      <input type="number" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                                    </template>
-                                    <template x-if="nestedQuestion.type === 'textarea'">
-                                      <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
-                                    </template>
-                                  </div>
-                                </template>
-                              </div>
-                            </template>
-                          </div>
-                        </template>
-                      </div>
-                    </template>
-                  </div>
-                </template>
-              </div>
-            </template>
-
-            <template x-if="field.type === 'multiple_checkbox'">
-              <div class="space-y-2" x-data="{ filter: '' }">
-                <template x-if="field.options.length > 5">
-                  <div class="mb-4 relative">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0014 0z" />
-                      </svg>
-                    </div>
-                    <input type="search" x-model.debounce.500ms="filter" class="pl-10 w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Filter options...">
-                  </div>
-                </template>
-                <div class="space-y-2 max-h-[50vh] overflow-y-auto pr-2">
-                  <template x-for="option in field.options" :key="option.name">
-                    <div class="flex items-center py-1" x-show="!filter || option.name.toLowerCase().includes(filter.toLowerCase())">
-                      <input type="checkbox" class="bg-gray-800 border-gray-600">
-                      <label class="ml-2 text-sm font-medium text-white" x-text="option.name"></label>
-                      <p x-text="option.description"></p>
-                    </div>
-                  </template>
-                </div>
-              </div>
-            </template>
-
-            <template x-if="field.type === 'textarea'">
-              <textarea :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 min-h-[100px]"></textarea>
-            </template>
-
-            <template x-if="field.type === 'date'">
-              <input type="date" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-            </template>
-
-            <template x-if="field.type === 'list'">
-              <div x-data="{ values: [''] }" class="space-y-2">
-                <template x-for="(value, index) in values" :key="index">
-                  <div class="flex space-x-2">
-                    <input type="text" 
-                           x-model.debounce.500ms="values[index]"
-                           :required="field.required"
-                           class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-                    <button @click="values.splice(index, 1)"
-                            class="bg-red-600 text-white w-8 h-8 rounded flex items-center justify-center">
-                      -
-                    </button>
-                  </div>
-                </template>
-                <button @click.prevent="values.push('')" 
-                        type="button"
-                        class="bg-green-600 text-white px-3 py-1 rounded">
-                  +
-                </button>
-              </div>
-            </template>
-
-            <template x-if="field.type !== 'select' && field.type !== 'checkbox' && field.type !== 'conditional' && field.type !== 'single_select' && field.type !== 'multiple_checkbox' && field.type !== 'textarea' && field.type !== 'date' && field.type !== 'list'">
-              <input :type="field.type" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-            </template>
-
-            <template x-if="field.type === 'checkbox'">
-              <input type="checkbox" :required="field.required" class="bg-gray-800 border-gray-600">
-            </template>
-          </div>
-        </template>
-      </form>
+            </div>
+          </template>
+        </div>
+      </div>
     </div>
   </div>
 </div>

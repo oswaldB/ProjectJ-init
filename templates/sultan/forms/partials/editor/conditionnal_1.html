@@ -1,0 +1,908 @@
+<!-- Conditional Questions Section -->
+<template x-if="field.type === 'conditional' && field.options && field.options.length > 0">
+  <div class="space-y-4">
+    <h3 class="text-lg font-medium text-white">Conditional Questions</h3>
+    <template x-for="(option, optIndex) in field.options">
+      <div class="p-4 border border-yellow-600 rounded">
+        <h4 class="text-white mb-2" x-text="'Questions for: ' + option.name"></h4>
+        <button @click="option.questions = option.questions || []; option.questions.push({key: '', type: 'text_input', label: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Question</button>
+
+        <template x-for="(question, qIndex) in option.questions">
+          <div class="mt-2 p-2 border border-purple-600 rounded">
+            <div class="flex justify-between mb-2">
+              <select x-model="question.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
+                <option value="text_input">Text Input</option>
+                <option value="number">Number</option>
+                <option value="single_select">Single Select</option>
+                <option value="multiple_checkbox">Multiple Checkbox</option>
+                <option value="textarea">Long Text</option>
+                <option value="date">Date</option>
+                <option value="list">List</option>
+                <option value="conditional">Conditional</option>
+                <option value="file_upload">File Upload</option>
+                <option value="actions">Actions</option>
+                <option value="submit_issue">Submit the Issue</option>
+              </select>
+              <button @click="option.questions.splice(qIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
+            </div>
+
+            <!-- Show 'multiple' toggle for file_upload in conditional questions -->
+            <template x-if="question.type === 'file_upload'">
+              <div class="mt-2">
+                <label class="flex items-center space-x-2 text-white">
+                  <input type="checkbox" x-model="question.multiple" class="bg-gray-800 border-gray-600">
+                  <span>Allow multiple files</span>
+                </label>
+              </div>
+            </template>
+
+            <!-- Bloc spécifique pour le type Actions -->
+            <template x-if="question.type === 'actions'">
+              <div class="mt-4 space-y-2 p-2 border border-yellow-600 rounded bg-gray-900">
+                <label class="block text-sm font-medium text-yellow-300">Content</label>
+                <div 
+                  x-ref="actionsQuillQuestion"
+                  x-init="window.initQuill($refs.actionsQuillQuestion, val => question.markdown = (val !== undefined ? val : question.markdown))"
+                  class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+                <div class="mt-1 text-gray-400 text-sm border-l-4 border-yellow-700 pl-2" x-show="question.markdown">
+                  <span class="font-semibold text-yellow-300">Preview:</span>
+                  <div x-html="question.markdown"></div>
+                </div>
+                <div class="mt-2">
+                  <h4 class="text-yellow-300 font-semibold mb-1">Buttons</h4>
+                  <button @click="question.buttons = question.buttons || []; question.buttons.push({label: '', url: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Button</button>
+                  <template x-for="(btn, btnIdx) in question.buttons">
+                    <div class="flex space-x-2 items-center mb-2">
+                      <input type="text" x-model="btn.label" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button Label">
+                      <input type="text" x-model="btn.url" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button URL">
+                      <button @click="question.buttons.splice(btnIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
+            <div class="space-y-2">
+              <input type="text" x-model.debounce.500ms="question.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Label">
+
+              <div class="mt-4 space-y-2">
+                <label class="block text-sm font-medium text-gray-300">Question Description</label>
+                <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
+                <div 
+                  x-ref="descQuillQuestion"
+                  x-init="window.initQuill($refs.descQuillQuestion, val => question.description = (val !== undefined ? val : question.description))"
+                  class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+                <div class="mt-1 text-gray-400 text-sm border-l-4 border-blue-700 pl-2" x-show="question.description">
+                  <span class="font-semibold text-blue-300">Preview:</span>
+                  <div x-html="question.description"></div>
+                </div>
+              </div>
+
+              <div class="relative">
+                <input type="text" 
+                       x-model="question.key"
+                       @input="question.key = question.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                       class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                       placeholder="Question Key (slug format)">
+              </div>
+              <div x-show="!question.key" class="mt-2 p-2 rounded border border-yellow-500 bg-black bg-[repeating-linear-gradient(45deg, black, black 10px, yellow 10px, yellow 20px)] text-yellow-300 flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                </svg>
+                <span>Question Key is required and cannot be empty.</span>
+              </div>
+
+              <label class="flex items-center space-x-2 text-white">
+                <input type="checkbox" x-model="question.required" class="bg-gray-800 border-gray-600">
+                <span>Required</span>
+              </label>
+
+              <!-- Options for select/multiple choice questions -->
+              <template x-if="['single_select', 'multiple_checkbox'].includes(question.type)">
+                <div class="mt-2 space-y-2">
+                  <button @click="question.options = question.options || []; question.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                  <template x-for="(opt, optIdx) in question.options">
+                    <div class="flex space-x-2">
+                      <input type="text" x-model.debounce.500ms="opt.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                      <button @click="question.options.splice(optIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                    </div>
+                  </template>
+                </div>
+              </template>
+
+              <!-- IMBRICATION: Conditional imbriqué -->
+              <template x-if="question.type === 'conditional'">
+                <div class="mt-4 space-y-2">
+                  <button @click="question.options = question.options || []; question.options.push({name: '', show: '', questions: []})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                  <template x-for="(subOption, subOptIdx) in question.options">
+                    <div class="p-2 border border-pink-600 rounded mt-2">
+                      <div class="flex space-x-2 items-center">
+                        <input type="text" x-model.debounce.500ms="subOption.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                        <button @click="question.options.splice(subOptIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                      </div>
+                      <div class="relative">
+                        <input type="text" 
+                               x-model="subOption.key"
+                               @input="subOption.key = subOption.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                               class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                               placeholder="Option Key (slug format)">
+                      </div>
+                      <div x-show="!subOption.key" class="mt-2 p-2 rounded border border-yellow-500 bg-black bg-[repeating-linear-gradient(45deg, black, black 10px, yellow 10px, yellow 20px)] text-yellow-300 flex items-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                        </svg>
+                        <span>Option Key is required and cannot be empty.</span>
+                      </div>
+                      <div class="mt-2">
+                        <h5 class="text-white mb-2" x-text="'Questions for: ' + subOption.name"></h5>
+                        <button @click="subOption.questions = subOption.questions || []; subOption.questions.push({key: '', type: 'text_input', label: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Question</button>
+                        <template x-for="(subQuestion, subQIdx) in subOption.questions">
+                          <div class="mt-2 p-2 border border-orange-600 rounded">
+                            <div class="flex justify-between mb-2">
+                              <select x-model="subQuestion.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                <option value="text_input">Text Input</option>
+                                <option value="number">Number</option>
+                                <option value="single_select">Single Select</option>
+                                <option value="multiple_checkbox">Multiple Checkbox</option>
+                                <option value="textarea">Long Text</option>
+                                <option value="date">Date</option>
+                                <option value="list">List</option>
+                                <option value="conditional">Conditional</option>
+                                <option value="file_upload">File Upload</option>
+                                <option value="actions">Actions</option>
+                                <option value="submit_issue">Submit the Issue</option>
+                              </select>
+                              <button @click="subOption.questions.splice(subQIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                            </div>
+                            <!-- Show 'multiple' toggle for file_upload in sub-questions -->
+                            <template x-if="subQuestion.type === 'file_upload'">
+                              <div class="mt-2">
+                                <label class="flex items-center space-x-2 text-white">
+                                  <input type="checkbox" x-model="subQuestion.multiple" class="bg-gray-800 border-gray-600">
+                                  <span>Allow multiple files</span>
+                                </label>
+                              </div>
+                            </template>
+
+                            <!-- Bloc spécifique pour le type Actions -->
+                            <template x-if="subQuestion.type === 'actions'">
+                              <div class="mt-4 space-y-2 p-2 border border-yellow-600 rounded bg-gray-900">
+                                <label class="block text-sm font-medium text-yellow-300">Content</label>
+                                <div 
+                                  x-ref="actionsQuillSubQuestion"
+                                  x-init="window.initQuill($refs.actionsQuillSubQuestion, val => subQuestion.markdown = (val !== undefined ? val : subQuestion.markdown))"
+                                  class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+                                <div class="mt-1 text-gray-400 text-sm border-l-4 border-yellow-700 pl-2" x-show="subQuestion.markdown">
+                                  <span class="font-semibold text-yellow-300">Preview:</span>
+                                  <div x-html="subQuestion.markdown"></div>
+                                </div>
+                                <div class="mt-2">
+                                  <h4 class="text-yellow-300 font-semibold mb-1">Buttons</h4>
+                                  <button @click="subQuestion.buttons = subQuestion.buttons || []; subQuestion.buttons.push({label: '', url: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Button</button>
+                                  <template x-for="(btn, btnIdx) in subQuestion.buttons">
+                                    <div class="flex space-x-2 items-center mb-2">
+                                      <input type="text" x-model="btn.label" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button Label">
+                                      <input type="text" x-model="btn.url" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button URL">
+                                      <button @click="subQuestion.buttons.splice(btnIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                    </div>
+                                  </template>
+                                </div>
+                              </div>
+                            </template>
+
+                            <div class="space-y-2">
+                              <input type="text" x-model.debounce.500ms="subQuestion.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Label">
+                              <div class="mt-4 space-y-2">
+                                <label class="block text-sm font-medium text-gray-300">Question Description</label>
+                                <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
+                                <div 
+                                  x-ref="descQuillSubQuestion"
+                                  x-init="window.initQuill($refs.descQuillSubQuestion, val => subQuestion.description = (val !== undefined ? val : subQuestion.description))"
+                                  class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+                                <div class="mt-1 text-gray-400 text-sm border-l-4 border-blue-700 pl-2" x-show="subQuestion.description">
+                                  <span class="font-semibold text-blue-300">Preview:</span>
+                                  <div x-html="subQuestion.description"></div>
+                                </div>
+                              </div>
+                              <div class="relative">
+                                <input type="text" 
+                                       x-model="subQuestion.key"
+                                       @input="subQuestion.key = subQuestion.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                                       class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                                       placeholder="Question Key (slug format)">
+                              </div>
+                              <div x-show="!subQuestion.key" class="mt-2 p-2 rounded border border-yellow-500 bg-black bg-[repeating-linear-gradient(45deg, black, black 10px, yellow 10px, yellow 20px)] text-yellow-300 flex items-center space-x-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                                </svg>
+                                <span>Question Key is required and cannot be empty.</span>
+                              </div>
+                              <label class="flex items-center space-x-2 text-white">
+                                <input type="checkbox" x-model="subQuestion.required" class="bg-gray-800 border-gray-600">
+                                <span>Required</span>
+                              </label>
+                              <!-- Options for select/multiple choice questions -->
+                              <template x-if="['single_select', 'multiple_checkbox'].includes(subQuestion.type)">
+                                <div class="mt-2 space-y-2">
+                                  <button @click="subQuestion.options = subQuestion.options || []; subQuestion.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                                  <template x-for="(opt, optIdx) in subQuestion.options">
+                                    <div class="flex space-x-2">
+                                      <input type="text" x-model.debounce.500ms="opt.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                                      <button @click="subQuestion.options.splice(optIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                    </div>
+                                  </template>
+                                </div>
+                              </template>
+                              <!-- IMBRICATION: Conditional imbriqué -->
+                              <template x-if="subQuestion.type === 'conditional'">
+                                <div class="mt-4 space-y-2">
+                                  <button @click="subQuestion.options = subQuestion.options || []; subQuestion.options.push({name: '', show: '', questions: []})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                                  <template x-for="(thirdOption, thirdOptIdx) in subQuestion.options">
+                                    <div class="p-2 border border-blue-400 rounded mt-2">
+                                      <div class="flex space-x-2 items-center">
+                                        <input type="text" x-model.debounce.500ms="thirdOption.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                                        <button @click="subQuestion.options.splice(thirdOptIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                      </div>
+                                      <div class="relative">
+                                        <input type="text" 
+                                               x-model="thirdOption.key"
+                                               @input="thirdOption.key = thirdOption.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                                               class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                                               placeholder="Option Key (slug format)">
+                                      </div>
+                                      <div x-show="!thirdOption.key" class="mt-2 p-2 rounded border border-yellow-500 bg-black bg-[repeating-linear-gradient(45deg, black, black 10px, yellow 10px, yellow 20px)] text-yellow-300 flex items-center space-x-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                                        </svg>
+                                        <span>Option Key is required and cannot be empty.</span>
+                                      </div>
+                                      <div class="mt-2">
+                                        <h5 class="text-white mb-2" x-text="'Questions for: ' + thirdOption.name"></h5>
+                                        <button @click="thirdOption.questions = thirdOption.questions || []; thirdOption.questions.push({key: '', type: 'text_input', label: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Question</button>
+                                        <template x-for="(thirdQuestion, thirdQIdx) in thirdOption.questions">
+                                          <div class="mt-2 p-2 border border-green-400 rounded">
+                                            <div class="flex justify-between mb-2">
+                                              <select x-model="thirdQuestion.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                                <option value="text_input">Text Input</option>
+                                                <option value="number">Number</option>
+                                                <option value="single_select">Single Select</option>
+                                                <option value="multiple_checkbox">Multiple Checkbox</option>
+                                                <option value="textarea">Long Text</option>
+                                                <option value="date">Date</option>
+                                                <option value="list">List</option>
+                                                <option value="file_upload">File Upload</option>
+                                                <option value="conditional">Conditional</option>
+                                                <option value="actions">Actions</option>
+                                                <option value="submit_issue">Submit the Issue</option>
+                                              </select>
+                                              <button @click="thirdOption.questions.splice(thirdQIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                            </div>
+                                            <!-- Show 'multiple' toggle for file_upload in third-level questions -->
+                                            <template x-if="thirdQuestion.type === 'file_upload'">
+                                              <div class="mt-2">
+                                                <label class="flex items-center space-x-2 text-white">
+                                                  <input type="checkbox" x-model="thirdQuestion.multiple" class="bg-gray-800 border-gray-600">
+                                                  <span>Allow multiple files</span>
+                                                </label>
+                                              </div>
+                                            </template>
+
+                                            <!-- Bloc spécifique pour le type Actions -->
+                                            <template x-if="thirdQuestion.type === 'actions'">
+                                              <div class="mt-4 space-y-2 p-2 border border-yellow-600 rounded bg-gray-900">
+                                                <label class="block text-sm font-medium text-yellow-300">Content</label>
+                                                <div 
+                                                  x-ref="actionsQuillThirdQuestion"
+                                                  x-init="window.initQuill($refs.actionsQuillThirdQuestion, val => thirdQuestion.markdown = (val !== undefined ? val : thirdQuestion.markdown))"
+                                                  class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+                                                <div class="mt-1 text-gray-400 text-sm border-l-4 border-yellow-700 pl-2" x-show="thirdQuestion.markdown">
+                                                  <span class="font-semibold text-yellow-300">Preview:</span>
+                                                  <div x-html="thirdQuestion.markdown"></div>
+                                                </div>
+                                                <div class="mt-2">
+                                                  <h4 class="text-yellow-300 font-semibold mb-1">Buttons</h4>
+                                                  <button @click="thirdQuestion.buttons = thirdQuestion.buttons || []; thirdQuestion.buttons.push({label: '', url: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Button</button>
+                                                  <template x-for="(btn, btnIdx) in thirdQuestion.buttons">
+                                                    <div class="flex space-x-2 items-center mb-2">
+                                                      <input type="text" x-model="btn.label" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button Label">
+                                                      <input type="text" x-model="btn.url" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button URL">
+                                                      <button @click="thirdQuestion.buttons.splice(btnIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                    </div>
+                                                  </template>
+                                                </div>
+                                              </div>
+                                            </template>
+
+                                            <div class="space-y-2">
+                                              <input type="text" x-model.debounce.500ms="thirdQuestion.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Label">
+                                              <div class="mt-4 space-y-2">
+                                                <label class="block text-sm font-medium text-gray-300">Question Description</label>
+                                                <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
+                                                <div 
+                                                  x-ref="descQuillThirdQuestion"
+                                                  x-init="window.initQuill($refs.descQuillThirdQuestion, val => thirdQuestion.description = (val !== undefined ? val : thirdQuestion.description))"
+                                                  class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+                                                <div class="mt-1 text-gray-400 text-sm border-l-4 border-blue-700 pl-2" x-show="thirdQuestion.description">
+                                                  <span class="font-semibold text-blue-300">Preview:</span>
+                                                  <div x-html="thirdQuestion.description"></div>
+                                                </div>
+                                              </div>
+                                              <div class="relative">
+                                                <input type="text" 
+                                                       x-model="thirdQuestion.key"
+                                                       @input="thirdQuestion.key = thirdQuestion.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                                                       class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                                                       placeholder="Question Key (slug format)">
+                                              </div>
+                                              <div x-show="!thirdQuestion.key" class="mt-2 p-2 rounded border border-yellow-500 bg-black bg-[repeating-linear-gradient(45deg, black, black 10px, yellow 10px, yellow 20px)] text-yellow-300 flex items-center space-x-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                                                </svg>
+                                                <span>Question Key is required and cannot be empty.</span>
+                                              </div>
+                                              <label class="flex items-center space-x-2 text-white">
+                                                <input type="checkbox" x-model="thirdQuestion.required" class="bg-gray-800 border-gray-600">
+                                                <span>Required</span>
+                                              </label>
+                                              <!-- Options for select/multiple choice questions -->
+                                              <template x-if="['single_select', 'multiple_checkbox'].includes(thirdQuestion.type)">
+                                                <div class="mt-2 space-y-2">
+                                                  <button @click="thirdQuestion.options = thirdQuestion.options || []; thirdQuestion.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                                                  <template x-for="(opt, optIdx) in thirdQuestion.options">
+                                                    <div class="flex space-x-2">
+                                                      <input type="text" x-model.debounce.500ms="opt.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                                                      <button @click="thirdQuestion.options.splice(optIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                    </div>
+                                                  </template>
+                                                </div>
+                                              </template>
+                                              <!-- IMBRICATION: Conditional imbriqué -->
+                                              <template x-if="thirdQuestion.type === 'conditional'">
+                                                <div class="mt-4 space-y-2">
+                                                  <button @click="thirdQuestion.options = thirdQuestion.options || []; thirdQuestion.options.push({name: '', show: '', questions: []})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                                                  <template x-for="(fourthOption, fourthOptIdx) in thirdQuestion.options">
+                                                    <div class="p-2 border border-yellow-400 rounded mt-2">
+                                                      <div class="flex space-x-2 items-center">
+                                                        <input type="text" x-model.debounce.500ms="fourthOption.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                                                        <button @click="thirdQuestion.options.splice(fourthOptIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                      </div>
+                                                      <div class="relative">
+                                                        <input type="text" 
+                                                               x-model="fourthOption.key"
+                                                               @input="fourthOption.key = fourthOption.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                                                               class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                                                               placeholder="Option Key (slug format)">
+                                                      </div>
+                                                      <div x-show="!fourthOption.key" class="mt-2 p-2 rounded border border-yellow-500 bg-black bg-[repeating-linear-gradient(45deg, black, black 10px, yellow 10px, yellow 20px)] text-yellow-300 flex items-center space-x-2">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                                                        </svg>
+                                                        <span>Option Key is required and cannot be empty.</span>
+                                                      </div>
+                                                      <div class="mt-2">
+                                                        <h5 class="text-white mb-2" x-text="'Questions for: ' + fourthOption.name"></h5>
+                                                        <button @click="fourthOption.questions = fourthOption.questions || []; fourthOption.questions.push({key: '', type: 'text_input', label: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Question</button>
+                                                        <template x-for="(fourthQuestion, fourthQIdx) in fourthOption.questions">
+                                                          <div class="mt-2 p-2 border border-purple-400 rounded">
+                                                            <div class="flex justify-between mb-2">
+                                                              <select x-model="fourthQuestion.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                                                <option value="text_input">Text Input</option>
+                                                                <option value="number">Number</option>
+                                                                <option value="single_select">Single Select</option>
+                                                                <option value="multiple_checkbox">Multiple Checkbox</option>
+                                                                <option value="textarea">Long Text</option>
+                                                                <option value="date">Date</option>
+                                                                <option value="list">List</option>
+                                                                <option value="file_upload">File Upload</option>
+                                                                <option value="conditional">Conditional</option>
+                                                                <option value="actions">Actions</option>
+                                                                <option value="submit_issue">Submit the Issue</option>
+                                                              </select>
+                                                              <button @click="fourthOption.questions.splice(fourthQIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                            </div>
+                                                            <!-- Show 'multiple' toggle for file_upload in fourth-level questions -->
+                                                            <template x-if="fourthQuestion.type === 'file_upload'">
+                                                              <div class="mt-2">
+                                                                <label class="flex items-center space-x-2 text-white">
+                                                                  <input type="checkbox" x-model="fourthQuestion.multiple" class="bg-gray-800 border-gray-600">
+                                                                  <span>Allow multiple files</span>
+                                                                </label>
+                                                              </div>
+                                                            </template>
+
+                                                            <!-- Bloc spécifique pour le type Actions -->
+                                                            <template x-if="fourthQuestion.type === 'actions'">
+                                                              <div class="mt-4 space-y-2 p-2 border border-yellow-600 rounded bg-gray-900">
+                                                                <label class="block text-sm font-medium text-yellow-300">Content</label>
+                                                                <div 
+                                                                  x-ref="actionsQuillFourthQuestion"
+                                                                  x-init="window.initQuill($refs.actionsQuillFourthQuestion, val => fourthQuestion.markdown = (val !== undefined ? val : fourthQuestion.markdown))"
+                                                                  class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+                                                                <div class="mt-1 text-gray-400 text-sm border-l-4 border-yellow-700 pl-2" x-show="fourthQuestion.markdown">
+                                                                  <span class="font-semibold text-yellow-300">Preview:</span>
+                                                                  <div x-html="fourthQuestion.markdown"></div>
+                                                                </div>
+                                                                <div class="mt-2">
+                                                                  <h4 class="text-yellow-300 font-semibold mb-1">Buttons</h4>
+                                                                  <button @click="fourthQuestion.buttons = fourthQuestion.buttons || []; fourthQuestion.buttons.push({label: '', url: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Button</button>
+                                                                  <template x-for="(btn, btnIdx) in fourthQuestion.buttons">
+                                                                    <div class="flex space-x-2 items-center mb-2">
+                                                                      <input type="text" x-model="btn.label" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button Label">
+                                                                      <input type="text" x-model="btn.url" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button URL">
+                                                                      <button @click="fourthQuestion.buttons.splice(btnIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                                    </div>
+                                                                  </template>
+                                                                </div>
+                                                              </div>
+                                                            </template>
+
+                                                            <div class="space-y-2">
+                                                              <input type="text" x-model.debounce.500ms="fourthQuestion.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Label">
+                                                              <div class="mt-4 space-y-2">
+                                                                <label class="block text-sm font-medium text-gray-300">Question Description</label>
+                                                                <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
+                                                                <div 
+                                                                  x-ref="descQuillFourthQuestion"
+                                                                  x-init="window.initQuill($refs.descQuillFourthQuestion, val => fourthQuestion.description = (val !== undefined ? val : fourthQuestion.description))"
+                                                                  class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+                                                                <div class="mt-1 text-gray-400 text-sm border-l-4 border-blue-700 pl-2" x-show="fourthQuestion.description">
+                                                                  <span class="font-semibold text-blue-300">Preview:</span>
+                                                                  <div x-html="fourthQuestion.description"></div>
+                                                                </div>
+                                                              </div>
+                                                              <div class="relative">
+                                                                <input type="text" 
+                                                                       x-model="fourthQuestion.key"
+                                                                       @input="fourthQuestion.key = fourthQuestion.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                                                                       class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                                                                       placeholder="Question Key (slug format)">
+                                                              </div>
+                                                              <div x-show="!fourthQuestion.key" class="mt-2 p-2 rounded border border-yellow-500 bg-black bg-[repeating-linear-gradient(45deg, black, black 10px, yellow 10px, yellow 20px)] text-yellow-300 flex items-center space-x-2">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                                                                </svg>
+                                                                <span>Question Key is required and cannot be empty.</span>
+                                                              </div>
+                                                              <label class="flex items-center space-x-2 text-white">
+                                                                <input type="checkbox" x-model="fourthQuestion.required" class="bg-gray-800 border-gray-600">
+                                                                <span>Required</span>
+                                                              </label>
+                                                              <!-- Options for select/multiple choice questions -->
+                                                              <template x-if="['single_select', 'multiple_checkbox'].includes(fourthQuestion.type)">
+                                                                <div class="mt-2 space-y-2">
+                                                                  <button @click="fourthQuestion.options = fourthQuestion.options || []; fourthQuestion.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                                                                  <template x-for="(opt, optIdx) in fourthQuestion.options">
+                                                                    <div class="flex space-x-2">
+                                                                      <input type="text" x-model.debounce.500ms="opt.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                                                                      <button @click="fourthQuestion.options.splice(optIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                                    </div>
+                                                                  </template>
+                                                                </div>
+                                                              </template>
+                                                              <!-- IMBRICATION: Conditional imbriqué -->
+                                                              <template x-if="fourthQuestion.type === 'conditional'">
+                                                                <div class="mt-4 space-y-2">
+                                                                  <button @click="fourthQuestion.options = fourthQuestion.options || []; fourthQuestion.options.push({name: '', show: '', questions: []})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                                                                  <template x-for="(fifthOption, fifthOptIdx) in fourthQuestion.options">
+                                                                    <div class="p-2 border border-pink-400 rounded mt-2">
+                                                                      <div class="flex space-x-2 items-center">
+                                                                        <input type="text" x-model.debounce.500ms="fifthOption.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                                                                        <button @click="fourthQuestion.options.splice(fifthOptIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                                      </div>
+                                                                      <div class="relative">
+                                                                        <input type="text" 
+                                                                               x-model="fifthOption.key"
+                                                                               @input="fifthOption.key = fifthOption.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                                                                               class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                                                                               placeholder="Option Key (slug format)">
+                                                                      </div>
+                                                                      <div x-show="!fifthOption.key" class="mt-2 p-2 rounded border border-yellow-500 bg-black bg-[repeating-linear-gradient(45deg, black, black 10px, yellow 10px, yellow 20px)] text-yellow-300 flex items-center space-x-2">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                                                                        </svg>
+                                                                        <span>Option Key is required and cannot be empty.</span>
+                                                                      </div>
+                                                                      <div class="mt-2">
+                                                                        <h5 class="text-white mb-2" x-text="'Questions for: ' + fifthOption.name"></h5>
+                                                                        <button @click="fifthOption.questions = fifthOption.questions || []; fifthOption.questions.push({key: '', type: 'text_input', label: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Question</button>
+                                                                        <template x-for="(fifthQuestion, fifthQIdx) in fifthOption.questions">
+                                                                          <div class="mt-2 p-2 border border-orange-400 rounded">
+                                                                            <div class="flex justify-between mb-2">
+                                                                              <select x-model="fifthQuestion.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                                                                <option value="text_input">Text Input</option>
+                                                                                <option value="number">Number</option>
+                                                                                <option value="single_select">Single Select</option>
+                                                                                <option value="multiple_checkbox">Multiple Checkbox</option>
+                                                                                <option value="textarea">Long Text</option>
+                                                                                <option value="date">Date</option>
+                                                                                <option value="list">List</option>
+                                                                                <option value="file_upload">File Upload</option>
+                                                                                <option value="conditional">Conditional</option>
+                                                                                <option value="actions">Actions</option>
+                                                                                <option value="submit_issue">Submit the Issue</option>
+                                                                              </select>
+                                                                              <button @click="fifthOption.questions.splice(fifthQIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                                            </div>
+                                                                            <!-- Show 'multiple' toggle for file_upload in fifth-level questions -->
+                                                                            <template x-if="fifthQuestion.type === 'file_upload'">
+                                                                              <div class="mt-2">
+                                                                                <label class="flex items-center space-x-2 text-white">
+                                                                                  <input type="checkbox" x-model="fifthQuestion.multiple" class="bg-gray-800 border-gray-600">
+                                                                                  <span>Allow multiple files</span>
+                                                                                </label>
+                                                                              </div>
+                                                                            </template>
+
+                                                                            <!-- Bloc spécifique pour le type Actions -->
+                                                                            <template x-if="fifthQuestion.type === 'actions'">
+                                                                              <div class="mt-4 space-y-2 p-2 border border-yellow-600 rounded bg-gray-900">
+                                                                                <label class="block text-sm font-medium text-yellow-300">Content</label>
+                                                                                <div 
+                                                                                  x-ref="actionsQuillFifthQuestion"
+                                                                                  x-init="window.initQuill($refs.actionsQuillFifthQuestion, val => fifthQuestion.markdown = (val !== undefined ? val : fifthQuestion.markdown))"
+                                                                                  class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+                                                                                <div class="mt-1 text-gray-400 text-sm border-l-4 border-yellow-700 pl-2" x-show="fifthQuestion.markdown">
+                                                                                  <span class="font-semibold text-yellow-300">Preview:</span>
+                                                                                  <div x-html="fifthQuestion.markdown"></div>
+                                                                                </div>
+                                                                                <div class="mt-2">
+                                                                                  <h4 class="text-yellow-300 font-semibold mb-1">Buttons</h4>
+                                                                                  <button @click="fifthQuestion.buttons = fifthQuestion.buttons || []; fifthQuestion.buttons.push({label: '', url: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Button</button>
+                                                                                  <template x-for="(btn, btnIdx) in fifthQuestion.buttons">
+                                                                                    <div class="flex space-x-2 items-center mb-2">
+                                                                                      <input type="text" x-model="btn.label" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button Label">
+                                                                                      <input type="text" x-model="btn.url" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button URL">
+                                                                                      <button @click="fifthQuestion.buttons.splice(btnIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                                                    </div>
+                                                                                  </template>
+                                                                                </div>
+                                                                              </div>
+                                                                            </template>
+
+                                                                            <div class="space-y-2">
+                                                                              <input type="text" x-model.debounce.500ms="fifthQuestion.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Label">
+                                                                              <div class="mt-4 space-y-2">
+                                                                                <label class="block text-sm font-medium text-gray-300">Question Description</label>
+                                                                                <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
+                                                                                <div 
+                                                                                  x-ref="descQuillFifthQuestion"
+                                                                                  x-init="window.initQuill($refs.descQuillFifthQuestion, val => fifthQuestion.description = (val !== undefined ? val : fifthQuestion.description))"
+                                                                                  class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+                                                                                <div class="mt-1 text-gray-400 text-sm border-l-4 border-blue-700 pl-2" x-show="fifthQuestion.description">
+                                                                                  <span class="font-semibold text-blue-300">Preview:</span>
+                                                                                  <div x-html="fifthQuestion.description"></div>
+                                                                                </div>
+                                                                              </div>
+                                                                              <div class="relative">
+                                                                                <input type="text" 
+                                                                                       x-model="fifthQuestion.key"
+                                                                                       @input="fifthQuestion.key = fifthQuestion.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                                                                                       class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                                                                                       placeholder="Question Key (slug format)">
+                                                                              </div>
+                                                                              <div x-show="!fifthQuestion.key" class="mt-2 p-2 rounded border border-yellow-500 bg-black bg-[repeating-linear-gradient(45deg, black, black 10px, yellow 10px, yellow 20px)] text-yellow-300 flex items-center space-x-2">
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                                                                                </svg>
+                                                                                <span>Question Key is required and cannot be empty.</span>
+                                                                              </div>
+                                                                              <label class="flex items-center space-x-2 text-white">
+                                                                                <input type="checkbox" x-model="fifthQuestion.required" class="bg-gray-800 border-gray-600">
+                                                                                <span>Required</span>
+                                                                              </label>
+                                                                              <!-- Options for select/multiple choice questions -->
+                                                                              <template x-if="['single_select', 'multiple_checkbox'].includes(fifthQuestion.type)">
+                                                                                <div class="mt-2 space-y-2">
+                                                                                  <button @click="fifthQuestion.options = fifthQuestion.options || []; fifthQuestion.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                                                                                  <template x-for="(opt, optIdx) in fifthQuestion.options">
+                                                                                    <div class="flex space-x-2">
+                                                                                      <input type="text" x-model.debounce.500ms="opt.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                                                                                      <button @click="fifthQuestion.options.splice(optIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                                                    </div>
+                                                                                  </template>
+                                                                                </div>
+                                                                              </template>
+                                                                              <!-- IMBRICATION: Conditional imbriqué -->
+                                                                              <template x-if="fifthQuestion.type === 'conditional'">
+                                                                                <div class="mt-4 space-y-2">
+                                                                                  <button @click="fifthQuestion.options = fifthQuestion.options || []; fifthQuestion.options.push({name: '', show: '', questions: []})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                                                                                  <template x-for="(sixthOption, sixthOptIdx) in fifthQuestion.options">
+                                                                                    <div class="p-2 border border-blue-600 rounded mt-2">
+                                                                                      <div class="flex space-x-2 items-center">
+                                                                                        <input type="text" x-model.debounce.500ms="sixthOption.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                                                                                        <button @click="fifthQuestion.options.splice(sixthOptIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                                                      </div>
+                                                                                      <div class="relative">
+                                                                                        <input type="text" 
+                                                                                               x-model="sixthOption.key"
+                                                                                               @input="sixthOption.key = sixthOption.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                                                                                               class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                                                                                               placeholder="Option Key (slug format)">
+                                                                                      </div>
+                                                                                      <div x-show="!sixthOption.key" class="mt-2 p-2 rounded border border-yellow-500 bg-black bg-[repeating-linear-gradient(45deg, black, black 10px, yellow 10px, yellow 20px)] text-yellow-300 flex items-center space-x-2">
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                                                                                        </svg>
+                                                                                        <span>Option Key is required and cannot be empty.</span>
+                                                                                      </div>
+                                                                                      <div class="mt-2">
+                                                                                        <h5 class="text-white mb-2" x-text="'Questions for: ' + sixthOption.name"></h5>
+                                                                                        <button @click="sixthOption.questions = sixthOption.questions || []; sixthOption.questions.push({key: '', type: 'text_input', label: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Question</button>
+                                                                                        <template x-for="(sixthQuestion, sixthQIdx) in sixthOption.questions">
+                                                                                          <div class="mt-2 p-2 border border-green-600 rounded">
+                                                                                            <div class="flex justify-between mb-2">
+                                                                                              <select x-model="sixthQuestion.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                                                                                <option value="text_input">Text Input</option>
+                                                                                                <option value="number">Number</option>
+                                                                                                <option value="single_select">Single Select</option>
+                                                                                                <option value="multiple_checkbox">Multiple Checkbox</option>
+                                                                                                <option value="textarea">Long Text</option>
+                                                                                                <option value="date">Date</option>
+                                                                                                <option value="list">List</option>
+                                                                                                <option value="file_upload">File Upload</option>
+                                                                                                <option value="conditional">Conditional</option>
+                                                                                                <option value="actions">Actions</option>
+                                                                                                <option value="submit_issue">Submit the Issue</option>
+                                                                                              </select>
+                                                                                              <button @click="sixthOption.questions.splice(sixthQIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                                                            </div>
+                                                                                            <!-- Show 'multiple' toggle for file_upload in sixth-level questions -->
+                                                                                            <template x-if="sixthQuestion.type === 'file_upload'">
+                                                                                              <div class="mt-2">
+                                                                                                <label class="flex items-center space-x-2 text-white">
+                                                                                                  <input type="checkbox" x-model="sixthQuestion.multiple" class="bg-gray-800 border-gray-600">
+                                                                                                  <span>Allow multiple files</span>
+                                                                                                </label>
+                                                                                              </div>
+                                                                                            </template>
+
+                                                                                            <!-- Bloc spécifique pour le type Actions -->
+                                                                                            <template x-if="sixthQuestion.type === 'actions'">
+                                                                                              <div class="mt-4 space-y-2 p-2 border border-yellow-600 rounded bg-gray-900">
+                                                                                                <label class="block text-sm font-medium text-yellow-300">Content</label>
+                                                                                                <div 
+                                                                                                  x-ref="actionsQuillSixthQuestion"
+                                                                                                  x-init="window.initQuill($refs.actionsQuillSixthQuestion, val => sixthQuestion.markdown = (val !== undefined ? val : sixthQuestion.markdown))"
+                                                                                                  class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+                                                                                                <div class="mt-1 text-gray-400 text-sm border-l-4 border-yellow-700 pl-2" x-show="sixthQuestion.markdown">
+                                                                                                  <span class="font-semibold text-yellow-300">Preview:</span>
+                                                                                                  <div x-html="sixthQuestion.markdown"></div>
+                                                                                                </div>
+                                                                                                <div class="mt-2">
+                                                                                                  <h4 class="text-yellow-300 font-semibold mb-1">Buttons</h4>
+                                                                                                  <button @click="sixthQuestion.buttons = sixthQuestion.buttons || []; sixthQuestion.buttons.push({label: '', url: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Button</button>
+                                                                                                  <template x-for="(btn, btnIdx) in sixthQuestion.buttons">
+                                                                                                    <div class="flex space-x-2 items-center mb-2">
+                                                                                                      <input type="text" x-model="btn.label" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button Label">
+                                                                                                      <input type="text" x-model="btn.url" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button URL">
+                                                                                                      <button @click="sixthQuestion.buttons.splice(btnIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                                                                    </div>
+                                                                                                  </template>
+                                                                                                </div>
+                                                                                              </div>
+                                                                                            </template>
+
+                                                                                            <div class="space-y-2">
+                                                                                              <input type="text" x-model.debounce.500ms="sixthQuestion.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Question Label">
+                                                                                              <div class="mt-4 space-y-2">
+                                                                                                <label class="block text-sm font-medium text-gray-300">Question Description</label>
+                                                                                                <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
+                                                                                                <div 
+                                                                                                  x-ref="descQuillSixthQuestion"
+                                                                                                  x-init="window.initQuill($refs.descQuillSixthQuestion, val => sixthQuestion.description = (val !== undefined ? val : sixthQuestion.description))"
+                                                                                                  class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+                                                                                                <div class="mt-1 text-gray-400 text-sm border-l-4 border-blue-700 pl-2" x-show="sixthQuestion.description">
+                                                                                                  <span class="font-semibold text-blue-300">Preview:</span>
+                                                                                                  <div x-html="sixthQuestion.description"></div>
+                                                                                                </div>
+                                                                                              </div>
+                                                                                              <div class="relative">
+                                                                                                <input type="text" 
+                                                                                                       x-model="sixthQuestion.key"
+                                                                                                       @input="sixthQuestion.key = sixthQuestion.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+                                                                                                       class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                                                                                                       placeholder="Question Key (slug format)">
+                                                                                              </div>
+                                                                                              <div x-show="!sixthQuestion.key" class="mt-2 p-2 rounded border border-yellow-500 bg-black bg-[repeating-linear-gradient(45deg, black, black 10px, yellow 10px, yellow 20px)] text-yellow-300 flex items-center space-x-2">
+                                                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                                                                                                </svg>
+                                                                                                <span>Question Key is required and cannot be empty.</span>
+                                                                                              </div>
+                                                                                              <label class="flex items-center space-x-2 text-white">
+                                                                                                <input type="checkbox" x-model="sixthQuestion.required" class="bg-gray-800 border-gray-600">
+                                                                                                <span>Required</span>
+                                                                                              </label>
+                                                                                              <!-- Options for select/multiple choice questions -->
+                                                                                              <template x-if="['single_select', 'multiple_checkbox'].includes(sixthQuestion.type)">
+                                                                                                <div class="mt-2 space-y-2">
+                                                                                                  <button @click="sixthQuestion.options = sixthQuestion.options || []; sixthQuestion.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                                                                                                  <template x-for="(opt, optIdx) in sixthQuestion.options">
+                                                                                                    <div class="flex space-x-2">
+                                                                                                      <input type="text" x-model.debounce.500ms="opt.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
+                                                                                                      <button @click="sixthQuestion.options.splice(optIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
+                                                                                                    </div>
+                                                                                                  </template>
+                                                                                                </div>
+                                                                                              </template>
+                                                                                              <template x-if="sixthQuestion.type === 'conditional'">
+                                                                                                <div class="space-y-4" x-data="{ seventhLevelSelected: previewValues[sixthQuestion.key] || '' }" x-effect="previewValues[sixthQuestion.key] = seventhLevelSelected">
+                                                                                                  <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="seventhLevelSelected">
+                                                                                                    <option value="">Select an option</option>
+                                                                                                    <template x-for="seventhOption in sixthQuestion.options">
+                                                                                                      <option x-text="seventhOption.name" :value="seventhOption.name"></option>
+                                                                                                    </template>
+                                                                                                  </select>
+                                                                                                  <template x-for="seventhOption in sixthQuestion.options">
+                                                                                                    <div x-show="seventhLevelSelected === seventhOption.name" class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4">
+                                                                                                      <template x-for="seventhQuestion in seventhOption.questions">
+                                                                                                        <div class="space-y-2">
+                                                                                                          <label class="block">
+                                                                                                            <span class="text-lg font-medium text-white" x-text="seventhQuestion.label"></span>
+                                                                                                          </label>
+                                                                                                          <p class="text-gray-400 text-sm" x-show="seventhQuestion.description" x-html="seventhQuestion.description"></p>
+                                                                                                          <!-- Ajoutez ici les templates pour chaque type de question, comme pour les autres niveaux -->
+                                                                                                          <template x-if="seventhQuestion.type === 'text_input'">
+                                                                                                            <input type="text" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                                                                                          </template>
+                                                                                                          <template x-if="seventhQuestion.type === 'number'">
+                                                                                                            <input type="number" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                                                                                          </template>
+                                                                                                          <template x-if="seventhQuestion.type === 'textarea'">
+                                                                                                            <textarea class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"></textarea>
+                                                                                                          </template>
+                                                                                                          <template x-if="seventhQuestion.type === 'single_select'">
+                                                                                                            <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                                                                                              <option value="">Select an option</option>
+                                                                                                              <template x-for="opt in seventhQuestion.options">
+                                                                                                                <option x-text="opt.name" :value="opt.name"></option>
+                                                                                                              </template>
+                                                                                                            </select>
+                                                                                                          </template>
+                                                                                                          <template x-if="seventhQuestion.type === 'multiple_checkbox'">
+                                                                                                            <div class="space-y-2">
+                                                                                                              <template x-for="opt in seventhQuestion.options">
+                                                                                                                <div class="flex items-center py-1">
+                                                                                                                  <input type="checkbox" class="bg-gray-800 border-gray-600">
+                                                                                                                  <label class="ml-2 text-sm font-medium text-white" x-text="opt.name"></label>
+                                                                                                                </div>
+                                                                                                              </template>
+                                                                                                            </div>
+                                                                                                          </template>
+                                                                                                          <template x-if="seventhQuestion.type === 'date'">
+                                                                                                            <input type="date" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                                                                                          </template>
+                                                                                                          <template x-if="seventhQuestion.type === 'list'">
+                                                                                                            <div x-data="{ values: [''] }" class="space-y-2">
+                                                                                                              <template x-for="(value, index) in values">
+                                                                                                                <div class="flex space-x-2">
+                                                                                                                  <input type="text" 
+                                                                                                                         x-model.debounce.500ms="values[index]"
+                                                                                                                         class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+                                                                                                                  <button @click="values.splice(index, 1)"
+                                                                                                                          class="bg-red-600 text-white w-8 h-8 rounded flex items-center justify-center">
+                                                                                                                    -
+                                                                                                                  </button>
+                                                                                                                </div>
+                                                                                                              </template>
+                                                                                                              <button @click.prevent="values.push('')" 
+                                                                                                                      type="button"
+                                                                                                                      class="bg-green-600 text-white px-3 py-1 rounded">
+                                                                                                                +
+                                                                                                              </button>
+                                                                                                            </div>
+                                                                                                          </template>
+                                                                                                          <template x-if="seventhQuestion.type === 'file_upload'">
+                                                                                                            <div class="mt-2" 
+                                                                                                                 x-data="{
+                                                                                                                   files: [],
+                                                                                                                   highlight: false,
+                                                                                                                   handleFiles(e) {
+                                                                                                                     let newFiles = Array.from(e.target.files || e.dataTransfer.files);
+                                                                                                                     if (!seventhQuestion.multiple) newFiles = newFiles.slice(0, 1);
+                                                                                                                     this.files = seventhQuestion.multiple ? [...this.files, ...newFiles] : newFiles;
+                                                                                                                   },
+                                                                                                                   removeFile(idx) {
+                                                                                                                     this.files.splice(idx, 1);
+                                                                                                                   }
+                                                                                                                 }"
+                                                                                                                 @dragover.prevent="highlight = true"
+                                                                                                                 @dragleave.prevent="highlight = false"
+                                                                                                                 @drop.prevent="
+                                                                                                                   highlight = false;
+                                                                                                                   handleFiles($event);
+                                                                                                                 ">
+                                                                                                              <label :class="[
+                                                                                                                  'flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer transition',
+                                                                                                                  highlight ? 'border-blue-400 bg-gray-700' : 'border-gray-600 bg-gray-800'
+                                                                                                                ]"
+                                                                                                                @click="$refs.fileInput.click()">
+                                                                                                                <svg class="w-10 h-10 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4a1 1 0 011-1h8a1 1 0 011 1v12m-5 4h.01M12 20a4 4 0 100-8 4 4 0 000 8z"/>
+                                                                                                                </svg>
+                                                                                                                <span class="text-gray-300">
+                                                                                                                  <span x-text="seventhQuestion.multiple ? 'Drop files here or click to select (multiple allowed)' : 'Drop a file here or click to select'"></span>
+                                                                                                                </span>
+                                                                                                                <input type="file"
+                                                                                                                       :multiple="seventhQuestion.multiple"
+                                                                                                                       :required="seventhQuestion.required"
+                                                                                                                       class="hidden"
+                                                                                                                       x-ref="fileInput"
+                                                                                                                       @change="handleFiles($event)">
+                                                                                                              </label>
+                                                                                                              <template x-if="files.length">
+                                                                                                                <ul class="mt-3 space-y-1">
+                                                                                                                  <template x-for="(file, idx) in files">
+                                                                                                                    <li class="flex items-center justify-between bg-gray-700 rounded px-3 py-1">
+                                                                                                                      <span class="truncate" x-text="file.name"></span>
+                                                                                                                      <button type="button" @click.stop="removeFile(idx)" class="ml-2 text-red-400 hover:text-red-200 text-lg font-bold">×</button>
+                                                                                                                    </li>
+                                                                                                                  </template>
+                                                                                                                </ul>
+                                                                                                              </template>
+                                                                                                            </div>
+                                                                                                          </template>
+                                                                                                          <template x-if="seventhQuestion.type === 'actions'">
+                                                                                                            <div class="p-4 border border-red-500 rounded bg-gray-900 space-y-4">
+                                                                                                              <div x-html="window.marked ? marked(seventhQuestion.markdown || '') : (seventhQuestion.markdown || '')"></div>
+                                                                                                              <div class="flex flex-wrap gap-2">
+                                                                                                                <template x-for="btn in seventhQuestion.buttons || []">
+                                                                                                                  <a :href="btn.url" target="_blank" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition" x-text="btn.label"></a>
+                                                                                                                </template>
+                                                                                                              </div>
+                                                                                                            </div>
+                                                                                                          </template>
+                                                                                                          <!-- Ajoutez ici d'autres types si besoin -->
+                                                                                                        </div>
+                                                                                                      </template>
+                                                                                                    </div>
+                                                                                                  </template>
+                                                                                                </div>
+                                                                                              </template>
+                                                                                            </div>
+                                                                                          </div>
+                                                                                        </template>
+                                                                                      </div>
+                                                                                    </div>
+                                                                                  </template>
+                                                                                </div>
+                                                                              </template>
+                                                                            </div>
+                                                                          </div>
+                                                                        </template>
+                                                                      </div>
+                                                                    </div>
+                                                                  </template>
+                                                                </div>
+                                                              </template>
+                                                            </div>
+                                                          </div>
+                                                        </template>
+                                                      </div>
+                                                    </div>
+                                                  </template>
+                                                </div>
+                                              </template>
+                                            </div>
+                                          </div>
+                                        </template>
+                                      </div>
+                                    </div>
+                                  </template>
+                                </div>
+                              </template>
+                            </div>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </template>
+  </div>
+</template>

@@ -1,0 +1,16 @@
+<template x-if="question.type === 'file_upload'">
+  <div x-data="{ files: [] }">
+    <label class="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer">
+      <span class="text-gray-300">Drop files here or click to select</span>
+      <input type="file" x-ref="fileInput" class="hidden" @change="files = Array.from($refs.fileInput.files)">
+    </label>
+    <ul class="mt-3 space-y-1">
+      <template x-for="(file, idx) in files">
+        <li class="flex items-center justify-between bg-gray-700 rounded px-3 py-1">
+          <span class="truncate" x-text="file.name"></span>
+          <button @click="files.splice(idx, 1)" class="text-red-400 hover:text-red-200">×</button>
+        </li>
+      </template>
+    </ul>
+  </div>
+</template>

@@ -1,0 +1,12 @@
+<template x-if="field.type === 'single_select'">
+    <select
+      :required="field.required"
+      class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+      x-model.debounce.500ms="formData[field.key]"
+          >
+      <option value="">Select an option</option>
+      <template x-for="option in field.options">
+        <option x-text="option.name" :value="option.name"></option>
+      </template>
+    </select>
+  </template>

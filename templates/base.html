@@ -32,7 +32,7 @@
             } notification-slide`;
             notification.textContent = message;
             container.appendChild(notification);
-            
+
             // Fade out and remove
             setTimeout(() => {
                 notification.classList.add('notification-fade');
@@ -46,21 +46,10 @@
     <title>Jaffar - {% block title %}{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-<script>
-  function jaffar() {
-    return {
-      page: 'main',
-      version: '1.0.0',
-      demoMode: false,
-      showFormPage() {
-        this.page = 'form';
-      }
-    }
-  }
-</script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body class="bg-black">
-    <div class="mx-auto flex min-h-screen min-w-screen" x-data="{% block alpine_component %}jaffar(){% endblock %}">
+    <div class="mx-auto flex min-h-screen min-w-screen" x-data="{% block alpine_component %}{% endblock %}">
         {% include 'sultan/menu.html' %}
         {% block content %}{% endblock %}
     </div>

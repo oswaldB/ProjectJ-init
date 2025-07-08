@@ -1,0 +1,21 @@
+<!-- List input -->
+<template x-if="field.type === 'list'">
+  <div x-data="{ newItem: '', items: formData[field.key] || [] }" @input="formData[field.key] = items">
+    <div class="flex gap-2 mb-2">
+      <input type="text" 
+             x-model="newItem" 
+             class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600"
+             @keyup.enter="if(newItem.trim()) { items.push(newItem.trim()); newItem = ''; }">
+      <div @click="if(newItem.trim()) { items.push(newItem.trim()); newItem = ''; }"
+              class="bg-red-500 px-4 py-2 rounded hover:bg-red-700">Add</div>
+    </div>
+    <div class="space-y-2">
+      <template x-for="(item, index) in items" :key="index">
+        <div class="flex items-center gap-2 bg-gray-700 p-2 rounded">
+          <span x-text="item" class="flex-1"></span>
+          <button @click="items.splice(index, 1)" class="text-red-400 hover:text-red-300">×</button>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>

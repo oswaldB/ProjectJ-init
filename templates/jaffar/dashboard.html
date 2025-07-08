@@ -1,0 +1,557 @@
+{% extends "jaffar/base.html" %}
+
+{% block title %}AG Grid Datatable Preview{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center h-[calc(100vh-2rem)] bg-gray-950 py-6" x-data="dashboardPage()" x-init="initPage()">
+  <!-- Full-screen loading overlay -->
+  <div
+    x-show="pouchDBLoading"
+    class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+  >
+    <div class="flex items-center justify-center space-x-2">
+      <div class="w-4 h-4 bg-red-600 rounded-full animate-pulse"></div>
+      <div class="w-4 h-4 bg-red-600 rounded-full animate-pulse delay-150"></div>
+      <div class="w-4 h-4 bg-red-600 rounded-full animate-pulse delay-300"></div>
+    </div>
+  </div>
+
+  <!-- Dashboard Header -->
+  <div class="mb-6">
+    <template x-if="loading || pouchDBLoading">
+      <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+    </template>
+    <template x-if="!loading && !pouchDBLoading">
+      <div>
+        <h1 class="text-xl font-bold text-white" x-text="dashboardData?.name || ''"></h1>
+      </div>
+    </template>
+  </div>
+  <div class="p-4 mb-4 w-[95%]">
+    <!-- Preview AG Grid -->
+    <div class="bg-gray-800 rounded-lg shadow p-6 mt-8" style="max-height:80vh;overflow:auto; width:100%;">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-white" x-text="dashboardData?.tableTitle || ''"></h2>
+        <div class="flex items-center gap-2">
+          <button @click="window.location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
+            Sync issues
+          </button>
+          <!-- Download CSV Button -->
+          <button @click="downloadCSV()" :disabled="csvDownloading" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold transition flex items-center gap-2">
+            <template x-if="csvDownloading">
+              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            </template>
+            <span x-text="csvDownloading ? 'Downloading...' : 'Download CSV'"></span>
+          </button>
+          <!-- Preset Dropdown -->
+          <select @change="applyPreset($event.target.value)" class="bg-gray-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
+            <option value="">Select Preset</option>
+            <template x-for="preset in presets">
+              <option :value="preset.name" x-text="preset.name"></option>
+            </template>
+          </select>
+          <!-- Save Preset Button -->
+          <button @click="showSavePresetModal = true" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
+            Save Preset
+          </button>
+          <!-- Delete Preset Button -->
+          <button @click="showDeletePresetModal = true" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
+            Delete Preset
+          </button>
+          <!-- Update Preset Button -->
+          <button x-show="selectedPreset" @click="updatePreset(selectedPreset)" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
+            Update Preset
+          </button>
+          <!-- Columns Icon for Columns Drawer -->
+          <button @click="showColumnsDrawer = true" class="bg-gray-700 hover:bg-gray-800 text-white px-2 py-1 rounded text-xs font-semibold transition flex items-center" title="Edit columns">
+            <!-- Columns icon (3 vertical bars) -->
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <rect x="4" y="5" width="3" height="14" rx="1" fill="currentColor"/>
+              <rect x="10.5" y="3" width="3" height="18" rx="1" fill="currentColor"/>
+              <rect x="17" y="7" width="3" height="10" rx="1" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <!-- Save Preset Modal -->
+      <div x-show="showSavePresetModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-gray-800 p-6 rounded-lg">
+          <h3 class="text-white font-semibold mb-4">Save Preset</h3>
+          <input type="text" x-model="newPresetName" placeholder="Preset Name" class="bg-gray-700 text-white px-3 py-1 rounded w-full mb-4">
+          <div class="flex justify-end gap-2">
+            <button @click="savePreset(newPresetName); showSavePresetModal = false" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
+              Save
+            </button>
+            <button @click="showSavePresetModal = false" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Delete Preset Modal -->
+      <div x-show="showDeletePresetModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-gray-800 p-6 rounded-lg">
+          <h3 class="text-white font-semibold mb-4">Delete Preset</h3>
+          <select x-model="presetToDelete" class="bg-gray-700 text-white px-3 py-1 rounded w-full mb-4">
+            <option value="">Select Preset</option>
+            <template x-for="preset in presets">
+              <option :value="preset.name" x-text="preset.name"></option>
+            </template>
+          </select>
+          <div class="flex justify-end gap-2">
+            <button @click="deletePreset(presetToDelete); showDeletePresetModal = false" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
+              Delete
+            </button>
+            <button @click="showDeletePresetModal = false" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs font-semibold transition">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Columns Drawer -->
+      <div x-show="showColumnsDrawer" class="fixed inset-0 z-50 flex">
+        <div class="fixed inset-0 bg-black bg-opacity-40" @click="showColumnsDrawer = false"></div>
+        <div class="relative bg-gray-900 w-80 max-w-full h-full shadow-lg p-6 overflow-y-auto ml-auto">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-white">Columns</h3>
+            <button @click="showColumnsDrawer = false" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+          </div>
+          <template x-for="(col, index) in columns">
+            <div class="flex items-center gap-2 mb-2">
+              <input type="checkbox" :checked="col.visible !== false" @change="toggleColumnVisibility(index)" class="form-checkbox">
+              <span x-text="col.label || col.key" class="flex-1"></span>
+              <button @click="moveColumnUp(index)" :disabled="index === 0" class="p-1" title="Move up">
+                <svg class="h-4 w-4 text-blue-400" fill="none" viewBox="0 0 24 24">
+                  <path d="M5 15l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <button @click="moveColumnDown(index)" :disabled="index === columns.length - 1" class="p-1" title="Move down">
+                <svg class="h-4 w-4 text-blue-400" fill="none" viewBox="0 0 24 24">
+                  <path d="M19 9l-7 7-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+      <div x-show="previewLoading" class="text-gray-400 text-center py-4">
+        Loading preview... <br> The first load may take some time.
+      </div>
+      <div x-show="!previewLoading && previewRows.length === 0" class="text-gray-400 text-center py-4">No data to preview.</div>
+      <div x-show="!previewLoading" class="overflow-x-auto">
+        <template x-if="paginatedFilteredAndSortedPreviewRows().length === 0">
+          <div class="text-gray-400 text-center py-4">No rows match the filter criteria.</div>
+        </template>
+        <table class="min-w-full text-xs text-gray-200 border border-gray-700">
+          <thead>
+            <tr>
+              <template x-for="(col, index) in getPreviewColumns()">
+                <th class="px-2 py-1 border-b border-gray-700 bg-gray-900 font-semibold group" style="position:relative;">
+                  <div class="flex flex-col items-start space-y-1">
+                    <span x-text="col.label || col.key"></span>
+                    <!-- Filter Dropdown for Array Fields -->
+                    <template x-if="getColumnValues(col.key)">
+                      <select
+                        x-model="previewFilters[col.key]"
+                        @change="addFilter(col.key, $event.target.value)"
+                        class="bg-gray-700 text-white px-2 py-1 rounded text-xs font-semibold transition"
+                      >
+                        <option value="">All</option>
+                        <template x-for="value in getColumnValues(col.key)">
+                          <option :value="value" x-text="value"></option>
+                        </template>
+                      </select>
+                    </template>
+                    <!-- Text Input for Non-Array Fields -->
+                    <template x-if="!getColumnValues(col.key)">
+                      <input
+                        type="text"
+                        x-model="previewFilters[col.key]"
+                        @input="addFilter(col.key, $event.target.value)"
+                        placeholder="Filter..."
+                        class="bg-gray-700 text-white px-2 py-1 rounded text-xs font-semibold transition"
+                      />
+                    </template>
+                  </div>
+                </th>
+              </template>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="row in paginatedFilteredAndSortedPreviewRows()">
+              <tr @click="openIssueDrawer(row)" class="cursor-pointer hover:bg-gray-800 transition">
+                <template x-for="col in getPreviewColumns()">
+                  <td class="px-2 py-1 border-b border-gray-800">
+                    <template x-if="col.type === 'actions'">
+                      <div class="flex flex-wrap gap-1">
+                        <template x-for="(action, i) in (Array.isArray(col.actions) ? col.actions : [])">
+                          <template>
+                            <a
+                              :href="getActionLink(col, i, row)"
+                              class="bg-blue-700 hover:bg-blue-800 text-white px-2 py-0.5 rounded text-xs mb-1 inline-block"
+                              style="text-decoration:none"
+                              @click.prevent="onActionClick(action.label, row, col, getActionLink(col, i, row))"
+                              x-text="action.label"
+                            ></a>
+                          </template>
+                        </template>
+                      </div>
+                    </template>
+                    <template x-if="!col.type || col.type !== 'actions'">
+                      <span x-html="getCellValue(row, col)"></span>
+                    </template>
+                  </td>
+                </template>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- Issue Drawer -->
+  <div x-show="showIssueDrawer" class="fixed inset-0 z-50 flex">
+    <div class="fixed inset-0 bg-black bg-opacity-40" @click="showIssueDrawer = false"></div>
+    <div class="relative bg-gray-900 w-1/2 h-full shadow-2xl p-0 overflow-y-auto ml-auto flex flex-col border-l border-red-900">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-8 py-5 border-b border-gray-800 bg-red-950">
+        <div class="flex items-center gap-3">
+          <!-- Icon/title -->
+          <h3 class="text-2xl font-extrabold text-white tracking-tight">
+            <span x-text="selectedIssue.id"></span>
+          </h3>
+        </div>
+        <button @click="showIssueDrawer = false" class="text-gray-400 hover:text-white text-3xl px-2 py-0.5 rounded transition focus:outline-none focus:ring-2 focus:ring-red-700">&times;</button>
+      </div>
+      <!-- Content -->
+      <div class="flex-1 overflow-y-auto px-8 py-6 bg-gray-900">
+        <template x-if="selectedIssue">
+          <div>
+            <!-- Highlighted main info if present -->
+            <div class="mb-6 flex flex-col gap-2">
+              <template x-if="selectedIssue.name">
+                <div class="text-xl font-bold text-red-200" x-html="selectedIssue.name"></div>
+              </template>
+              <template x-if="selectedIssue.status">
+                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold"
+                  :class="{
+                    'bg-green-700 text-green-100': selectedIssue.status === 'open',
+                    'bg-yellow-700 text-yellow-100': selectedIssue.status === 'pending',
+                    'bg-red-700 text-red-100': selectedIssue.status === 'closed'
+                  }"
+                  x-html="selectedIssue.status"
+                ></span>
+              </template>
+              <template x-if="selectedIssue.created_at">
+                <div class="text-xs text-gray-400">Créée le <span x-text="formatDate(selectedIssue.created_at)"></span></div>
+              </template>
+            </div>
+            <table class="w-full text-sm border-separate [border-spacing:0.5rem_0.25rem]">
+              <tbody>
+                <template x-for="([key, value], idx) in Object.entries(selectedIssue).filter(([k]) => !['_id','_rev','config','id','title','status','created_at'].includes(k))">
+                  <tr :class="idx % 2 === 0 ? 'bg-gray-800/80' : 'bg-gray-900/80'">
+                    <td class="pr-4 py-2 align-top font-semibold text-red-300 whitespace-nowrap capitalize" x-text="key.replace(/_/g, ' ')"></td>
+                    <td class="py-2 text-gray-100 break-all">
+                      <template x-if="Array.isArray(value)">
+                        <ul class="list-disc list-inside pl-2">
+                          <template x-for="item in value">
+                            <li x-html="formatIssueValue(item)"></li>
+                          </template>
+                        </ul>
+                      </template>
+                      <template x-if="typeof value === 'object' && value !== null && !Array.isArray(value)">
+                        <pre class="bg-gray-950 rounded p-2 text-gray-400 text-xs overflow-x-auto" x-text="formatIssueValue(value)"></pre>
+                      </template>
+                      <template x-if="!(Array.isArray(value) || (typeof value === 'object' && value !== null))">
+                        <span x-html="formatIssueValue(value)"></span>
+                      </template>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </template>
+      </div>
+      <!-- Footer with action (optional) -->
+      <div class="px-8 py-4 border-t border-gray-800 bg-gray-950 flex justify-end">
+        <button @click="showIssueDrawer = false" class="bg-red-700 hover:bg-red-800 text-white font-semibold px-5 py-2 rounded shadow transition focus:outline-none focus:ring-2 focus:ring-red-400">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include "services/pouchdb.html" %}
+<script>
+function dashboardPage() {
+  return {
+    columns: [],
+    previewRows: [],
+    previewLoading: false,
+    previewFilters: {},
+    previewSort: { col: '', dir: 'asc' },
+    dashboardId: '',
+    dashboardData: null,
+    loading: true,
+    csvDownloading: false,
+    pouchDBLoading: false,
+    presets: [],
+    newPresetName: '',
+    presetToDelete: '',
+    showSavePresetModal: false,
+    showDeletePresetModal: false,
+    selectedPreset: null, // Initialize selectedPreset to null
+    showColumnsDrawer: false, // Track drawer visibility
+    showIssueDrawer: false,
+    selectedIssue: null,
+    async initPage() {
+      this.pouchDBLoading = true;
+      await this.loadDashboardConfig();
+
+      const dbName = this.dashboardData?.form_id && this.dashboardData?.nonJaffarAnswers ? this.dashboardData.form_id : 'issuesDB'; // Use form_id as dbName if nonJaffarAnswers is true and form_id exists
+      await initializePouchDB(dbName); // Pass the form_id as the database name
+
+      await this.loadPreviewRows(dbName); // Pass the database name to loadPreviewRows
+      this.loadPresets();
+      this.selectedPreset = null; // Reset selectedPreset on page initialization
+      this.pouchDBLoading = false;
+    },
+    async loadDashboardConfig() {
+      const match = window.location.pathname.match(/\/dashboard\/([^\/]+)/);
+      let dashboardId = match ? match[1] : '';
+      if (!dashboardId) return;
+
+      const resp = await fetch(`/pc-analytics-jaffar/api/sultan/dashboard/${dashboardId}`);
+      if (!resp.ok) return;
+      const config = await resp.json();
+      this.dashboardId = dashboardId;
+      this.dashboardData = config;
+      this.loading = false;
+      this.columns = (config.columns || []).filter(col => col.visible !== false);
+    },
+    async loadPreviewRows(dbName) {
+      this.previewLoading = true;
+      const pouchDB = new PouchDB(dbName); // Use the provided database name
+
+      try {
+        const configFilters = this.dashboardData?.configFilters || {};
+        console.log('configFilters:', JSON.stringify(configFilters, null, 2));
+        const result = await pouchDB.query(function (doc, emit) {
+          const filters = configFilters;
+          if (Object.entries(filters).every(([key, value]) => {
+            const docValue = doc[key];
+            if (Array.isArray(docValue)) {
+              return docValue.includes(value);
+            }
+            return docValue === value;
+          })) {
+            emit(doc);
+          }
+        }, { include_docs: true });
+
+        this.previewRows = result.rows.map(row => row.doc);
+      } catch (e) {
+        console.error('Error loading preview rows:', e);
+        this.previewRows = [];
+      } finally {
+        this.previewLoading = false;
+      }
+    },
+    paginatedFilteredAndSortedPreviewRows() {
+      let rows = this.previewRows;
+
+      // Apply filters
+      for (const [key, val] of Object.entries(this.previewFilters)) {
+        if (Array.isArray(val) && val.length > 0) {
+          rows = rows.filter(row => {
+            const cellValue = row[key];
+            if (Array.isArray(cellValue)) {
+              return val.some(filter => cellValue.includes(filter)); // Match any selected filter
+            }
+            return val.includes(cellValue); // Match exact value for non-array cells
+          });
+        } else if (typeof val === 'string' && val.trim() !== '') {
+          rows = rows.filter(row => {
+            const cellValue = row[key];
+            if (Array.isArray(cellValue)) {
+              return cellValue.includes(val); // Check if the array contains the filter value
+            }
+            return (cellValue || '').toLowerCase().includes(val.toLowerCase()); // Default string comparison
+          });
+        }
+      }
+
+      // Apply sorting
+      if (this.previewSort.col) {
+        rows = [...rows].sort((a, b) => {
+          const va = a[this.previewSort.col];
+          const vb = b[this.previewSort.col];
+          if (Array.isArray(va) || Array.isArray(vb)) {
+            return 0; // Skip sorting for array values
+          }
+          return this.previewSort.dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+        });
+      }
+
+      return rows; // Return all rows without pagination
+    },
+    addFilter(key, value) {
+      if (!this.previewFilters[key]) {
+        this.previewFilters[key] = [];
+      }
+      if (!this.previewFilters[key].includes(value)) {
+        this.previewFilters[key].push(value);
+      }
+    },
+    removeFilter(key, value) {
+      if (this.previewFilters[key]) {
+        this.previewFilters[key] = this.previewFilters[key].filter(filter => filter !== value);
+        if (this.previewFilters[key].length === 0) {
+          delete this.previewFilters[key]; // Remove the filter key entirely if no filters are left
+        }
+      }
+    },
+    getPreviewColumns() {
+      return this.columns.filter(col => col.visible !== false);
+    },
+    getColumnValues(key) {
+      const values = this.previewRows.map(row => row[key]).filter(val => Array.isArray(val));
+      return values.length > 0 ? [...new Set(values.flat())] : null;
+    },
+    toggleSort(colKey) {
+      if (this.previewSort.col === colKey) {
+        this.previewSort.dir = this.previewSort.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.previewSort.col = colKey;
+        this.previewSort.dir = 'asc';
+      }
+    },
+    async downloadCSV() {
+      this.csvDownloading = true;
+      try {
+        const rows = this.paginatedFilteredAndSortedPreviewRows();
+        const columns = this.getPreviewColumns();
+        const csvContent = [
+          columns.map(col => col.label || col.key).join(','),
+          ...rows.map(row => columns.map(col => `"${row[col.key] || ''}"`).join(','))
+        ].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${this.dashboardData?.tableTitle || 'data'}.csv`;
+        link.click();
+      } catch (e) {
+        console.error('Failed to download CSV:', e);
+      } finally {
+        this.csvDownloading = false;
+      }
+    },
+    getCellValue(row, col) {
+      return row[col.key] || ''; // Return the value of the cell or an empty string if undefined
+    },
+    savePreset(name) {
+      if (!name) return;
+      const preset = {
+        name,
+        columns: this.columns,
+        filters: this.previewFilters,
+        sort: this.previewSort,
+      };
+      const savedPresets = JSON.parse(localStorage.getItem('dashboardPresets') || '[]');
+      savedPresets.push(preset);
+      localStorage.setItem('dashboardPresets', JSON.stringify(savedPresets));
+      this.loadPresets();
+    },
+    loadPresets() {
+      this.presets = JSON.parse(localStorage.getItem('dashboardPresets') || '[]');
+    },
+    applyPreset(name) {
+      const preset = this.presets.find(p => p.name === name);
+      if (preset) {
+        this.selectedPreset = name; // Set selectedPreset to the active preset name
+        this.columns = preset.columns;
+        this.previewFilters = preset.filters;
+        this.previewSort = preset.sort;
+      } else {
+        this.selectedPreset = null; // Reset selectedPreset and return to initial state
+        this.columns = this.dashboardData?.columns || []; // Use dashboardData instead of dashboardConfig
+        this.previewFilters = {};
+        this.previewSort = { col: '', dir: 'asc' };
+      }
+    },
+    deletePreset(name) {
+      if (!name) return;
+      const savedPresets = JSON.parse(localStorage.getItem('dashboardPresets') || '[]');
+      const updatedPresets = savedPresets.filter(p => p.name !== name);
+      localStorage.setItem('dashboardPresets', JSON.stringify(updatedPresets));
+      this.loadPresets();
+    },
+    async updatePreset(name) {
+      if (!name) return;
+      const presetIndex = this.presets.findIndex(p => p.name === name);
+      if (presetIndex !== -1) {
+        this.presets[presetIndex] = {
+          name,
+          columns: this.columns,
+          filters: this.previewFilters,
+          sort: this.previewSort,
+        };
+        localStorage.setItem('dashboardPresets', JSON.stringify(this.presets));
+        this.loadPresets();
+      }
+    },
+    toggleColumnVisibility(index) {
+      this.columns[index].visible = !this.columns[index].visible;
+    },
+    moveColumnUp(index) {
+      if (index > 0) {
+        const temp = this.columns[index];
+        this.columns[index] = this.columns[index - 1];
+        this.columns[index - 1] = temp;
+      }
+    },
+    moveColumnDown(index) {
+      if (index < this.columns.length - 1) {
+        const temp = this.columns[index];
+        this.columns[index] = this.columns[index + 1];
+        this.columns[index + 1] = temp;
+      }
+    },
+    openIssueDrawer(row) {
+      this.selectedIssue = row;
+      this.showIssueDrawer = true;
+    },
+    formatIssueValue(value) {
+      if (Array.isArray(value)) {
+        return value.map(v => typeof v === 'string' ? v : this.formatIssueValue(v)).join(', ');
+      }
+      if (typeof value === 'object' && value !== null) {
+        try {
+          return JSON.stringify(value, null, 2);
+        } catch {
+          return '[Object]';
+        }
+      }
+      if (typeof value === 'boolean') {
+        return value ? 'Oui' : 'Non';
+      }
+      if (value === null || value === undefined) {
+        return '';
+      }
+      return value;
+    },
+    formatDate(date) {
+      if (!date) return '';
+      try {
+        const d = new Date(date);
+        return d.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      } catch {
+        return date;
+      }
+    }
+  };
+}
+</script>
+{% endblock %}

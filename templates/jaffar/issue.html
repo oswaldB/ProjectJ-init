@@ -3,248 +3,396 @@
 {% block title %}Issue Detail{% endblock %}
 
 {% block content %}
-<div class="p-6" x-data="{
-  issue: null,
-  config: null,
-  newComment: '',
-  activityFilter: 'all',
 
-  async init() {
-    const issueId = window.location.pathname.split('/').pop();
-    const [configResponse, issueResponse, changesResponse] = await Promise.all([
-      fetch('/api/jaffar/config'),
-      fetch(`/api/jaffar/issues/${issueId}`),
-      fetch(`/api/jaffar/issues/${issueId}/changes`)
-    ]);
+<script>
+function issuePageData() {
+  return {
+    issue: null,
+    config: null,
+    newComment: '',
+    activityFilter: 'all',
+    currentUser: '',
+    raiseSimilar: null,
+    showRaiseBar: false,
 
-    this.config = await configResponse.json();
-    this.issue = await issueResponse.json();
+    async init() {
+      this.currentUser = await localStorage.getItem('author2');
+      const urlParams = new URLSearchParams(window.location.search);
+      this.raiseSimilar = urlParams.get('raise_similar');
+      this.showRaiseBar = !!this.raiseSimilar;
+      const issueId = window.location.pathname.split('/').pop();
+      const [configResponse, issueResponse, changesResponse] = await Promise.all([
+        fetch('/pc-analytics-jaffar/api/jaffar/config'),
+        fetch(`/pc-analytics-jaffar/api/jaffar/issues/${issueId}`),
+        fetch(`/pc-analytics-jaffar/api/jaffar/issues/${issueId}/changes`)
+      ]);
 
-    // Fusionner les changements du fichier avec ceux de l'issue
-    const changesFromFile = await changesResponse.json();
-    this.issue.changes = changesFromFile;
-  },
+      this.config = await configResponse.json();
+      this.issue = await issueResponse.json();
 
-  async loadIssue(id) {
-    const response = await fetch(`/api/jaffar/issues/${id}`);
-    this.issue = await response.json();
-  },
+      // Fusionner les changements du fichier avec ceux de l'issue
+      const changesFromFile = await changesResponse.json();
+      this.issue.changes = changesFromFile;
+    },
 
-  async addComment() {
-    if (!this.newComment.trim()) return;
+    async loadIssue(id) {
+      const response = await fetch(`/pc-analytics-jaffar/api/jaffar/issues/${id}`);
+      this.issue = await response.json();
+    },
 
-    const comment = {
-      author: localStorage.getItem('user_email'),
-      content: this.newComment,
-      timestamp: new Date().toISOString(),
-      type: 'comment'
-    };
+    async addComment() {
+      if (!this.newComment.trim()) return;
 
-    const response = await fetch(`/api/jaffar/issues/${this.issue.id}/comments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(comment)
-    });
+      const comment = {
+        author: this.currentUser,
+        content: this.newComment,
+        timestamp: new Date().toISOString(),
+        type: 'comment'
+      };
 
-    if (response.ok) {
-      if (!Array.isArray(this.issue.changes)) {
-        this.issue.changes = [];
+      const response = await fetch(`/pc-analytics-jaffar/api/jaffar/issues/${this.issue.id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(comment)
+      });
+
+      if (response.ok) {
+        if (!Array.isArray(this.issue.changes)) {
+          this.issue.changes = [];
+        }
+        this.issue.changes.push(comment);
+        this.newComment = '';
       }
-      this.issue.changes.push(comment);
-      this.newComment = '';
+    },
+
+    async handleSameIssue() {
+      if (!this.issue) return;
+
+      this.issue.occurrence = (this.issue.occurrence || 0) + 1;
+      this.issue.version = (this.issue.version || 0) + 1;
+      this.issue['recurring-escalation'] =  'yes';
+
+      if (!Array.isArray(this.issue['other-authors'])) {
+        this.issue['other-authors'] = [];
+      }
+      if (this.currentUser && !this.issue['other-authors'].includes(this.currentUser)) {
+        this.issue['other-authors'].push(this.currentUser);
+      }
+
+      // Add a change entry for the new occurrence
+      const changeEntry = {
+        type: 'system',
+        content: `New occurrence of this issue declared by ${this.currentUser}`,
+        timestamp: new Date().toISOString(),
+        author: this.currentUser
+      };
+
+      // Save the updated issue POST /pc-analytics-jaffar/api/jaffar/save
+      await fetch('/pc-analytics-jaffar/api/jaffar/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...this.issue,
+          changes: [changeEntry]
+        })
+      });
+
+      // Submit the issue POST /pc-analytics-jaffar/api/jaffar/submit
+      await fetch('/pc-analytics-jaffar/api/jaffar/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ issueId: this.issue.id })
+      });
+
+      // Delete the parameter issue 
+      if (this.raiseSimilar) {
+        await fetch(`/pc-analytics-jaffar/api/jaffar/issues/${this.raiseSimilar}/delete`, {
+          method: 'POST'
+        });
+      }
+
+      // Reload the page without parameters
+      const url = new URL(window.location.href);
+      url.search = '';
+      window.location.href = url.toString();
+    },
+
+    async handleUseAsBase() {
+      if (!this.issue || !this.raiseSimilar) return;
+
+      try {
+        const response = await fetch(`/pc-analytics-jaffar/api/jaffar/issues/${this.raiseSimilar}`);
+        if (!response.ok) throw new Error('Failed to fetch target issue');
+
+        const targetIssue = await response.json();
+        const fieldsToCopy = Object.keys(this.issue).filter(
+          key => !['id', 'status', 'created_at', 'updated_at', 'version', 'changes'].includes(key)
+        );
+
+        fieldsToCopy.forEach(key => {
+          targetIssue[key] = this.issue[key];
+        });
+          
+        targetIssue['base-issue'] = this.issue.id;
+        targetIssue['recurring-escalation'] = 'no';
+        targetIssue['status'] = "draft"
+        targetIssue['author'] = this.currentUser
+
+        const saveResponse = await fetch('/pc-analytics-jaffar/api/jaffar/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(targetIssue)
+        });
+
+        if (!saveResponse.ok) throw new Error('Failed to save target issue');
+
+        window.location.href = "/pc-analytics-jaffar/edit/" + targetIssue.id;
+      } catch (e) {
+        alert(e.message || e);
+      }
+    },
+
+    canCloseIssue() {
+      return this.issue && this.currentUser === this.issue.author && this.issue.status !== 'closed' && this.issue.status !== 'draft';
     }
-  }
-}">
-  <template x-if="issue">
-    <div>
-      <!-- Status Tag -->
-      <div class="mb-4 flex items-center gap-2">
-        <!-- Original Status -->
-        <span
-          class="px-3 py-1 rounded-full text-sm font-semibold"
-          :class="{
-            'bg-yellow-900 text-yellow-200': issue.status === 'draft',
-            'bg-green-900 text-green-200': issue.status === 'new',
-            'bg-red-900 text-red-200': issue.status === 'in_progress',
-            'bg-purple-900 text-purple-200': issue.status === 'resolved'
-          }"
-          x-text="issue.status"
-        ></span>
-        
-        <!-- Version for submitted issues -->
-        <template x-if="issue.version">
-          <span class="text-sm text-gray-400">
-            Version <span x-text="issue.version"></span>
-          </span>
-        </template>
+  };
+}
+</script>
 
-        <!-- Draft V2 tag for submitted issues being edited -->
-        <template x-if="issue.status === 'new' && issue.previous_status === 'draft'">
-          <span class="px-3 py-1 rounded-full text-sm font-semibold bg-yellow-900 text-yellow-200">
-            V<span x-text="(issue.version || 1) + 1"></span>: draft
-          </span>
-        </template>
+<div class="p-6"
+  x-data="issuePageData()"
+  x-init="init()"
+>
+  <!-- Top bar si raise_similar présent -->
+  <template x-if="showRaiseBar">
+    <div class="fixed top-0 left-0 right-0 bg-yellow-900 text-yellow-100 px-6 py-3 z-50 flex items-center justify-between shadow-lg">
+      <div>
+        <span class="font-bold">Similarity Action:</span>
+        <span class="ml-2">What do you want to do with this similar issue?</span>
       </div>
+      <div class="flex gap-2">
+        <button @click="handleSameIssue" class="bg-green-700 hover:bg-green-800 px-4 py-2 rounded text-white font-semibold">It is the same issue</button>
+        <button @click="handleUseAsBase" class="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded text-white font-semibold">Use as base to raise issue</button>
+        <button @click="window.history.back()" class="bg-gray-700 hover:bg-gray-800 px-4 py-2 rounded text-white font-semibold">Back to your issue</button>
+      </div>
+    </div>
+  </template>
+  <div :class="showRaiseBar ? 'pt-20' : ''">
+    <template x-if="issue">
+      <div>
+        <!-- Status Tag -->
+        <div class="mb-4 flex items-center gap-2">
+          <!-- Original Status -->
+          <span
+            class="px-3 py-1 rounded-full text-sm font-semibold"
+            :class="{
+              'bg-yellow-900 text-yellow-200': issue.status === 'draft',
+              'bg-green-900 text-green-200': issue.status === 'new',
+              'bg-red-900 text-red-200': issue.status === 'in_progress',
+              'bg-purple-900 text-purple-200': issue.status === 'resolved'
+            }"
+            x-text="issue.status"
+          ></span>
+          
+          <!-- Version for submitted issues -->
+          <template x-if="issue.version">
+            <span class="text-sm text-gray-400">
+              Version <span x-text="issue.version"></span>
+            </span>
+          </template>
 
-      <!-- Issue Header -->
-      <div class="mb-6">
-        <div class="flex justify-between items-start">
-          <div>
-            <h1 class="text-2xl font-bold text-white" x-text="issue.id + ': ' + issue.name"></h1>
-            <div class="mt-2 space-x-2">
-              <template x-for="tag in issue.tags" :key="tag">
-                <span class="bg-red-900 text-red-200 px-2 py-1 rounded-full text-xs" x-text="tag"></span>
-              </template>
-            </div>
-          </div>
-          <div>
-            <a :href="'/edit/' + issue.id" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600 text-white">
-              Edit Issue
-            </a>
-          </div>
+          <!-- Draft V2 tag for submitted issues being edited -->
+          <template x-if="issue.status === 'new' && issue.previous_status === 'draft'">
+            <span class="px-3 py-1 rounded-full text-sm font-semibold bg-yellow-900 text-yellow-200">
+              V<span x-text="(issue.version || 1) + 1"></span>: draft
+            </span>
+          </template>
         </div>
 
-        <div class="mt-4 text-sm text-gray-400">
-          Created by <span x-text="issue.author"></span> on <span x-text="new Date(issue.created_at).toLocaleDateString()"></span>
-        </div>
-      </div>
-
-      <!-- Issue Description -->
-      <div class="bg-gray-800 p-4 rounded-lg mb-6">
-        <h2 class="text-xl font-bold text-white mb-4">Description</h2>
-        <div x-html="issue['issue-description']" class="prose prose-invert"></div>
-      </div>
-
-      <!-- Form Values -->
-      <div class="bg-gray-800 p-4 rounded-lg mb-6">
-        <h2 class="text-xl font-bold text-white mb-4" x-text="issue.id"></h2>
-        <div class="grid grid-cols-2 gap-4">
-          <template x-for="field in config.fields" :key="field.key">
-            <div class="col-span-1">
-              <label class="block text-sm font-medium text-gray-400">
-                <span x-text="field.label"></span>
-                <span x-show="field.required" class="text-red-500">*</span>
-              </label>
-              <div class="mt-1">
-                <div x-text="issue[field.key] !== undefined && issue[field.key] !== null && issue[field.key] !== '' ? (Array.isArray(issue[field.key]) ? issue[field.key].join(', ') : issue[field.key]) : '--'" :class="{'text-white': issue[field.key], 'text-gray-500': !issue[field.key]}"></div>
-                <!-- Display nested questions if they exist -->
-                <template x-if="field.type === 'conditional' && field.options">
-                  <template x-for="option in field.options" :key="option.name">
-                    <template x-if="issue[field.key] === option.name && option.questions">
-                      <div class="mt-2 ml-4 border-l-2 border-red-600 pl-4">
-                        <template x-for="question in option.questions" :key="question.key">
-                          <div class="mt-2" x-show="issue[question.key]">
-                            <label class="block text-sm font-medium text-gray-400" x-text="question.label"></label>
-                            <div class="text-white" x-text="Array.isArray(issue[question.key]) ? issue[question.key].join(', ') : issue[question.key]"></div>
-                          </div>
-                        </template>
-                      </div>
-                    </template>
-                  </template>
+        <!-- Issue Header -->
+        <div class="mb-6">
+          <div class="flex justify-between items-start">
+            <div>
+              <h1 class="text-2xl font-bold text-white" x-text="issue.id + ': ' + issue.name"></h1>
+              <div class="mt-2 space-x-2">
+                <template x-for="tag in issue.tags" :key="tag">
+                  <span class="bg-red-900 text-red-200 px-2 py-1 rounded-full text-xs" x-text="tag"></span>
                 </template>
               </div>
             </div>
-          </template>
-        </div>
-      </div>
+            <div class="flex gap-2">
+              <a :href="'/pc-analytics-jaffar/edit/' + issue.id" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600 text-white">
+                Edit Issue
+              </a>
+              <button
+                type="button"
+                class="bg-red-500 px-4 py-2 rounded hover:bg-red-700 text-white"
+                @click="window.location.href = `/pc-analytics-jaffar/escalation?issueId=${encodeURIComponent(issue.id)}`"
+              >
+                Help me to escalate it
+              </button>
+              <template x-if="canCloseIssue()">
+                <button
+                  type="button"
+                  class="bg-gray-500 px-4 py-2 rounded hover:bg-gray-700 text-white"
+                  @click="window.location.href = `/pc-analytics-jaffar/close/${issue.id}`"
+                >
+                  Close
+                </button>
+              </template>
+            </div>
+          </div>
 
-      <!-- Comments and Changes Section -->
-      <div class="space-y-4">
-        <div class="flex justify-between items-center">
-          <h2 class="text-xl font-bold text-white">Activity</h2>
-          <select 
-            x-model="activityFilter" 
-            class="bg-gray-700 text-white px-3 py-1 rounded border border-gray-600"
-          >
-            <option value="all">All Activities</option>
-            <option value="system">System</option>
-            <option value="comment">Comments</option>
-            <option value="change">Changes</option>
-          </select>
-        </div>
-
-        <!-- Add Comment Form -->
-        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
-          <textarea
-            x-model="newComment"
-            placeholder="Add a comment..."
-            class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
-            rows="3"
-          ></textarea>
-          <div class="mt-2 flex justify-end">
-            <button 
-              @click="addComment()"
-              class="bg-red-600 px-4 py-2 rounded hover:bg-red-700 text-white"
-            >
-              Comment
-            </button>
+          <div class="mt-4 text-sm text-gray-400">
+            Created by <span x-text="issue.author"></span> on <span x-text="new Date(issue.created_at).toLocaleDateString()"></span>
           </div>
         </div>
 
-        <!-- Timeline des actions -->
-        <template x-for="(item, index) in [...(Array.isArray(issue.changes) ? issue.changes : [])].reverse().filter(item => 
-          activityFilter === 'all' || 
-          (activityFilter === 'system' && item.type === 'system') ||
-          (activityFilter === 'comment' && item.type === 'comment') ||
-          (activityFilter === 'change' && !item.type)
-        )" :key="index">
-          <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <!-- System activity display -->
-            <template x-if="item.type === 'system'">
-              <div class="border-l-4 border-red-500 pl-4">
-                <div class="flex justify-between items-start mb-2">
-                  <div class="flex items-center gap-2">
-                    <span class="bg-transparent border border-red-500 text-red-500 px-2 py-0.5 rounded text-xs">Jaffar</span>
-                    <span class="text-sm text-gray-400" x-text="new Date(item.timestamp).toLocaleString()"></span>
-                  </div>
-                </div>
-                <div class="text-red-300" x-html="item.content"></div>
-              </div>
-            </template>
+        <!-- Issue Description -->
+        <div class="bg-gray-800 p-4 rounded-lg mb-6">
+          <h2 class="text-xl font-bold text-white mb-4">Description</h2>
+          <div x-html="issue['issue-description']" class="prose prose-invert"></div>
+        </div>
 
-            <!-- Comment display -->
-            <template x-if="item.type === 'comment'">
-              <div>
-                <div class="flex justify-between items-start mb-2">
-                  <div class="flex items-center gap-2">
-                    <span class="bg-transparent border border-red-500 text-red-500 px-2 py-0.5 rounded text-xs" x-text="item.type"></span>
-                    <span class="text-sm text-gray-400" x-text="item.author + ' - ' + new Date(item.timestamp).toLocaleString()"></span>
-                  </div>
-                </div>
-                <div x-html="item.content"></div>
-              </div>
-            </template>
-
-            <!-- Field Change display -->
-            <template x-if="!item.type">
-              <div>
-                <div class="flex justify-between items-start mb-2">
-                  <div class="flex items-center gap-2">
-                    <span class="bg-transparent border border-red-500 text-red-500 px-2 py-0.5 rounded text-xs">change</span>
-                    <span class="text-sm text-gray-400" x-text="Object.values(item)[0][0].author + ' - ' + new Date(Object.values(item)[0][0].timestamp).toLocaleString()"></span>
-                  </div>
-                </div>
-                <div class="space-y-2">
-                  <template x-for="[field, changes] in Object.entries(item)" :key="field">
-                    <div class="flex flex-col space-y-1 bg-gray-900 p-2 rounded">
-                      <span class="text-sm font-medium text-red-300" x-text="field"></span>
-                      <div class="flex items-center space-x-2">
-                        <span class="bg-red-900/50 px-2 py-1 rounded text-red-200" x-text="changes[0].previous ? (Array.isArray(changes[0].previous) ? changes[0].previous.join(', ') : changes[0].previous) : '--'"></span>
-                        <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                        </svg>
-                        <span class="bg-green-900/50 px-2 py-1 rounded text-green-200" x-text="changes[0].new ? (Array.isArray(changes[0].new) ? changes[0].new.join(', ') : changes[0].new) : '--'"></span>
-                      </div>
-                    </div>
+        <!-- Form Values -->
+        <div class="bg-gray-800 p-4 rounded-lg mb-6">
+          <h2 class="text-xl font-bold text-white mb-4" x-text="issue.id"></h2>
+          <div class="grid grid-cols-2 gap-4">
+            <template x-for="field in config.fields" :key="field.key">
+              <div class="col-span-1">
+                <label class="block text-sm font-medium text-gray-400">
+                  <span x-text="field.label"></span>
+                  <span x-show="field.required" class="text-red-500">*</span>
+                </label>
+                <div class="mt-1">
+                  <template x-if="field.type === 'textarea'">
+                    <div x-html="issue[field.key]" class="prose prose-invert"></div>
+                  </template>
+                  <template x-if="field.type !== 'textarea'">
+                    <div x-text="issue[field.key] !== undefined && issue[field.key] !== null && issue[field.key] !== '' ? (Array.isArray(issue[field.key]) ? issue[field.key].join(', ') : issue[field.key]) : '--'" :class="{'text-white': issue[field.key], 'text-gray-500': !issue[field.key]}"></div>
+                  </template>
+                  <!-- Display nested questions if they exist -->
+                  <template x-if="field.type === 'conditional' && field.options">
+                    <template x-for="option in field.options" :key="option.name">
+                      <template x-if="issue[field.key] === option.name && option.questions">
+                        <div class="mt-2 ml-4 border-l-2 border-red-600 pl-4">
+                          <template x-for="question in option.questions" :key="question.key">
+                            <div class="mt-2" x-show="issue[question.key]">
+                              <label class="block text-sm font-medium text-gray-400" x-text="question.label"></label>
+                              <div class="text-white" x-text="Array.isArray(issue[question.key]) ? issue[question.key].join(', ') : issue[question.key]"></div>
+                            </div>
+                          </template>
+                        </div>
+                      </template>
+                    </template>
                   </template>
                 </div>
               </div>
             </template>
           </div>
-        </template>
-
         </div>
-    </div>
-  </template>
+
+        <!-- Comments and Changes Section -->
+        <div class="space-y-4">
+          <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold text-white">Activity</h2>
+            <select 
+              x-model="activityFilter" 
+              class="bg-gray-700 text-white px-3 py-1 rounded border border-gray-600"
+            >
+              <option value="all">All Activities</option>
+              <option value="system">System</option>
+              <option value="comment">Comments</option>
+              <option value="change">Changes</option>
+            </select>
+          </div>
+
+          <!-- Add Comment Form -->
+          <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
+            <textarea
+              x-model="newComment"
+              placeholder="Add a comment..."
+              class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
+              rows="3"
+            ></textarea>
+            <div class="mt-2 flex justify-end">
+              <button 
+                @click="addComment()"
+                class="bg-red-600 px-4 py-2 rounded hover:bg-red-700 text-white"
+              >
+                Comment
+              </button>
+            </div>
+          </div>
+
+          <!-- Timeline des actions -->
+          <template x-for="(item, index) in [...(Array.isArray(issue.changes) ? issue.changes : [])].reverse().filter(item => 
+            activityFilter === 'all' || 
+            (activityFilter === 'system' && item.type === 'system') ||
+            (activityFilter === 'comment' && item.type === 'comment') ||
+            (activityFilter === 'change' && !item.type)
+          )" :key="index">
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+              <!-- System activity display -->
+              <template x-if="item.type === 'system'">
+                <div class="border-l-4 border-red-500 pl-4">
+                  <div class="flex justify-between items-start mb-2">
+                    <div class="flex items-center gap-2">
+                      <span class="bg-transparent border border-red-500 text-red-500 px-2 py-0.5 rounded text-xs">Jaffar</span>
+                      <span class="text-sm text-gray-400" x-text="new Date(item.timestamp).toLocaleString()"></span>
+                      <template x-if="item.author && item.author !== 'system'">
+                        <span class="text-xs text-gray-400" x-text="item.author"></span>
+                      </template>
+                    </div>
+                  </div>
+                  <div class="text-red-300" x-html="item.content"></div>
+                </div>
+              </template>
+
+              <!-- Comment display -->
+              <template x-if="item.type === 'comment'">
+                <div>
+                  <div class="flex justify-between items-start mb-2">
+                    <div class="flex items-center gap-2">
+                      <span class="bg-transparent border border-red-500 text-red-500 px-2 py-0.5 rounded text-xs" x-text="item.type"></span>
+                      <span class="text-sm text-gray-400" x-text="item.author + ' - ' + new Date(item.timestamp).toLocaleString()"></span>
+                    </div>
+                  </div>
+                  <div x-html="item.content"></div>
+                </div>
+              </template>
+
+              <!-- Field Change display -->
+              <template x-if="!item.type">
+                <div>
+                  <div class="flex justify-between items-start mb-2">
+                    <div class="flex items-center gap-2">
+                      <span class="bg-transparent border border-red-500 text-red-500 px-2 py-0.5 rounded text-xs">change</span>
+                      <span class="text-sm text-gray-400" x-text="Object.values(item)[0][0].author + ' - ' + new Date(Object.values(item)[0][0].timestamp).toLocaleString()"></span>
+                    </div>
+                  </div>
+                  <div class="space-y-2">
+                    <template x-for="[field, changes] in Object.entries(item)" :key="field">
+                      <div class="flex flex-col space-y-1 bg-gray-900 p-2 rounded">
+                        <span class="text-sm font-medium text-red-300" x-text="field"></span>
+                        <div class="flex items-center space-x-2">
+                          <span class="bg-red-900/50 px-2 py-1 rounded text-red-200" x-text="changes[0].previous ? (Array.isArray(changes[0].previous) ? changes[0].previous.join(', ') : changes[0].previous) : '--'"></span>
+                          <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
+                          <span class="bg-green-900/50 px-2 py-1 rounded text-green-200" x-text="changes[0].new ? (Array.isArray(changes[0].new) ? changes[0].new.join(', ') : changes[0].new) : '--'"></span>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+
+          </div>
+      </div>
+    </template>
+  </div>
 </div>
 {% endblock %}

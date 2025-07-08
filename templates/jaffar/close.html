@@ -1,0 +1,87 @@
+{% extends "jaffar/base.html" %}
+
+{% block title %}Close Issue{% endblock %}
+
+{% block content %}
+<div class="p-6" x-data="closeIssueForm('{{ issue_id }}', '{{ author }}')">
+  <h1 class="text-2xl font-bold text-white mb-4">Close Issue</h1>
+  <template x-if="isAuthor">
+    <form @submit.prevent="submitForm" class="space-y-4">
+      <div>
+        <label for="reason" class="block text-sm font-medium text-gray-400">Reason for closing</label>
+        <textarea id="reason" name="reason" rows="4" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600" x-model="reason"></textarea>
+      </div>
+      <div class="flex justify-end">
+        <button type="submit" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600 text-white">Submit</button>
+      </div>
+    </form>
+  </template>
+  <template x-if="!isAuthor">
+    <div class="space-y-4">
+      <p class="text-red-500">Only the author of this issue can close it.</p>
+      <p class="text-gray-400">You have two options:</p>
+      <div class="space-y-2">
+        <a href="mailto:{{ author }}?subject=Issue%20Closure%20Request&body=Hello,%0D%0A%0D%0AI%20am%20requesting%20your%20assistance%20to%20close%20the%20issue%20with%20ID%20{{ issue_id }}.%0D%0AYou%20can%20view%20the%20issue%20here:%20https://stratpy.uk.hsbc:1337/pc-analytics-jaffar/issue/{{ issue_id }}.%0D%0A%0D%0AThank%20you%20for%20your%20help.%0D%0A%0D%0ABest%20regards," class="bg-red-500 px-4 py-2 rounded hover:bg-red-600 text-white">Contact Author</a>
+        <a href="mailto:global.control.remediation.programme@noexternalmail.hsbc.com?subject=Issue%20Closure%20Request&body=Hello,%0D%0A%0D%0AI%20am%20requesting%20your%20assistance%20to%20close%20the%20issue%20with%20ID%20{{ issue_id }}.%0D%0AYou%20can%20view%20the%20issue%20here:%20https://stratpy.uk.hsbc:1337/pc-analytics-jaffar/issue/{{ issue_id }}.%0D%0A%0D%0AThank%20you%20for%20your%20help.%0D%0A%0D%0ABest%20regards," class="bg-red-500 px-4 py-2 rounded hover:bg-red-600 text-white">Contact Admins</a>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+function closeIssueForm(issueId, author) {
+  return {
+    reason: '',
+    isAuthor: false,
+    async init() {
+      try {
+        const currentUser = await localStorage.getItem('author2'); // Retrieve the current user
+        this.isAuthor = currentUser === author; // Check if the current user is the author
+      } catch (error) {
+        console.error('Error during initialization:', error);
+      }
+    },
+    async submitForm() {
+      if (!this.reason.trim()) {
+        alert('Reason is required.');
+        return;
+      }
+
+      try {
+        const currentUser = await localStorage.getItem('author2'); // Retrieve the current user
+        if (currentUser !== author) {
+          window.location.href = `/pc-analytics-jaffar/issue/${issueId}`;
+          return;
+        }
+
+        const response = await fetch(`/pc-analytics-jaffar/api/jaffar/issues/${issueId}/close`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reason: this.reason,
+            closed_by: currentUser // Send the current user as the one who closed the issue
+          })
+        });
+
+        const data = await response.json();
+        if (data.status === 'success') {
+          window.location.href = `/pc-analytics-jaffar/issue/${issueId}`;
+        } else {
+          alert(data.error || 'Failed to close the issue.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred.');
+      }
+    }
+  };
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const issueId = '{{ issue_id }}';
+  const author = '{{ author }}';
+  const form = closeIssueForm(issueId, author);
+  form.init(); // Call the initialization method on page load
+});
+</script>
+{% endblock %}

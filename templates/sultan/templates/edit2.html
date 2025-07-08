@@ -1,281 +1,272 @@
+  {% extends "sultan/base.html" %}
 
-{% extends "sultan/base.html" %}
+  {% block title %}Template Editor{% endblock %}
 
-{% block title %}Template Editor{% endblock %}
-
-{% block alpine_component %}
-  {
-    page: 'template-editor',
-    template: { 
-      id: '', 
-      name: '',
-      subject: '',
-      body: '',
-      selectedForm: ''
-    },
-    searchQuery: '',
-    preview: true,
-    formFields: [],
-    availableForms: [],
-    debouncedSave: null,
-    async init() {
-      const templateId = window.location.pathname.split('/').pop();
-      const userEmail = localStorage.getItem('user_email');
-
-      await this.loadForms();
-      await this.loadTemplate(templateId, userEmail);
-      if (this.template.selectedForm) {
-        await this.loadFormFields();
-      }
-      this.initTrumbowyg();
-    },
-    async loadForms() {
-      try {
-        const response = await fetch('/api/sultan/forms/list');
-        this.availableForms = await response.json();
-      } catch (error) {
-        console.error('Failed to load forms:', error);
-        this.availableForms = [];
-      }
-    },
-    extractFormFields(form) {
-      const fields = [];
-      const extract = (items) => {
-        items.forEach(item => {
-          if (item.key) {
-            const fullKey = item.key;
-            console.log('fullKey', fullKey);
-            const keyForTemplate = '\{\{'+item.key+'\}\}';
-            console.log('keyForTemplate', keyForTemplate);
-            fields.push({
-              key: item.key,
-              label: item.label || item.key,
-              keyForTemplate: keyForTemplate
-            });
-          }
-          if (item.options) {
-            item.options.forEach(option => {
-              if (option.questions) {
-                extract(option.questions, item.key);
-              }
-            });
-          }
-          if (item.fields) {
-            extract(item.fields);
-          }
-        });
-      };
-
-      if (form.fields) {
-        extract(form.fields);
-      }
-      return fields;
-    },
-    async loadFormFields() {
-      if (!this.template.selectedForm) {
-        this.formFields = [];
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/sultan/forms/${this.template.selectedForm}`);
-        const form = await response.json();
-        this.formFields = this.extractFormFields(form);
-      } catch (error) {
-        console.error('Failed to load form fields:', error);
-        this.formFields = [];
-      }
-    },
-    async loadTemplate(templateId, userEmail) {
-      if (templateId === 'new') return;
-
-      try {
-        const response = await fetch(`/api/sultan/templates/${templateId}?email=${userEmail}`);
-        const data = await response.json();
-        this.template = data;
-        
-        // Set email body content after template is loaded
-        if (this.template.body) {
-          setTimeout(() => {
-            $('#emailEditor').trumbowyg('html', this.template.body);
-          }, 100);
-        }
-      } catch (error) {
-        console.error('Failed to load template:', error);
-        window.location.href = '/sultan/templates/list';
-      }
-    },
-    initTrumbowyg() {
-      $('#emailEditor').trumbowyg({
-        btns: [
-          ['viewHTML'],
-          ['formatting'],
-          ['fontfamily'],
-          ['fontsize'],
-          ['strong', 'em', 'underline'],
-          ['link'],
-          ['insertImage'],
-          ['justifyLeft', 'justifyCenter', 'justifyRight'],
-          ['unorderedList', 'orderedList'],
-          ['table'],
-          ['foreColor', 'backColor'],
-          ['mention'],
-          ['removeformat']
-        ],
-        plugins: {
-          table: {
-            rows: 8,
-            columns: 8
-          },
-          colors: {
-            colorList: [
-              'ffff00', '000000', '808080', 'ff0000', '008000', '0000ff'
-            ]
-          },
-          mention: {
-            source: this.formFields.map(field => ({
-              login: field.key,
-              name: field.label
-            })),
-            formatDropdownItem: function (item) {
-              return item.name;
-            },
-            formatResult: function (item) {
-              return '{{' + item.login +'}}';
-            }
-          }
-        }
-      });
-
-      $('#emailEditor').on('tbwchange', () => {
-        this.template.body = $('#emailEditor').trumbowyg('html');
-        this.saveTemplate();
-      });
-    },
-    saveTemplate() {
-      if (this.debouncedSave) clearTimeout(this.debouncedSave);
-
-      this.debouncedSave = setTimeout(async () => {
-        if (!this.template.id) {
-          this.template.id = `templates-${Date.now()}`;
-        }
-
+  {% block alpine_component %}
+    { sidebarOpen: true,
+      page: 'template-editor',
+      template: { 
+        id: '', 
+        name: '',
+        subject: '',
+        body: '',
+        selectedForm: ''
+      },
+      searchQuery: '',
+      preview: true,
+      formFields: [],
+      availableForms: [],
+      async init() {
+        const templateId = window.location.pathname.split('/').pop();
         const userEmail = localStorage.getItem('user_email');
-        if (!userEmail) return;
+
+        await this.loadForms();
+        await this.loadTemplate(templateId, userEmail);
+        if (this.template.selectedForm) {
+          await this.loadFormFields();
+        }
+        this.initTrumbowyg();
+      },
+      $watch: {
+        'template': {
+          handler() {
+            this.saveTemplate();
+          },
+          deep: true
+        }
+      },
+      async loadForms() {
+        try {
+          const response = await fetch('/pc-analytics-jaffar/api/sultan/forms/list');
+          this.availableForms = await response.json();
+        } catch (error) {
+          console.error('Failed to load forms:', error);
+          this.availableForms = [];
+        }
+      },
+      extractFormFields(form) {
+        const fields = [];
+        const extract = (items) => {
+          items.forEach(item => {
+            if (item.key) {
+              const fullKey = item.key;
+              console.log('fullKey', fullKey);
+              const keyForTemplate = '\{\{'+item.key+'\}\}';
+              console.log('keyForTemplate', keyForTemplate);
+              fields.push({
+                key: item.key,
+                label: item.label || item.key,
+                keyForTemplate: keyForTemplate
+              });
+            }
+            if (item.options) {
+              item.options.forEach(option => {
+                if (option.questions) {
+                  extract(option.questions, item.key);
+                }
+              });
+            }
+            if (item.fields) {
+              extract(item.fields);
+            }
+          });
+        };
+
+        if (form.fields) {
+          extract(form.fields);
+        }
+        return fields;
+      },
+      async loadFormFields() {
+        if (!this.template.selectedForm) {
+          this.formFields = [];
+          return;
+        }
 
         try {
-          await fetch('/api/sultan/templates/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              email: userEmail, 
-              template: { 
-                ...this.template, 
-                user_email: userEmail,
-                formFields: this.formFields 
-              }
-            })
-          });
+          const response = await fetch(`/pc-analytics-jaffar/api/sultan/forms/${this.template.selectedForm}`);
+          const form = await response.json();
+          this.formFields = this.extractFormFields(form);
         } catch (error) {
-          console.error('Failed to save template:', error);
+          console.error('Failed to load form fields:', error);
+          this.formFields = [];
         }
-      }, 1000); // 1 second delay
+      },
+      async loadTemplate(templateId, userEmail) {
+        if (templateId === 'new') return;
+
+        try {
+          const response = await fetch(`/pc-analytics-jaffar/api/sultan/templates/${templateId}`);
+          const dataArr = await response.json();
+          // On suppose que la réponse est un tableau avec l'objet voulu en premier élément
+          const data = Array.isArray(dataArr) && dataArr.length > 0 ? dataArr[0] : {};
+          this.template = data;
+
+          // Set email body content after template is loaded
+          if (this.template.body) {
+            setTimeout(() => {
+              $('#emailEditor').trumbowyg('html', this.template.body);
+            }, 100);
+          }
+        } catch (error) {
+          console.error('Failed to load template:', error);
+          window.location.href = '/sultan/templates/list';
+        }
+      },
+      initTrumbowyg() {
+        $('#emailEditor').trumbowyg({
+          btns: [
+            ['viewHTML'],
+            ['formatting'],
+            ['fontfamily'],
+            ['fontsize'],
+            ['strong', 'em', 'underline'],
+            ['link'],
+            ['insertImage'],
+            ['justifyLeft', 'justifyCenter', 'justifyRight'],
+            ['unorderedList', 'orderedList'],
+            ['table'],
+            ['foreColor', 'backColor'],
+            ['mention'],
+            ['removeformat']
+          ],
+          plugins: {
+            table: {
+              rows: 8,
+              columns: 8
+            },
+            colors: {
+              colorList: [
+                'ffff00', '000000', '808080', 'ff0000', '008000', '0000ff'
+              ]
+            },
+            mention: {
+              source: this.formFields.map(field => ({
+                login: field.key,
+                name: field.label
+              })),
+              formatDropdownItem: function (item) {
+                return item.name;
+              },
+              formatResult: function (item) {
+                return '{{' + item.login +'}}';
+              }
+            }
+          }
+        });
+
+        $('#emailEditor').on('tbwchange', () => {
+          this.template.body = $('#emailEditor').trumbowyg('html');
+          this.saveTemplate();
+        });
+      },
+      async saveTemplate() {
+        await fetch('/pc-analytics-jaffar/api/sultan/templates/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            template: { 
+              ...this.template, 
+              formFields: this.formFields 
+            }
+          })
+        });
+      }
     }
-  }
-{% endblock %}
+  {% endblock %}
 
-{% block content %}
-<div class="h-screen bg-gray-900 text-white">
-  <!-- Top Bar -->
-  <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
-    <h1 class="text-2xl font-bold text-white">Email Template Editor</h1>
-    <div class="flex space-x-4">
-      <a href="/sultan/templates" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Back</a>
+  {% block content %}
+  <div class="h-screen bg-gray-900 text-white">
+    <!-- Top Bar -->
+    <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
+      <h1 class="text-2xl font-bold text-white">Email Template Editor</h1>
+      <div class="flex space-x-4">
+        <a href="/pc-analytics-jaffar/sultan/templates" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Back</a>
+      </div>
     </div>
-  </div>
 
-  <!-- Main Content -->
-  <div class="p-6">
-    <div class="w-full">
+    <!-- Main Content -->
+    <div class="p-6">
+      <div class="w-full">
 
-    <div class="space-y-4">
-      <input type="text" x-model.debounce.500ms="template.name" @input="saveTemplate()" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Template Name">
+      <div class="space-y-4">
+        <input type="text" x-model.debounce.500ms="template.name" @input="saveTemplate()" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Template Name">
 
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-gray-300">Status</label>
-        <select x-model="template.status" 
-                @change="template.status = template.status.toLowerCase(); saveTemplate()"
-                class="bg-transparent text-sm font-medium px-3 py-1.5 rounded-full border"
-                :class="{
-                  'border-green-600 text-green-100': template.status === 'prod',
-                  'border-gray-600 text-gray-100': template.status === 'draft',
-                  'border-yellow-600 text-yellow-100': template.status === 'old version'
-                }">
-          <option value="draft">Draft</option>
-          <option value="prod">Prod</option>
-          <option value="old version">Old version</option>
-        </select>
-      </div>
-
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-gray-300">Email Subject</label>
-        <div class="relative">
-          <input type="text" x-model.debounce="template.subject" @input="saveTemplate()" @focus="currentFocus='subject'" x-ref="subject"
-                 class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Sujet de l'email">
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-300">Status</label>
+          <select x-model="template.status" 
+                  @change="template.status = template.status.toLowerCase(); saveTemplate()"
+                  class="bg-transparent text-sm font-medium px-3 py-1.5 rounded-full border"
+                  :class="{
+                    'border-green-600 text-green-100': template.status === 'prod',
+                    'border-gray-600 text-gray-100': template.status === 'draft',
+                    'border-yellow-600 text-yellow-100': template.status === 'old version'
+                  }">
+            <option value="draft">Draft</option>
+            <option value="prod">Prod</option>
+            <option value="old version">Old version</option>
+          </select>
         </div>
-      </div>
 
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-gray-300">Email Body (HTML)</label>
-        <div x-init="initTrumbowyg()" class="bg-gray-800 rounded-lg">
-          <textarea id="emailEditor" x-ref="editor"></textarea>
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-300">Email Subject</label>
+          <div class="relative">
+            <input type="text" x-model.debounce="template.subject" @input="saveTemplate()" @focus="currentFocus='subject'" x-ref="subject"
+                   class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Sujet de l'email">
+          </div>
         </div>
-      </div>
 
-      <!-- Form Selection -->
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-gray-300">Form for Variables</label>
-        <select x-model="template.selectedForm" @change="loadFormFields()" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-          <option value="">Select a form</option>
-          <template x-for="form in availableForms">
-            <option :value="form.id" x-text="form.name"></option>
-          </template>
-        </select>
-      </div>
-
-      <!-- Variables Panel -->
-      <div x-show="formFields.length > 0" class="bg-gray-800 p-4 rounded-lg border border-gray-600">
-        <h3 class="text-lg font-medium text-white mb-2">Available Variables</h3>
-        <div class="relative mb-4">
-          <input 
-            type="text" 
-            x-model="searchQuery" 
-            placeholder="Search variables..." 
-            class="w-full bg-gray-700 text-white px-4 py-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
-          >
-          <svg class="absolute right-3 top-2.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-300">Email Body (HTML)</label>
+          <div x-init="initTrumbowyg()" class="bg-gray-800 rounded-lg">
+            <textarea id="emailEditor" x-ref="editor"></textarea>
+          </div>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-          <template x-for="(field, index) in formFields.filter(f => !searchQuery || f.label.toLowerCase().includes(searchQuery.toLowerCase()) || f.key.toLowerCase().includes(searchQuery.toLowerCase()))">
-            <div class="flex justify-between items-center px-3 py-2 bg-gray-700 rounded hover:bg-gray-600">
-              <div class="flex-1">
-                <span class="text-white" x-text="field.label"></span>
+
+        <!-- Form Selection -->
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-300">Form for Variables</label>
+          <select x-model="template.selectedForm" @change="loadFormFields()" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+            <option value="">Select a form</option>
+            <template x-for="form in availableForms">
+              <option :value="form.id" x-text="form.name"></option>
+            </template>
+          </select>
+        </div>
+
+        <!-- Variables Panel -->
+        <div x-show="formFields.length > 0" class="bg-gray-800 p-4 rounded-lg border border-gray-600">
+          <h3 class="text-lg font-medium text-white mb-2">Available Variables</h3>
+          <div class="relative mb-4">
+            <input 
+              type="text" 
+              x-model="searchQuery" 
+              placeholder="Search variables..." 
+              class="w-full bg-gray-700 text-white px-4 py-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+            >
+            <svg class="absolute right-3 top-2.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            <template x-for="(field, index) in formFields.filter(f => !searchQuery || f.label.toLowerCase().includes(searchQuery.toLowerCase()) || f.key.toLowerCase().includes(searchQuery.toLowerCase()))">
+              <div class="flex justify-between items-center px-3 py-2 bg-gray-700 rounded hover:bg-gray-600">
+                <div class="flex-1">
+                  <span class="text-white" x-text="field.label"></span>
+                </div>
+                <button @click="navigator.clipboard.writeText(field.keyForTemplate)"
+                        class="ml-2 text-gray-400 hover:text-white"
+                        title="Copy variable">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                  </svg>
+                </button>
               </div>
-              <button @click="navigator.clipboard.writeText(field.keyForTemplate)"
-                      class="ml-2 text-gray-400 hover:text-white"
-                      title="Copy variable">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                </svg>
-              </button>
-            </div>
-          </template>
+            </template>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  </div>
-{% endblock %}
+    </div>
+  {% endblock %}

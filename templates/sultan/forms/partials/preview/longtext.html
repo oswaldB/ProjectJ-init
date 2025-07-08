@@ -1,0 +1,24 @@
+<template x-if="field.type== 'textarea'">
+    <div class="space-y-2">
+        <div class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
+            <!-- Magic wand icon with dropdown -->
+            <div class="relative" x-data="{ dropdownVisible: false }">
+                <button @click="dropdownVisible = !dropdownVisible" class="absolute top-2 right-2 bg-gray-700 text-white p-1 rounded hover:bg-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3l2.09 6.26L21 9l-4.91 3.74L17.18 21l-5.18-3.74L6.82 21l1.09-8.26L3 9l6.91-1.74L12 3z" />
+                    </svg>
+                </button>
+                <div class="absolute top-10 right-2 z-40 bg-white text-black border border-gray-600 rounded shadow-lg" x-show="dropdownVisible" @click.away="dropdownVisible = false">
+                    <ul class="text-sm">
+                        <li class="p-2 hover:bg-gray-200 cursor-pointer" @click="rewriteText('5Cs')">Rewrite using the 5Cs</li>
+                        <li class="p-2 hover:bg-gray-200 cursor-pointer" @click="rewriteText('4W')">Rewrite using the 4W</li>
+                    </ul>
+                </div>
+            </div>
+            <!-- Quill editor -->
+            <div x-ref="longtextPreviewQuillField" 
+            x-init="window.initQuill($refs.longtextPreviewQuillField, (val) => formData[field.key] = (val !== undefined ? val : formData[field.key]))"
+            class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
+        </div>
+    </div>
+</template>

@@ -1,0 +1,90 @@
+{% macro render_level(level, questions) %}
+{% if level < 10 %}
+<template x-for="field in {{ questions }}">
+  <div
+    class="space-y-2"
+    x-data="{ selectedLevel: formData[field.key] || '' }"
+    x-effect="formData[field.key] = selectedLevel"
+  >
+    <label class="block">
+      <span
+        class="text-lg font-medium text-white"
+        x-text="field.label"
+      ></span>
+    </label>
+    <p
+      class="text-gray-400 text-sm"
+      x-show="field.description"
+      x-html="field.description"
+    ></p>
+
+    {% include "sultan/forms/partials/preview/input.html" %}
+    {% include "sultan/forms/partials/preview/number.html" %}
+    {% include "sultan/forms/partials/preview/longtext.html" %}
+    {% include "sultan/forms/partials/preview/single_select.html" %}
+    {% include "sultan/forms/partials/preview/multiple_checkbox.html" %}
+    {% include "sultan/forms/partials/preview/date.html" %}
+    {% include "sultan/forms/partials/preview/list.html" %}
+    {% include "sultan/forms/partials/preview/file_upload.html" %}
+    {% include "sultan/forms/partials/preview/actions.html" %}
+    {% include "sultan/forms/partials/preview/submit.html" %}
+
+    <template x-if="field.type === 'conditional'">
+      <div
+        class="space-y-4"
+        x-data="{ nestedSelected: formData[field.key] || '' }"
+        x-effect="formData[field.key] = nestedSelected"
+      >
+        <select
+          class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+          x-model="nestedSelected"
+        >
+          <option value="">Select an option</option>
+          <template x-for="nestedOption in field.options">
+            <option
+              x-text="nestedOption.name"
+              :value="nestedOption.name"
+            ></option>
+          </template>
+        </select>
+        <template x-for="nestedOption in field.options">
+          <div
+            x-show="nestedSelected === nestedOption.name"
+            class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4"
+          >
+            {{ render_level(level + 1, 'nestedOption.questions') }}
+          </div>
+        </template>
+      </div>
+    </template>
+  </div>
+</template>
+{% endif %}
+{% endmacro %}
+
+<template x-if="field.type === 'conditional'">
+  <div
+    class="space-y-4"
+    x-data="{ selected: formData[field.key] || '' }"
+    x-effect="formData[field.key] = selected"
+  >
+    <select
+      :required="field.required"
+      class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+      x-model="selected"
+    >
+      <option value="">Select an option</option>
+      <template x-for="option in field.options">
+        <option x-text="option.name" :value="option.name"></option>
+      </template>
+    </select>
+    <template x-for="option in field.options">
+      <div
+        x-show="selected === option.name"
+        class="ml-4 border-l-2 border-gray-600 pl-4 space-y-4"
+      >
+        {{ render_level(0, 'option.questions') }}
+      </div>
+    </template>
+  </div>
+</template>
