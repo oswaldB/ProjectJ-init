@@ -31,6 +31,8 @@
     } else {
       this.dashboard.id = 'dashboard-' + Date.now();
     }
+    // S'assurer que les positions sont correctes
+    this.updateCardPositions();
   },
   async loadDashboard(id) {
     try {
@@ -51,34 +53,45 @@
       config: {}
     };
     this.dashboard.cards.push(newCard);
+    this.updateCardPositions();
   },
   removeCard(cardId) {
     this.dashboard.cards = this.dashboard.cards.filter(card => card.id !== cardId);
   },
-  moveCard(card, direction) {
-    switch(direction) {
-      case 'left':
-        if (card.position.col > 1) card.position.col--;
-        break;
-      case 'right':
-        if (card.position.col + card.size.width <= 12) card.position.col++;
-        break;
-      case 'up':
-        if (card.position.row > 1) card.position.row--;
-        break;
-      case 'down':
-        card.position.row++;
-        break;
+  moveCardLeft(cardId) {
+    const cardIndex = this.dashboard.cards.findIndex(c => c.id === cardId);
+    if (cardIndex > 0) {
+      const cards = [...this.dashboard.cards];
+      [cards[cardIndex - 1], cards[cardIndex]] = [cards[cardIndex], cards[cardIndex - 1]];
+      this.dashboard.cards = cards;
+      this.updateCardPositions();
     }
   },
-  updateCardPosition(card, field, value) {
-    const numValue = parseInt(value);
-    if (field === 'col') {
-      card.position.col = Math.max(1, Math.min(12 - card.size.width + 1, numValue));
-    } else if (field === 'row') {
-      card.position.row = Math.max(1, numValue);
+  moveCardRight(cardId) {
+    const cardIndex = this.dashboard.cards.findIndex(c => c.id === cardId);
+    if (cardIndex < this.dashboard.cards.length - 1) {
+      const cards = [...this.dashboard.cards];
+      [cards[cardIndex], cards[cardIndex + 1]] = [cards[cardIndex + 1], cards[cardIndex]];
+      this.dashboard.cards = cards;
+      this.updateCardPositions();
     }
   },
+  updateCardPositions() {
+    let currentCol = 1;
+    let currentRow = 1;
+    
+    this.dashboard.cards.forEach(card => {
+      // Si la carte ne rentre pas dans la ligne actuelle, passer à la ligne suivante
+      if (currentCol + card.size.width > 13) {
+        currentCol = 1;
+        currentRow++;
+      }
+      
+      card.position = { col: currentCol, row: currentRow };
+      currentCol += card.size.width;
+    });
+  },
+  
   getCardStyle(card) {
     return {
       'grid-column-start': card.position.col,
@@ -179,12 +192,24 @@
                 <span x-text="card.type"></span>
               </h4>
               <div class="flex items-center space-x-1">
-                <!-- Position controls -->
-                <div class="flex space-x-1 bg-gray-700 rounded p-1" x-show="selectedCard?.id === card.id">
-                  <button @click.stop="moveCard(card, 'left')" class="text-white hover:text-red-500 px-1" title="Move Left">←</button>
-                  <button @click.stop="moveCard(card, 'up')" class="text-white hover:text-red-500 px-1" title="Move Up">↑</button>
-                  <button @click.stop="moveCard(card, 'down')" class="text-white hover:text-red-500 px-1" title="Move Down">↓</button>
-                  <button @click.stop="moveCard(card, 'right')" class="text-white hover:text-red-500 px-1" title="Move Right">→</button>
+                <!-- Order controls -->
+                <div class="flex space-x-1 bg-gray-700 rounded p-1">
+                  <button 
+                    @click.stop="moveCardLeft(card.id)" 
+                    :class="dashboard.cards.findIndex(c => c.id === card.id) === 0 ? 'text-gray-500 cursor-not-allowed' : 'text-white hover:text-red-500'"
+                    :disabled="dashboard.cards.findIndex(c => c.id === card.id) === 0"
+                    class="px-2 py-1" 
+                    title="Move Left in Order">
+                    ←
+                  </button>
+                  <button 
+                    @click.stop="moveCardRight(card.id)" 
+                    :class="dashboard.cards.findIndex(c => c.id === card.id) === dashboard.cards.length - 1 ? 'text-gray-500 cursor-not-allowed' : 'text-white hover:text-red-500'"
+                    :disabled="dashboard.cards.findIndex(c => c.id === card.id) === dashboard.cards.length - 1"
+                    class="px-2 py-1" 
+                    title="Move Right in Order">
+                    →
+                  </button>
                 </div>
                 <button @click.stop="removeCard(card.id)" class="text-red-500 hover:text-red-700">
                   ×
@@ -232,47 +257,27 @@
           </select>
         </div>
         
-        <!-- Position Controls -->
+        <!-- Order Controls -->
         <div class="border-t border-gray-600 pt-4">
-          <h4 class="text-white font-medium mb-3">Position</h4>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-1">Column</label>
-              <input 
-                type="number" 
-                :value="selectedCard.position.col" 
-                @input="updateCardPosition(selectedCard, 'col', $event.target.value)"
-                min="1" 
-                :max="13 - selectedCard.size.width" 
-                class="w-full bg-gray-700 text-white p-2 rounded"
-              >
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-1">Row</label>
-              <input 
-                type="number" 
-                :value="selectedCard.position.row" 
-                @input="updateCardPosition(selectedCard, 'row', $event.target.value)"
-                min="1" 
-                class="w-full bg-gray-700 text-white p-2 rounded"
-              >
-            </div>
+          <h4 class="text-white font-medium mb-3">Card Order</h4>
+          <div class="flex justify-center space-x-2">
+            <button 
+              @click="moveCardLeft(selectedCard.id)" 
+              :class="dashboard.cards.findIndex(c => c.id === selectedCard.id) === 0 ? 'bg-gray-600 text-gray-500 cursor-not-allowed' : 'bg-gray-600 hover:bg-red-500 text-white'"
+              :disabled="dashboard.cards.findIndex(c => c.id === selectedCard.id) === 0"
+              class="px-4 py-2 rounded">
+              ← Move Left
+            </button>
+            <button 
+              @click="moveCardRight(selectedCard.id)" 
+              :class="dashboard.cards.findIndex(c => c.id === selectedCard.id) === dashboard.cards.length - 1 ? 'bg-gray-600 text-gray-500 cursor-not-allowed' : 'bg-gray-600 hover:bg-red-500 text-white'"
+              :disabled="dashboard.cards.findIndex(c => c.id === selectedCard.id) === dashboard.cards.length - 1"
+              class="px-4 py-2 rounded">
+              Move Right →
+            </button>
           </div>
-          
-          <!-- Arrow Controls -->
-          <div class="mt-3">
-            <label class="block text-sm font-medium text-gray-300 mb-2">Move Card</label>
-            <div class="grid grid-cols-3 gap-1 w-20 mx-auto">
-              <div></div>
-              <button @click="moveCard(selectedCard, 'up')" class="bg-gray-600 hover:bg-red-500 text-white p-2 rounded text-sm">↑</button>
-              <div></div>
-              <button @click="moveCard(selectedCard, 'left')" class="bg-gray-600 hover:bg-red-500 text-white p-2 rounded text-sm">←</button>
-              <div></div>
-              <button @click="moveCard(selectedCard, 'right')" class="bg-gray-600 hover:bg-red-500 text-white p-2 rounded text-sm">→</button>
-              <div></div>
-              <button @click="moveCard(selectedCard, 'down')" class="bg-gray-600 hover:bg-red-500 text-white p-2 rounded text-sm">↓</button>
-              <div></div>
-            </div>
+          <div class="text-center mt-2 text-sm text-gray-400">
+            Position: <span x-text="dashboard.cards.findIndex(c => c.id === selectedCard.id) + 1"></span> / <span x-text="dashboard.cards.length"></span>
           </div>
         </div>
       </div>
