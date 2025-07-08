@@ -5,7 +5,7 @@ import datetime
 from concurrent.futures import ThreadPoolExecutor
 from blueprint.workflow import workflow_bp
 from config import s3, BUCKET_NAME, LOCAL_BUCKET_DIR, CircularRefEncoder
-from services.db_service import (
+from services.s3_service import (
     get_max_from_global_db, save_in_global_db, delete, load_from_global_db,
     list_issues, get_issue, save_issue, save_issue_changes, get_issue_changes,
     list_sultan_objects, get_sultan_object, save_sultan_object, delete_sultan_object,

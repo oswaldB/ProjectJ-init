@@ -1,6 +1,5 @@
-
 from flask import Blueprint, render_template, request, jsonify
-from services.db_service import list_sultan_objects, get_sultan_object, save_sultan_object, delete_sultan_object
+from services.s3_service import list_sultan_objects, get_sultan_object, save_sultan_object, delete_sultan_object
 
 workflow_bp = Blueprint('workflow', __name__, url_prefix='/sultan/workflows')
 
