@@ -1,7 +1,9 @@
 {% extends "sultan/base.html" %}
-
+```
+```html
 {% block title %}Edit Dashboard{% endblock %}
-
+```
+```html
 {% block content %}
 <div class="flex h-screen" x-data="{
   page: 'dashboard-edit',
@@ -276,14 +278,30 @@
                 </button>
               </div>
             </div>
+
+            <!-- Card Preview Includes -->
             <div class="text-gray-400 text-sm">
-              <div x-show="card.type === 'graph'">Graph visualization</div>
-              <div x-show="card.type === 'datatable'">Data table display</div>
-              <div x-show="card.type === 'kanban'">Kanban board</div>
-              <div x-show="card.type === 'actions'">Action buttons</div>
-              <div x-show="card.type === 'chat'">Chat interface</div>
-              <div x-show="card.type === 'search'">Search functionality</div>
-              <div x-show="card.type === 'stats'">Statistics display</div>
+              <div x-show="card.type === 'graph'">
+                {% include "sultan/dashboards/cards/preview/graph.html" %}
+              </div>
+              <div x-show="card.type === 'datatable'">
+                {% include "sultan/dashboards/cards/preview/datatable.html" %}
+              </div>
+              <div x-show="card.type === 'kanban'">
+                {% include "sultan/dashboards/cards/preview/kanban.html" %}
+              </div>
+              <div x-show="card.type === 'actions'">
+                {% include "sultan/dashboards/cards/preview/actions.html" %}
+              </div>
+              <div x-show="card.type === 'chat'">
+                {% include "sultan/dashboards/cards/preview/chat.html" %}
+              </div>
+              <div x-show="card.type === 'search'">
+                {% include "sultan/dashboards/cards/preview/search.html" %}
+              </div>
+              <div x-show="card.type === 'stats'">
+                {% include "sultan/dashboards/cards/preview/stats.html" %}
+              </div>
             </div>
           </div>
         </template>
@@ -315,96 +333,27 @@
           </select>
         </div>
 
-        <!-- Data Table Specific Configuration -->
-        <div x-show="selectedCard.type === 'datatable'" class="space-y-3">
-          <hr class="border-gray-600">
-
-          <!-- Data Source Selection -->
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
-            <select x-model="selectedCard.config.dataSource" @change="loadFormColumns(selectedCard)" class="w-full bg-gray-700 text-white p-2 rounded">
-              <option value="">Select data source...</option>
-              <option value="jaffar">Jaffar Issues</option>
-              <template x-for="form in availableForms" :key="form.id">
-                <option :value="form.id" x-text="form.name"></option>
-              </template>
-            </select>
-          </div>
-
-          <!-- Local DB Storage -->
-          <div x-show="selectedCard.config.dataSource">
-            <label class="flex items-center text-gray-300 mb-1">
-              <input type="checkbox" x-model="selectedCard.config.saveToLocalDB" class="mr-2">
-              Save to Local DB (PouchDB)
-            </label>
-            <div x-show="selectedCard.config.saveToLocalDB" class="ml-6">
-              <input type="text" x-model="selectedCard.config.localDBName" class="w-full bg-gray-700 text-white p-2 rounded text-sm" placeholder="Local DB name">
-            </div>
-          </div>
-
-          <!-- Table Title -->
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">Table Title</label>
-            <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Table title">
-          </div>
-
-          <!-- Columns Configuration -->
-          <div x-show="selectedCard.config.columns && selectedCard.config.columns.length > 0">
-            <label class="block text-sm font-medium text-gray-300 mb-2">Columns</label>
-            <div class="space-y-2 max-h-40 overflow-y-auto">
-              <template x-for="(column, index) in selectedCard.config.columns" :key="index">
-                <div class="flex items-center space-x-2 p-2 bg-gray-700 rounded">
-                  <div class="flex space-x-1">
-                    <button @click="moveColumnUp(selectedCard, index)" :disabled="index === 0" class="text-gray-400 hover:text-white disabled:text-gray-600 text-xs">↑</button>
-                    <button @click="moveColumnDown(selectedCard, index)" :disabled="index === selectedCard.config.columns.length - 1" class="text-gray-400 hover:text-white disabled:text-gray-600 text-xs">↓</button>
-                  </div>
-                  <div class="flex-1 text-xs">
-                    <div class="text-white" x-text="column.label"></div>
-                  </div>
-                  <div class="flex space-x-1">
-                    <label class="flex items-center text-xs text-gray-300">
-                      <input type="checkbox" x-model="column.visible" class="mr-1">
-                      V
-                    </label>
-                    <label class="flex items-center text-xs text-gray-300">
-                      <input type="checkbox" x-model="column.filterable" class="mr-1">
-                      F
-                    </label>
-                    <label class="flex items-center text-xs text-gray-300">
-                      <input type="checkbox" x-model="column.sortable" class="mr-1">
-                      S
-                    </label>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
-
-          <!-- Options -->
-          <div class="space-y-2">
-            <label class="flex items-center text-gray-300">
-              <input type="checkbox" x-model="selectedCard.config.pagination" class="mr-2">
-              Enable Pagination
-            </label>
-            <label class="flex items-center text-gray-300">
-              <input type="checkbox" x-model="selectedCard.config.enableSearch" class="mr-2">
-              Enable Search
-            </label>
-            <label class="flex items-center text-gray-300">
-              <input type="checkbox" x-model="selectedCard.config.enableExport" class="mr-2">
-              Enable Export
-            </label>
-          </div>
-
-          <div x-show="selectedCard.config.pagination">
-            <label class="block text-sm font-medium text-gray-300 mb-1">Rows per page</label>
-            <select x-model="selectedCard.config.pageSize" class="w-full bg-gray-700 text-white p-2 rounded">
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
-          </div>
+        <!-- Card Editor Includes -->
+        <div x-show="selectedCard.type === 'datatable'">
+          {% include "sultan/dashboards/cards/editor/datatable.html" %}
+        </div>
+        <div x-show="selectedCard.type === 'graph'">
+          {% include "sultan/dashboards/cards/editor/graph.html" %}
+        </div>
+        <div x-show="selectedCard.type === 'kanban'">
+          {% include "sultan/dashboards/cards/editor/kanban.html" %}
+        </div>
+        <div x-show="selectedCard.type === 'actions'">
+          {% include "sultan/dashboards/cards/editor/actions.html" %}
+        </div>
+        <div x-show="selectedCard.type === 'chat'">
+          {% include "sultan/dashboards/cards/editor/chat.html" %}
+        </div>
+        <div x-show="selectedCard.type === 'search'">
+          {% include "sultan/dashboards/cards/editor/search.html" %}
+        </div>
+        <div x-show="selectedCard.type === 'stats'">
+          {% include "sultan/dashboards/cards/editor/stats.html" %}
         </div>
       </div>
     </div>
