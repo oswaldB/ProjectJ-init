@@ -2,7 +2,54 @@
 
 {% block title %}Workflow Editor{% endblock %}
 
-
+{% block head %}
+<style>
+  .workflow-block {
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  
+  .workflow-block.drag-over {
+    border-color: #3b82f6 !important;
+    background-color: #374151 !important;
+    transform: scale(1.02);
+  }
+  
+  .workflow-block:hover {
+    background-color: #374151;
+  }
+  
+  .cursor-move {
+    cursor: move;
+  }
+  
+  .cursor-move:active {
+    cursor: grabbing;
+  }
+  
+  /* Visual feedback for draggable blocks */
+  .workflow-block[draggable="true"]:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Drop zone styling */
+  .drop-zone {
+    min-height: 60px;
+    border: 2px dashed #6b7280;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+    transition: all 0.2s ease;
+  }
+  
+  .drop-zone.active {
+    border-color: #3b82f6;
+    background-color: #1f2937;
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="h-screen bg-gray-900 text-white flex" x-data="{
@@ -393,6 +440,9 @@
     this.draggedBlockIndex = blockIndex;
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/html', event.target.outerHTML);
+    
+    // Add visual feedback
+    event.target.style.opacity = '0.5';
   },
 
   dropBlockReorder(event, targetIndex) {
@@ -419,6 +469,26 @@
     blocks.splice(newTargetIndex, 0, draggedBlock);
 
     this.draggedBlockIndex = null;
+  },
+
+  onDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  },
+
+  onDragEnd(event) {
+    event.target.style.opacity = '1';
+    this.draggedBlockIndex = null;
+  },
+
+  onDragEnter(event) {
+    if (this.draggedBlockIndex !== null) {
+      event.target.closest('.workflow-block')?.classList.add('drag-over');
+    }
+  },
+
+  onDragLeave(event) {
+    event.target.closest('.workflow-block')?.classList.remove('drag-over');
   },
 
   moveBlockUp(blockIndex) {
@@ -619,19 +689,29 @@
     <div class="flex-1 p-6 overflow-y-auto">
       <div class="space-y-6">
         <template x-for="(block, blockIndex) in workflow.blocks" :key="block.id">
-          <div 
-            :draggable="blockIndex !== 0"
-            @dragstart="startDragBlock(blockIndex, $event)"
-            @dragover.prevent
-            @drop="dropBlockReorder($event, blockIndex)"
-            @dragend="draggedBlockIndex = null"
-            :class="{
-              'cursor-move': blockIndex !== 0,
-              'opacity-50': draggedBlockIndex === blockIndex,
-              'border-2 border-blue-400 border-dashed': draggedBlockIndex !== null && draggedBlockIndex !== blockIndex && blockIndex !== 0
-            }"
-            class="relative transition-all duration-200"
-          >
+          <div>
+            <!-- Drop zone above each block (except first) -->
+            <div x-show="blockIndex > 0 && draggedBlockIndex !== null && draggedBlockIndex !== blockIndex"
+                 @dragover.prevent="onDragOver"
+                 @drop="dropBlockReorder($event, blockIndex)"
+                 @dragenter="$event.target.classList.add('active')"
+                 @dragleave="$event.target.classList.remove('active')"
+                 class="drop-zone text-gray-400 text-sm">
+              <span>Drop block here</span>
+            </div>
+            
+            <div 
+              :draggable="blockIndex !== 0"
+              @dragstart="startDragBlock(blockIndex, $event)"
+              @dragend="onDragEnd"
+              :class="{
+                'cursor-move': blockIndex !== 0,
+                'opacity-50': draggedBlockIndex === blockIndex,
+                'border-2 border-blue-400 border-dashed': draggedBlockIndex !== null && draggedBlockIndex !== blockIndex && blockIndex !== 0,
+                'bg-gray-700': draggedBlockIndex !== null && draggedBlockIndex !== blockIndex && blockIndex !== 0
+              }"
+              class="workflow-block relative transition-all duration-200 p-4 rounded-lg border border-gray-600 bg-gray-800 hover:bg-gray-750"
+            >
             <!-- Controls (only for non-trigger blocks) -->
             <div x-show="blockIndex !== 0" class="absolute -left-12 top-1/2 transform -translate-y-1/2 flex flex-col space-y-1">
               <!-- Move Up Arrow -->
@@ -708,8 +788,19 @@
             <template x-if="block.type === 'form_response'">
               {% include 'sultan/workflows/actions/form_response.html' %}
             </template>
+            </div>
           </div>
         </template>
+        
+        <!-- Drop zone at the end -->
+        <div x-show="draggedBlockIndex !== null"
+             @dragover.prevent="onDragOver"
+             @drop="dropBlockReorder($event, workflow.blocks.length)"
+             @dragenter="$event.target.classList.add('active')"
+             @dragleave="$event.target.classList.remove('active')"
+             class="drop-zone text-gray-400 text-sm">
+          <span>Drop block at the end</span>
+        </div>
       </div>
     </div>
   </div>
