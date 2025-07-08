@@ -722,6 +722,7 @@ def dashboard_edit(dashboard_id):
     return render_template('sultan/dashboards/edit.html')
 
 # Register blueprints
+app.register_blueprint(workflow_bp)
 app.register_blueprint(dashboard_bp)
 
 if __name__ == '__main__':
