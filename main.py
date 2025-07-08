@@ -1713,7 +1713,7 @@ def sultan_save_dashboard():
         key = f'sultan/dashboards/{dashboard_id}.json'
         s3.put_object(Bucket=BUCKET_NAME,
                       Key=key,
-                      Body=json.dumps(dashboard, ensure_ascii=False),
+                      Body=jsonson.dumps(dashboard, ensure_ascii=False),
                       ContentType='application/json')
         return jsonify({"status": "success"})
     except Exception as e:
@@ -1803,3 +1803,179 @@ def save_in_global_db(key, data):
     except Exception as e:
         logger.error(f"Failed to save data to {key}: {e}")
         raise
+# Initialize Flask app
+from flask import Flask
+app = Flask(__name__)
+
+# AWS configuration - Replace with your actual AWS credentials and region
+REGION = os.environ.get('AWS_REGION') or 'eu-west-2'
+BUCKET_NAME = os.environ.get('BUCKET_NAME') or 'pc-analytics-jaffar'
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+
+# Initialize S3 client
+s3 = boto3.client('s3',
+                  region_name=REGION,
+                  aws_access_key_id=AWS_ACCESS_KEY_ID,
+                  aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+
+
+def delete(key):
+    s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+
+
+class Email:
+
+    def __init__(self, to, subject, content):
+        self.to = to
+        self.subject = subject
+        self.content = content
+
+    def send(self):
+        client = boto3.client(
+            'ses',
+            region_name=REGION,
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+
+        try:
+            response = client.send_email(
+                Destination={
+                    'ToAddresses': self.to,
+                },
+                Message={
+                    'Body': {
+                        'Html': {
+                            'Charset': 'UTF-8',
+                            'Data': self.content,
+                        },
+                    },
+                    'Subject': {
+                        'Charset': 'UTF-8',
+                        'Data': self.subject,
+                    },
+                },
+                Source="palms.reporting@noexternalmail.hsbc.com",
+            )
+            print(f"Email sent! Message ID: {response['MessageId']}")
+        except Exception as e:
+            print(f"Error sending email: {e}")
+
+
+def get_one_from_global_db(filename):
+    try:
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=filename)
+        content = response['Body'].read().decode('utf-8')
+        return json.loads(content)
+    except Exception as e:
+        logger.error(f"Error getting file from db {filename}: {e}")
+        return {}
+
+
+def get_max_from_global_db(filename):
+    """
+    Returns the content of the file ending with the highest number for a given filename prefix in S3.
+    For example, if you have myconfig-1.json, myconfig-2.json, this function will return the content of myconfig-2.json.
+    """
+    max_number = -1
+    max_filename = None
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=filename)
+        for obj in response.get('Contents', []):
+            try:
+                file = obj['Key']
+                parts = file.split('-')
+                if len(parts) > 1:
+                    number = parts[-1].split('.')[0]
+                    if number.isdigit() and int(number) > max_number:
+                        max_number = int(number)
+                        max_filename = file
+            except Exception:
+                continue
+        if max_filename:
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=max_filename)
+            content = response['Body'].read().decode('utf-8')
+            return json.loads(content)
+        else:
+            return {}
+    except Exception as e:
+        logger.error(f"Error getting max file from db {filename}: {e}")
+        return {}
+
+
+def get_max_filename_from_global_db(filename):
+    """
+    Returns the filename ending with the highest number for a given filename prefix in S3.
+    """
+    max_number = -1
+    max_filename = None
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=filename)
+        for obj in response.get('Contents', []):
+            try:
+                file = obj['Key']
+                parts = file.split('-')
+                if len(parts) > 1:
+                    number = parts[-1].split('.')[0]
+                    if number.isdigit() and int(number) > max_number:
+                        max_number = int(number)
+                        max_filename = file
+            except Exception:
+                continue
+        return max_filename
+    except Exception as e:
+        logger.error(f"Error getting max filename from db {filename}: {e}")
+        return None
+
+
+def save_issue_to_storage(issue_id, status, data):
+    """
+    Saves the issue data as a JSON file in S3.
+    """
+    try:
+        key = f'jaffar/issues/{status}/{issue_id}.json'
+        json_data = json.dumps(data, ensure_ascii=False)
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
+                      Body=json_data.encode('utf-8'),
+                      ContentType='application/json')
+        logger.info(f"Issue {issue_id} saved to {key}")
+    except Exception as e:
+        logger.error(f"Failed to save issue {issue_id}: {e}")
+        raise
+
+
+def save_issue_changes(issue_id, changes):
+    """
+    Saves the issue changes as a JSON file in S3.
+    """
+    try:
+        changes_key = f'jaffar/issues/changes/{issue_id}-changes.json'
+        try:
+            response = s3.get_object(Bucket=BUCKET_NAME, Key=changes_key)
+            existing_changes = json.loads(
+                response['Body'].read().decode('utf-8'))
+            if not isinstance(existing_changes, list):
+                existing_changes = [existing_changes]
+        except s3.exceptions.NoSuchKey:
+            existing_changes = []
+
+        if isinstance(changes, list):
+            existing_changes.extend(changes)
+        else:
+            existing_changes.append(changes)
+
+        json_data = json.dumps(existing_changes, ensure_ascii=False)
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=changes_key,
+                      Body=json_data.encode('utf-8'),
+                      ContentType='application/json')
+        logger.info(f"Changes for issue {issue_id} saved to {changes_key}")
+    except Exception as e:
+        logger.error(f"Failed to save changes for issue {issue_id}: {e}")
+        raise
+
+
+# Start the Flask application
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
