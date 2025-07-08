@@ -65,17 +65,19 @@
 
   async loadWorkflow(id) {
     try {
-      const response = await fetch(`/api/sultan/workflows/${id}`);
+      const response = await fetch(`/sultan/workflows/api/${id}`);
       const data = await response.json();
       this.workflow = data;
 
       // Initialize branches for filter blocks if not present
-      this.workflow.blocks.forEach(block => {
-        if (block.type === 'filter') {
-          if (!block.trueBranch) block.trueBranch = [];
-          if (!block.falseBranch) block.falseBranch = [];
-        }
-      });
+      if (this.workflow && this.workflow.blocks) {
+        this.workflow.blocks.forEach(block => {
+          if (block.type === 'filter') {
+            if (!block.trueBranch) block.trueBranch = [];
+            if (!block.falseBranch) block.falseBranch = [];
+          }
+        });
+      }
     } catch (error) {
       console.error('Failed to load workflow:', error);
     }
@@ -83,7 +85,7 @@
 
   async loadTemplates() {
     try {
-      const response = await fetch('/api/sultan/templates');
+      const response = await fetch('/sultan/templates/api/list');
       this.templates = await response.json();
     } catch (error) {
       console.error('Failed to load templates:', error);
@@ -93,7 +95,7 @@
 
   async loadEmailGroups() {
     try {
-      const response = await fetch('/api/sultan/emailgroups/list');
+      const response = await fetch('/sultan/emailgroups/api/list');
       this.emailGroups = await response.json();
     } catch (error) {
       console.error('Failed to load email groups:', error);
@@ -103,7 +105,7 @@
 
   async loadForms() {
     try {
-      const response = await fetch('/api/sultan/forms/list');
+      const response = await fetch('/sultan/forms/api/list');
       this.forms = await response.json();
     } catch (error) {
       console.error('Failed to load forms:', error);
@@ -113,7 +115,7 @@
 
   async loadAvailableWorkflows() {
     try {
-      const response = await fetch('/api/sultan/workflows/list');
+      const response = await fetch('/sultan/workflows/api/list');
       this.availableWorkflows = await response.json();
     } catch (error) {
       console.error('Failed to load available workflows:', error);
@@ -127,7 +129,7 @@
       return;
     }
     try {
-      const response = await fetch(`/api/sultan/forms/${formId}`);
+      const response = await fetch(`/sultan/forms/api/${formId}`);
       const formData = await response.json();
 
       const keys = [];
@@ -241,7 +243,7 @@
 
   async save() {
     try {
-      const response = await fetch('/api/sultan/workflows/save', {
+      const response = await fetch('/sultan/workflows/api/save', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(this.workflow)
