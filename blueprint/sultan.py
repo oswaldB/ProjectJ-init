@@ -28,27 +28,27 @@ logger = logging.getLogger(__name__)
 # Create Sultan blueprint with prefix
 sultan_bp = Blueprint('sultan', __name__, url_prefix='/pc-analytics-jaffar/sultan')
 
-@sultan_blueprint.route('/')
+@sultan_bp.route('/')
 def index():
     return render_template('sultan/base.html')
 
-@sultan_blueprint.route('/login')
+@sultan_bp.route('/login')
 def login():
     return render_template('sultan/login.html')
 
-@sultan_blueprint.route('/forms')
+@sultan_bp.route('/forms')
 def forms_list():
     return render_template('sultan/forms/index.html')
 
-@sultan_blueprint.route('/forms/edit/<form_id>')
+@sultan_bp.route('/forms/edit/<form_id>')
 def form_edit(form_id):
     return render_template('sultan/forms/edit.html')
 
-@sultan_blueprint.route('/escalation')
+@sultan_bp.route('/escalation')
 def escalation_list():
     return render_template('/sultan/escalation/index.html')
 
-@sultan_blueprint.route('/escalation/create')
+@sultan_bp.route('/escalation/create')
 def escalation_create():
     new_id = f"Escalation-{uuid.uuid4()}"
     # Structure vide ou par défaut
@@ -61,56 +61,56 @@ def escalation_create():
     # Redirige vers la page d'édition
     return redirect(f"/pc-analytics-jaffar/sultan/escalation/edit/{new_id}")
 
-@sultan_blueprint.route('/escalation/edit/<escalation_id>')
+@sultan_bp.route('/escalation/edit/<escalation_id>')
 def escalation_edit(escalation_id):
     return render_template('sultan/escalation/edit.html')
 
-@sultan_blueprint.route('/emailgroups')
+@sultan_bp.route('/emailgroups')
 def emailgroups_list():
     return render_template('sultan/emailgroups/index.html')
 
-@sultan_blueprint.route('/emailgroups/edit/<emailgroup_id>')
+@sultan_bp.route('/emailgroups/edit/<emailgroup_id>')
 def emailgroup_edit(emailgroup_id):
     return render_template('sultan/emailgroups/edit.html')
 
-@sultan_blueprint.route('/sites')
+@sultan_bp.route('/sites')
 def sites_list():
     return render_template('sultan/sites/index.html')
 
-@sultan_blueprint.route('/sites/edit/<site_id>')
+@sultan_bp.route('/sites/edit/<site_id>')
 def site_edit(site_id):
     return render_template('sultan/sites/edit.html')
 
-@sultan_blueprint.route('/templates')
+@sultan_bp.route('/templates')
 def templates_list():
     return render_template('sultan/templates/index.html')
 
-@sultan_blueprint.route('/templates/edit/<template_id>')
+@sultan_bp.route('/templates/edit/<template_id>')
 def template_edit(template_id):
     return render_template('sultan/templates/edit2.html')
 
-@sultan_blueprint.route('/templates/edit-datatable/<template_id>')
+@sultan_bp.route('/templates/edit-datatable/<template_id>')
 def template_edit_datatable(template_id):
     return render_template('sultan/templates/edit-datatable.html')
 
-@sultan_blueprint.route('/dashboard/<dashboard_id>')
+@sultan_bp.route('/dashboard/<dashboard_id>')
 def dashboard_edit(dashboard_id):
     return render_template('sultan/dashboards/edit.html', dashboard_id=dashboard_id)
 
-@sultan_blueprint.route('/dashboards')
+@sultan_bp.route('/dashboards')
 def dashboards_list():
     return render_template('sultan/dashboards/index.html')
 
-@sultan_blueprint.route('/workflows')
+@sultan_bp.route('/workflows')
 def workflows_list():
     return render_template('sultan/workflows/index.html')
 
-@sultan_blueprint.route('/workflows/edit/<workflow_id>')
+@sultan_bp.route('/workflows/edit/<workflow_id>')
 def workflow_edit(workflow_id):
     return render_template('sultan/workflows/edit.html')
 
 # API Routes
-@sultan_blueprint.route('/api/dashboard/<dashboard_id>', methods=['GET'])
+@sultan_bp.route('/api/dashboard/<dashboard_id>', methods=['GET'])
 def api_dashboard_get(dashboard_id):
     """Get a dashboard config from S3"""
     key = f'sultan/dashboards/{dashboard_id}.json'
@@ -124,7 +124,7 @@ def api_dashboard_get(dashboard_id):
         logger.error(f"Failed to get dashboard {dashboard_id}: {e}")
         return jsonify({"error": str(e)}), 500
 
-@sultan_blueprint.route('/api/dashboard/create', methods=['POST'])
+@sultan_bp.route('/api/dashboard/create', methods=['POST'])
 def api_dashboard_create():
     """Create a new dashboard config"""
     try:
@@ -158,7 +158,7 @@ def api_dashboard_create():
         logger.error(f"Failed to create dashboard: {e}")
         return jsonify({"error": str(e)}), 500
 
-@sultan_blueprint.route('/api/dashboards/list')
+@sultan_bp.route('/api/dashboards/list')
 def api_dashboards_list():
     """List all dashboards"""
     dashboards = []
@@ -181,7 +181,7 @@ def api_dashboards_list():
         return jsonify({"error": str(e)}), 500
     return jsonify(dashboards)
 
-@sultan_blueprint.route('/api/emailgroups/list')
+@sultan_bp.route('/api/emailgroups/list')
 def api_emailgroups_list():
     emailgroups = []
     prefix = 'sultan/emailgroups/'
@@ -200,7 +200,7 @@ def api_emailgroups_list():
         return jsonify({"error": str(e)}), 500
     return jsonify(emailgroups)
 
-@sultan_blueprint.route('/api/sites/list')
+@sultan_bp.route('/api/sites/list')
 def api_sites_list():
     sites = []
     prefix = 'sultan/sites/'
@@ -219,7 +219,7 @@ def api_sites_list():
         return jsonify({"error": str(e)}), 500
     return jsonify(sites)
 
-@sultan_blueprint.route('/api/escalation/list')
+@sultan_bp.route('/api/escalation/list')
 def api_escalation_list():
     escalation_names = []
     prefix = 'sultan/escalations/'
@@ -237,7 +237,7 @@ def api_escalation_list():
         return jsonify({"error": str(e)}), 500
     return jsonify(escalation_names)
 
-@sultan_blueprint.route('/api/escalation/save', methods=['POST'])
+@sultan_bp.route('/api/escalation/save', methods=['POST'])
 def api_escalation_save():
     try:
         data = request.json
@@ -264,7 +264,7 @@ def api_escalation_save():
         logger.error(f"Failed to save escalation: {e}")
         return jsonify({"error": str(e)}), 500
 
-@sultan_blueprint.route('/api/escalation/<escalation_id>')
+@sultan_bp.route('/api/escalation/<escalation_id>')
 def api_escalation_get(escalation_id):
     key = f"sultan/escalations/{escalation_id}.json"
     try:
@@ -275,7 +275,7 @@ def api_escalation_get(escalation_id):
         logger.error(f"Failed to load escalation {escalation_id}: {e}")
         return jsonify({"error": str(e)}), 404
 
-@sultan_blueprint.route('/api/forms', methods=['GET'])
+@sultan_bp.route('/api/forms', methods=['GET'])
 def api_forms():
     forms = []
     try:
@@ -293,7 +293,7 @@ def api_forms():
         return jsonify({"error": str(e)}), 500
     return jsonify(forms)
 
-@sultan_blueprint.route('/api/forms/<form_id>', methods=['GET'])
+@sultan_bp.route('/api/forms/<form_id>', methods=['GET'])
 def api_form_by_id(form_id):
     """Fetch a specific form by its ID"""
     try:
@@ -307,7 +307,7 @@ def api_form_by_id(form_id):
         logger.error(f"Failed to fetch form {form_id}: {e}")
         return jsonify({"error": str(e)}), 500
 
-@sultan_blueprint.route('/api/forms/save', methods=['POST'])
+@sultan_bp.route('/api/forms/save', methods=['POST'])
 def api_save_form():
     data = request.json
     form = data.get('form')
@@ -321,7 +321,7 @@ def api_save_form():
         logger.error(f"Failed to save form: {e}")
         return jsonify({"error": str(e)}), 500
 
-@sultan_blueprint.route('/api/forms/delete/<form_id>', methods=['DELETE'])
+@sultan_bp.route('/api/forms/delete/<form_id>', methods=['DELETE'])
 def api_delete_form(form_id):
     key = f'sultan/forms/{form_id}.json'
     try:
@@ -331,7 +331,7 @@ def api_delete_form(form_id):
         logger.error(f"Failed to delete form: {e}")
         return jsonify({"error": str(e)}), 500
 
-@sultan_blueprint.route('/api/templates/<template_id>')
+@sultan_bp.route('/api/templates/<template_id>')
 def api_template_get(template_id):
     try:
         if template_id.endswith('.json'):
@@ -349,7 +349,7 @@ def api_template_get(template_id):
             "redirect": "/pc-analytics-jaffar/sultan/templates/list"
         }), 404
 
-@sultan_blueprint.route('/api/templates/delete/<template_id>', methods=['POST'])
+@sultan_bp.route('/api/templates/delete/<template_id>', methods=['POST'])
 def api_template_delete(template_id):
     """Move a template to the 'sultan/templates/delete/' folder"""
     try:
@@ -373,7 +373,7 @@ def api_template_delete(template_id):
         logger.error(f"Failed to move template {template_id} to delete folder: {e}")
         return jsonify({"error": str(e)}), 500
 
-@sultan_blueprint.route('/api/templates/save', methods=['POST'])
+@sultan_bp.route('/api/templates/save', methods=['POST'])
 def api_template_save():
     data = request.json
     template = data.get('template')
@@ -392,7 +392,7 @@ def api_template_save():
         logger.error(f"Failed to save template: {e}")
         return jsonify({"error": "Failed to save template"}), 500
 
-@sultan_blueprint.route('/api/templates/duplicate', methods=['POST'])
+@sultan_bp.route('/api/templates/duplicate', methods=['POST'])
 def api_template_duplicate():
     data = request.json
     template_id = data.get('id')
@@ -409,7 +409,7 @@ def api_template_duplicate():
         logger.error(f"Failed to duplicate template: {e}")
         return jsonify({"error": "Failed to duplicate template"}), 500
 
-@sultan_blueprint.route('/api/templates', methods=['GET'])
+@sultan_bp.route('/api/templates', methods=['GET'])
 def api_templates_list():
     """Fetch the list of templates from the S3 bucket"""
     templates = []
@@ -431,7 +431,7 @@ def api_templates_list():
     
     return jsonify(templates)
 
-@sultan_blueprint.route('/save/dashboard', methods=['POST'])
+@sultan_bp.route('/save/dashboard', methods=['POST'])
 def save_dashboard():
     """Save a dashboard configuration to S3"""
     try:
