@@ -397,7 +397,7 @@
 
   dropBlockReorder(event, targetIndex) {
     event.preventDefault();
-    
+
     if (this.draggedBlockIndex === null || this.draggedBlockIndex === targetIndex) {
       return;
     }
@@ -409,15 +409,15 @@
 
     const sourceIndex = this.draggedBlockIndex;
     const blocks = this.workflow.blocks;
-    
+
     // Remove the dragged block from its original position
     const draggedBlock = blocks.splice(sourceIndex, 1)[0];
-    
+
     // Insert it at the new position
     // Adjust target index if we removed an item before it
     const newTargetIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
     blocks.splice(newTargetIndex, 0, draggedBlock);
-    
+
     this.draggedBlockIndex = null;
   },
 
@@ -426,10 +426,10 @@
     if (blockIndex <= 1) {
       return;
     }
-    
+
     const blocks = this.workflow.blocks;
     const block = blocks[blockIndex];
-    
+
     // Swap with previous block
     blocks[blockIndex] = blocks[blockIndex - 1];
     blocks[blockIndex - 1] = block;
@@ -440,10 +440,10 @@
     if (blockIndex === 0 || blockIndex >= this.workflow.blocks.length - 1) {
       return;
     }
-    
+
     const blocks = this.workflow.blocks;
     const block = blocks[blockIndex];
-    
+
     // Swap with next block
     blocks[blockIndex] = blocks[blockIndex + 1];
     blocks[blockIndex + 1] = block;
@@ -460,19 +460,19 @@
       for (let i = 0; i < this.workflow.blocks.length; i++) {
         this.testExecution.currentStep = i;
         const block = this.workflow.blocks[i];
-        
+
         this.testExecution.logs.push(`Executing ${block.type} block...`);
-        
+
         // Simulate processing time
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
+
         // Simulate block execution
         const result = await this.simulateBlockExecution(block, i);
         this.testExecution.results.push(result);
-        
+
         this.testExecution.logs.push(`${block.type} block completed: ${result.status}`);
       }
-      
+
       this.testExecution.logs.push('Workflow execution completed successfully!');
     } catch (error) {
       this.testExecution.logs.push(`Error: ${error.message}`);
@@ -486,34 +486,34 @@
     switch(block.type) {
       case 'trigger':
         return { status: 'success', message: 'Trigger activated with test data', data: this.testData };
-      
+
       case 'filter':
         // Simulate filter evaluation
         const passed = Math.random() > 0.5; // Random for demo
         return { status: 'success', message: `Filter evaluated: ${passed ? 'PASSED' : 'FAILED'}`, passed };
-      
+
       case 'email':
         return { status: 'success', message: `Email sent to group ${block.emailGroupId || 'test-group'}` };
-      
+
       case 'code':
         return { status: 'success', message: 'Python code executed', output: 'Test code execution result' };
-      
+
       case 'search':
         return { status: 'success', message: `Search performed: ${block.query}`, results: 3 };
-      
+
       case 'delay':
         return { status: 'success', message: `Delayed for ${block.delayAmount || 5} ${block.delayUnit || 'seconds'}` };
-      
+
       case 'ask_scheherazade':
         return { status: 'success', message: 'Question sent to Scheherazade', response: 'AI response simulation' };
-      
+
       case 'call_workflow':
         return { status: 'success', message: `Called workflow: ${block.workflowId || 'test-workflow'}` };
-      
+
       case 'form_response':
         const submitType = block.saveAsDraft ? 'draft' : 'submitted';
         return { status: 'success', message: `Form response ${submitType} to form: ${block.formId || 'test-form'}` };
-      
+
       default:
         return { status: 'unknown', message: 'Unknown block type' };
     }
@@ -644,14 +644,14 @@
                   <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
                 </svg>
               </button>
-              
+
               <!-- Drag Handle -->
               <div class="text-gray-500 hover:text-gray-300 cursor-move w-5 h-5 flex items-center justify-center">
                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M7 19v-8l-2 2V9l2-2V5a1 1 0 011-1h1a1 1 0 011 1v2l2 2v4l-2-2v8a1 1 0 01-1 1H8a1 1 0 01-1-1zM17 5v8l2-2v4l-2 2v2a1 1 0 01-1 1h-1a1 1 0 01-1-1v-2l-2-2V9l2 2V5a1 1 0 011-1h1a1 1 0 011 1z"/>
                 </svg>
               </div>
-              
+
               <!-- Move Down Arrow -->
               <button 
                 @click="moveBlockDown(blockIndex)"
@@ -758,7 +758,7 @@
         <!-- Execution Results -->
         <div>
           <h3 class="text-lg font-semibold mb-3">Execution Results</h3>
-          
+
           <!-- Progress Indicator -->
           <div x-show="testExecution.isRunning" class="mb-4">
             <div class="bg-gray-600 rounded-full h-2">
@@ -822,14 +822,14 @@
       <svg x-show="toastType === 'success'" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
       </svg>
-      
+
       <!-- Error Icon -->
       <svg x-show="toastType === 'error'" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
       </svg>
-      
+
       <span x-text="toastMessage"></span>
-      
+
       <!-- Close Button -->
       <button @click="showToast = false" class="ml-2 text-white hover:text-gray-200">
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -839,4 +839,25 @@
     </div>
   </div>
 </div>
+
+<div class="w-64 bg-gray-800 border-r border-gray-700 p-4 overflow-y-auto">
+      <h3 class="text-white font-semibold mb-4">Workflow Blocks</h3>
+      <div class="space-y-2">
+        <template x-for="blockType in availableBlocks.slice(1)" :key="blockType.type">
+          <button 
+            @click="addBlock(blockType.type)"
+            draggable="true"
+            @dragstart="startDragFromPalette(blockType.type)"
+            @dragend="draggedBlock = null"
+            class="bg-red-500 p-3 rounded cursor-move hover:bg-red-600 transition-colors w-full text-left"
+          >
+            <div class="flex items-center space-x-2">
+              <div class="w-3 h-3 rounded-full" :class="`bg-${blockType.color}-500`"></div>
+              <span class="text-white text-sm font-medium" x-text="blockType.name"></span>
+            </div>
+             <div class="text-xs text-gray-400 mt-1">Click to add or drag to filter</div>
+          </button>
+        </template>
+      </div>
+    </div>
 {% endblock %}
