@@ -293,7 +293,7 @@
           <!-- Data Source Selection -->
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
-            <select x-model="selectedCard.config.dataSource" @change="loadFormColumns(selectedCard)" class="w-full bg-gray-700 text-white p-2 rounded">
+            <select x-model="selectedCard.config.dataSource" @change="await loadFormColumns(selectedCard)" class="w-full bg-gray-700 text-white p-2 rounded">
               <option value="">Select data source...</option>
               <option value="jaffar">Jaffar Issues</option>
               <template x-for="form in availableForms" :key="form.id">
