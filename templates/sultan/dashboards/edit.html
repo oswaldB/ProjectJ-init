@@ -44,7 +44,7 @@
 
   async loadDashboard(id) {
     try {
-      const response = await fetch(`/sultan/dashboard/api/${id}`);
+      const response = await fetch(`/pc-analytics-jaffar/sultan/dashboard/api/${id}`);
       if (response.ok) {
         this.dashboard = await response.json();
       }
@@ -148,7 +148,7 @@
 
   async saveDashboard() {
     try {
-      const response = await fetch('/sultan/dashboard/api/save', {
+      const response = await fetch('/pc-analytics-jaffar/sultan/dashboard/api/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -156,7 +156,7 @@
         body: JSON.stringify(this.dashboard)
       });
       if (response.ok) {
-        window.location.href = '/sultan/dashboard';
+        window.location.href = '/pc-analytics-jaffar/sultan/dashboards';
       }
     } catch (error) {
       console.error('Failed to save dashboard:', error);
@@ -176,7 +176,7 @@
 
   async loadForms() {
     try {
-      const response = await fetch('/sultan/api/forms');
+      const response = await fetch('/pc-analytics-jaffar/sultan/api/forms');
       if (response.ok) {
         this.availableForms = await response.json();
       }
@@ -188,7 +188,7 @@
   async loadDataSources() {
     try {
       // Charger toutes les datasources disponibles depuis les formulaires soumis
-      const formsResponse = await fetch('/sultan/api/forms');
+      const formsResponse = await fetch('/pc-analytics-jaffar/sultan/api/forms');
       if (formsResponse.ok) {
         const forms = await formsResponse.json();
         this.availableDataSources = [];
@@ -225,7 +225,7 @@
     try {
       let columns = [];
       // Load form configuration to get questions
-      const response = await fetch(`/sultan/api/forms/${card.config.dataSource}`);
+      const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${card.config.dataSource}`);
       if (response.ok) {
         const formConfig = await response.json();
         if (formConfig && formConfig.fields && Array.isArray(formConfig.fields)) {
@@ -395,7 +395,7 @@
           ></textarea>
         </div>
         <div class="flex space-x-2">
-          <a href="/sultan/dashboard" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+          <a href="/pc-analytics-jaffar/sultan/dashboards" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
             Cancel
           </a>
           <button @click="saveDashboard()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
