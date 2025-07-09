@@ -1,4 +1,3 @@
-
 {% extends "sultan/base.html" %}
 
 {% block title %}Edit Dashboard{% endblock %}
@@ -24,9 +23,10 @@
   ],
   selectedCard: null,
   gridColumns: Array.from({length: 12}, (_, i) => i + 1),
-  
+
   // Form and data source management
   availableForms: [],
+  availableDataSources: [],
 
   async init() {
     const dashboardId = window.location.pathname.split('/').pop();
@@ -292,7 +292,99 @@
 
   removeSearchField(card, index) {
     card.config.searchFields.splice(index, 1);
-  }
+  },
+
+  init() {
+    this.loadForms();
+    this.loadDataSources();
+  },
+
+  async loadForms() {
+    try {
+      const response = await fetch('/sultan/api/forms');
+      if (response.ok) {
+        this.availableForms = await response.json();
+      }
+    } catch (error) {
+      console.error('Failed to load forms:', error);
+    }
+  },
+
+  async loadDataSources() {
+    try {
+      // Charger toutes les datasources disponibles depuis les formulaires soumis
+      const formsResponse = await fetch('/sultan/api/forms');
+      if (formsResponse.ok) {
+        const forms = await formsResponse.json();
+        this.availableDataSources = [];
+
+        for (const form of forms) {
+          try {
+            // Vérifier s'il y a des données soumises pour ce formulaire
+            const submittedResponse = await fetch(`/forms/api/submitted-responses/${form.id}?page=1&page_size=1`);
+            if (submittedResponse.ok) {
+              const submittedData = await submittedResponse.json();
+              if (submittedData.total > 0) {
+                this.availableDataSources.push({
+                  id: form.id,
+                  name: form.name || `Form ${form.id}`,
+                  type: 'form',
+                  path: `/forms/${form.id}/submitted/`,
+                  recordCount: submittedData.total
+                });
+              }
+            }
+          } catch (error) {
+            console.error(`Failed to check submitted data for form ${form.id}:`, error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load data sources:', error);
+    }
+  },
+
+  async loadDataSourceColumns() {
+    if (!this.selectedCard || !this.selectedCard.config.dataSource) return;
+
+    try {
+      const formId = this.selectedCard.config.dataSource;
+      const response = await fetch(`/forms/api/submitted-responses/${formId}?page=1&page_size=1`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.issues && data.issues.length > 0) {
+          const firstRecord = data.issues[0];
+          const columns = Object.keys(firstRecord).map(key => ({
+            key: key,
+            label: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
+            type: this.inferColumnType(firstRecord[key]),
+            visible: true,
+            sortable: true
+          }));
+
+          if (!this.selectedCard.config.columns) {
+            this.selectedCard.config.columns = [];
+          }
+          this.selectedCard.config.columns = columns;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load columns:', error);
+    }
+  },
+
+  inferColumnType(value) {
+    if (typeof value === 'number') return 'number';
+    if (typeof value === 'boolean') return 'boolean';
+    if (value && typeof value === 'string') {
+      if (value.match(/^\d{4}-\d{2}-\d{2}/)) return 'date';
+      if (value.includes('@')) return 'email';
+      if (value.length > 100) return 'longtext';
+    }
+    return 'text';
+  },
+
+  addCard(type) {
 }" x-init="init()">
 
   <!-- Sidebar for adding cards -->
@@ -359,7 +451,7 @@
                 <button @click.stop="removeCard(card.id)" class="text-red-500 hover:text-red-700 text-xs">×</button>
               </div>
             </div>
-            
+
             <!-- Type-specific Preview Includes -->
             <template x-if="card && card.type === 'datatable'">
               <div>

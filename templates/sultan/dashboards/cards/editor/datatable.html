@@ -1,19 +1,18 @@
 <div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
   <h3 class="text-white font-semibold mb-3">Data Table Configuration</h3>
   <div class="space-y-4">
-    
+
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
-      <select x-model="selectedCard.config.dataSource" @change="loadFormColumns(selectedCard)" class="w-full bg-gray-700 text-white p-2 rounded">
+      <select x-model="selectedCard.config.dataSource" @change="loadDataSourceColumns" class="w-full bg-gray-700 text-white p-2 rounded">
         <option value="">Select a data source</option>
-        <option value="jaffar">Jaffar Issues</option>
-        <template x-for="form in availableForms" :key="form.id">
-          <option :value="form.id" x-text="form.name"></option>
+        <template x-for="source in availableDataSources" :key="source.id">
+          <option :value="source.id" x-text="`${source.name} (${source.recordCount} records)`"></option>
         </template>
       </select>
     </div>
 
-    
+
 
     <div x-show="selectedCard.config.dataSource" class="mt-4">
       <label class="block text-sm font-medium text-gray-300 mb-1">Page Size</label>
