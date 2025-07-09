@@ -128,37 +128,37 @@
             </div>
 
             <!-- Type-specific Editor Includes -->
-            <template x-if="selectedCard.type === 'datatable'">
+            <template x-if="selectedCard && selectedCard.type === 'datatable'">
               <div>
                 {% include "sultan/dashboards/cards/editor/datatable.html" %}
               </div>
             </template>
-            <template x-if="selectedCard.type === 'graph'">
+            <template x-if="selectedCard && selectedCard.type === 'graph'">
               <div>
                 {% include "sultan/dashboards/cards/editor/graph.html" %}
               </div>
             </template>
-            <template x-if="selectedCard.type === 'kanban'">
+            <template x-if="selectedCard && selectedCard.type === 'kanban'">
               <div>
                 {% include "sultan/dashboards/cards/editor/kanban.html" %}
               </div>
             </template>
-            <template x-if="selectedCard.type === 'actions'">
+            <template x-if="selectedCard && selectedCard.type === 'actions'">
               <div>
                 {% include "sultan/dashboards/cards/editor/actions.html" %}
               </div>
             </template>
-            <template x-if="selectedCard.type === 'chat'">
+            <template x-if="selectedCard && selectedCard.type === 'chat'">
               <div>
                 {% include "sultan/dashboards/cards/editor/chat.html" %}
               </div>
             </template>
-            <template x-if="selectedCard.type === 'search'">
+            <template x-if="selectedCard && selectedCard.type === 'search'">
               <div>
                 {% include "sultan/dashboards/cards/editor/search.html" %}
               </div>
             </template>
-            <template x-if="selectedCard.type === 'stats'">
+            <template x-if="selectedCard && selectedCard.type === 'stats'">
               <div>
                 {% include "sultan/dashboards/cards/editor/stats.html" %}
               </div>
@@ -182,41 +182,41 @@
         <div class="grid grid-cols-4 gap-4 auto-rows-min">
           <template x-for="card in dashboard.cards" :key="card.id">
             <div class="bg-gray-800 rounded-lg border border-gray-600 p-4"
-                 :class="`col-span-${card.size.width} row-span-${card.size.height}`">
+                 :class="`col-span-${card.size?.width || 1} row-span-${card.size?.height || 1}`">
               <h3 class="text-white font-semibold mb-2" x-text="card.title || `${card.type} Card`"></h3>
               
               <!-- Type-specific Preview Includes -->
-              <template x-if="card.type === 'datatable'">
+              <template x-if="card && card.type === 'datatable'">
                 <div>
                   {% include "sultan/dashboards/cards/preview/datatable.html" %}
                 </div>
               </template>
-              <template x-if="card.type === 'graph'">
+              <template x-if="card && card.type === 'graph'">
                 <div>
                   {% include "sultan/dashboards/cards/preview/graph.html" %}
                 </div>
               </template>
-              <template x-if="card.type === 'kanban'">
+              <template x-if="card && card.type === 'kanban'">
                 <div>
                   {% include "sultan/dashboards/cards/preview/kanban.html" %}
                 </div>
               </template>
-              <template x-if="card.type === 'actions'">
+              <template x-if="card && card.type === 'actions'">
                 <div>
                   {% include "sultan/dashboards/cards/preview/actions.html" %}
                 </div>
               </template>
-              <template x-if="card.type === 'chat'">
+              <template x-if="card && card.type === 'chat'">
                 <div>
                   {% include "sultan/dashboards/cards/preview/chat.html" %}
                 </div>
               </template>
-              <template x-if="card.type === 'search'">
+              <template x-if="card && card.type === 'search'">
                 <div>
                   {% include "sultan/dashboards/cards/preview/search.html" %}
                 </div>
               </template>
-              <template x-if="card.type === 'stats'">
+              <template x-if="card && card.type === 'stats'">
                 <div>
                   {% include "sultan/dashboards/cards/preview/stats.html" %}
                 </div>
