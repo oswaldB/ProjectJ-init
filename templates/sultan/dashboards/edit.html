@@ -334,26 +334,26 @@
         </div>
 
         <!-- Card Editor Includes -->
-        <div x-show="selectedCard.type === 'datatable'" x-data="{ mode: 'editor' }">
-          {% include "sultan/dashboards/cards/datatable.html" %}
+        <div x-show="selectedCard.type === 'datatable'">
+          {% include "sultan/dashboards/cards/editor/datatable.html" %}
         </div>
-        <div x-show="selectedCard.type === 'graph'" x-data="{ mode: 'editor' }">
-          {% include "sultan/dashboards/cards/graph.html" %}
+        <div x-show="selectedCard.type === 'graph'">
+          {% include "sultan/dashboards/cards/editor/graph.html" %}
         </div>
-        <div x-show="selectedCard.type === 'kanban'" x-data="{ mode: 'editor' }">
-          {% include "sultan/dashboards/cards/kanban.html" %}
+        <div x-show="selectedCard.type === 'kanban'">
+          {% include "sultan/dashboards/cards/editor/kanban.html" %}
         </div>
-        <div x-show="selectedCard.type === 'actions'" x-data="{ mode: 'editor' }">
-          {% include "sultan/dashboards/cards/actions.html" %}
+        <div x-show="selectedCard.type === 'actions'">
+          {% include "sultan/dashboards/cards/editor/actions.html" %}
         </div>
-        <div x-show="selectedCard.type === 'chat'" x-data="{ mode: 'editor' }">
-          {% include "sultan/dashboards/cards/chat.html" %}
+        <div x-show="selectedCard.type === 'chat'">
+          {% include "sultan/dashboards/cards/editor/chat.html" %}
         </div>
-        <div x-show="selectedCard.type === 'search'" x-data="{ mode: 'editor' }">
-          {% include "sultan/dashboards/cards/search.html" %}
+        <div x-show="selectedCard.type === 'search'">
+          {% include "sultan/dashboards/cards/editor/search.html" %}
         </div>
-        <div x-show="selectedCard.type === 'stats'" x-data="{ mode: 'editor' }">
-          {% include "sultan/dashboards/cards/stats.html" %}
+        <div x-show="selectedCard.type === 'stats'">
+          {% include "sultan/dashboards/cards/editor/stats.html" %}
         </div>
       </div>
     </div>
