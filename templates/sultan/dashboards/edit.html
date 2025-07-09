@@ -1,4 +1,3 @@
-
 {% extends "sultan/base.html" %}
 
 {% block title %}Edit Dashboard{% endblock %}
@@ -187,35 +186,46 @@
 
   async loadDataSources() {
     try {
+      console.log('Loading data sources...');
+      // Initialize availableDataSources
+      this.availableDataSources = [];
+
       // Charger toutes les datasources disponibles depuis les formulaires soumis
       const formsResponse = await fetch('/pc-analytics-jaffar/forms/api/list');
       if (formsResponse.ok) {
         const forms = await formsResponse.json();
-        this.availableDataSources = [];
+        console.log('Forms loaded:', forms);
 
-        for (const form of forms) {
-          try {
-            // Vérifier s'il y a des données soumises pour ce formulaire depuis S3
-            const submittedResponse = await fetch(`/pc-analytics-jaffar/forms/api/submitted-responses/${form.id}?page=1&page_size=1`);
-            if (submittedResponse.ok) {
-              const submittedData = await submittedResponse.json();
-              if (submittedData.total > 0) {
-                this.availableDataSources.push({
-                  id: form.id,
-                  name: form.name || `Form ${form.id}`,
-                  type: 'form',
-                  path: `/forms/${form.id}/submitted/`,
-                  recordCount: submittedData.total
-                });
+        if (forms && Array.isArray(forms)) {
+          for (const form of forms) {
+            try {
+              // Vérifier s'il y a des données soumises pour ce formulaire depuis S3
+              const submittedResponse = await fetch(`/pc-analytics-jaffar/forms/api/submitted-responses/${form.id}?page=1&page_size=1`);
+              if (submittedResponse.ok) {
+                const submittedData = await submittedResponse.json();
+                console.log(`Form ${form.id} submitted data:`, submittedData);
+                if (submittedData.total > 0) {
+                  this.availableDataSources.push({
+                    id: form.id,
+                    name: form.name || `Form ${form.id}`,
+                    type: 'form',
+                    path: `/forms/${form.id}/submitted/`,
+                    recordCount: submittedData.total
+                  });
+                }
               }
+            } catch (error) {
+              console.error(`Failed to check submitted data for form ${form.id}:`, error);
             }
-          } catch (error) {
-            console.error(`Failed to check submitted data for form ${form.id}:`, error);
           }
         }
+        console.log('Available data sources:', this.availableDataSources);
+      } else {
+        console.error('Failed to fetch forms:', formsResponse.status);
       }
     } catch (error) {
       console.error('Failed to load data sources:', error);
+      this.availableDataSources = [];
     }
   },
 
@@ -247,13 +257,18 @@
   },
 
   async loadDataSourceColumns() {
-    if (!this.selectedCard || !this.selectedCard.config.dataSource) return;
+    if (!this.selectedCard || !this.selectedCard.config.dataSource) {
+      console.log('No selected card or data source');
+      return;
+    }
 
     try {
+      console.log('Loading columns for data source:', this.selectedCard.config.dataSource);
       const formId = this.selectedCard.config.dataSource;
       const response = await fetch(`/pc-analytics-jaffar/forms/api/submitted-responses/${formId}?page=1&page_size=1`);
       if (response.ok) {
         const data = await response.json();
+        console.log('Submitted data response:', data);
         if (data.issues && data.issues.length > 0) {
           const firstRecord = data.issues[0];
           const columns = Object.keys(firstRecord).map(key => ({
@@ -264,14 +279,24 @@
             sortable: true
           }));
 
+          // Initialize columns if not exists
           if (!this.selectedCard.config.columns) {
             this.selectedCard.config.columns = [];
           }
           this.selectedCard.config.columns = columns;
+          console.log('Columns loaded:', columns);
+        } else {
+          console.log('No issues found in submitted data');
+          this.selectedCard.config.columns = [];
         }
+      } else {
+        console.error('Failed to fetch submitted responses:', response.status);
       }
     } catch (error) {
       console.error('Failed to load columns:', error);
+      if (this.selectedCard && this.selectedCard.config) {
+        this.selectedCard.config.columns = [];
+      }
     }
   },
 
