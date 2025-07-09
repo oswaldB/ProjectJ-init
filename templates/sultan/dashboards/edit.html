@@ -188,7 +188,7 @@
   async loadDataSources() {
     try {
       // Charger toutes les datasources disponibles depuis les formulaires soumis
-      const formsResponse = await fetch('/pc-analytics-jaffar/sultan/api/forms');
+      const formsResponse = await fetch('/pc-analytics-jaffar/forms/api/list');
       if (formsResponse.ok) {
         const forms = await formsResponse.json();
         this.availableDataSources = [];
