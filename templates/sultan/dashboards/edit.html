@@ -162,14 +162,14 @@
   },
 
   selectCard(card) {
-    this.selectedCard = {
-      ...card,
-      size: card.size || { width: 4, height: 3 },
-      config: {
-        ...this.getDefaultConfig(card.type),
-        ...card.config
-      }
-    };
+    this.selectedCard = card;
+    // Ensure the card has the required structure
+    if (!card.size) {
+      card.size = { width: 4, height: 3 };
+    }
+    if (!card.config) {
+      card.config = this.getDefaultConfig(card.type);
+    }
   },
 
   async loadAvailableForms() {
@@ -361,41 +361,43 @@
             </div>
             
             <!-- Type-specific Preview Includes -->
-            <template x-if="card && card.type === 'datatable'">
-              <div>
-                {% include "sultan/dashboards/cards/preview/datatable.html" %}
-              </div>
-            </template>
-            <template x-if="card && card.type === 'graph'">
-              <div>
-                {% include "sultan/dashboards/cards/preview/graph.html" %}
-              </div>
-            </template>
-            <template x-if="card && card.type === 'kanban'">
-              <div>
-                {% include "sultan/dashboards/cards/preview/kanban.html" %}
-              </div>
-            </template>
-            <template x-if="card && card.type === 'actions'">
-              <div>
-                {% include "sultan/dashboards/cards/preview/actions.html" %}
-              </div>
-            </template>
-            <template x-if="card && card.type === 'chat'">
-              <div>
-                {% include "sultan/dashboards/cards/preview/chat.html" %}
-              </div>
-            </template>
-            <template x-if="card && card.type === 'search'">
-              <div>
-                {% include "sultan/dashboards/cards/preview/search.html" %}
-              </div>
-            </template>
-            <template x-if="card && card.type === 'stats'">
-              <div>
-                {% include "sultan/dashboards/cards/preview/stats.html" %}
-              </div>
-            </template>
+            <div x-data="{ previewCard: card }">
+              <template x-if="previewCard && previewCard.type === 'datatable'">
+                <div>
+                  {% include "sultan/dashboards/cards/preview/datatable.html" %}
+                </div>
+              </template>
+              <template x-if="previewCard && previewCard.type === 'graph'">
+                <div>
+                  {% include "sultan/dashboards/cards/preview/graph.html" %}
+                </div>
+              </template>
+              <template x-if="previewCard && previewCard.type === 'kanban'">
+                <div>
+                  {% include "sultan/dashboards/cards/preview/kanban.html" %}
+                </div>
+              </template>
+              <template x-if="previewCard && previewCard.type === 'actions'">
+                <div>
+                  {% include "sultan/dashboards/cards/preview/actions.html" %}
+                </div>
+              </template>
+              <template x-if="previewCard && previewCard.type === 'chat'">
+                <div>
+                  {% include "sultan/dashboards/cards/preview/chat.html" %}
+                </div>
+              </template>
+              <template x-if="previewCard && previewCard.type === 'search'">
+                <div>
+                  {% include "sultan/dashboards/cards/preview/search.html" %}
+                </div>
+              </template>
+              <template x-if="previewCard && previewCard.type === 'stats'">
+                <div>
+                  {% include "sultan/dashboards/cards/preview/stats.html" %}
+                </div>
+              </template>
+            </div>
           </div>
         </template>
       </div>
