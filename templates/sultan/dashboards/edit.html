@@ -1,3 +1,4 @@
+
 {% extends "sultan/base.html" %}
 
 {% block title %}Edit Dashboard{% endblock %}
@@ -36,8 +37,9 @@
       this.dashboard.id = 'dashboard-' + Date.now();
     }
 
-    // Load available forms for data table cards
-    await this.loadAvailableForms();
+    // Load available forms and data sources for data table cards
+    await this.loadForms();
+    await this.loadDataSources();
   },
 
   async loadDashboard(id) {
@@ -172,9 +174,9 @@
     }
   },
 
-  async loadAvailableForms() {
+  async loadForms() {
     try {
-      const response = await fetch('/pc-analytics-jaffar/sultan/api/forms');
+      const response = await fetch('/sultan/api/forms');
       if (response.ok) {
         this.availableForms = await response.json();
       }
@@ -183,23 +185,57 @@
     }
   },
 
+  async loadDataSources() {
+    try {
+      // Charger toutes les datasources disponibles depuis les formulaires soumis
+      const formsResponse = await fetch('/sultan/api/forms');
+      if (formsResponse.ok) {
+        const forms = await formsResponse.json();
+        this.availableDataSources = [];
+
+        for (const form of forms) {
+          try {
+            // Vérifier s'il y a des données soumises pour ce formulaire
+            const submittedResponse = await fetch(`/forms/api/submitted-responses/${form.id}?page=1&page_size=1`);
+            if (submittedResponse.ok) {
+              const submittedData = await submittedResponse.json();
+              if (submittedData.total > 0) {
+                this.availableDataSources.push({
+                  id: form.id,
+                  name: form.name || `Form ${form.id}`,
+                  type: 'form',
+                  path: `/forms/${form.id}/submitted/`,
+                  recordCount: submittedData.total
+                });
+              }
+            }
+          } catch (error) {
+            console.error(`Failed to check submitted data for form ${form.id}:`, error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load data sources:', error);
+    }
+  },
+
   async loadFormColumns(card) {
     if (!card.config.dataSource) return;
 
     try {
       let columns = [];
-        // Load form configuration to get questions
-        const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${card.config.dataSource}`);
-        if (response.ok) {
-          const formConfig = await response.json();
-          if (formConfig && formConfig.fields && Array.isArray(formConfig.fields)) {
-            columns = formConfig.fields.map(field => ({
-              key: field.key,
-              label: field.label || field.key,
-              visible: true,
-              filterable: true,
-              sortable: true
-            }));
+      // Load form configuration to get questions
+      const response = await fetch(`/sultan/api/forms/${card.config.dataSource}`);
+      if (response.ok) {
+        const formConfig = await response.json();
+        if (formConfig && formConfig.fields && Array.isArray(formConfig.fields)) {
+          columns = formConfig.fields.map(field => ({
+            key: field.key,
+            label: field.label || field.key,
+            visible: true,
+            filterable: true,
+            sortable: true
+          }));
         }
       }
 
@@ -208,6 +244,46 @@
       console.error('Failed to load columns:', error);
       card.config.columns = [];
     }
+  },
+
+  async loadDataSourceColumns() {
+    if (!this.selectedCard || !this.selectedCard.config.dataSource) return;
+
+    try {
+      const formId = this.selectedCard.config.dataSource;
+      const response = await fetch(`/forms/api/submitted-responses/${formId}?page=1&page_size=1`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.issues && data.issues.length > 0) {
+          const firstRecord = data.issues[0];
+          const columns = Object.keys(firstRecord).map(key => ({
+            key: key,
+            label: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
+            type: this.inferColumnType(firstRecord[key]),
+            visible: true,
+            sortable: true
+          }));
+
+          if (!this.selectedCard.config.columns) {
+            this.selectedCard.config.columns = [];
+          }
+          this.selectedCard.config.columns = columns;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load columns:', error);
+    }
+  },
+
+  inferColumnType(value) {
+    if (typeof value === 'number') return 'number';
+    if (typeof value === 'boolean') return 'boolean';
+    if (value && typeof value === 'string') {
+      if (value.match(/^\d{4}-\d{2}-\d{2}/)) return 'date';
+      if (value.includes('@')) return 'email';
+      if (value.length > 100) return 'longtext';
+    }
+    return 'text';
   },
 
   moveColumnUp(card, index) {
@@ -279,99 +355,7 @@
 
   removeSearchField(card, index) {
     card.config.searchFields.splice(index, 1);
-  },
-
-  init() {
-    this.loadForms();
-    this.loadDataSources();
-  },
-
-  async loadForms() {
-    try {
-      const response = await fetch('/sultan/api/forms');
-      if (response.ok) {
-        this.availableForms = await response.json();
-      }
-    } catch (error) {
-      console.error('Failed to load forms:', error);
-    }
-  },
-
-  async loadDataSources() {
-    try {
-      // Charger toutes les datasources disponibles depuis les formulaires soumis
-      const formsResponse = await fetch('/sultan/api/forms');
-      if (formsResponse.ok) {
-        const forms = await formsResponse.json();
-        this.availableDataSources = [];
-
-        for (const form of forms) {
-          try {
-            // Vérifier s'il y a des données soumises pour ce formulaire
-            const submittedResponse = await fetch(`/forms/api/submitted-responses/${form.id}?page=1&page_size=1`);
-            if (submittedResponse.ok) {
-              const submittedData = await submittedResponse.json();
-              if (submittedData.total > 0) {
-                this.availableDataSources.push({
-                  id: form.id,
-                  name: form.name || `Form ${form.id}`,
-                  type: 'form',
-                  path: `/forms/${form.id}/submitted/`,
-                  recordCount: submittedData.total
-                });
-              }
-            }
-          } catch (error) {
-            console.error(`Failed to check submitted data for form ${form.id}:`, error);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load data sources:', error);
-    }
-  },
-
-  async loadDataSourceColumns() {
-    if (!this.selectedCard || !this.selectedCard.config.dataSource) return;
-
-    try {
-      const formId = this.selectedCard.config.dataSource;
-      const response = await fetch(`/forms/api/submitted-responses/${formId}?page=1&page_size=1`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.issues && data.issues.length > 0) {
-          const firstRecord = data.issues[0];
-          const columns = Object.keys(firstRecord).map(key => ({
-            key: key,
-            label: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
-            type: this.inferColumnType(firstRecord[key]),
-            visible: true,
-            sortable: true
-          }));
-
-          if (!this.selectedCard.config.columns) {
-            this.selectedCard.config.columns = [];
-          }
-          this.selectedCard.config.columns = columns;
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load columns:', error);
-    }
-  },
-
-  inferColumnType(value) {
-    if (typeof value === 'number') return 'number';
-    if (typeof value === 'boolean') return 'boolean';
-    if (value && typeof value === 'string') {
-      if (value.match(/^\d{4}-\d{2}-\d{2}/)) return 'date';
-      if (value.includes('@')) return 'email';
-      if (value.length > 100) return 'longtext';
-    }
-    return 'text';
-  },
-
-  addCard(type) {
+  }
 }" x-init="init()">
 
   <!-- Sidebar for adding cards -->
@@ -491,7 +475,7 @@
           <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
           <input 
             type="text" 
-            x-model="selectedCard.title" 
+            x-model="selectedCard?.title" 
             class="w-full bg-gray-700 text-white p-2 rounded"
             placeholder="Card title"
           >
@@ -499,7 +483,7 @@
 
         <div>
           <label class="block text-sm font-medium text-gray-300 mb-1">Card Width (columns)</label>
-          <select x-model="selectedCard.size.width" class="w-full bg-gray-700 text-white p-2 rounded">
+          <select x-model="selectedCard?.size?.width" class="w-full bg-gray-700 text-white p-2 rounded">
             <template x-for="col in [1,2,3,4]" :key="col">
               <option :value="col" x-text="col"></option>
             </template>
@@ -508,7 +492,7 @@
 
         <div>
           <label class="block text-sm font-medium text-gray-300 mb-1">Card Height</label>
-          <select x-model="selectedCard.size.height" class="w-full bg-gray-700 text-white p-2 rounded">
+          <select x-model="selectedCard?.size?.height" class="w-full bg-gray-700 text-white p-2 rounded">
             <option value="1">Small</option>
             <option value="2">Medium</option>
             <option value="3">Large</option>
