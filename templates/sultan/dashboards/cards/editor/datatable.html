@@ -1,91 +1,42 @@
 <div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
-  <h3 class="text-white font-semibold mb-3">Data Table Configuration</h3>
+  <h3 class="text-white font-semibold mb-3">Datatable Configuration</h3>
   <div class="space-y-3">
-    <!-- Title -->
-    <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">Table Title</label>
-      <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Data table title">
-    </div>
-
-    <!-- Data Source -->
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
-      <select x-model="selectedCard.config.dataSource" @change="loadFormColumns(selectedCard)" class="w-full bg-gray-700 text-white p-2 rounded">
-        <option value="">Select data source</option>
-        <option value="jaffar">Jaffar Issues</option>
-        <template x-for="form in availableForms">
-          <option :value="form.id" x-text="form.name"></option>
-        </template>
-      </select>
+      <input type="text" x-model="selectedCard.config.dataSource" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="API endpoint">
     </div>
 
-    <!-- Local Database Options -->
-    <div>
-      <label class="flex items-center text-gray-300">
-        <input type="checkbox" x-model="selectedCard.config.saveToLocalDB" class="mr-2">
-        Save to Local Database
-      </label>
-      <div x-show="selectedCard.config.saveToLocalDB" class="ml-6 mt-2">
-        <label class="block text-sm font-medium text-gray-300 mb-1">Database Name</label>
-        <input type="text" x-model="selectedCard.config.localDBName" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="local_db_name">
-      </div>
-    </div>
-
-    <!-- Columns Configuration -->
-    <div x-show="selectedCard.config.columns && selectedCard.config.columns.length > 0">
-      <h4 class="text-white font-medium mb-2">Columns</h4>
-      <div class="space-y-2 max-h-48 overflow-y-auto">
-        <template x-for="(column, index) in selectedCard.config.columns">
-          <div class="bg-gray-700 p-2 rounded flex items-center justify-between">
-            <div class="flex items-center space-x-3 flex-1">
-              <input type="checkbox" x-model="column.visible" class="flex-shrink-0">
-              <span class="text-white text-sm" x-text="column.label"></span>
-            </div>
-            <div class="flex space-x-1">
-              <button @click="moveColumnUp(selectedCard, index)" :disabled="index === 0" class="text-gray-400 hover:text-white disabled:text-gray-600">
-                ↑
-              </button>
-              <button @click="moveColumnDown(selectedCard, index)" :disabled="index === selectedCard.config.columns.length - 1" class="text-gray-400 hover:text-white disabled:text-gray-600">
-                ↓
-              </button>
-            </div>
-          </div>
-        </template>
-      </div>
-    </div>
-
-    <!-- Pagination -->
-    <div>
+    <div class="flex items-center space-x-4">
       <label class="flex items-center text-gray-300">
         <input type="checkbox" x-model="selectedCard.config.pagination" class="mr-2">
         Enable Pagination
       </label>
-      <div x-show="selectedCard.config.pagination" class="ml-6 mt-2">
-        <label class="block text-sm font-medium text-gray-300 mb-1">Rows per page</label>
-        <select x-model="selectedCard.config.pageSize" class="w-full bg-gray-700 text-white p-2 rounded">
-          <option value="10">10</option>
-          <option value="25">25</option>
-          <option value="50">50</option>
-          <option value="100">100</option>
-        </select>
+      <label class="flex items-center text-gray-300">
+        <input type="checkbox" x-model="selectedCard.config.search" class="mr-2">
+        Enable Search
+      </label>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">Columns</label>
+      <div class="space-y-2">
+        <template x-for="(column, index) in selectedCard.config.columns" :key="index">
+          <div class="flex items-center space-x-2 bg-gray-700 p-2 rounded">
+            <input type="text" x-model="column.key" placeholder="Field key" class="flex-1 bg-gray-600 text-white p-1 rounded text-sm">
+            <input type="text" x-model="column.label" placeholder="Display label" class="flex-1 bg-gray-600 text-white p-1 rounded text-sm">
+            <button @click="selectedCard.config.columns.splice(index, 1)" class="text-red-400 hover:text-red-300">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </template>
+        <button @click="selectedCard.config.columns.push({key: '', label: ''})" 
+                class="w-full bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700">
+          Add Column
+        </button>
       </div>
     </div>
-
-    <!-- Advanced Options -->
-    <div>
-      <label class="flex items-center text-gray-300">
-        <input type="checkbox" x-model="selectedCard.config.enableSearch" class="mr-2">
-        Enable Global Search
-      </label>
-    </div>
-
-    <div>
-      <label class="flex items-center text-gray-300">
-        <input type="checkbox" x-model="selectedCard.config.enableExport" class="mr-2">
-        Enable Export (CSV, Excel)
-      </label>
-    </div>
-
   </div>
 </div>
 
