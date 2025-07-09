@@ -1,71 +1,100 @@
-
 <div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
   <h3 class="text-white font-semibold mb-3">Data Table Configuration</h3>
   <div class="space-y-4">
     
-    <!-- Data Source Selection -->
-    <div x-show="selectedCard && selectedCard.config">
-      <label class="block text-sm font-medium text-gray-300 mb-2">Data Source</label>
-      <select x-model="selectedCard.config.dataSource" @change="await loadFormColumns(selectedCard)" class="w-full bg-gray-700 text-white p-2 rounded">
-        <option value="">Select data source...</option>
-        <template x-for="form in availableForms">
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
+      <select x-model="selectedCard.config.dataSource" @change="loadFormColumns(selectedCard)" class="w-full bg-gray-700 text-white p-2 rounded">
+        <option value="">Select a data source</option>
+        <option value="jaffar">Jaffar Issues</option>
+        <template x-for="form in availableForms" :key="form.id">
           <option :value="form.id" x-text="form.name"></option>
         </template>
       </select>
     </div>
 
-    <!-- Local DB Storage -->
-    <div x-show="selectedCard && selectedCard.config && selectedCard.config.dataSource">
-      <label class="flex items-center text-gray-300 mb-2">
-        <input type="checkbox" x-model="selectedCard.config.saveToLocalDB" class="mr-2" x-show="selectedCard && selectedCard.config">
-        Save to Local DB (PouchDB)
+    <div x-show="selectedCard.config.dataSource">
+      <label class="block text-sm font-medium text-gray-300 mb-1 mt-4">Table Title</label>
+      <input 
+        type="text" 
+        x-model="selectedCard.config.title" 
+        class="w-full bg-gray-700 text-white p-2 rounded"
+        placeholder="Table title"
+      >
+    </div>
+
+    <div x-show="selectedCard.config.dataSource" class="mt-4">
+      <label class="block text-sm font-medium text-gray-300 mb-1">Page Size</label>
+      <select x-model="selectedCard.config.pageSize" class="w-full bg-gray-700 text-white p-2 rounded">
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+    </div>
+
+    <div x-show="selectedCard.config.dataSource" class="mt-4">
+      <label class="flex items-center space-x-2">
+        <input type="checkbox" x-model="selectedCard.config.pagination" class="rounded">
+        <span class="text-sm text-gray-300">Enable Pagination</span>
       </label>
-      <div x-show="selectedCard.config.saveToLocalDB" class="ml-6">
-        <label class="block text-sm font-medium text-gray-300 mb-1">Local DB Name</label>
-        <input type="text" x-model="selectedCard.config.localDBName" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="table_name" x-show="selectedCard && selectedCard.config">
-      </div>
     </div>
 
-    <!-- Table Title -->
-    <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">Table Title</label>
-      <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Table title" x-show="selectedCard && selectedCard.config">
+    <div x-show="selectedCard.config.dataSource" class="mt-4">
+      <label class="flex items-center space-x-2">
+        <input type="checkbox" x-model="selectedCard.config.enableSearch" class="rounded">
+        <span class="text-sm text-gray-300">Enable Search</span>
+      </label>
     </div>
 
-    <!-- Column Configuration -->
-    <div x-show="selectedCard && selectedCard.config && selectedCard.config.dataSource">
-      <label class="block text-sm font-medium text-gray-300 mb-2">Column Configuration</label>
-      <div class="bg-gray-700 p-3 rounded max-h-60 overflow-y-auto">
-        <template x-for="(column, index) in (selectedCard.config.columns || [])">
-          <div class="flex items-center space-x-2 mb-2 p-2 bg-gray-600 rounded">
-            <!-- Drag Handle -->
-            <div class="cursor-move text-gray-400">⋮⋮</div>
-            
-            <!-- Column Order -->
-            <div class="flex space-x-1">
-              <button @click="moveColumnUp(selectedCard, index)" :disabled="index === 0" class="text-gray-400 hover:text-white disabled:text-gray-600">↑</button>
-              <button @click="moveColumnDown(selectedCard, index)" :disabled="index === selectedCard.config.columns.length - 1" class="text-gray-400 hover:text-white disabled:text-gray-600">↓</button>
+    <div x-show="selectedCard.config.dataSource" class="mt-4">
+      <label class="flex items-center space-x-2">
+        <input type="checkbox" x-model="selectedCard.config.enableExport" class="rounded">
+        <span class="text-sm text-gray-300">Enable Export</span>
+      </label>
+    </div>
+
+    <div x-show="selectedCard.config.dataSource" class="mt-4">
+      <label class="flex items-center space-x-2">
+        <input type="checkbox" x-model="selectedCard.config.saveToLocalDB" class="rounded">
+        <span class="text-sm text-gray-300">Save to Local DB</span>
+      </label>
+    </div>
+
+    <div x-show="selectedCard.config.dataSource && selectedCard.config.saveToLocalDB" class="mt-2">
+      <label class="block text-sm font-medium text-gray-300 mb-1">Local DB Name</label>
+      <input 
+        type="text" 
+        x-model="selectedCard.config.localDBName" 
+        class="w-full bg-gray-700 text-white p-2 rounded"
+        placeholder="local_db"
+      >
+    </div>
+
+    <div x-show="selectedCard.config.columns && selectedCard.config.columns.length > 0" class="mt-4">
+      <h4 class="text-sm font-medium text-gray-300 mb-2">Columns</h4>
+      <div class="space-y-2 max-h-64 overflow-y-auto">
+        <template x-for="(column, index) in selectedCard.config.columns" :key="column.key">
+          <div class="bg-gray-700 p-2 rounded">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-white text-sm font-medium" x-text="column.label"></span>
+              <div class="flex space-x-1">
+                <button @click="moveColumnUp(selectedCard, index)" :disabled="index === 0" class="text-gray-400 hover:text-white disabled:text-gray-600 text-xs">↑</button>
+                <button @click="moveColumnDown(selectedCard, index)" :disabled="index === selectedCard.config.columns.length - 1" class="text-gray-400 hover:text-white disabled:text-gray-600 text-xs">↓</button>
+              </div>
             </div>
-            
-            <!-- Column Name -->
-            <div class="flex-1">
-              <span class="text-white text-sm" x-text="column.label"></span>
-              <div class="text-xs text-gray-400" x-text="column.key"></div>
-            </div>
-            
-            <!-- Column Options -->
-            <div class="flex items-center space-x-2">
-              <label class="flex items-center text-xs text-gray-300">
-                <input type="checkbox" x-model="column.visible" class="mr-1">
-                Show
+            <div class="grid grid-cols-3 gap-2">
+              <label class="flex items-center space-x-1">
+                <input type="checkbox" x-model="column.visible" class="rounded text-xs">
+                <span class="text-xs text-gray-300">Visible</span>
               </label>
-              <label class="flex items-center text-xs text-gray-300">
-                <input type="checkbox" x-model="column.filterable" class="mr-1">
-                Filter
+              <label class="flex items-center space-x-1">
+                <input type="checkbox" x-model="column.sortable" class="rounded text-xs">
+                <span class="text-xs text-gray-300">Sortable</span>
               </label>
-              <label class="flex items-center text-xs text-gray-300">
-                <input type="checkbox" x-model="column.sortable" class="mr-1">
-                Sort
+              <label class="flex items-center space-x-1">
+                <input type="checkbox" x-model="column.filterable" class="rounded text-xs">
+                <span class="text-xs text-gray-300">Filterable</span>
               </label>
             </div>
           </div>
@@ -73,123 +102,5 @@
       </div>
     </div>
 
-    <!-- Pagination -->
-    <div>
-      <label class="flex items-center text-gray-300">
-        <input type="checkbox" x-model="selectedCard.config.pagination" class="mr-2">
-        Enable Pagination
-      </label>
-      <div x-show="selectedCard.config.pagination" class="ml-6 mt-2">
-        <label class="block text-sm font-medium text-gray-300 mb-1">Rows per page</label>
-        <select x-model="selectedCard.config.pageSize" class="w-full bg-gray-700 text-white p-2 rounded">
-          <option value="10">10</option>
-          <option value="25">25</option>
-          <option value="50">50</option>
-          <option value="100">100</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Advanced Options -->
-    <div>
-      <label class="flex items-center text-gray-300">
-        <input type="checkbox" x-model="selectedCard.config.enableSearch" class="mr-2">
-        Enable Global Search
-      </label>
-    </div>
-
-    <div>
-      <label class="flex items-center text-gray-300">
-        <input type="checkbox" x-model="selectedCard.config.enableExport" class="mr-2">
-        Enable Export (CSV, Excel)
-      </label>
-    </div>
-
   </div>
-</div>
-
-<script>
-// Add these methods to the Alpine component
-function initDataTableCard() {
-  return {
-    availableForms: [],
-    
-    async loadAvailableForms() {
-      try {
-        const response = await fetch('/pc-analytics-jaffar/sultan/api/forms');
-        if (response.ok) {
-          this.availableForms = await response.json();
-        }
-      } catch (error) {
-        console.error('Failed to load forms:', error);
-      }
-    },
-
-    async loadFormColumns(card) {
-      if (!card.config.dataSource) return;
-      
-      try {
-        let columns = [];
-        
-        // Load form configuration to get questions
-        const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${card.config.dataSource}`);
-        if (response.ok) {
-          const formConfig = await response.json();
-          if (formConfig && formConfig.fields && Array.isArray(formConfig.fields)) {
-            columns = formConfig.fields.map(field => ({
-              key: field.key,
-              label: field.label || field.key,
-              visible: true,
-              filterable: true,
-              sortable: true
-            }));
-          }
-        }
-        
-        card.config.columns = columns;
-      } catch (error) {
-        console.error('Failed to load columns:', error);
-        card.config.columns = [];
-      }
-    },
-
-    moveColumnUp(card, index) {
-      if (index > 0) {
-        const columns = [...card.config.columns];
-        [columns[index], columns[index - 1]] = [columns[index - 1], columns[index]];
-        card.config.columns = columns;
-      }
-    },
-
-    moveColumnDown(card, index) {
-      if (index < card.config.columns.length - 1) {
-        const columns = [...card.config.columns];
-        [columns[index], columns[index + 1]] = [columns[index + 1], columns[index]];
-        card.config.columns = columns;
-      }
-    },
-
-    async init() {
-      await this.loadAvailableForms();
-      
-      // Initialize default config if not set
-      if (!this.selectedCard.config.columns) {
-        this.selectedCard.config.columns = [];
-      }
-      if (!this.selectedCard.config.pageSize) {
-        this.selectedCard.config.pageSize = 25;
-      }
-      if (this.selectedCard.config.pagination === undefined) {
-        this.selectedCard.config.pagination = true;
-      }
-      if (this.selectedCard.config.enableSearch === undefined) {
-        this.selectedCard.config.enableSearch = true;
-      }
-      if (this.selectedCard.config.enableExport === undefined) {
-        this.selectedCard.config.enableExport = false;
-      }
-    }
-  }
-}
-</script>
 </div>
