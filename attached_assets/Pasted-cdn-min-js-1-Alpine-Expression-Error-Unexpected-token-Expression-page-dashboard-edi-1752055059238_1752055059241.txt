@@ -1,0 +1,1272 @@
+cdn.min.js:1 Alpine Expression Error: Unexpected token ')'
+
+Expression: "{
+  page: 'dashboard-edit',
+  dashboard: {
+    id: '',
+    name: '',
+    description: '',
+    cards: [],
+    layout: 'grid'
+  },
+  availableCards: [
+    { type: 'graph', name: 'Graph', icon: '' },
+    { type: 'datatable', name: 'Data Table', icon: '' },
+    { type: 'kanban', name: 'Kanban Board', icon: '' },
+    { type: 'actions', name: 'Actions', icon: '' },
+    { type: 'chat', name: 'Chat', icon: '' },
+    { type: 'search', name: 'Search Bar', icon: '' },
+    { type: 'stats', name: 'Stats Card', icon: '' }
+  ],
+  selectedCard: null,
+  gridColumns: Array.from({length: 12}, (_, i) => i + 1),
+
+  // Form and data source management
+  availableForms: [],
+  availableDataSources: [],
+
+  async init() {
+    const dashboardId = window.location.pathname.split('/').pop();
+    if (dashboardId !== 'new') {
+      await this.loadDashboard(dashboardId);
+    } else {
+      this.dashboard.id = 'dashboard-' + Date.now();
+    }
+
+    // Load available forms for data table cards
+    await this.loadAvailableForms();
+  },
+
+  async loadDashboard(id) {
+    try {
+      const response = await fetch(`/sultan/dashboard/api/${id}`);
+      if (response.ok) {
+        this.dashboard = await response.json();
+      }
+    } catch (error) {
+      console.error('Failed to load dashboard:', error);
+    }
+  },
+
+  addCard(type) {
+    const card = {
+      id: Date.now().toString(),
+      type: type,
+      title: `New ${type}`,
+      size: { width: 4, height: 3 },
+      config: this.getDefaultConfig(type)
+    };
+    this.dashboard.cards.push(card);
+    this.selectedCard = card;
+  },
+
+  getDefaultConfig(cardType) {
+    const defaults = {
+      datatable: {
+        title: '',
+        dataSource: '',
+        saveToLocalDB: false,
+        localDBName: '',
+        columns: [],
+        pagination: true,
+        pageSize: 25,
+        enableSearch: true,
+        enableExport: false
+      },
+      graph: {
+        title: '',
+        type: 'line',
+        dataSource: '',
+        xAxis: '',
+        yAxis: '',
+        color: '#3B82F6'
+      },
+      stats: {
+        title: '',
+        icon: '',
+        value: '',
+        change: '',
+        changeType: 'positive'
+      },
+      actions: {
+        title: '',
+        actions: []
+      },
+      kanban: {
+        title: '',
+        dataSource: '',
+        statusField: 'status',
+        titleField: 'title',
+        columns: [
+          { id: 'todo', title: 'To Do', color: '#6B7280' },
+          { id: 'in-progress', title: 'In Progress', color: '#F59E0B' },
+          { id: 'done', title: 'Done', color: '#10B981' }
+        ]
+      },
+      search: {
+        title: '',
+        placeholder: 'Search...',
+        targetUrl: '',
+        searchFields: []
+      },
+      chat: {
+        title: '',
+        endpoint: '',
+        maxMessages: 50,
+        allowFileUpload: false
+      }
+    };
+
+    return defaults[cardType] || {};
+  },
+
+  removeCard(cardId) {
+    this.dashboard.cards = this.dashboard.cards.filter(card => card.id !== cardId);
+    if (this.selectedCard && this.selectedCard.id === cardId) {
+      this.selectedCard = null;
+    }
+  },
+
+  moveCardLeft(cardIndex) {
+    if (cardIndex > 0) {
+      const card = this.dashboard.cards.splice(cardIndex, 1)[0];
+      this.dashboard.cards.splice(cardIndex - 1, 0, card);
+    }
+  },
+
+  moveCardRight(cardIndex) {
+    if (cardIndex < this.dashboard.cards.length - 1) {
+      const card = this.dashboard.cards.splice(cardIndex, 1)[0];
+      this.dashboard.cards.splice(cardIndex + 1, 0, card);
+    }
+  },
+
+  async saveDashboard() {
+    try {
+      const response = await fetch('/sultan/dashboard/api/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(this.dashboard)
+      });
+      if (response.ok) {
+        window.location.href = '/sultan/dashboard';
+      }
+    } catch (error) {
+      console.error('Failed to save dashboard:', error);
+    }
+  },
+
+  selectCard(card) {
+    this.selectedCard = card;
+    // Ensure the card has the required structure
+    if (!card.size) {
+      card.size = { width: 4, height: 3 };
+    }
+    if (!card.config) {
+      card.config = this.getDefaultConfig(card.type);
+    }
+  },
+
+  async loadAvailableForms() {
+    try {
+      const response = await fetch('/pc-analytics-jaffar/sultan/api/forms');
+      if (response.ok) {
+        this.availableForms = await response.json();
+      }
+    } catch (error) {
+      console.error('Failed to load forms:', error);
+    }
+  },
+
+  async loadFormColumns(card) {
+    if (!card.config.dataSource) return;
+
+    try {
+      let columns = [];
+
+      if (card.config.dataSource === 'jaffar') {
+        // Jaffar issues columns
+        columns = [
+          { key: 'id', label: 'Issue ID', visible: true, filterable: true, sortable: true },
+          { key: 'title', label: 'Title', visible: true, filterable: true, sortable: true },
+          { key: 'status', label: 'Status', visible: true, filterable div.flex.h-screen
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+jn @ cdn.min.js:5
+Fn @ cdn.min.js:5
+xt @ cdn.min.js:5
+x @ cdn.min.js:5
+R @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: init is not defined
+
+Expression: "init()"
+
+ <div class=​"flex h-screen" x-data=​"{
+  page:​ 'dashboard-edit',
+  dashboard:​ {
+    id:​ '',
+    name:​ '',
+    description:​ '',
+    cards:​ []​,
+    layout:​ 'grid'
+  }​,
+  availableCards:​ [
+    { type:​ 'graph', name:​ 'Graph', icon:​ '' }​,
+    { type:​ 'datatable', name:​ 'Data Table', icon:​ '' }​,
+    { type:​ 'kanban', name:​ 'Kanban Board', icon:​ '' }​,
+    { type:​ 'actions', name:​ 'Actions', icon:​ '' }​,
+    { type:​ 'chat', name:​ 'Chat', icon:​ '' }​,
+    { type:​ 'search', name:​ 'Search Bar', icon:​ '' }​,
+    { type:​ 'stats', name:​ 'Stats Card', icon:​ '' }​
+  ]​,
+  selectedCard:​ null,
+  gridColumns:​ Array.from({length:​ 12}​, (_, i)​ => i + 1)​,
+
+  /​/​ Form and data source management
+  availableForms:​ []​,
+  availableDataSources:​ []​,
+
+  async init()​ {
+    const dashboardId = window.location.pathname.split('/​')​.pop()​;​
+    if (dashboardId !== 'new')​ {
+      await this.loadDashboard(dashboardId)​;​
+    }​ else {
+      this.dashboard.id = 'dashboard-' + Date.now()​;​
+    }​
+
+    /​/​ Load available forms for data table cards
+    await this.loadAvailableForms()​;​
+  }​,
+
+  async loadDashboard(id)​ {
+    try {
+      const response = await fetch(`/​sultan/​dashboard/​api/​${id}​`)​;​
+      if (response.ok)​ {
+        this.dashboard = await response.json()​;​
+      }​
+    }​ catch (error)​ {
+      console.error('Failed to load dashboard:​', error)​;​
+    }​
+  }​,
+
+  addCard(type)​ {
+    const card = {
+      id:​ Date.now()​.toString()​,
+      type:​ type,
+      title:​ `New ${type}​`,
+      size:​ { width:​ 4, height:​ 3 }​,
+      config:​ this.getDefaultConfig(type)​
+    }​;​
+    this.dashboard.cards.push(card)​;​
+    this.selectedCard = card;​
+  }​,
+
+  getDefaultConfig(cardType)​ {
+    const defaults = {
+      datatable:​ {
+        title:​ '',
+        dataSource:​ '',
+        saveToLocalDB:​ false,
+        localDBName:​ '',
+        columns:​ []​,
+        pagination:​ true,
+        pageSize:​ 25,
+        enableSearch:​ true,
+        enableExport:​ false
+      }​,
+      graph:​ {
+        title:​ '',
+        type:​ 'line',
+        dataSource:​ '',
+        xAxis:​ '',
+        yAxis:​ '',
+        color:​ '#3B82F6'
+      }​,
+      stats:​ {
+        title:​ '',
+        icon:​ '',
+        value:​ '',
+        change:​ '',
+        changeType:​ 'positive'
+      }​,
+      actions:​ {
+        title:​ '',
+        actions:​ []​
+      }​,
+      kanban:​ {
+        title:​ '',
+        dataSource:​ '',
+        statusField:​ 'status',
+        titleField:​ 'title',
+        columns:​ [
+          { id:​ 'todo', title:​ 'To Do', color:​ '#6B7280' }​,
+          { id:​ 'in-progress', title:​ 'In Progress', color:​ '#F59E0B' }​,
+          { id:​ 'done', title:​ 'Done', color:​ '#10B981' }​
+        ]​
+      }​,
+      search:​ {
+        title:​ '',
+        placeholder:​ 'Search...',
+        targetUrl:​ '',
+        searchFields:​ []​
+      }​,
+      chat:​ {
+        title:​ '',
+        endpoint:​ '',
+        maxMessages:​ 50,
+        allowFileUpload:​ false
+      }​
+    }​;​
+
+    return defaults[cardType]​ || {}​;​
+  }​,
+
+  removeCard(cardId)​ {
+    this.dashboard.cards = this.dashboard.cards.filter(card => card.id !== cardId)​;​
+    if (this.selectedCard && this.selectedCard.id === cardId)​ {
+      this.selectedCard = null;​
+    }​
+  }​,
+
+  moveCardLeft(cardIndex)​ {
+    if (cardIndex > 0)​ {
+      const card = this.dashboard.cards.splice(cardIndex, 1)​[0]​;​
+      this.dashboard.cards.splice(cardIndex - 1, 0, card)​;​
+    }​
+  }​,
+
+  moveCardRight(cardIndex)​ {
+    if (cardIndex < this.dashboard.cards.length - 1)​ {
+      const card = this.dashboard.cards.splice(cardIndex, 1)​[0]​;​
+      this.dashboard.cards.splice(cardIndex + 1, 0, card)​;​
+    }​
+  }​,
+
+  async saveDashboard()​ {
+    try {
+      const response = await fetch('/​sultan/​dashboard/​api/​save', {
+        method:​ 'POST',
+        headers:​ {
+          'Content-Type':​ 'application/​json'
+        }​,
+        body:​ JSON.stringify(this.dashboard)​
+      }​)​;​
+      if (response.ok)​ {
+        window.location.href = '/​sultan/​dashboard';​
+      }​
+    }​ catch (error)​ {
+      console.error('Failed to save dashboard:​', error)​;​
+    }​
+  }​,
+
+  selectCard(card)​ {
+    this.selectedCard = card;​
+    /​/​ Ensure the card has the required structure
+    if (!card.size)​ {
+      card.size = { width:​ 4, height:​ 3 }​;​
+    }​
+    if (!card.config)​ {
+      card.config = this.getDefaultConfig(card.type)​;​
+    }​
+  }​,
+
+  async loadAvailableForms()​ {
+    try {
+      const response = await fetch('/​pc-analytics-jaffar/​sultan/​api/​forms')​;​
+      if (response.ok)​ {
+        this.availableForms = await response.json()​;​
+      }​
+    }​ catch (error)​ {
+      console.error('Failed to load forms:​', error)​;​
+    }​
+  }​,
+
+  async loadFormColumns(card)​ {
+    if (!card.config.dataSource)​ return;​
+
+    try {
+      let columns = []​;​
+
+      if (card.config.dataSource === 'jaffar')​ {
+        /​/​ Jaffar issues columns
+        columns = [
+          { key:​ 'id', label:​ 'Issue ID', …r('Failed to load columns:​', error)​;​
+      card.config.columns = []​;​
+    }​
+  }​,
+
+  moveColumnUp(card, index)​ {
+    if (index > 0)​ {
+      const columns = [...card.config.columns]​;​
+      [columns[index]​, columns[index - 1]​]​ = [columns[index - 1]​, columns[index]​]​;​
+      card.config.columns = columns;​
+    }​
+  }​,
+
+  moveColumnDown(card, index)​ {
+    if (index < card.config.columns.length - 1)​ {
+      const columns = [...card.config.columns]​;​
+      [columns[index]​, columns[index + 1]​]​ = [columns[index + 1]​, columns[index]​]​;​
+      card.config.columns = columns;​
+    }​
+  }​,
+
+  /​/​ Stats card methods
+  addStatCard()​ {
+    this.addCard('stats')​;​
+  }​,
+
+  /​/​ Actions card methods
+  addAction(card)​ {
+    if (!card.config.actions)​ {
+      card.config.actions = []​;​
+    }​
+    card.config.actions.push({
+      id:​ Date.now()​.toString()​,
+      label:​ 'New Action',
+      type:​ 'button',
+      url:​ '',
+      method:​ 'GET'
+    }​)​;​
+  }​,
+
+  removeAction(card, actionId)​ {
+    card.config.actions = card.config.actions.filter(action => action.id !== actionId)​;​
+  }​,
+
+  /​/​ Kanban card methods
+  addKanbanColumn(card)​ {
+    if (!card.config.columns)​ {
+      card.config.columns = []​;​
+    }​
+    card.config.columns.push({
+      id:​ Date.now()​.toString()​,
+      title:​ 'New Column',
+      color:​ '#6B7280'
+    }​)​;​
+  }​,
+
+  removeKanbanColumn(card, columnId)​ {
+    card.config.columns = card.config.columns.filter(col => col.id !== columnId)​;​
+  }​,
+
+  /​/​ Search card methods
+  addSearchField(card)​ {
+    if (!card.config.searchFields)​ {
+      card.config.searchFields = []​;​
+    }​
+    card.config.searchFields.push({
+      key:​ '',
+      label:​ '',
+      type:​ 'text'
+    }​)​;​
+  }​,
+
+  removeSearchField(card, index)​ {
+    card.config.searchFields.splice(index, 1)​;​
+  }​,
+
+  init()​ {
+    this.loadForms()​;​
+    this.loadDataSources()​;​
+  }​,
+
+  async loadForms()​ {
+    try {
+      const response = await fetch('/​sultan/​api/​forms')​;​
+      if (response.ok)​ {
+        this.availableForms = await response.json()​;​
+      }​
+    }​ catch (error)​ {
+      console.error('Failed to load forms:​', error)​;​
+    }​
+  }​,
+
+  async loadDataSources()​ {
+    try {
+      /​/​ Charger toutes les datasources disponibles depuis les formulaires soumis
+      const formsResponse = await fetch('/​sultan/​api/​forms')​;​
+      if (formsResponse.ok)​ {
+        const forms = await formsResponse.json()​;​
+        this.availableDataSources = []​;​
+
+        for (const form of forms)​ {
+          try {
+            /​/​ Vérifier s'il y a des données soumises pour ce formulaire
+            const submittedResponse = await fetch(`/​forms/​api/​submitted-responses/​${form.id}​?page=1&page_size=1`)​;​
+            if (submittedResponse.ok)​ {
+              const submittedData = await submittedResponse.json()​;​
+              if (submittedData.total > 0)​ {
+                this.availableDataSources.push({
+                  id:​ form.id,
+                  name:​ form.name || `Form ${form.id}​`,
+                  type:​ 'form',
+                  path:​ `/​forms/​${form.id}​/​submitted/​`,
+                  recordCount:​ submittedData.total
+                }​)​;​
+              }​
+            }​
+          }​ catch (error)​ {
+            console.error(`Failed to check submitted data for form ${form.id}​:​`, error)​;​
+          }​
+        }​
+      }​
+    }​ catch (error)​ {
+      console.error('Failed to load data sources:​', error)​;​
+    }​
+  }​,
+
+  async loadDataSourceColumns()​ {
+    if (!this.selectedCard || !this.selectedCard.config.dataSource)​ return;​
+
+    try {
+      const formId = this.selectedCard.config.dataSource;​
+      const response = await fetch(`/​forms/​api/​submitted-responses/​${formId}​?page=1&page_size=1`)​;​
+      if (response.ok)​ {
+        const data = await response.json()​;​
+        if (data.issues && data.issues.length > 0)​ {
+          const firstRecord = data.issues[0]​;​
+          const columns = Object.keys(firstRecord)​.map(key => ({
+            key:​ key,
+            label:​ key.charAt(0)​.toUpperCase()​ + key.slice(1)​.replace(/​_/​g, ' ')​,
+            type:​ this.inferColumnType(firstRecord[key]​)​,
+            visible:​ true,
+            sortable:​ true
+          }​)​)​;​
+
+          if (!this.selectedCard.config.columns)​ {
+            this.selectedCard.config.columns = []​;​
+          }​
+          this.selectedCard.config.columns = columns;​
+        }​
+      }​
+    }​ catch (error)​ {
+      console.error('Failed to load columns:​', error)​;​
+    }​
+  }​,
+
+  inferColumnType(value)​ {
+    if (typeof value === 'number')​ return 'number';​
+    if (typeof value === 'boolean')​ return 'boolean';​
+    if (value && typeof value === 'string')​ {
+      if (value.match(/​^\d{4}​-\d{2}​-\d{2}​/​)​)​ return 'date';​
+      if (value.includes('@')​)​ return 'email';​
+      if (value.length > 100)​ return 'longtext';​
+    }​
+    return 'text';​
+  }​,
+
+  addCard(type)​ {
+}​" x-init=​"init()​">​…​</div>​flex
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+R @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: availableCards is not defined
+
+Expression: "availableCards"
+
+ <template x-for=​"cardType in availableCards" :key=​"cardType.type">​…​</template>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+to @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: dashboard is not defined
+
+Expression: "dashboard.name"
+
+ <input type=​"text" x-model=​"dashboard.name" placeholder=​"Dashboard Name" class=​"bg-gray-700 text-white px-3 py-2 rounded w-full">​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: dashboard is not defined
+
+Expression: "dashboard.description"
+
+ <textarea x-model=​"dashboard.description" placeholder=​"Description" class=​"bg-gray-700 text-white px-3 py-2 rounded w-full mt-2 h-20">​</textarea>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: dashboard is not defined
+
+Expression: "dashboard.cards"
+
+ <template x-for=​"(card, index)​ in dashboard.cards" :key=​"card.id">​…​</template>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+to @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: selectedCard is not defined
+
+Expression: "selectedCard"
+
+ <div x-show=​"selectedCard" class=​"w-80 bg-gray-800 border-l border-gray-700 p-4 overflow-y-auto" style=​"display:​ none;​">​…​</div>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: selectedCard is not defined
+
+Expression: "selectedCard"
+
+ <div x-show=​"selectedCard" style=​"display:​ none;​">​…​</div>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: selectedCard is not defined
+
+Expression: "selectedCard.title"
+
+ <input type=​"text" x-model=​"selectedCard.title" class=​"w-full bg-gray-700 text-white p-2 rounded" placeholder=​"Card title">​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: selectedCard is not defined
+
+Expression: "selectedCard.size.width"
+
+ <select x-model=​"selectedCard.size.width" class=​"w-full bg-gray-700 text-white p-2 rounded">​…​</select>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: selectedCard is not defined
+
+Expression: "selectedCard.size.height"
+
+ <select x-model=​"selectedCard.size.height" class=​"w-full bg-gray-700 text-white p-2 rounded">​…​</select>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: selectedCard is not defined
+
+Expression: "selectedCard && selectedCard.type === 'datatable'"
+
+ <template x-if=​"selectedCard && selectedCard.type === 'datatable'">​…​</template>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: selectedCard is not defined
+
+Expression: "selectedCard && selectedCard.type === 'graph'"
+
+ <template x-if=​"selectedCard && selectedCard.type === 'graph'">​…​</template>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: selectedCard is not defined
+
+Expression: "selectedCard && selectedCard.type === 'kanban'"
+
+ <template x-if=​"selectedCard && selectedCard.type === 'kanban'">​…​</template>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: selectedCard is not defined
+
+Expression: "selectedCard && selectedCard.type === 'actions'"
+
+ <template x-if=​"selectedCard && selectedCard.type === 'actions'">​…​</template>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: selectedCard is not defined
+
+Expression: "selectedCard && selectedCard.type === 'chat'"
+
+ <template x-if=​"selectedCard && selectedCard.type === 'chat'">​…​</template>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: selectedCard is not defined
+
+Expression: "selectedCard && selectedCard.type === 'search'"
+
+ <template x-if=​"selectedCard && selectedCard.type === 'search'">​…​</template>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:1 Alpine Expression Error: selectedCard is not defined
+
+Expression: "selectedCard && selectedCard.type === 'stats'"
+
+ <template x-if=​"selectedCard && selectedCard.type === 'stats'">​…​</template>​
+re @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Promise.catch
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+backend.js:2 Alpine Devtools: waiting for init request...
+cdn.min.js:5 Uncaught SyntaxError: Unexpected token ')'
+(anonymous) @ cdn.min.js:5
+jn @ cdn.min.js:5
+Fn @ cdn.min.js:5
+xt @ cdn.min.js:5
+x @ cdn.min.js:5
+R @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: init is not defined
+[Alpine] init() @ VM12208:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+R @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: availableCards is not defined
+[Alpine] availableCards @ VM12209:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+to @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: dashboard is not defined
+[Alpine] dashboard.name @ VM12211:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: dashboard is not defined
+[Alpine] dashboard.description @ VM12213:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: dashboard is not defined
+[Alpine] dashboard.cards @ VM12216:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+to @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: selectedCard is not defined
+[Alpine] selectedCard @ VM12218:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: selectedCard is not defined
+[Alpine] selectedCard @ VM12218:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: selectedCard is not defined
+[Alpine] selectedCard.title @ VM12219:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: selectedCard is not defined
+[Alpine] selectedCard.size.width @ VM12221:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: selectedCard is not defined
+[Alpine] selectedCard.size.height @ VM12225:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+c @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: selectedCard is not defined
+[Alpine] selectedCard && selectedCard.type === 'datatable' @ VM12227:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: selectedCard is not defined
+[Alpine] selectedCard && selectedCard.type === 'graph' @ VM12228:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: selectedCard is not defined
+[Alpine] selectedCard && selectedCard.type === 'kanban' @ VM12229:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: selectedCard is not defined
+[Alpine] selectedCard && selectedCard.type === 'actions' @ VM12230:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: selectedCard is not defined
+[Alpine] selectedCard && selectedCard.type === 'chat' @ VM12231:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: selectedCard is not defined
+[Alpine] selectedCard && selectedCard.type === 'search' @ VM12232:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+cdn.min.js:5 Uncaught ReferenceError: selectedCard is not defined
+[Alpine] selectedCard && selectedCard.type === 'stats' @ VM12233:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+backend.js:2 Alpine Devtools: starting...
+backend.js:2 Alpine Devtools: detected version 3.14.9
+backend.js:2 Alpine Devtools: detected 1 components, 0 stores.
