@@ -36,9 +36,8 @@
       this.dashboard.id = 'dashboard-' + Date.now();
     }
 
-    // Load available forms and data sources for data table cards
-    await this.loadForms();
-    await this.loadDataSources();
+    // Load available forms for data table cards
+    await this.loadAvailableForms();
   },
 
   async loadDashboard(id) {
@@ -295,6 +294,11 @@
     card.config.searchFields.splice(index, 1);
   },
 
+  init() {
+    this.loadForms();
+    this.loadDataSources();
+  },
+
   async loadForms() {
     try {
       const response = await fetch('/sultan/api/forms');
@@ -378,7 +382,9 @@
       if (value.length > 100) return 'longtext';
     }
     return 'text';
-  }
+  },
+
+  addCard(type) {
 }" x-init="init()">
 
   <!-- Sidebar for adding cards -->
