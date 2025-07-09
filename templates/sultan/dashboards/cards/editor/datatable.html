@@ -136,7 +136,7 @@ function initDataTableCard() {
         if (response.ok) {
           const formConfig = await response.json();
           if (formConfig && formConfig.fields && Array.isArray(formConfig.fields)) {
-            columns = formConfig.fields.map(field => ({
+            this.selectedCard.configs.columns = formConfig.fields.map(field => ({
               key: field.key,
               label: field.label || field.key,
               visible: true,
