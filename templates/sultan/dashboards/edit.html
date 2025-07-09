@@ -1,9 +1,7 @@
 {% extends "sultan/base.html" %}
-```
-```html
+
 {% block title %}Edit Dashboard{% endblock %}
-```
-```html
+
 {% block content %}
 <div class="flex h-screen" x-data="{
   page: 'dashboard-edit',
@@ -52,7 +50,17 @@
       type: type,
       title: `New ${type}`,
       size: { width: 4, height: 3 },
-      config: this.getDefaultConfig(type)
+      config: {
+        dataSource: '',
+        saveToLocalDB: false,
+        localDBName: '',
+        title: '',
+        columns: [],
+        pagination: true,
+        pageSize: 25,
+        enableSearch: true,
+        enableExport: false
+      }
     };
     this.dashboard.cards.push(card);
     this.selectedCard = card;
@@ -61,8 +69,6 @@
   getDefaultConfig(cardType) {
     const defaults = {
       datatable: {
-        title: '',
-        dataSource: '',
         columns: [],
         pageSize: 25,
         pagination: true,
@@ -72,41 +78,17 @@
         localDBName: ''
       },
       graph: {
-        title: '',
-        type: 'line',
-        dataSource: '',
-        xAxis: '',
-        yAxis: ''
+        type: 'line'
       },
       stats: {
-        title: '',
-        icon: '📊',
-        dataSource: '',
-        valueField: 'count'
+        icon: '📊'
       },
       actions: {
-        title: '',
         actions: []
-      },
-      kanban: {
-        title: '',
-        dataSource: '',
-        columns: '[{"id": "todo", "title": "To Do"}, {"id": "doing", "title": "Doing"}, {"id": "done", "title": "Done"}]'
-      },
-      chat: {
-        title: '',
-        apiEndpoint: '',
-        placeholder: 'Type your message...'
-      },
-      search: {
-        title: '',
-        searchApi: '/api/search',
-        placeholder: 'Search...',
-        instantSearch: false
       }
     };
 
-    return defaults[cardType] || { title: '' };
+    return defaults[cardType] || {};
   },
   removeCard(cardId) {
     this.dashboard.cards = this.dashboard.cards.filter(card => card.id !== cardId);
@@ -207,7 +189,22 @@
     }
   },
   selectCard(card) {
-    this.selectedCard = card;
+    this.selectedCard = {
+      ...card,
+      size: card.size || { width: 4, height: 3 },
+      config: {
+        dataSource: '',
+        saveToLocalDB: false,
+        localDBName: '',
+        title: '',
+        columns: [],
+        pagination: true,
+        pageSize: 25,
+        enableSearch: true,
+        enableExport: false,
+        ...card.config
+      }
+    };
   },
 }" x-init="init()">
   <!-- Sidebar -->
@@ -262,7 +259,7 @@
       <div class="grid grid-cols-12 gap-4 min-h-full">
         <template x-for="(card, index) in dashboard.cards">
           <div 
-            :class="`col-span-${card.size?.width || 4} bg-gray-800 p-4 rounded-lg border-2 border-gray-700 hover:border-red-500 transition-colors cursor-pointer`"
+            :class="`col-span-${card.size.width} bg-gray-800 p-4 rounded-lg border-2 border-gray-700 hover:border-red-500 transition-colors cursor-pointer`"
             @click="selectCard(card)"
           >
             <div class="flex justify-between items-center mb-2">
