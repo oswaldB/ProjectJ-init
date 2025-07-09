@@ -475,14 +475,14 @@
           <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
           <input 
             type="text" 
-            x-model="selectedCard?.title" 
+            x-model="selectedCard.title" 
             class="w-full bg-gray-700 text-white p-2 rounded"
           >
         </div>
 
         <div>
           <label class="block text-sm font-medium text-gray-300 mb-1">Card Width (columns)</label>
-          <select x-model="selectedCard?.size?.width" class="w-full bg-gray-700 text-white p-2 rounded">
+          <select x-model="selectedCard.size.width" class="w-full bg-gray-700 text-white p-2 rounded">
             <template x-for="col in [1,2,3,4]" :key="col">
               <option :value="col" x-text="col"></option>
             </template>
@@ -491,7 +491,7 @@
 
         <div>
           <label class="block text-sm font-medium text-gray-300 mb-1">Card Height</label>
-          <select x-model="selectedCard?.size?.height" class="w-full bg-gray-700 text-white p-2 rounded">
+          <select x-model="selectedCard.size.height" class="w-full bg-gray-700 text-white p-2 rounded">
             <option value="1">Small</option>
             <option value="2">Medium</option>
             <option value="3">Large</option>
