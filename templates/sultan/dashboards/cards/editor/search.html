@@ -4,19 +4,19 @@
   <div class="space-y-3">
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
-      <input type="text" x-model="card.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Search title">
+      <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Search title">
     </div>
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Search API</label>
-      <input type="text" x-model="card.config.searchApi" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="/api/search">
+      <input type="text" x-model="selectedCard.config.searchApi" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="/api/search">
     </div>
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Placeholder</label>
-      <input type="text" x-model="card.config.placeholder" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Search...">
+      <input type="text" x-model="selectedCard.config.placeholder" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Search...">
     </div>
     <div>
       <label class="flex items-center text-gray-300">
-        <input type="checkbox" x-model="card.config.instantSearch" class="mr-2">
+        <input type="checkbox" x-model="selectedCard.config.instantSearch" class="mr-2">
         Enable Instant Search
       </label>
     </div>

@@ -1,72 +1,53 @@
-
 <div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
   <h3 class="text-white font-semibold mb-3">Data Table Configuration</h3>
-  <div class="space-y-4">
-    
-    <!-- Data Source Selection -->
-    <div x-show="selectedCard && selectedCard.config">
-      <label class="block text-sm font-medium text-gray-300 mb-2">Data Source</label>
-      <select x-model="selectedCard.config.dataSource" @change="await loadFormColumns(selectedCard)" class="w-full bg-gray-700 text-white p-2 rounded">
-        <option value="">Select data source...</option>
+  <div class="space-y-3">
+    <!-- Title -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Table Title</label>
+      <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Data table title">
+    </div>
+
+    <!-- Data Source -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
+      <select x-model="selectedCard.config.dataSource" @change="loadFormColumns(selectedCard)" class="w-full bg-gray-700 text-white p-2 rounded">
+        <option value="">Select data source</option>
+        <option value="jaffar">Jaffar Issues</option>
         <template x-for="form in availableForms">
           <option :value="form.id" x-text="form.name"></option>
         </template>
       </select>
     </div>
 
-    <!-- Local DB Storage -->
-    <div x-show="selectedCard && selectedCard.config && selectedCard.config.dataSource">
-      <label class="flex items-center text-gray-300 mb-2">
-        <input type="checkbox" x-model="selectedCard.config.saveToLocalDB" class="mr-2" x-show="selectedCard && selectedCard.config">
-        Save to Local DB (PouchDB)
+    <!-- Local Database Options -->
+    <div>
+      <label class="flex items-center text-gray-300">
+        <input type="checkbox" x-model="selectedCard.config.saveToLocalDB" class="mr-2">
+        Save to Local Database
       </label>
-      <div x-show="selectedCard.config.saveToLocalDB" class="ml-6">
-        <label class="block text-sm font-medium text-gray-300 mb-1">Local DB Name</label>
-        <input type="text" x-model="selectedCard.config.localDBName" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="table_name" x-show="selectedCard && selectedCard.config">
+      <div x-show="selectedCard.config.saveToLocalDB" class="ml-6 mt-2">
+        <label class="block text-sm font-medium text-gray-300 mb-1">Database Name</label>
+        <input type="text" x-model="selectedCard.config.localDBName" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="local_db_name">
       </div>
     </div>
 
-    <!-- Table Title -->
-    <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">Table Title</label>
-      <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Table title" x-show="selectedCard && selectedCard.config">
-    </div>
-
-    <!-- Column Configuration -->
-    <div x-show="selectedCard && selectedCard.config && selectedCard.config.dataSource">
-      <label class="block text-sm font-medium text-gray-300 mb-2">Column Configuration</label>
-      <div class="bg-gray-700 p-3 rounded max-h-60 overflow-y-auto">
-        <template x-for="(column, index) in (selectedCard.config.columns || [])">
-          <div class="flex items-center space-x-2 mb-2 p-2 bg-gray-600 rounded">
-            <!-- Drag Handle -->
-            <div class="cursor-move text-gray-400">⋮⋮</div>
-            
-            <!-- Column Order -->
-            <div class="flex space-x-1">
-              <button @click="moveColumnUp(selectedCard, index)" :disabled="index === 0" class="text-gray-400 hover:text-white disabled:text-gray-600">↑</button>
-              <button @click="moveColumnDown(selectedCard, index)" :disabled="index === selectedCard.config.columns.length - 1" class="text-gray-400 hover:text-white disabled:text-gray-600">↓</button>
-            </div>
-            
-            <!-- Column Name -->
-            <div class="flex-1">
+    <!-- Columns Configuration -->
+    <div x-show="selectedCard.config.columns && selectedCard.config.columns.length > 0">
+      <h4 class="text-white font-medium mb-2">Columns</h4>
+      <div class="space-y-2 max-h-48 overflow-y-auto">
+        <template x-for="(column, index) in selectedCard.config.columns">
+          <div class="bg-gray-700 p-2 rounded flex items-center justify-between">
+            <div class="flex items-center space-x-3 flex-1">
+              <input type="checkbox" x-model="column.visible" class="flex-shrink-0">
               <span class="text-white text-sm" x-text="column.label"></span>
-              <div class="text-xs text-gray-400" x-text="column.key"></div>
             </div>
-            
-            <!-- Column Options -->
-            <div class="flex items-center space-x-2">
-              <label class="flex items-center text-xs text-gray-300">
-                <input type="checkbox" x-model="column.visible" class="mr-1">
-                Show
-              </label>
-              <label class="flex items-center text-xs text-gray-300">
-                <input type="checkbox" x-model="column.filterable" class="mr-1">
-                Filter
-              </label>
-              <label class="flex items-center text-xs text-gray-300">
-                <input type="checkbox" x-model="column.sortable" class="mr-1">
-                Sort
-              </label>
+            <div class="flex space-x-1">
+              <button @click="moveColumnUp(selectedCard, index)" :disabled="index === 0" class="text-gray-400 hover:text-white disabled:text-gray-600">
+                ↑
+              </button>
+              <button @click="moveColumnDown(selectedCard, index)" :disabled="index === selectedCard.config.columns.length - 1" class="text-gray-400 hover:text-white disabled:text-gray-600">
+                ↓
+              </button>
             </div>
           </div>
         </template>
@@ -113,7 +94,7 @@
 function initDataTableCard() {
   return {
     availableForms: [],
-    
+
     async loadAvailableForms() {
       try {
         const response = await fetch('/pc-analytics-jaffar/sultan/api/forms');
@@ -127,10 +108,10 @@ function initDataTableCard() {
 
     async loadFormColumns(card) {
       if (!card.config.dataSource) return;
-      
+
       try {
         let columns = [];
-        
+
         // Load form configuration to get questions
         const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${card.config.dataSource}`);
         if (response.ok) {
@@ -145,7 +126,7 @@ function initDataTableCard() {
             }));
           }
         }
-        
+
         card.config.columns = columns;
       } catch (error) {
         console.error('Failed to load columns:', error);
@@ -171,7 +152,7 @@ function initDataTableCard() {
 
     async init() {
       await this.loadAvailableForms();
-      
+
       // Initialize default config if not set
       if (!this.selectedCard.config.columns) {
         this.selectedCard.config.columns = [];
