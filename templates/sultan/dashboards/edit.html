@@ -1,3 +1,4 @@
+
 {% extends "sultan/base.html" %}
 
 {% block title %}Edit Dashboard{% endblock %}
@@ -23,7 +24,7 @@
   ],
   selectedCard: null,
   gridColumns: Array.from({length: 12}, (_, i) => i + 1),
-
+  
   // Form and data source management
   availableForms: [],
 
@@ -358,7 +359,7 @@
                 <button @click.stop="removeCard(card.id)" class="text-red-500 hover:text-red-700 text-xs">×</button>
               </div>
             </div>
-
+            
             <!-- Type-specific Preview Includes -->
             <template x-if="card && card.type === 'datatable'">
               <div>
@@ -419,8 +420,8 @@
 
         <div>
           <label class="block text-sm font-medium text-gray-300 mb-1">Card Width (columns)</label>
-          <select x-model="selectedCard?.size?.width" class="bg-gray-700 text-white p-2 rounded">
-            <template x-for="col in gridColumns" :key="col">
+          <select x-model="selectedCard.size.width" class="w-full bg-gray-700 text-white p-2 rounded">
+            <template x-for="col in [1,2,3,4]" :key="col">
               <option :value="col" x-text="col"></option>
             </template>
           </select>
@@ -428,11 +429,11 @@
 
         <div>
           <label class="block text-sm font-medium text-gray-300 mb-1">Card Height</label>
-          <select x-model="selectedCard?.size?.height" class="bg-gray-700 text-white p-2 rounded">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
+          <select x-model="selectedCard.size.height" class="w-full bg-gray-700 text-white p-2 rounded">
+            <option value="1">Small</option>
+            <option value="2">Medium</option>
+            <option value="3">Large</option>
+            <option value="4">Extra Large</option>
           </select>
         </div>
 
