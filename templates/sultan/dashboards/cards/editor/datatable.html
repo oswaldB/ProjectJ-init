@@ -13,15 +13,7 @@
       </select>
     </div>
 
-    <div x-show="selectedCard.config.dataSource">
-      <label class="block text-sm font-medium text-gray-300 mb-1 mt-4">Table Title</label>
-      <input 
-        type="text" 
-        x-model="selectedCard.config.title" 
-        class="w-full bg-gray-700 text-white p-2 rounded"
-        placeholder="Table title"
-      >
-    </div>
+    
 
     <div x-show="selectedCard.config.dataSource" class="mt-4">
       <label class="block text-sm font-medium text-gray-300 mb-1">Page Size</label>
