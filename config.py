@@ -18,8 +18,15 @@ mock.start()
 s3 = boto3.client('s3', region_name='us-east-1')
 try:
     s3.create_bucket(Bucket=BUCKET_NAME)
-except:
-    pass
+    print(f"S3 bucket '{BUCKET_NAME}' created successfully")
+except Exception as e:
+    print(f"S3 bucket creation: {e}")
+    try:
+        # Check if bucket exists
+        s3.head_bucket(Bucket=BUCKET_NAME)
+        print(f"S3 bucket '{BUCKET_NAME}' already exists")
+    except:
+        print(f"Failed to access bucket '{BUCKET_NAME}'")
 
 class CircularRefEncoder(json.JSONEncoder):
     def default(self, obj):
