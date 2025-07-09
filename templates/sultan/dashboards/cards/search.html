@@ -1,0 +1,57 @@
+
+<div x-show="mode === 'editor'">
+  <!-- Editor Mode -->
+  <div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
+    <h3 class="text-white font-semibold mb-3">Search Configuration</h3>
+    <div class="space-y-4">
+      
+      <!-- Search Title -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Search Title</label>
+        <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Search widget title" x-show="selectedCard && selectedCard.config">
+      </div>
+
+      <!-- Data Source -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Data Source</label>
+        <select x-model="selectedCard.config.dataSource" class="w-full bg-gray-700 text-white p-2 rounded" x-show="selectedCard && selectedCard.config">
+          <option value="">Select data source...</option>
+          <template x-for="form in availableForms">
+            <option :value="form.id" x-text="form.name"></option>
+          </template>
+        </select>
+      </div>
+
+      <!-- Search Fields -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Search Fields</label>
+        <input type="text" x-model="selectedCard.config.searchFields" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Comma-separated field names" x-show="selectedCard && selectedCard.config">
+      </div>
+
+      <!-- Placeholder Text -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Placeholder Text</label>
+        <input type="text" x-model="selectedCard.config.placeholder" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Search placeholder text" x-show="selectedCard && selectedCard.config">
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div x-show="mode === 'preview'">
+  <!-- Preview Mode -->
+  <div class="bg-gray-800 p-4 rounded-lg h-full">
+    <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Search'"></h3>
+    
+    <div class="space-y-2">
+      <div class="flex">
+        <input type="text" :placeholder="card.config.placeholder || 'Search...'" class="flex-1 bg-gray-700 text-white p-2 rounded-l" disabled>
+        <button class="bg-blue-600 text-white px-3 py-2 rounded-r">🔍</button>
+      </div>
+      <div class="text-xs text-gray-400" x-show="card.config.dataSource" x-text="`Searching in: ${card.config.dataSource}`"></div>
+      <div class="bg-gray-700 p-3 rounded">
+        <div class="text-gray-400 text-center text-sm">Search results will appear here</div>
+      </div>
+    </div>
+  </div>
+</div>

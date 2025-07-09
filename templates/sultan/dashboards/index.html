@@ -1,4 +1,3 @@
-
 {% extends "sultan/base.html" %}
 
 {% block title %}Dashboards{% endblock %}
@@ -81,7 +80,8 @@
 
     <!-- Dashboards Grid -->
     <div class="grid gap-4" x-show="!state.loading">
-      <template x-for="dashboard in filteredDashboards()">
+      <template x-for="dashboard in dashboard.cards">
+      <template x-for="card in dashboard.cards">
         <div class="bg-gray-800 p-4 rounded-lg hover:bg-gray-750 transition">
           <div class="flex justify-between items-start mb-2">
             <div>
@@ -100,6 +100,29 @@
           <div class="text-xs text-gray-500">
             Cards: <span x-text="dashboard.cards?.length || 0"></span>
           </div>
+          
+            <div x-show="card.type === 'datatable'" x-data="{ mode: 'preview' }">
+              {% include "sultan/dashboards/cards/datatable.html" %}
+            </div>
+            <div x-show="card.type === 'graph'" x-data="{ mode: 'preview' }">
+              {% include "sultan/dashboards/cards/graph.html" %}
+            </div>
+            <div x-show="card.type === 'kanban'" x-data="{ mode: 'preview' }">
+              {% include "sultan/dashboards/cards/kanban.html" %}
+            </div>
+            <div x-show="card.type === 'actions'" x-data="{ mode: 'preview' }">
+              {% include "sultan/dashboards/cards/actions.html" %}
+            </div>
+            <div x-show="card.type === 'chat'" x-data="{ mode: 'preview' }">
+              {% include "sultan/dashboards/cards/chat.html" %}
+            </div>
+            <div x-show="card.type === 'search'" x-data="{ mode: 'preview' }">
+              {% include "sultan/dashboards/cards/search.html" %}
+            </div>
+            <div x-show="card.type === 'stats'" x-data="{ mode: 'preview' }">
+              {% include "sultan/dashboards/cards/stats.html" %}
+            </div>
+          
         </div>
       </template>
     </div>

@@ -1,0 +1,61 @@
+
+<div x-show="mode === 'editor'">
+  <!-- Editor Mode -->
+  <div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
+    <h3 class="text-white font-semibold mb-3">Chat Configuration</h3>
+    <div class="space-y-4">
+      
+      <!-- Chat Title -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Chat Title</label>
+        <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Chat widget title" x-show="selectedCard && selectedCard.config">
+      </div>
+
+      <!-- Chat Type -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Chat Type</label>
+        <select x-model="selectedCard.config.chatType" class="w-full bg-gray-700 text-white p-2 rounded" x-show="selectedCard && selectedCard.config">
+          <option value="ai">AI Assistant</option>
+          <option value="support">Support Chat</option>
+          <option value="team">Team Chat</option>
+        </select>
+      </div>
+
+      <!-- AI Model (if AI type) -->
+      <div x-show="selectedCard.config.chatType === 'ai'">
+        <label class="block text-sm font-medium text-gray-300 mb-1">AI Model</label>
+        <select x-model="selectedCard.config.aiModel" class="w-full bg-gray-700 text-white p-2 rounded" x-show="selectedCard && selectedCard.config">
+          <option value="gpt-4">GPT-4</option>
+          <option value="gpt-3.5">GPT-3.5</option>
+          <option value="claude">Claude</option>
+        </select>
+      </div>
+
+      <!-- Welcome Message -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Welcome Message</label>
+        <textarea x-model="selectedCard.config.welcomeMessage" class="w-full bg-gray-700 text-white p-2 rounded" rows="3" placeholder="Welcome message..." x-show="selectedCard && selectedCard.config"></textarea>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div x-show="mode === 'preview'">
+  <!-- Preview Mode -->
+  <div class="bg-gray-800 p-4 rounded-lg h-full flex flex-col">
+    <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Chat'"></h3>
+    
+    <div class="flex-1 bg-gray-700 rounded p-2 mb-2 overflow-y-auto">
+      <div class="text-xs text-gray-400 mb-2" x-text="card.config.welcomeMessage || 'Welcome to the chat!'"></div>
+      <div class="bg-blue-600 text-white text-xs p-2 rounded mb-1 max-w-xs">
+        Hello! How can I help you today?
+      </div>
+    </div>
+    
+    <div class="flex">
+      <input type="text" placeholder="Type a message..." class="flex-1 bg-gray-700 text-white p-2 rounded-l text-sm" disabled>
+      <button class="bg-blue-600 text-white px-3 py-2 rounded-r">→</button>
+    </div>
+  </div>
+</div>

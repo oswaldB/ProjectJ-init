@@ -1,0 +1,65 @@
+
+<div x-show="mode === 'editor'">
+  <!-- Editor Mode -->
+  <div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
+    <h3 class="text-white font-semibold mb-3">Stats Configuration</h3>
+    <div class="space-y-4">
+      
+      <!-- Stats Title -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Stats Title</label>
+        <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Stats widget title" x-show="selectedCard && selectedCard.config">
+      </div>
+
+      <!-- Data Source -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Data Source</label>
+        <select x-model="selectedCard.config.dataSource" class="w-full bg-gray-700 text-white p-2 rounded" x-show="selectedCard && selectedCard.config">
+          <option value="">Select data source...</option>
+          <template x-for="form in availableForms">
+            <option :value="form.id" x-text="form.name"></option>
+          </template>
+        </select>
+      </div>
+
+      <!-- Metric Type -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Metric Type</label>
+        <select x-model="selectedCard.config.metricType" class="w-full bg-gray-700 text-white p-2 rounded" x-show="selectedCard && selectedCard.config">
+          <option value="count">Count</option>
+          <option value="sum">Sum</option>
+          <option value="average">Average</option>
+          <option value="max">Maximum</option>
+          <option value="min">Minimum</option>
+        </select>
+      </div>
+
+      <!-- Field (for sum, average, max, min) -->
+      <div x-show="selectedCard.config.metricType !== 'count'">
+        <label class="block text-sm font-medium text-gray-300 mb-1">Field</label>
+        <input type="text" x-model="selectedCard.config.field" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Field name for calculation" x-show="selectedCard && selectedCard.config">
+      </div>
+
+      <!-- Icon -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Icon</label>
+        <input type="text" x-model="selectedCard.config.icon" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="📊" x-show="selectedCard && selectedCard.config">
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div x-show="mode === 'preview'">
+  <!-- Preview Mode -->
+  <div class="bg-gray-800 p-4 rounded-lg h-full">
+    <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Statistics'"></h3>
+    
+    <div class="bg-gray-700 p-4 rounded text-center">
+      <div class="text-3xl mb-2" x-text="card.config.icon || '📊'"></div>
+      <div class="text-2xl font-bold text-white mb-1">1,234</div>
+      <div class="text-sm text-gray-400" x-text="card.config.metricType || 'count'"></div>
+      <div class="text-xs text-gray-500 mt-2" x-show="card.config.dataSource" x-text="`From: ${card.config.dataSource}`"></div>
+    </div>
+  </div>
+</div>
