@@ -53,7 +53,7 @@ def api_forms_list():
     Fetch the list of forms from S3.
     """
     forms = []
-    prefix = '/sultan/forms/'
+    prefix = 'sultan/forms/'
     try:
         forms = list_folder_with_filter(prefix)
         if not forms:
