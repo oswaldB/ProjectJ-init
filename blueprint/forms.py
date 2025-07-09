@@ -14,17 +14,7 @@ from services.s3_service import (
 )
 import boto3
 import os
-
-# Initialize S3 client
-REGION = os.environ.get('AWS_REGION') or 'eu-west-2'
-BUCKET_NAME = os.environ.get('BUCKET_NAME') or 'pc-analytics-jaffar'
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-
-s3 = boto3.client('s3',
-                  region_name=REGION,
-                  aws_access_key_id=AWS_ACCESS_KEY_ID,
-                  aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+from config import BUCKET_NAME, s3
 
 logger = logging.getLogger(__name__)
 
@@ -55,13 +45,26 @@ def api_forms_list():
     forms = []
     prefix = 'sultan/forms/'
     try:
-        forms = list_folder_with_filter(prefix)
-        if not forms:
-            return jsonify([]), 200
+        logger.info(f"Listing forms with prefix: {prefix}")
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        logger.info(f"S3 response: {response}")
+        
+        for obj in response.get('Contents', []):
+            key = obj['Key']
+            if key.endswith('.json'):
+                try:
+                    form_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+                    form_data = json.loads(form_obj['Body'].read().decode('utf-8'))
+                    forms.append(form_data)
+                    logger.info(f"Loaded form: {form_data.get('id', 'unknown')}")
+                except Exception as e:
+                    logger.error(f"Failed to load form {key}: {e}")
+        
+        logger.info(f"Total forms found: {len(forms)}")
+        return jsonify(forms)
     except Exception as e:
         logger.error(f"Failed to list forms: {e}")
         return jsonify({"error": str(e)}), 500
-    return jsonify(forms)
 
 @forms_blueprint.route('/api/save', methods=['POST'])
 def api_forms_save():
