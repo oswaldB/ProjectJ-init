@@ -1,3 +1,4 @@
+
 {% extends "sultan/base.html" %}
 
 {% block title %}Edit Dashboard{% endblock %}
@@ -27,7 +28,6 @@
   // Form and data source management
   availableForms: [],
   availableDataSources: [],
-  isLoadingDataSources: false,
 
   async init() {
     const dashboardId = window.location.pathname.split('/').pop();
@@ -186,7 +186,6 @@
   },
 
   async loadDataSources() {
-    this.isLoadingDataSources = true;
     try {
       // Charger toutes les datasources disponibles depuis les formulaires soumis
       const formsResponse = await fetch('/pc-analytics-jaffar/sultan/api/forms');
@@ -217,8 +216,6 @@
       }
     } catch (error) {
       console.error('Failed to load data sources:', error);
-    } finally {
-      this.isLoadingDataSources = false;
     }
   },
 
