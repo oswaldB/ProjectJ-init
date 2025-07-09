@@ -188,18 +188,6 @@
 
     try {
       let columns = [];
-
-      if (card.config.dataSource === 'jaffar') {
-        // Jaffar issues columns
-        columns = [
-          { key: 'id', label: 'Issue ID', visible: true, filterable: true, sortable: true },
-          { key: 'title', label: 'Title', visible: true, filterable: true, sortable: true },
-          { key: 'status', label: 'Status', visible: true, filterable: true, sortable: true },
-          { key: 'priority', label: 'Priority', visible: true, filterable: true, sortable: true },
-          { key: 'created_at', label: 'Created', visible: true, filterable: true, sortable: true },
-          { key: 'assigned_to', label: 'Assigned To', visible: true, filterable: true, sortable: true }
-        ];
-      } else {
         // Load form configuration to get questions
         const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${card.config.dataSource}`);
         if (response.ok) {
@@ -212,7 +200,6 @@
               filterable: true,
               sortable: true
             }));
-          }
         }
       }
 

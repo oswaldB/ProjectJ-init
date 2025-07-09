@@ -29,13 +29,14 @@ s3 = boto3.client('s3',
 logger = logging.getLogger(__name__)
 
 # Create a blueprint for forms
-forms_blueprint = Blueprint('forms', __name__, url_prefix='/forms')
+forms_blueprint = Blueprint('forms', __name__, url_prefix='/pc-analytics-jaffar/forms')
 
 @forms_blueprint.route('/')
 def forms_index():
     return render_template('forms/form.html')
 
 @forms_blueprint.route('/edit/<form_id>')
+@forms_blueprint.route('/edit/<form_id>/')
 def forms_edit(form_id):
     return render_template('forms/form.html', form_id=form_id)
 
