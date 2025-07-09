@@ -16,7 +16,7 @@ from services.s3_service import (
 logger = logging.getLogger(__name__)
 
 # Create Sultan blueprint with prefix
-sultan_bp = Blueprint('sultan', __name__, url_prefix='/sultan')
+sultan_bp = Blueprint('sultan', __name__, url_prefix='/pc-analytics-jaffar/sultan')
 
 @sultan_bp.route('/')
 def index():
@@ -254,37 +254,6 @@ def api_delete_form(form_id):
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to delete form: {e}")
-        return jsonify({"error": str(e)}), 500
-
-@sultan_bp.route('/api/datasources', methods=['GET'])
-def api_datasources():
-    """Get available data sources from S3 forms submitted folder"""
-    try:
-        from services.s3_service import s3, BUCKET_NAME
-        datasources = []
-        
-        # List all forms to find their submitted data
-        forms = list_sultan_objects('forms')
-        for form in forms:
-            form_id = form.get('id')
-            if form_id:
-                # Check if this form has submitted data
-                prefix = f'forms/{form_id}/submitted/'
-                try:
-                    response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix, MaxKeys=1)
-                    if response.get('Contents'):
-                        datasources.append({
-                            'id': form_id,
-                            'name': form.get('name', form_id),
-                            'type': 'form_submissions',
-                            'path': prefix
-                        })
-                except Exception as e:
-                    logger.error(f"Error checking submissions for form {form_id}: {e}")
-        
-        return jsonify(datasources)
-    except Exception as e:
-        logger.error(f"Failed to list data sources: {e}")
         return jsonify({"error": str(e)}), 500
 
 # Add the missing API route for Sultan forms save
