@@ -3,24 +3,20 @@
   <h3 class="text-white font-semibold mb-3">Stats Card Configuration</h3>
   <div class="space-y-3">
     <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
+      <input type="text" x-model="card.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Stats title">
+    </div>
+    <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
-      <input type="text" x-model="selectedCard.config.dataSource" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="API endpoint">
+      <input type="text" x-model="card.config.dataSource" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="API endpoint">
     </div>
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Value Field</label>
-      <input type="text" x-model="selectedCard.config.valueField" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="count">
+      <input type="text" x-model="card.config.valueField" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="count">
     </div>
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Icon</label>
-      <input type="text" x-model="selectedCard.config.icon" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="📊">
-    </div>
-    <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">Format</label>
-      <select x-model="selectedCard.config.format" class="w-full bg-gray-700 text-white p-2 rounded">
-        <option value="number">Number</option>
-        <option value="currency">Currency</option>
-        <option value="percentage">Percentage</option>
-      </select>
+      <input type="text" x-model="card.config.icon" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="📊">
     </div>
   </div>
 </div>

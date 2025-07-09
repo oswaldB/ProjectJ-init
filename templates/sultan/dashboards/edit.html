@@ -1,377 +1,362 @@
-
 {% extends "sultan/base.html" %}
-
-{% block title %}Dashboard Editor{% endblock %}
-
+```
+```html
+{% block title %}Edit Dashboard{% endblock %}
+```
+```html
 {% block content %}
-<div class="h-screen bg-gray-900 text-white" x-data="dashboardEditor()" x-init="init()">
-  <!-- Top Bar -->
-  <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
-    <h1 class="text-2xl font-bold text-white">Dashboard Editor</h1>
-    <div class="flex space-x-4">
-      <span class="text-gray-400 text-sm">Auto-saved</span>
-      <a href="/pc-analytics-jaffar/sultan/dashboards" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Back</a>
+<div class="flex h-screen" x-data="{
+  page: 'dashboard-edit',
+  dashboard: {
+    id: '',
+    name: '',
+    description: '',
+    cards: [],
+    layout: 'grid'
+  },
+  availableCards: [
+    { type: 'graph', name: 'Graph', icon: '' },
+    { type: 'datatable', name: 'Data Table', icon: '' },
+    { type: 'kanban', name: 'Kanban Board', icon: '' },
+    { type: 'actions', name: 'Actions', icon: '' },
+    { type: 'chat', name: 'Chat', icon: '' },
+    { type: 'search', name: 'Search Bar', icon: '' },
+    { type: 'stats', name: 'Stats Card', icon: '' }
+  ],
+  selectedCard: null,
+  gridColumns: Array.from({length: 12}, (_, i) => i + 1),
+  async init() {
+    const dashboardId = window.location.pathname.split('/').pop();
+    if (dashboardId !== 'new') {
+      await this.loadDashboard(dashboardId);
+    } else {
+      this.dashboard.id = 'dashboard-' + Date.now();
+    }
+
+    // Load available forms for data table cards
+    await this.loadAvailableForms();
+  },
+  async loadDashboard(id) {
+    try {
+      const response = await fetch(`/sultan/dashboard/api/${id}`);
+      if (response.ok) {
+        this.dashboard = await response.json();
+      }
+    } catch (error) {
+      console.error('Failed to load dashboard:', error);
+    }
+  },
+  addCard(type) {
+    const card = {
+      id: Date.now().toString(),
+      type: type,
+      title: `New ${type}`,
+      size: { width: 4, height: 3 },
+      config: {
+        dataSource: '',
+        saveToLocalDB: false,
+        localDBName: '',
+        title: '',
+        columns: [],
+        pagination: true,
+        pageSize: 25,
+        enableSearch: true,
+        enableExport: false
+      }
+    };
+    this.dashboard.cards.push(card);
+    this.selectedCard = card;
+  },
+
+  getDefaultConfig(cardType) {
+    const defaults = {
+      datatable: {
+        columns: [],
+        pageSize: 25,
+        pagination: true,
+        enableSearch: true,
+        enableExport: false,
+        saveToLocalDB: false,
+        localDBName: ''
+      },
+      graph: {
+        type: 'line'
+      },
+      stats: {
+        icon: '📊'
+      },
+      actions: {
+        actions: []
+      }
+    };
+
+    return defaults[cardType] || {};
+  },
+  removeCard(cardId) {
+    this.dashboard.cards = this.dashboard.cards.filter(card => card.id !== cardId);
+  },
+  moveCardLeft(cardIndex) {
+    if (cardIndex > 0) {
+      const card = this.dashboard.cards.splice(cardIndex, 1)[0];
+      this.dashboard.cards.splice(cardIndex - 1, 0, card);
+    }
+  },
+  moveCardRight(cardIndex) {
+    if (cardIndex < this.dashboard.cards.length - 1) {
+      const card = this.dashboard.cards.splice(cardIndex, 1)[0];
+      this.dashboard.cards.splice(cardIndex + 1, 0, card);
+    }
+  },
+  async saveDashboard() {
+    try {
+      const response = await fetch('/sultan/dashboard/api/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(this.dashboard)
+      });
+      if (response.ok) {
+        window.location.href = '/sultan/dashboard';
+      }
+    } catch (error) {
+      console.error('Failed to save dashboard:', error);
+    }
+  },
+
+  // Form and data source management
+  availableForms: [],
+
+  async loadAvailableForms() {
+    try {
+      const response = await fetch('/pc-analytics-jaffar/sultan/api/forms');
+      if (response.ok) {
+        this.availableForms = await response.json();
+      }
+    } catch (error) {
+      console.error('Failed to load forms:', error);
+    }
+  },
+
+  async loadFormColumns(card) {
+    if (!card.config.dataSource) return;
+
+    try {
+      let columns = [];
+
+      if (card.config.dataSource === 'jaffar') {
+        // Jaffar issues columns
+        columns = [
+          { key: 'id', label: 'Issue ID', visible: true, filterable: true, sortable: true },
+          { key: 'title', label: 'Title', visible: true, filterable: true, sortable: true },
+          { key: 'status', label: 'Status', visible: true, filterable: true, sortable: true },
+          { key: 'priority', label: 'Priority', visible: true, filterable: true, sortable: true },
+          { key: 'created_at', label: 'Created', visible: true, filterable: true, sortable: true },
+          { key: 'assigned_to', label: 'Assigned To', visible: true, filterable: true, sortable: true }
+        ];
+      } else {
+        // Load form configuration to get questions
+        const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${card.config.dataSource}`);
+        if (response.ok) {
+          const formConfig = await response.json();
+          columns = formConfig.questions.map(question => ({
+            key: question.id,
+            label: question.label || question.id,
+            visible: true,
+            filterable: true,
+            sortable: true
+          }));
+        }
+      }
+
+      card.config.columns = columns;
+    } catch (error) {
+      console.error('Failed to load columns:', error);
+    }
+  },
+
+  moveColumnUp(card, index) {
+    if (index > 0) {
+      const columns = [...card.config.columns];
+      [columns[index], columns[index - 1]] = [columns[index - 1], columns[index]];
+      card.config.columns = columns;
+    }
+  },
+
+  moveColumnDown(card, index) {
+    if (index < card.config.columns.length - 1) {
+      const columns = [...card.config.columns];
+      [columns[index], columns[index + 1]] = [columns[index + 1], columns[index]];
+      card.config.columns = columns;
+    }
+  },
+  selectCard(card) {
+    this.selectedCard = {
+      ...card,
+      size: card.size || { width: 4, height: 3 },
+      config: {
+        dataSource: '',
+        saveToLocalDB: false,
+        localDBName: '',
+        title: '',
+        columns: [],
+        pagination: true,
+        pageSize: 25,
+        enableSearch: true,
+        enableExport: false,
+        ...card.config
+      }
+    };
+  },
+}" x-init="init()">
+  <!-- Sidebar -->
+  <div class="w-64 bg-gray-800 border-r border-gray-700 p-4 overflow-y-auto">
+    <h3 class="text-white font-semibold mb-4">Dashboard Cards</h3>
+    <div class="space-y-2">
+      <template x-for="cardType in availableCards">
+        <button 
+          @click="addCard(cardType.type)"
+          class="bg-red-500 p-3 rounded hover:bg-red-600 transition-colors w-full text-left"
+        >
+          <div class="flex items-center space-x-2">
+            <span x-text="cardType.icon"></span>
+            <span class="text-white text-sm font-medium" x-text="cardType.name"></span>
+          </div>
+        </button>
+      </template>
     </div>
   </div>
 
-  <!-- Main Content - 3 Columns -->
-  <div class="flex h-[calc(100vh-80px)]">
-    
-    <!-- Column 1: Add Cards & Dashboard Settings -->
-    <div class="w-80 bg-gray-800 border-r border-gray-700 overflow-y-auto">
-      <!-- Dashboard Settings -->
-      <div class="p-4 border-b border-gray-700">
-        <h2 class="text-lg font-semibold mb-3">Dashboard Settings</h2>
-        <div class="space-y-3">
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">Name</label>
-            <input type="text" x-model="dashboard.name" class="w-full bg-gray-700 text-white p-2 rounded">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">Description</label>
-            <textarea x-model="dashboard.description" class="w-full bg-gray-700 text-white p-2 rounded h-20"></textarea>
-          </div>
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col">
+    <!-- Header -->
+    <div class="bg-gray-800 p-4 border-b border-gray-700">
+      <div class="flex justify-between items-center">
+        <div class="flex-1 mr-4">
+          <input 
+            type="text" 
+            x-model="dashboard.name" 
+            placeholder="Dashboard Name"
+            class="bg-gray-700 text-white px-3 py-2 rounded w-full"
+          >
+          <textarea 
+            x-model="dashboard.description" 
+            placeholder="Description"
+            class="bg-gray-700 text-white px-3 py-2 rounded w-full mt-2 h-20"
+          ></textarea>
         </div>
-      </div>
-
-      <!-- Add Card Types -->
-      <div class="p-4 border-b border-gray-700">
-        <h3 class="text-lg font-semibold mb-3">Add Card</h3>
-        <div class="grid grid-cols-2 gap-2">
-          <button @click="addCard('datatable')" class="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">
-            📊 Table
-          </button>
-          <button @click="addCard('stats')" class="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700">
-            📈 Stats
-          </button>
-          <button @click="addCard('search')" class="bg-purple-600 text-white px-3 py-2 rounded text-sm hover:bg-purple-700">
-            🔍 Search
-          </button>
-          <button @click="addCard('kanban')" class="bg-orange-600 text-white px-3 py-2 rounded text-sm hover:bg-orange-700">
-            📋 Kanban
-          </button>
-          <button @click="addCard('graph')" class="bg-indigo-600 text-white px-3 py-2 rounded text-sm hover:bg-indigo-700">
-            📉 Graph
-          </button>
-          <button @click="addCard('actions')" class="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700">
-            ⚡ Actions
-          </button>
-          <button @click="addCard('chat')" class="bg-teal-600 text-white px-3 py-2 rounded text-sm hover:bg-teal-700">
-            💬 Chat
+        <div class="flex space-x-2">
+          <a href="/sultan/dashboard" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+            Cancel
+          </a>
+          <button @click="saveDashboard()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+            Save Dashboard
           </button>
         </div>
       </div>
+    </div>
 
-      <!-- Cards List -->
-      <div class="p-4">
-        <h3 class="text-lg font-semibold mb-3">Cards</h3>
-        <div class="space-y-2">
-          <template x-for="(card, index) in dashboard.cards" :key="card.id">
-            <div class="bg-gray-700 p-3 rounded cursor-pointer border-2"
-                 :class="selectedCardIndex === index ? 'border-blue-500' : 'border-transparent'"
-                 @click="selectCard(index)">
-              <div class="flex items-center justify-between">
-                <div>
-                  <span class="font-medium" x-text="card.title || `${card.type} Card`"></span>
-                  <div class="text-xs text-gray-400" x-text="card.type"></div>
-                </div>
-                <button @click.stop="removeCard(index)" class="text-red-400 hover:text-red-300">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
+    <!-- Dashboard Canvas -->
+    <div class="flex-1 p-4 bg-gray-900 overflow-auto">
+      <div class="grid grid-cols-12 gap-4 min-h-full">
+        <template x-for="(card, index) in dashboard.cards">
+          <div 
+            :class="`col-span-${card.size.width} bg-gray-800 p-4 rounded-lg border-2 border-gray-700 hover:border-red-500 transition-colors cursor-pointer`"
+            @click="selectCard(card)"
+          >
+            <div class="flex justify-between items-center mb-2">
+              <h4 class="text-white font-medium" x-text="card.type"></h4>
+              <div>
+                <button @click.stop="moveCardLeft(index)" :disabled="index === 0" class="text-gray-500 hover:text-white disabled:text-gray-700 mr-2">
+                  &lt;
+                </button>
+                <button @click.stop="moveCardRight(index)" :disabled="index === dashboard.cards.length - 1" class="text-gray-500 hover:text-white disabled:text-gray-700">
+                  &gt;
+                </button>
+                <button @click.stop="removeCard(card.id)" class="text-red-500 hover:text-red-700">
+                  ×
                 </button>
               </div>
             </div>
-          </template>
-        </div>
-      </div>
-    </div>
 
-    <!-- Column 2: Live Preview -->
-    <div class="flex-1 bg-gray-900 p-6 overflow-y-auto">
-      <h2 class="text-xl font-bold mb-4">Live Preview</h2>
-      <div class="grid grid-cols-4 gap-4 auto-rows-min">
-        <template x-for="card in dashboard.cards" :key="card.id">
-          <div class="bg-gray-800 rounded-lg border border-gray-600 p-4 cursor-pointer"
-               :class="[
-                 `col-span-${card.size?.width || 1} row-span-${card.size?.height || 1}`,
-                 selectedCardIndex === dashboard.cards.indexOf(card) ? 'ring-2 ring-blue-500' : ''
-               ]"
-               @click="selectCard(dashboard.cards.indexOf(card))">
-            <h3 class="text-white font-semibold mb-2" x-text="card.title || `${card.type} Card`"></h3>
-            
-            <!-- Type-specific Preview Includes -->
-            <template x-if="card && card.type === 'datatable'">
-              <div>
-                {% include "sultan/dashboards/cards/preview/datatable.html" %}
-              </div>
-            </template>
-            <template x-if="card && card.type === 'graph'">
-              <div>
+            <!-- Card Preview Includes -->
+            <div class="text-gray-400 text-sm">
+              <div x-show="card.type === 'graph'">
                 {% include "sultan/dashboards/cards/preview/graph.html" %}
               </div>
-            </template>
-            <template x-if="card && card.type === 'kanban'">
-              <div>
+              <div x-show="card.type === 'datatable'">
+                {% include "sultan/dashboards/cards/preview/datatable.html" %}
+              </div>
+              <div x-show="card.type === 'kanban'">
                 {% include "sultan/dashboards/cards/preview/kanban.html" %}
               </div>
-            </template>
-            <template x-if="card && card.type === 'actions'">
-              <div>
+              <div x-show="card.type === 'actions'">
                 {% include "sultan/dashboards/cards/preview/actions.html" %}
               </div>
-            </template>
-            <template x-if="card && card.type === 'chat'">
-              <div>
+              <div x-show="card.type === 'chat'">
                 {% include "sultan/dashboards/cards/preview/chat.html" %}
               </div>
-            </template>
-            <template x-if="card && card.type === 'search'">
-              <div>
+              <div x-show="card.type === 'search'">
                 {% include "sultan/dashboards/cards/preview/search.html" %}
               </div>
-            </template>
-            <template x-if="card && card.type === 'stats'">
-              <div>
+              <div x-show="card.type === 'stats'">
                 {% include "sultan/dashboards/cards/preview/stats.html" %}
               </div>
-            </template>
-          </div>
-        </template>
-        
-        <!-- Empty state -->
-        <template x-if="dashboard.cards.length === 0">
-          <div class="col-span-4 text-center text-gray-400 py-20">
-            <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            <p>No cards yet. Add your first card using the buttons on the left.</p>
+            </div>
           </div>
         </template>
       </div>
     </div>
+  </div>
 
-    <!-- Column 3: Card Configuration -->
-    <div class="w-96 bg-gray-800 border-l border-gray-700 overflow-y-auto">
-      <template x-if="selectedCard">
-        <div class="p-6">
-          <h2 class="text-xl font-bold mb-4">
-            Configure: <span x-text="selectedCard.title || selectedCard.type"></span>
-          </h2>
-          
-          <!-- Common Card Settings -->
-          <div class="bg-gray-700 p-4 rounded-lg border border-gray-600 mb-4">
-            <h3 class="text-white font-semibold mb-3">General Settings</h3>
-            <div class="space-y-3">
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
-                <input type="text" x-model="selectedCard.title" class="w-full bg-gray-600 text-white p-2 rounded">
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-1">Width</label>
-                  <select x-model="selectedCard.size.width" class="w-full bg-gray-600 text-white p-2 rounded">
-                    <option value="1">1 Column</option>
-                    <option value="2">2 Columns</option>
-                    <option value="3">3 Columns</option>
-                    <option value="4">4 Columns</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-1">Height</label>
-                  <select x-model="selectedCard.size.height" class="w-full bg-gray-600 text-white p-2 rounded">
-                    <option value="1">1 Row</option>
-                    <option value="2">2 Rows</option>
-                    <option value="3">3 Rows</option>
-                    <option value="4">4 Rows</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Type-specific Editor Includes -->
-          <template x-if="selectedCard && selectedCard.type === 'datatable'">
-            <div>
-              {% include "sultan/dashboards/cards/editor/datatable.html" %}
-            </div>
-          </template>
-          <template x-if="selectedCard && selectedCard.type === 'graph'">
-            <div>
-              {% include "sultan/dashboards/cards/editor/graph.html" %}
-            </div>
-          </template>
-          <template x-if="selectedCard && selectedCard.type === 'kanban'">
-            <div>
-              {% include "sultan/dashboards/cards/editor/kanban.html" %}
-            </div>
-          </template>
-          <template x-if="selectedCard && selectedCard.type === 'actions'">
-            <div>
-              {% include "sultan/dashboards/cards/editor/actions.html" %}
-            </div>
-          </template>
-          <template x-if="selectedCard && selectedCard.type === 'chat'">
-            <div>
-              {% include "sultan/dashboards/cards/editor/chat.html" %}
-            </div>
-          </template>
-          <template x-if="selectedCard && selectedCard.type === 'search'">
-            <div>
-              {% include "sultan/dashboards/cards/editor/search.html" %}
-            </div>
-          </template>
-          <template x-if="selectedCard && selectedCard.type === 'stats'">
-            <div>
-              {% include "sultan/dashboards/cards/editor/stats.html" %}
-            </div>
-          </template>
+  <!-- Card Configuration Panel -->
+  <div x-show="selectedCard" class="w-80 bg-gray-800 border-l border-gray-700 p-4 overflow-y-auto">
+    <h3 class="text-white font-semibold mb-4">Card Configuration</h3>
+    <div x-show="selectedCard">
+      <div class="space-y-4">
+        <!-- General Settings -->
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Card Width (columns)</label>
+          <select x-model="selectedCard.size.width" class="w-full bg-gray-700 text-white p-2 rounded">
+            <template x-for="col in gridColumns">
+              <option :value="col" x-text="col"></option>
+            </template>
+          </select>
         </div>
-      </template>
-
-      <template x-if="!selectedCard">
-        <div class="text-center text-gray-400 p-6 mt-20">
-          <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-          </svg>
-          <p>Select a card to configure its properties</p>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Card Height</label>
+          <select x-model="selectedCard.size.height" class="w-full bg-gray-700 text-white p-2 rounded">
+            <option value="1">Small</option>
+            <option value="2">Medium</option>
+            <option value="3">Large</option>
+            <option value="4">Extra Large</option>
+          </select>
         </div>
-      </template>
+
+        <!-- Card Editor Includes -->
+        <div x-show="selectedCard.type === 'datatable'">
+          {% include "sultan/dashboards/cards/editor/datatable.html" %}
+        </div>
+        <div x-show="selectedCard.type === 'graph'">
+          {% include "sultan/dashboards/cards/editor/graph.html" %}
+        </div>
+        <div x-show="selectedCard.type === 'kanban'">
+          {% include "sultan/dashboards/cards/editor/kanban.html" %}
+        </div>
+        <div x-show="selectedCard.type === 'actions'">
+          {% include "sultan/dashboards/cards/editor/actions.html" %}
+        </div>
+        <div x-show="selectedCard.type === 'chat'">
+          {% include "sultan/dashboards/cards/editor/chat.html" %}
+        </div>
+        <div x-show="selectedCard.type === 'search'">
+          {% include "sultan/dashboards/cards/editor/search.html" %}
+        </div>
+        <div x-show="selectedCard.type === 'stats'">
+          {% include "sultan/dashboards/cards/editor/stats.html" %}
+        </div>
+      </div>
     </div>
   </div>
 </div>
-
-<script>
-function dashboardEditor() {
-  return {
-    dashboard: {
-      id: '',
-      name: '',
-      description: '',
-      cards: []
-    },
-    selectedCardIndex: null,
-    
-    get selectedCard() {
-      return this.selectedCardIndex !== null ? this.dashboard.cards[this.selectedCardIndex] : null;
-    },
-
-    async init() {
-      const dashboardId = window.location.pathname.split('/').pop();
-      if (dashboardId !== 'new') {
-        try {
-          const response = await fetch(`/pc-analytics-jaffar/sultan/api/dashboard/${dashboardId}`);
-          if (response.ok) {
-            const data = await response.json();
-            this.dashboard = {
-              id: dashboardId,
-              name: data.name || '',
-              description: data.description || '',
-              cards: data.cards || []
-            };
-          }
-        } catch (error) {
-          console.error('Failed to load dashboard:', error);
-        }
-      } else {
-        this.dashboard.id = `dashboard-${Date.now()}`;
-      }
-
-      // Auto-save watcher
-      this.$watch('dashboard', () => {
-        this.saveDashboard();
-      }, { deep: true });
-    },
-
-    addCard(type) {
-      const newCard = {
-        id: `card-${Date.now()}`,
-        type: type,
-        title: '',
-        size: {
-          width: 2,
-          height: 1
-        },
-        config: this.getDefaultConfig(type)
-      };
-      
-      this.dashboard.cards.push(newCard);
-      this.selectedCardIndex = this.dashboard.cards.length - 1;
-    },
-
-    selectCard(index) {
-      this.selectedCardIndex = index;
-    },
-
-    removeCard(index) {
-      this.dashboard.cards.splice(index, 1);
-      if (this.selectedCardIndex === index) {
-        this.selectedCardIndex = null;
-      } else if (this.selectedCardIndex > index) {
-        this.selectedCardIndex--;
-      }
-    },
-
-    getDefaultConfig(type) {
-      const defaults = {
-        datatable: {
-          dataSource: '',
-          columns: [],
-          pagination: true,
-          search: true
-        },
-        stats: {
-          dataSource: '',
-          valueField: 'count',
-          icon: '📊',
-          format: 'number'
-        },
-        search: {
-          searchApi: '/api/search',
-          placeholder: 'Search...',
-          instantSearch: false
-        },
-        kanban: {
-          dataSource: '',
-          statusField: 'status',
-          titleField: 'title'
-        },
-        graph: {
-          dataSource: '',
-          chartType: 'line',
-          xField: 'date',
-          yField: 'value'
-        },
-        actions: {
-          buttons: []
-        },
-        chat: {
-          chatApi: '/api/chat',
-          height: 400
-        }
-      };
-      
-      return defaults[type] || {};
-    },
-
-    async saveDashboard() {
-      if (!this.dashboard.id) return;
-      
-      try {
-        await fetch('/pc-analytics-jaffar/sultan/api/dashboard/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            dashboard_id: this.dashboard.id,
-            dashboard: this.dashboard
-          })
-        });
-      } catch (error) {
-        console.error('Failed to save dashboard:', error);
-      }
-    }
-  };
-}
-</script>
 {% endblock %}
