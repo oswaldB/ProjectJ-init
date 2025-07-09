@@ -234,43 +234,6 @@ def api_form_by_id(form_id):
         logger.error(f"Failed to fetch form {form_id}: {e}")
         return jsonify({"error": str(e)}), 500
 
-@sultan_bp.route('/api/forms/<form_id>/submitted-data', methods=['GET'])
-def api_form_submitted_data(form_id):
-    """Get submitted data for a specific form from S3"""
-    try:
-        # Check if form exists
-        form = get_sultan_object('forms', form_id)
-        if not form:
-            return jsonify({"error": "Form not found"}), 404
-        
-        # List submitted responses from S3
-        submitted_responses = []
-        prefix = f'forms/{form_id}/submitted/'
-        
-        try:
-            import boto3
-            from config import s3, BUCKET_NAME
-            
-            response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-            for obj in response.get('Contents', []):
-                try:
-                    content = s3.get_object(Bucket=BUCKET_NAME, Key=obj['Key'])
-                    data = json.loads(content['Body'].read().decode('utf-8'))
-                    submitted_responses.append(data)
-                except Exception as e:
-                    logger.error(f"Failed to load submitted response {obj['Key']}: {e}")
-        except Exception as e:
-            logger.error(f"Failed to list submitted responses for form {form_id}: {e}")
-        
-        return jsonify({
-            "form_id": form_id,
-            "total": len(submitted_responses),
-            "issues": submitted_responses
-        })
-    except Exception as e:
-        logger.error(f"Failed to get submitted data for form {form_id}: {e}")
-        return jsonify({"error": str(e)}), 500
-
 @sultan_bp.route('/api/forms/save', methods=['POST'])
 def api_save_form():
     data = request.json

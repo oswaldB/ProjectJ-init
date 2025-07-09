@@ -196,7 +196,7 @@
         for (const form of forms) {
           try {
             // Vérifier s'il y a des données soumises pour ce formulaire depuis S3
-            const submittedResponse = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${form.id}/submitted-data`);
+            const submittedResponse = await fetch(`/pc-analytics-jaffar/forms/api/submitted-responses/${form.id}?page=1&page_size=1`);
             if (submittedResponse.ok) {
               const submittedData = await submittedResponse.json();
               if (submittedData.total > 0) {
@@ -251,7 +251,7 @@
 
     try {
       const formId = this.selectedCard.config.dataSource;
-      const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${formId}/submitted-data`);
+      const response = await fetch(`/pc-analytics-jaffar/forms/api/submitted-responses/${formId}?page=1&page_size=1`);
       if (response.ok) {
         const data = await response.json();
         if (data.issues && data.issues.length > 0) {
