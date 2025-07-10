@@ -11,22 +11,13 @@ from services.s3_service import (
     delete,
     get_max_from_global_db,
     get_one_file,
-    list_folder_with_filter
+    list_folder_with_filter,
+    save_sultan_object,
+    get_sultan_object,
+    list_sultan_objects
 )
 from services.email_service import Email
-import boto3
-import os
-
-# Initialize S3 client
-REGION = os.environ.get('AWS_REGION') or 'eu-west-2'
-BUCKET_NAME = os.environ.get('BUCKET_NAME') or 'pc-analytics-jaffar'
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-
-s3 = boto3.client('s3',
-                  region_name=REGION,
-                  aws_access_key_id=AWS_ACCESS_KEY_ID,
-                  aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+from config import s3, BUCKET_NAME
 
 logger = logging.getLogger(__name__)
 
