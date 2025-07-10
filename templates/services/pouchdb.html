@@ -16,14 +16,20 @@ async function initializePouchDB(dbName) {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch issues for PouchDB initialization');
+      throw new Error('Failed to fetch data for PouchDB initialization');
     }
 
     const data = await response.json();
     const chunks = data.chunks || [];
 
+    // Add unique _id to each document for PouchDB
+    let docId = 1;
     for (const chunk of chunks) {
-      await newPouchDB.bulkDocs(chunk);
+      const docsWithIds = chunk.map(doc => ({
+        _id: `doc_${docId++}`,
+        ...doc
+      }));
+      await newPouchDB.bulkDocs(docsWithIds);
     }
 
     console.log(`PouchDB (${dbName}) initialized successfully`);

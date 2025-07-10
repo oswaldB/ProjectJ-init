@@ -40,17 +40,18 @@
     <div x-show="card.config.columns && card.config.columns.length > 0" class="p-2 space-y-1 max-h-32 overflow-y-auto overflow-x-auto" x-data="{ previewData: [], loading: false }" x-init="
       if (card.config.dataSource) {
         loading = true;
-        fetch(`/pc-analytics-jaffar/forms/${card.config.dataSource}/submitted/`)
-          .then(response => response.json())
-          .then(data => {
-            previewData = Array.isArray(data) ? data.slice(0, 3) : [];
-            loading = false;
-          })
-          .catch(error => {
-            console.error('Failed to load preview data:', error);
-            previewData = [];
-            loading = false;
-          });
+        // Initialize PouchDB with form_id as database name
+        initializePouchDB(card.config.dataSource).then(() => {
+          const pouchDB = new PouchDB(card.config.dataSource);
+          return pouchDB.allDocs({ include_docs: true, limit: 3 });
+        }).then(result => {
+          previewData = result.rows.map(row => row.doc).filter(doc => doc._id !== '_design/search');
+          loading = false;
+        }).catch(error => {
+          console.error('Failed to load preview data:', error);
+          previewData = [];
+          loading = false;
+        });
       }
     ">
       <!-- Loading indicator -->
