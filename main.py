@@ -14,11 +14,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import uuid
 
 # Import blueprints
-from blueprint.forms import forms_blueprint
-from blueprint.workflow import workflow_bp
 from blueprint.dashboard import dashboard_bp
+from blueprint.forms import forms_blueprint
 from blueprint.jaffar import jaffar_blueprint
-from blueprint.sultan import sultan_bp #Import Sultan blueprint
+from blueprint.jaffar_api import jaffar_api_bp
+from blueprint.sultan import sultan_bp
+from blueprint.workflow import workflow_bp
+from blueprint.pouchdb_api import pouchdb_api_bp
 
 # Import services
 from services.s3_service import save_in_global_db, get_one_from_global_db, get_max_from_global_db
@@ -27,11 +29,13 @@ from services.s3_service import save_in_global_db, get_one_from_global_db, get_m
 app = Flask(__name__)
 
 # Register blueprints
-app.register_blueprint(forms_blueprint)
-app.register_blueprint(workflow_bp)
 app.register_blueprint(dashboard_bp)
+app.register_blueprint(forms_blueprint)
 app.register_blueprint(jaffar_blueprint)
-app.register_blueprint(sultan_bp, url_prefix="/pc-analytics-jaffar/sultan/") #Register Sultan blueprint with url_prefix
+app.register_blueprint(jaffar_api_bp)
+app.register_blueprint(sultan_bp)
+app.register_blueprint(workflow_bp)
+app.register_blueprint(pouchdb_api_bp)
 
 logger = logging.getLogger(__name__)
 # Configure logging
@@ -443,7 +447,6 @@ def save_issue_changes(issue_id, changes):
     except Exception as e:
         logger.error(f"Failed to save changes for issue {issue_id}: {e}")
         raise
-
 
 # Start the Flask application
 if __name__ == '__main__':

@@ -1,8 +1,9 @@
 {% extends "sultan/base.html" %}
 
-{% block title %}Edit Dashboard{% endblock %}
+{% block title %}Dashboard Editor{% endblock %}
 
 {% block content %}
+{% include "sultan/dashboards/components/sync_indicator.html" %}
 <div class="flex h-screen" x-data="{
   page: 'dashboard-edit',
   dashboard: {
@@ -189,23 +190,20 @@
     try {
       console.log('=== loadDataSources() called ===');
       console.log('Stack trace:', new Error().stack);
-      
+
       // Prevent multiple simultaneous calls
       if (this.dataSourcesLoaded) {
         console.log('Data sources already loaded, skipping...');
         return;
       }
-      
+
       this.dataSourcesLoaded = true;
-      
-      // Initialize availableDataSources
-      this.availableDataSources = [];
 
       // Charger toutes les datasources disponibles depuis les formulaires soumis
       console.log('About to fetch /pc-analytics-jaffar/forms/api/list');
       const formsResponse = await fetch('/pc-analytics-jaffar/forms/api/list');
       console.log('Fetch completed with status:', formsResponse.status);
-      
+
       if (formsResponse.ok) {
         const forms = await formsResponse.json();
         console.log('Forms loaded:', forms);
@@ -267,7 +265,7 @@
     try {
       console.log('Loading columns for data source:', this.selectedCard.config.dataSource);
       const formId = this.selectedCard.config.dataSource;
-      
+
       // Find the selected data source in availableDataSources
       const selectedDataSource = this.availableDataSources.find(ds => ds.id === formId);
       if (!selectedDataSource) {
@@ -280,7 +278,7 @@
       if (response.ok) {
         const formConfig = await response.json();
         console.log('Form config loaded:', formConfig);
-        
+
         if (formConfig && formConfig.fields && Array.isArray(formConfig.fields)) {
           const columns = formConfig.fields
             .filter(field => field.key) // Only include fields with keys
