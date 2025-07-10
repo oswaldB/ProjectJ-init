@@ -1,0 +1,447 @@
+<div class="bg-gray-800 p-4 rounded-lg h-full" x-data="{ 
+  previewData: [], 
+  loading: false,
+  currentPage: 1,
+  totalPages: 1,
+  totalCount: 0,
+  searchQuery: '',
+  async loadDataFromPouchDB(page = 1) {
+    if (!card.config.dataSource) return;
+
+    this.loading = true;
+    const formId = card.config.dataSource;
+    console.log('Loading data from PouchDB for form:', formId, 'page:', page);
+
+    try {
+      await initializePouchDB(formId);
+      const pouchDB = new PouchDB(formId);
+
+      // Use configured page size, default to 25 if not set
+      const pageSize = parseInt(card.config.pageSize) || 25;
+      const skip = (page - 1) * pageSize;
+      console.log('Using page size:', pageSize, 'skip:', skip);
+
+      // Build Mango query selector with predefined filters
+      const selector = this.buildMangoSelector();
+      console.log('Using Mango selector:', JSON.stringify(selector, null, 2));
+
+      // Get filtered data using Mango query
+      let allData = [];
+      try {
+        const result = await pouchDB.find({
+          selector: selector
+        });
+        allData = result.docs.filter(doc => !doc._id.startsWith('_design/'));
+        console.log('Loaded filtered data using Mango query:', allData.length, 'documents');
+      } catch (findError) {
+        console.log('Mango query failed, falling back to allDocs:', findError);
+        // Fallback to allDocs if Mango query fails
+        const result = await pouchDB.allDocs({ include_docs: true });
+        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
+        // Apply filters in memory if Mango query failed
+        allData = this.applyFiltersInMemory(allDocs);
+        console.log('Loaded and filtered data using allDocs:', allData.length, 'documents');
+      }
+
+      // Set total count and pages
+      this.totalCount = allData.length;
+      this.totalPages = Math.ceil(this.totalCount / pageSize);
+      this.currentPage = page;
+
+      // Apply pagination in memory
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      this.previewData = allData.slice(startIndex, endIndex);
+
+      console.log(`Displaying page ${page}/${this.totalPages}, showing ${this.previewData.length} of ${this.totalCount} documents`);
+
+    } catch (error) {
+      console.error('Failed to load preview data for form', formId, ':', error);
+      this.previewData = [];
+    } finally {
+      this.loading = false;
+    }
+  },
+  buildMangoSelector() {
+    // Start with base selector to exclude design documents
+    const selector = {
+      '_id': { '$gt': null }
+    };
+
+    // Add search query if provided
+    if (this.searchQuery &amp;&amp; this.searchQuery.trim()) {
+      const searchTerm = this.searchQuery.trim();
+      const searchableColumns = (card.config.columns || []).filter(col => col.visible &amp;&amp; col.key);
+
+      if (searchableColumns.length > 0) {
+        // Create OR condition for searching across all visible columns
+        const searchConditions = searchableColumns.map(column => ({
+          [column.key]: { '$regex': new RegExp(searchTerm, 'i') }
+        }));
+
+        selector['$or'] = searchConditions;
+      }
+    }
+
+    // Add predefined filters from column configuration
+    const columns = card.config.columns || [];
+
+    for (const column of columns) {
+      if (!column.enablePredefinedFilter) continue;
+
+      const fieldName = column.key;
+      const operator = column.filterOperator || 'equals';
+      let value = column.filterValue;
+
+      // For multi-select fields, use filterValues array
+      if (column.filterValues &amp;&amp; Array.isArray(column.filterValues) &amp;&amp; column.filterValues.length > 0) {
+        value = column.filterValues;
+      }
+
+      // Skip if no value provided (except for exists/not_exists/empty/not_empty)
+      if (!value &amp;&amp; !['exists', 'not_exists', 'empty', 'not_empty'].includes(operator)) continue;
+
+      switch (operator) {
+        case 'equals':
+          selector[fieldName] = value;
+          break;
+        case 'not_equals':
+          selector[fieldName] = { '$ne': value };
+          break;
+        case 'contains':
+          selector[fieldName] = { '$regex': new RegExp(value, 'i') };
+          break;
+        case 'not_contains':
+          selector[fieldName] = { '$not': { '$regex': new RegExp(value, 'i') } };
+          break;
+        case 'greater_than':
+          selector[fieldName] = { '$gt': parseFloat(value) || value };
+          break;
+        case 'less_than':
+          selector[fieldName] = { '$lt': parseFloat(value) || value };
+          break;
+        case 'greater_equal':
+          selector[fieldName] = { '$gte': parseFloat(value) || value };
+          break;
+        case 'less_equal':
+          selector[fieldName] = { '$lte': parseFloat(value) || value };
+          break;
+        case 'in':
+          const inValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
+          selector[fieldName] = { '$in': inValues };
+          break;
+        case 'not_in':
+          const notInValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
+          selector[fieldName] = { '$nin': notInValues };
+          break;
+        case 'exists':
+          selector[fieldName] = { '$exists': true };
+          break;
+        case 'not_exists':
+          selector[fieldName] = { '$exists': false };
+          break;
+        case 'empty':
+          selector[fieldName] = { '$in': [null, '', undefined] };
+          break;
+        case 'not_empty':
+          selector[fieldName] = { '$nin': [null, '', undefined] };
+          break;
+        case 'starts_with':
+          selector[fieldName] = { '$regex': new RegExp(`^${value}`, 'i') };
+          break;
+        case 'ends_with':
+          selector[fieldName] = { '$regex': new RegExp(`${value}$`, 'i') };
+          break;
+      }
+    }
+
+    return selector;
+  },
+  applyFiltersInMemory(docs) {
+    // Fallback method to apply filters in memory when Mango queries fail
+    let filteredDocs = docs;
+
+    // Apply search filter first
+    if (this.searchQuery &amp;&amp; this.searchQuery.trim()) {
+      const searchTerm = this.searchQuery.trim().toLowerCase();
+      const searchableColumns = (card.config.columns || []).filter(col => col.visible &amp;&amp; col.key);
+
+      filteredDocs = filteredDocs.filter(doc => {
+        return searchableColumns.some(column => {
+          const value = doc[column.key];
+          if (value === null || value === undefined) return false;
+          return String(value).toLowerCase().includes(searchTerm);
+        });
+      });
+    }
+
+    // Apply predefined filters
+    const columns = card.config.columns || [];
+
+    return filteredDocs.filter(doc => {
+      for (const column of columns) {
+        if (!column.enablePredefinedFilter) continue;
+
+        const fieldName = column.key;
+        const operator = column.filterOperator || 'equals';
+        let value = column.filterValue;
+
+        // For multi-select fields, use filterValues array
+        if (column.filterValues &amp;&amp; Array.isArray(column.filterValues) &amp;&amp; column.filterValues.length > 0) {
+          value = column.filterValues;
+        }
+
+        // Skip if no value provided (except for exists/not_exists/empty/not_empty)
+        if (!value &amp;&amp; !['exists', 'not_exists', 'empty', 'not_empty'].includes(operator)) continue;
+
+        const docValue = doc[fieldName];
+
+        switch (operator) {
+          case 'equals':
+            if (docValue != value) return false;
+            break;
+          case 'not_equals':
+            if (docValue == value) return false;
+            break;
+          case 'contains':
+            if (!String(docValue || '').toLowerCase().includes(String(value || '').toLowerCase())) return false;
+            break;
+          case 'not_contains':
+            if (String(docValue || '').toLowerCase().includes(String(value || '').toLowerCase())) return false;
+            break;
+          case 'greater_than':
+            if (!(parseFloat(docValue) > parseFloat(value))) return false;
+            break;
+          case 'less_than':
+            if (!(parseFloat(docValue) < parseFloat(value))) return false;
+            break;
+          case 'greater_equal':
+            if (!(parseFloat(docValue) >= parseFloat(value))) return false;
+            break;
+          case 'less_equal':
+            if (!(parseFloat(docValue) <= parseFloat(value))) return false;
+            break;
+          case 'in':
+            const inValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
+            if (!inValues.includes(String(docValue))) return false;
+            break;
+          case 'not_in':
+            const notInValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
+            if (notInValues.includes(String(docValue))) return false;
+            break;
+          case 'exists':
+            if (docValue === null || docValue === undefined) return false;
+            break;
+          case 'not_exists':
+            if (docValue !== null &amp;&amp; docValue !== undefined) return false;
+            break;
+          case 'empty':
+            if (docValue !== null &amp;&amp; docValue !== undefined &amp;&amp; docValue !== '') return false;
+            break;
+          case 'not_empty':
+            if (docValue === null || docValue === undefined || docValue === '') return false;
+            break;
+          case 'starts_with':
+            if (!String(docValue || '').toLowerCase().startsWith(String(value || '').toLowerCase())) return false;
+            break;
+          case 'ends_with':
+            if (!String(docValue || '').toLowerCase().endsWith(String(value || '').toLowerCase())) return false;
+            break;
+        }
+      }
+      return true;
+    });
+  },
+  async goToPage(page) {
+    if (page < 1 || page > this.totalPages || page === this.currentPage) return;
+    await this.loadDataFromPouchDB(page);
+  },
+  async nextPage() {
+    if (this.currentPage < this.totalPages) {
+      await this.goToPage(this.currentPage + 1);
+    }
+  },
+  async prevPage() {
+    if (this.currentPage > 1) {
+      await this.goToPage(this.currentPage - 1);
+    }
+  },
+  async performSearch() {
+    // Reset to first page when searching
+    await this.loadDataFromPouchDB(1);
+  },
+  clearSearch() {
+    this.searchQuery = '';
+    this.loadDataFromPouchDB(1);
+  },
+  async exportToCSV() {
+    if (!card.config.dataSource) return;
+
+    try {
+      // Get all data without pagination for export
+      const formId = card.config.dataSource;
+      await initializePouchDB(formId);
+      const pouchDB = new PouchDB(formId);
+
+      // Build selector for export (same as current filters but no pagination)
+      const selector = this.buildMangoSelector();
+
+      let allData = [];
+      try {
+        const result = await pouchDB.find({
+          selector: selector
+        });
+        allData = result.docs.filter(doc => !doc._id.startsWith('_design/'));
+      } catch (findError) {
+        // Fallback to allDocs if Mango query fails
+        const result = await pouchDB.allDocs({ include_docs: true });
+        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
+        allData = this.applyFiltersInMemory(allDocs);
+      }
+
+      if (allData.length === 0) {
+        alert('No data to export');
+        return;
+      }
+
+      // Get visible columns for export
+      const visibleColumns = (card.config.columns || []).filter(col => col.visible);
+
+      if (visibleColumns.length === 0) {
+        alert('No visible columns to export');
+        return;
+      }
+
+      // Create CSV content
+      const headers = visibleColumns.map(col => col.label || col.key).join(',');
+      const rows = allData.map(row => {
+        return visibleColumns.map(col => {
+          let value = row[col.key];
+          if (value === null || value === undefined) return '';
+          if (Array.isArray(value)) return `" ${value.join(',="" ')}"`;="" return="" `"${string(value).replace(="" "="" g,="" '"')}"`;="" }).join(',');="" });="" const="" csvcontent="[headers," ...rows].join('\n');="" create="" and="" download="" file="" blob="new" blob([csvcontent],="" {="" type:="" 'text="" csv;charset="utf-8;'" link="document.createElement('a');" url="URL.createObjectURL(blob);" link.setattribute('href',="" url);="" link.setattribute('download',="" card.config.datasource="" +="" '_export_'="" new="" date().toisostring().split('t')[0]="" '.csv');="" link.style.visibility="hidden" ;="" document.body.appendchild(link);="" link.click();="" document.body.removechild(link);="" url.revokeobjecturl(url);="" }="" catch="" (error)="" console.error('export="" failed:',="" error);="" alert('export="" failed:="" '="" error.message);="" }"="" x-init="loadDataFromPouchDB()">
+
+  <!-- Data Source Info -->
+  <div x-show="card.config.dataSource" class="mb-2 flex justify-between items-center" style="display: none;">
+    <div class="text-xs text-gray-400 flex items-center gap-2">
+      <span>Source: <span x-text="card.config.dataSource"></span></span>
+      <span x-show="(card.config.columns || []).filter(col => col.enablePredefinedFilter).length > 0" class="bg-blue-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1" :title="`${(card.config.columns || []).filter(col => col.enablePredefinedFilter).length} active filters`" title="0 active filters" style="display: none;">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z"></path>
+        </svg>
+        <span x-text="(card.config.columns || []).filter(col => col.enablePredefinedFilter).length">0</span>
+      </span>
+    </div>
+    <button @click="
+      const formId = card.config.dataSource; 
+      console.log('Syncing form:', formId); 
+      loading = true;
+      syncPouchDB(formId).then(() => {
+        console.log('Sync completed, reloading data...');
+        return loadDataFromPouchDB(1);
+      }).catch(error => {
+        console.error('Sync failed:', error);
+        loading = false;
+      });
+    " class="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded text-xs flex items-center gap-1" title="Synchronize data" :disabled="loading">
+      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+      </svg>
+      Sync
+    </button>
+  </div>
+
+  <!-- Table Preview -->
+  <div x-show="card.config.dataSource" class="bg-gray-700 rounded overflow-hidden" style="display: none;">
+    <!-- Search Bar (if enabled) -->
+    <div x-show="card.config.enableSearch" class="bg-gray-600 p-2 border-b border-gray-500">
+      <div class="flex items-center space-x-2">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input type="text" x-model="searchQuery" @input.debounce.500ms="performSearch()" @keyup.enter="performSearch()" placeholder="Search in all columns..." class="bg-gray-700 text-white text-xs px-2 py-1 rounded border-none flex-1">
+        <button x-show="searchQuery" @click="clearSearch()" class="text-gray-400 hover:text-white px-1" title="Clear search" style="display: none;">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Table Container with Horizontal Scroll -->
+    <div x-show="card.config.columns &amp;&amp; card.config.columns.length > 0" class="overflow-x-auto" style="display: none;">
+      <!-- Table Header -->
+      <div class="bg-gray-600 p-2 min-w-max">
+        <div class="grid gap-2 text-xs" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(80px, 1fr))`" style="grid-template-columns: repeat(0, minmax(80px, 1fr))">
+          <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible)" :key="column.key">
+            <div class="text-white font-medium truncate flex items-center">
+              <span x-text="column.label" class="truncate"></span>
+              <svg x-show="column.sortable" class="w-3 h-3 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+              </svg>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Data Rows Container -->
+      <div class="p-2 space-y-1 max-h-32 overflow-y-auto min-w-max">
+        <!-- Loading indicator -->
+        <div x-show="loading" class="text-center py-4" style="display: none;">
+          <div class="text-xs text-gray-400">Loading data...</div>
+        </div>
+
+        <!-- Real data rows -->
+        <template x-for="(row, rowIndex) in previewData" :key="rowIndex">
+          <div class="grid gap-2 text-xs text-gray-300 py-1 border-b border-gray-600" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(120px, 1fr))`">
+            <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible)" :key="column.key">
+              <div class="truncate">
+                <template x-if="Array.isArray(row[column.key])">
+                  <span x-text="row[column.key].join(', ')"></span>
+                </template>
+                <template x-if="!Array.isArray(row[column.key]) &amp;&amp; row[column.key] !== null &amp;&amp; row[column.key] !== undefined">
+                  <span x-text="row[column.key]"></span>
+                </template>
+                <template x-if="row[column.key] === null || row[column.key] === undefined">
+                  <span class="text-gray-500">-</span>
+                </template>
+              </div>
+            </template>
+          </div>
+        </template>
+
+        <!-- No data message -->
+        <div x-show="!loading &amp;&amp; previewData.length === 0" class="text-center py-4" style="display: none;">
+          <div class="text-xs text-gray-400">No data available</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Footer with Controls -->
+    <div x-show="card.config.columns &amp;&amp; card.config.columns.length > 0" class="bg-gray-600 p-2 text-xs text-gray-300" style="display: none;">
+      <div class="flex justify-between items-center">
+        <div class="flex space-x-3">
+          <button x-show="card.config.enableExport" @click="exportToCSV()" class="text-green-300 flex items-center" style="display: none;">
+            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Export
+          </button>
+          <span class="text-gray-400" x-text="`${totalCount} total entries`"></span>
+        </div>
+        <div x-show="card.config.pagination &amp;&amp; totalPages > 1" class="flex items-center space-x-2" style="display: none;">
+          <button @click="prevPage()" class="px-2 py-1 bg-gray-700 rounded disabled:opacity-50 hover:bg-gray-600" :disabled="currentPage === 1 || loading">←</button>
+          <span x-text="`${currentPage} / ${totalPages}`"></span>
+          <button @click="nextPage()" class="px-2 py-1 bg-gray-700 rounded disabled:opacity-50 hover:bg-gray-600" :disabled="currentPage === totalPages || loading">→</button>
+          <span x-text="`${card.config.pageSize || 25}/page`" class="ml-2">25/page</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Data Source -->
+  <div x-show="!card.config.dataSource" class="bg-gray-700 p-4 rounded h-32 flex items-center justify-center">
+    <div class="text-center text-gray-400">
+      <div class="text-sm">Select a data source</div>
+    </div>
+  </div>
+</div>

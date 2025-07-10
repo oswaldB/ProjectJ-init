@@ -316,10 +316,10 @@
       const headers = visibleColumns.map(col => col.label || col.key).join(',');
       const rows = allData.map(row => {
         return visibleColumns.map(col => {
-          const value = row[col.key];
+          let value = row[col.key];
           if (value === null || value === undefined) return '';
-          if (Array.isArray(value)) return '"' + value.join(', ') + '"';
-          return '"' + String(value).replace(/"/g, '""') + '"';
+          if (Array.isArray(value)) return `"${value.join(', ')}"`;
+          return `"${String(value).replace(/"/g, '"')}"`;  
         }).join(',');
       });
 
