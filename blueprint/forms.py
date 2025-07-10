@@ -360,11 +360,17 @@ def api_pouchdb_init(form_id):
     """
     Initialize PouchDB with data from S3 for the given form ID.
     """
+    logger.info(f"Initializing PouchDB for form {form_id}")
     prefix = f'forms/{form_id}/submitted/'
     try:
         # List all submitted responses
         response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
         chunks = []
+        
+        if 'Contents' not in response:
+            logger.info(f"No submitted data found for form {form_id}")
+            return jsonify({"chunks": []}), 200
+            
         for obj in response.get('Contents', []):
             key = obj['Key']
             if key.endswith('/'):
@@ -373,6 +379,8 @@ def api_pouchdb_init(form_id):
             response_data = json.loads(response_obj['Body'].read().decode('utf-8'))
             chunks.append(response_data.get('answers', {}))
 
+        logger.info(f"Found {len(chunks)} submitted responses for form {form_id}")
+        
         # Split data into chunks for PouchDB
         chunk_size = 100
         chunked_data = [chunks[i:i + chunk_size] for i in range(0, len(chunks), chunk_size)]
