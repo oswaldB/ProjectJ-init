@@ -27,6 +27,7 @@
   // Form and data source management
   availableForms: [],
   availableDataSources: [],
+  dataSourcesLoaded: false,
 
   async init() {
     const dashboardId = window.location.pathname.split('/').pop();
@@ -188,6 +189,14 @@
     try {
       console.log('=== loadDataSources() called ===');
       console.log('Stack trace:', new Error().stack);
+      
+      // Prevent multiple simultaneous calls
+      if (this.dataSourcesLoaded) {
+        console.log('Data sources already loaded, skipping...');
+        return;
+      }
+      
+      this.dataSourcesLoaded = true;
       
       // Initialize availableDataSources
       this.availableDataSources = [];
