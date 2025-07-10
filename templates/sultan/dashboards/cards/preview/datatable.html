@@ -24,8 +24,8 @@
 
     <!-- Table Header -->
     <div x-show="card.config.columns && card.config.columns.length > 0" class="bg-gray-600 p-2">
-      <div class="grid gap-2 text-xs" :style="`grid-template-columns: repeat(${Math.min((card.config.columns || []).filter(col => col.visible).length, 4)}, 1fr)`">
-        <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible).slice(0, 4)" :key="column.key">
+      <div class="grid gap-2 text-xs" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(80px, 1fr))`">
+        <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible)" :key="column.key">
           <div class="text-white font-medium truncate flex items-center">
             <span x-text="column.label" class="truncate"></span>
             <svg x-show="column.sortable" class="w-3 h-3 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,8 +39,8 @@
     <!-- Sample Data Rows -->
     <div x-show="card.config.columns && card.config.columns.length > 0" class="p-2 space-y-1 max-h-32 overflow-y-auto overflow-x-auto">
       <template x-for="i in 3" :key="i">
-        <div class="grid gap-2 text-xs text-gray-300 py-1 border-b border-gray-600" :style="`grid-template-columns: repeat(${Math.min((card.config.columns || []).filter(col => col.visible).length, 4)}, 1fr)`">
-          <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible).slice(0, 4)" :key="column.key">
+        <div class="grid gap-2 text-xs text-gray-300 py-1 border-b border-gray-600" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(80px, 1fr))`">
+          <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible)" :key="column.key">
             <div class="truncate">
               <template x-if="column.key === 'id' || column.key === 'issue_id'">
                 <span x-text="`ID-${1000 + i}`"></span>
@@ -67,9 +67,6 @@
           </template>
         </div>
       </template>
-      <div x-show="(card.config.columns || []).filter(col => col.visible).length > 4" class="text-xs text-gray-400 text-center py-1">
-        <span x-text="`... et ${(card.config.columns || []).filter(col => col.visible).length - 4} autres colonnes`"></span>
-      </div>
     </div>
 
     <!-- Table Footer with Controls -->
