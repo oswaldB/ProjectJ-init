@@ -318,8 +318,8 @@
         return visibleColumns.map(col => {
           const value = row[col.key];
           if (value === null || value === undefined) return '';
-          if (Array.isArray(value)) return `"${value.join(', ')}"`;
-          return `"${String(value).replace(/"/g, '""')}"`;
+          if (Array.isArray(value)) return '"' + value.join(', ') + '"';
+          return '"' + String(value).replace(/"/g, '""') + '"';
         }).join(',');
       });
 
@@ -330,7 +330,7 @@
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', `${card.config.dataSource}_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', card.config.dataSource + '_export_' + new Date().toISOString().split('T')[0] + '.csv');
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
