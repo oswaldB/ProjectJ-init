@@ -12,19 +12,23 @@
       await initializePouchDB(formId);
       const pouchDB = new PouchDB(formId);
       
+      // Use configured page size, default to 25 if not set
+      const pageSize = parseInt(card.config.pageSize) || 25;
+      console.log('Using page size:', pageSize);
+      
       // First, try to get data using find (better for indexed queries)
       let result;
       try {
         result = await pouchDB.find({
           selector: { '_id': { '$gt': null } },
-          limit: 10
+          limit: pageSize
         });
         this.previewData = result.docs.filter(doc => !doc._id.startsWith('_design/'));
         console.log('Loaded preview data using find:', this.previewData.length, 'documents');
       } catch (findError) {
         console.log('Find method failed, falling back to allDocs:', findError);
         // Fallback to allDocs if find fails
-        result = await pouchDB.allDocs({ include_docs: true, limit: 10 });
+        result = await pouchDB.allDocs({ include_docs: true, limit: pageSize });
         this.previewData = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
         console.log('Loaded preview data using allDocs:', this.previewData.length, 'documents');
       }
