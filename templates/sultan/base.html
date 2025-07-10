@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,137 +6,129 @@
     <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
     <title>Sultan - {% block title %}{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pouchdb@9.0.0/dist/pouchdb.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pouchdb@9.0.0/dist/pouchdb.find.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/pouchdb-community/pouchdb-quick-search@master/dist/pouchdb.quick-search.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/ui/trumbowyg.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/plugins/table/ui/trumbowyg.table.min.css">
+    <style>
+      .trumbowyg-editor table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+      }
+      .trumbowyg-editor th,
+      .trumbowyg-editor td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      .trumbowyg-editor th {
+        background-color: #f2f2f2;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/trumbowyg.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/plugins/colors/trumbowyg.colors.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/plugins/fontsize/trumbowyg.fontsize.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/plugins/fontfamily/trumbowyg.fontfamily.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/plugins/table/trumbowyg.table.min.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <!-- Quill JS and Alpine integration -->
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
-    
-    <!-- Include PouchDB Service -->
-    {% include "services/pouchdb.html" %}
-    
     <script>
-    // Initialize Quill editors
-    window.initQuill = function(element, onChange) {
-        if (!element) return;
-        
-        const quill = new Quill(element, {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    ['bold', 'italic', 'underline'],
-                    ['link'],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    ['clean']
-                ]
-            }
-        });
-        
-        // Set initial content if available
-        if (onChange) {
-            quill.on('text-change', () => {
-                onChange(quill.root.innerHTML);
+      document.addEventListener('DOMContentLoaded', () => {
+        // Alpine x-init runs before DOM is ready for Quill, so use setTimeout to defer
+        window.initQuill = function($el, model) {
+          if (!$el) return;
+          if ($el._quill) return;
+          setTimeout(() => {
+            if ($el._quill) return;
+            var quill = new Quill($el, {
+              theme: 'snow',
+              modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
             });
-        }
-        
-        return quill;
-    };
-
-    // Global notification system
-    window.showNotification = function(message, type = 'info') {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
-            type === 'error' ? 'bg-red-600' : 
-            type === 'success' ? 'bg-green-600' : 
-            type === 'warning' ? 'bg-yellow-600' : 'bg-blue-600'
-        }`;
-        notification.textContent = message;
-        
-        document.body.appendChild(notification);
-        
-        // Remove after 5 seconds
-        setTimeout(() => {
-            notification.remove();
-        }, 5000);
-    };
+            $el._quill = quill;
+            // Set initial value
+            quill.root.innerHTML = model();
+            // Update Alpine model on change
+            quill.on('text-change', function() {
+              model(quill.root.innerHTML);
+            });
+            // Update Quill if model changes externally
+            $el.__watcher = Alpine.effect(() => {
+              if (quill.root.innerHTML !== model()) {
+                quill.root.innerHTML = model() || '';
+              }
+            });
+          }, 0);
+        };
+      });
     </script>
+    <!-- Quill CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+    <style>
+      /* Quill editor dark background and white toolbar buttons */
+      .ql-toolbar.ql-snow {
+        background: #rgb(31 41 55 / var(--tw-bg-opacity, 1)) !important;
+        border-color: #374151 !important;
+      }
+      .ql-toolbar.ql-snow .ql-picker,
+      .ql-toolbar.ql-snow .ql-stroke,
+      .ql-toolbar.ql-snow .ql-fill,
+      .ql-toolbar.ql-snow .ql-picker-label,
+      .ql-toolbar.ql-snow .ql-picker-item,
+      .ql-toolbar.ql-snow button {
+        color: #fff !important;
+        stroke: #fff !important;
+      }
+      .ql-toolbar.ql-snow .ql-picker-options {
+        background: #18181b !important;
+        color: #fff !important;
+      }
+      .ql-toolbar.ql-snow .ql-picker-item {
+        color: #fff !important;
+      }
+      .ql-toolbar.ql-snow button:hover,
+      .ql-toolbar.ql-snow button:focus,
+      .ql-toolbar.ql-snow .ql-picker-label:hover,
+      .ql-toolbar.ql-snow .ql-picker-label.ql-active {
+        color: #fff !important;
+        background: #27272a !important;
+      }
+      .ql-container.ql-snow {
+        background: #18181b !important;
+        color: #fff !important;
+        border-color: #374151 !important;
+        min-height: 80px;
+      }
+      .ql-editor {
+        background:rgb(31 41 55 / var(--tw-bg-opacity, 1)) !important;
+        color: #fff !important;
+        min-height: 80px;
+      }
+      </style>
+    <script>
+        if (!localStorage.getItem('sultan_password')) {
+            window.location.href = '/pc-analytics-jaffar/sultan/login';
+        }
+    </script>
+    {% block head %}{% endblock %}
 </head>
 <body class="bg-gray-900 text-white">
-    <div class="flex h-screen">
+    <div class="min-h-screen flex">
         <!-- Sidebar -->
-        {% include "sultan/menu.html" %}
-        
+        <div class="w-64 min-h-screen bg-gray-800 fixed left-0 top-0 z-20 flex flex-col">
+            <div class="flex-1 mt-10">
+                {% include 'sultan/menu.html' %}
+            </div>
+        </div>
+
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col overflow-hidden">
-            {% block content %}{% endblock %}
+        <div class="flex-1 ml-64">
+            <!-- Main Content Area -->
+            <main class="pl-6">
+                {% block content %}{% endblock %}
+            </main>
         </div>
     </div>
-    
-    <!-- Sync Progress Indicator -->
-    <div id="sync-indicator" 
-         x-data="syncIndicator()" 
-         x-show="hasSyncs" 
-         class="fixed bottom-4 right-4 bg-gray-800 border border-gray-600 rounded-lg p-4 max-w-sm z-50">
-        <h4 class="text-white font-semibold mb-2">Data Sync Progress</h4>
-        <template x-for="(status, dbName) in syncStatuses" :key="dbName">
-            <div class="mb-2 last:mb-0">
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-sm text-gray-300" x-text="dbName"></span>
-                    <span class="text-xs" 
-                          :class="{
-                            'text-green-400': status.status === 'completed',
-                            'text-red-400': status.status === 'error',
-                            'text-blue-400': status.status === 'syncing' || status.status === 'fetching',
-                            'text-yellow-400': status.status === 'starting' || status.status === 'clearing',
-                            'text-gray-400': status.status === 'idle'
-                          }"
-                          x-text="status.status"></span>
-                </div>
-                <div x-show="status.total > 0" class="bg-gray-700 rounded-full h-2">
-                    <div class="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                         :style="`width: ${status.total > 0 ? (status.progress / status.total) * 100 : 0}%`"></div>
-                </div>
-                <div x-show="status.total > 0" class="text-xs text-gray-400 mt-1" 
-                     x-text="`${status.progress}/${status.total}`"></div>
-                <div x-show="status.error" class="text-xs text-red-400 mt-1" x-text="status.error"></div>
-            </div>
-        </template>
-    </div>
-
-    <script>
-        function syncIndicator() {
-            return {
-                syncStatuses: {},
-                hasSyncs: false,
-                
-                init() {
-                    // Listen for sync progress updates
-                    window.addEventListener('pouchdb-sync-progress', (event) => {
-                        const { dbName, progress } = event.detail;
-                        this.syncStatuses[dbName] = progress;
-                        this.updateHasSyncs();
-                    });
-                    
-                    // Periodic check for sync statuses
-                    setInterval(() => {
-                        if (window.getAllSyncStatuses) {
-                            const statuses = window.getAllSyncStatuses();
-                            this.syncStatuses = statuses;
-                            this.updateHasSyncs();
-                        }
-                    }, 1000);
-                },
-                
-                updateHasSyncs() {
-                    this.hasSyncs = Object.values(this.syncStatuses).some(status => 
-                        status.status !== 'idle' && status.status !== 'completed'
-                    );
-                }
-            };
-        }
-    </script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

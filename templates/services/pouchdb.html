@@ -1,254 +1,34 @@
-
 <script>
-// Global variables for sync management
-let syncProgress = {};
-let activeSyncs = new Set();
-
-// PouchDB sync service
-class PouchDBSyncService {
-  constructor() {
-    this.databases = new Map();
-    this.syncCallbacks = new Map();
-  }
-
-  // Initialize or get existing PouchDB instance
-  async getDatabase(dbName) {
-    if (!this.databases.has(dbName)) {
-      const db = new PouchDB(dbName);
-      this.databases.set(dbName, db);
-    }
-    return this.databases.get(dbName);
-  }
-
-  // Discover all data sources from dashboards
-  async discoverDataSources() {
-    try {
-      const response = await fetch('/pc-analytics-jaffar/sultan/api/dashboards/list');
-      const dashboards = await response.json();
-      
-      const dataSources = new Set();
-      
-      dashboards.forEach(dashboard => {
-        // Add form_id as data source if exists
-        if (dashboard.form_id) {
-          dataSources.add(dashboard.form_id);
-        }
-        
-        // Add source_id as data source if exists
-        if (dashboard.source_id) {
-          dataSources.add(dashboard.source_id);
-        }
-        
-        // Check cards for additional data sources
-        if (dashboard.cards) {
-          dashboard.cards.forEach(card => {
-            if (card.config && card.config.dataSource) {
-              dataSources.add(card.config.dataSource);
-            }
-          });
-        }
-      });
-      
-      // Always include issuesDB for Jaffar issues
-      dataSources.add('issuesDB');
-      
-      console.log('Discovered data sources:', dataSources);
-      return Array.from(dataSources);
-    } catch (error) {
-      console.error('Error discovering data sources:', error);
-      return ['issuesDB']; // Fallback to default
-    }
-  }
-
-  // Sync a specific data source
-  async syncDataSource(dbName, onProgress = null) {
-    if (activeSyncs.has(dbName)) {
-      console.log(`Sync already in progress for ${dbName}`);
-      return;
-    }
-
-    activeSyncs.add(dbName);
-    syncProgress[dbName] = { status: 'starting', progress: 0, total: 0, error: null };
-    
-    try {
-      // Notify progress
-      if (onProgress) onProgress(syncProgress[dbName]);
-      this.notifyProgress(dbName, syncProgress[dbName]);
-
-      // Get or create database
-      const db = await this.getDatabase(dbName);
-      
-      // Destroy existing database to ensure clean sync
-      syncProgress[dbName] = { status: 'clearing', progress: 0, total: 0, error: null };
-      if (onProgress) onProgress(syncProgress[dbName]);
-      this.notifyProgress(dbName, syncProgress[dbName]);
-      
-      await db.destroy();
-      
-      // Create new database instance
-      const newDb = new PouchDB(dbName);
-      this.databases.set(dbName, newDb);
-      
-      // Determine API endpoint based on data source
-      let apiEndpoint;
-      if (dbName === 'issuesDB') {
-        apiEndpoint = '/pc-analytics-jaffar/api/jaffar/pouchdb/init';
-      } else {
-        apiEndpoint = `/pc-analytics-jaffar/forms/api/pouchdb/init/${dbName}`;
-      }
-      
-      syncProgress[dbName] = { status: 'fetching', progress: 0, total: 0, error: null };
-      if (onProgress) onProgress(syncProgress[dbName]);
-      this.notifyProgress(dbName, syncProgress[dbName]);
-      
-      // Fetch data from API
-      const response = await fetch(apiEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch data for ${dbName}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const chunks = data.chunks || [];
-      
-      syncProgress[dbName] = { 
-        status: 'syncing', 
-        progress: 0, 
-        total: chunks.length, 
-        error: null 
-      };
-      
-      if (onProgress) onProgress(syncProgress[dbName]);
-      this.notifyProgress(dbName, syncProgress[dbName]);
-
-      // Process chunks with progress updates
-      for (let i = 0; i < chunks.length; i++) {
-        const chunk = chunks[i];
-        if (Array.isArray(chunk) && chunk.length > 0) {
-          await newDb.bulkDocs(chunk);
-        }
-        
-        syncProgress[dbName].progress = i + 1;
-        if (onProgress) onProgress(syncProgress[dbName]);
-        this.notifyProgress(dbName, syncProgress[dbName]);
-        
-        // Small delay to allow UI updates
-        await new Promise(resolve => setTimeout(resolve, 10));
-      }
-
-      syncProgress[dbName] = { 
-        status: 'completed', 
-        progress: chunks.length, 
-        total: chunks.length, 
-        error: null 
-      };
-      
-      if (onProgress) onProgress(syncProgress[dbName]);
-      this.notifyProgress(dbName, syncProgress[dbName]);
-      
-      console.log(`PouchDB (${dbName}) synchronized successfully`);
-      
-    } catch (error) {
-      console.error(`Error synchronizing PouchDB (${dbName}):`, error);
-      syncProgress[dbName] = { 
-        status: 'error', 
-        progress: 0, 
-        total: 0, 
-        error: error.message 
-      };
-      
-      if (onProgress) onProgress(syncProgress[dbName]);
-      this.notifyProgress(dbName, syncProgress[dbName]);
-    } finally {
-      activeSyncs.delete(dbName);
-    }
-  }
-
-  // Sync all discovered data sources
-  async syncAllDataSources() {
-    const dataSources = await this.discoverDataSources();
-    
-    // Start all syncs in parallel
-    const syncPromises = dataSources.map(dbName => this.syncDataSource(dbName));
-    
-    try {
-      await Promise.all(syncPromises);
-      console.log('All data sources synchronized');
-    } catch (error) {
-      console.error('Error during bulk sync:', error);
-    }
-  }
-
-  // Register callback for progress updates
-  onProgress(dbName, callback) {
-    if (!this.syncCallbacks.has(dbName)) {
-      this.syncCallbacks.set(dbName, new Set());
-    }
-    this.syncCallbacks.get(dbName).add(callback);
-  }
-
-  // Remove progress callback
-  offProgress(dbName, callback) {
-    if (this.syncCallbacks.has(dbName)) {
-      this.syncCallbacks.get(dbName).delete(callback);
-    }
-  }
-
-  // Notify all registered callbacks
-  notifyProgress(dbName, progress) {
-    if (this.syncCallbacks.has(dbName)) {
-      this.syncCallbacks.get(dbName).forEach(callback => {
-        try {
-          callback(progress);
-        } catch (error) {
-          console.error('Error in progress callback:', error);
-        }
-      });
-    }
-    
-    // Also dispatch custom event for global listeners
-    window.dispatchEvent(new CustomEvent('pouchdb-sync-progress', {
-      detail: { dbName, progress }
-    }));
-  }
-
-  // Get current sync status for a database
-  getSyncStatus(dbName) {
-    return syncProgress[dbName] || { status: 'idle', progress: 0, total: 0, error: null };
-  }
-
-  // Get all sync statuses
-  getAllSyncStatuses() {
-    return { ...syncProgress };
-  }
-}
-
-// Global instance
-window.pouchDBSyncService = new PouchDBSyncService();
-
-// Legacy function for backward compatibility
 async function initializePouchDB(dbName) {
-  dbName = dbName || 'issuesDB';
-  await window.pouchDBSyncService.syncDataSource(dbName);
-}
+  dbName = dbName || 'issuesDB'; // Default to 'issuesDB' if dbName is not defined
+  const pouchDB = new PouchDB(dbName);
+  try {
+    // Delete the local database before initialization
+    await pouchDB.destroy();
 
-// Auto-sync on page load for dashboards
-document.addEventListener('DOMContentLoaded', async () => {
-  // Only auto-sync if we're on a dashboard page
-  if (window.location.pathname.includes('/dashboard/') || 
-      window.location.pathname.includes('/dashboards/')) {
-    console.log('Dashboard page detected, starting auto-sync...');
-    await window.pouchDBSyncService.syncAllDataSources();
+    const newPouchDB = new PouchDB(dbName);
+    const apiEndpoint = dbName === 'issuesDB' 
+      ? '/pc-analytics-jaffar/api/jaffar/pouchdb/init' 
+      : `/pc-analytics-jaffar/forms/api/pouchdb/init/${dbName}`;
+    const response = await fetch(apiEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch issues for PouchDB initialization');
+    }
+
+    const data = await response.json();
+    const chunks = data.chunks || [];
+
+    for (const chunk of chunks) {
+      await newPouchDB.bulkDocs(chunk);
+    }
+
+    console.log(`PouchDB (${dbName}) initialized successfully`);
+  } catch (error) {
+    console.error(`Error initializing PouchDB (${dbName}):`, error);
   }
-});
-
-// Expose functions globally
-window.initializePouchDB = initializePouchDB;
-window.syncAllDataSources = () => window.pouchDBSyncService.syncAllDataSources();
-window.syncDataSource = (dbName) => window.pouchDBSyncService.syncDataSource(dbName);
-window.getSyncStatus = (dbName) => window.pouchDBSyncService.getSyncStatus(dbName);
-window.getAllSyncStatuses = () => window.pouchDBSyncService.getAllSyncStatuses();
+}
 </script>
