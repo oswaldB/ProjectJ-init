@@ -1,4 +1,20 @@
-<div class="bg-gray-800 p-4 rounded-lg h-full">
+<div class="bg-gray-800 p-4 rounded-lg h-full" x-data="{ previewData: [], loading: false }" x-init="
+  if (card.config.dataSource) {
+    loading = true;
+    // Initialize PouchDB with form_id as database name
+    initializePouchDB(card.config.dataSource).then(() => {
+      const pouchDB = new PouchDB(card.config.dataSource);
+      return pouchDB.allDocs({ include_docs: true, limit: 3 });
+    }).then(result => {
+      previewData = result.rows.map(row => row.doc).filter(doc => doc._id !== '_design/search');
+      loading = false;
+    }).catch(error => {
+      console.error('Failed to load preview data:', error);
+      previewData = [];
+      loading = false;
+    });
+  }
+">
 
   <!-- Data Source Info -->
   <div x-show="card.config.dataSource" class="mb-2">
@@ -37,23 +53,7 @@
     </div>
 
     <!-- Real Data Rows -->
-    <div x-show="card.config.columns && card.config.columns.length > 0" class="p-2 space-y-1 max-h-32 overflow-y-auto overflow-x-auto" x-data="{ previewData: [], loading: false }" x-init="
-      if (card.config.dataSource) {
-        loading = true;
-        // Initialize PouchDB with form_id as database name
-        initializePouchDB(card.config.dataSource).then(() => {
-          const pouchDB = new PouchDB(card.config.dataSource);
-          return pouchDB.allDocs({ include_docs: true, limit: 3 });
-        }).then(result => {
-          previewData = result.rows.map(row => row.doc).filter(doc => doc._id !== '_design/search');
-          loading = false;
-        }).catch(error => {
-          console.error('Failed to load preview data:', error);
-          previewData = [];
-          loading = false;
-        });
-      }
-    ">
+    <div x-show="card.config.columns && card.config.columns.length > 0" class="p-2 space-y-1 max-h-32 overflow-y-auto overflow-x-auto"></div>
       <!-- Loading indicator -->
       <div x-show="loading" class="text-center py-4">
         <div class="text-xs text-gray-400">Chargement des données...</div>
