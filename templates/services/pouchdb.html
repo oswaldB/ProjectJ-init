@@ -41,10 +41,9 @@ async function initializePouchDB(dbName) {
 async function syncPouchDB(dbName) {
   if (!dbName) {
     console.error('Database name is required for synchronization');
-    return;
+    return Promise.reject(new Error('Database name is required'));
   }
   
-  const pouchDB = new PouchDB(dbName);
   try {
     console.log(`Starting synchronization for ${dbName}...`);
     
@@ -52,10 +51,11 @@ async function syncPouchDB(dbName) {
     await initializePouchDB(dbName);
     
     console.log(`Synchronization completed for ${dbName}`);
-  
+    return Promise.resolve();
     
   } catch (error) {
     console.error(`Error synchronizing PouchDB (${dbName}):`, error);
+    return Promise.reject(error);
   }
 }
 </script>
