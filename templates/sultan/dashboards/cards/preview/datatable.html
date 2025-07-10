@@ -36,37 +36,51 @@
       </div>
     </div>
 
-    <!-- Sample Data Rows -->
-    <div x-show="card.config.columns && card.config.columns.length > 0" class="p-2 space-y-1 max-h-32 overflow-y-auto overflow-x-auto">
-      <template x-for="i in 3" :key="i">
+    <!-- Real Data Rows -->
+    <div x-show="card.config.columns && card.config.columns.length > 0" class="p-2 space-y-1 max-h-32 overflow-y-auto overflow-x-auto" x-data="{ previewData: [], loading: false }" x-init="
+      if (card.config.dataSource) {
+        loading = true;
+        fetch(`/pc-analytics-jaffar/forms/${card.config.dataSource}/submitted/`)
+          .then(response => response.json())
+          .then(data => {
+            previewData = Array.isArray(data) ? data.slice(0, 3) : [];
+            loading = false;
+          })
+          .catch(error => {
+            console.error('Failed to load preview data:', error);
+            previewData = [];
+            loading = false;
+          });
+      }
+    ">
+      <!-- Loading indicator -->
+      <div x-show="loading" class="text-center py-4">
+        <div class="text-xs text-gray-400">Chargement des données...</div>
+      </div>
+      
+      <!-- Real data rows -->
+      <template x-for="(row, rowIndex) in previewData" :key="rowIndex">
         <div class="grid gap-2 text-xs text-gray-300 py-1 border-b border-gray-600" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(80px, 1fr))`">
           <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible)" :key="column.key">
             <div class="truncate">
-              <template x-if="column.key === 'id' || column.key === 'issue_id'">
-                <span x-text="`ID-${1000 + i}`"></span>
+              <template x-if="Array.isArray(row[column.key])">
+                <span x-text="row[column.key].join(', ')"></span>
               </template>
-              <template x-if="column.key === 'title' || column.key === 'name'">
-                <span x-text="`Sample Title ${i}`"></span>
+              <template x-if="!Array.isArray(row[column.key]) && row[column.key] !== null && row[column.key] !== undefined">
+                <span x-text="row[column.key]"></span>
               </template>
-              <template x-if="column.key === 'status'">
-                <span class="px-2 py-1 rounded text-xs" :class="i === 1 ? 'bg-green-600' : i === 2 ? 'bg-yellow-600' : 'bg-red-600'" x-text="i === 1 ? 'Completed' : i === 2 ? 'In Progress' : 'Open'"></span>
-              </template>
-              <template x-if="column.key === 'priority'">
-                <span x-text="i === 1 ? 'High' : i === 2 ? 'Medium' : 'Low'"></span>
-              </template>
-              <template x-if="column.key === 'created_at' || column.key === 'date'">
-                <span x-text="new Date(Date.now() - i * 86400000).toLocaleDateString()"></span>
-              </template>
-              <template x-if="column.key === 'assigned_to' || column.key === 'assignee'">
-                <span x-text="`User ${i}`"></span>
-              </template>
-              <template x-if="!['id', 'issue_id', 'title', 'name', 'status', 'priority', 'created_at', 'date', 'assigned_to', 'assignee'].includes(column.key)">
-                <span x-text="`Data ${i}`"></span>
+              <template x-if="row[column.key] === null || row[column.key] === undefined">
+                <span class="text-gray-500">-</span>
               </template>
             </div>
           </template>
         </div>
       </template>
+      
+      <!-- No data message -->
+      <div x-show="!loading && previewData.length === 0" class="text-center py-4">
+        <div class="text-xs text-gray-400">Aucune donnée disponible</div>
+      </div>
     </div>
 
     <!-- Table Footer with Controls -->
@@ -79,7 +93,7 @@
             </svg>
             Export
           </span>
-          <span class="text-gray-400">3 entrées</span>
+          <span class="text-gray-400" x-text="`${previewData ? previewData.length : 0} entrées`"></span>
         </div>
         <div x-show="card.config.pagination" class="flex items-center space-x-2">
           <button class="px-2 py-1 bg-gray-700 rounded disabled:opacity-50" disabled>←</button>
