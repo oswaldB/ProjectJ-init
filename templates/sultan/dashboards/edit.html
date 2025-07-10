@@ -267,32 +267,45 @@
     try {
       console.log('Loading columns for data source:', this.selectedCard.config.dataSource);
       const formId = this.selectedCard.config.dataSource;
-      const response = await fetch(`/pc-analytics-jaffar/forms/api/submitted-responses/${formId}?page=1&page_size=1`);
+      
+      // Find the selected data source in availableDataSources
+      const selectedDataSource = this.availableDataSources.find(ds => ds.id === formId);
+      if (!selectedDataSource) {
+        console.log('Data source not found in availableDataSources');
+        return;
+      }
+
+      // Load form configuration to get fields
+      const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${formId}`);
       if (response.ok) {
-        const data = await response.json();
-        console.log('Submitted data response:', data);
-        if (data.issues && data.issues.length > 0) {
-          const firstRecord = data.issues[0];
-          const columns = Object.keys(firstRecord).map(key => ({
-            key: key,
-            label: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
-            type: this.inferColumnType(firstRecord[key]),
-            visible: true,
-            sortable: true
-          }));
+        const formConfig = await response.json();
+        console.log('Form config loaded:', formConfig);
+        
+        if (formConfig && formConfig.fields && Array.isArray(formConfig.fields)) {
+          const columns = formConfig.fields
+            .filter(field => field.key) // Only include fields with keys
+            .map(field => ({
+              key: field.key,
+              label: field.label || field.key.charAt(0).toUpperCase() + field.key.slice(1).replace(/_/g, ' '),
+              type: this.inferFieldType(field.type),
+              visible: true,
+              sortable: true,
+              filterable: true
+            }));
 
           // Initialize columns if not exists
           if (!this.selectedCard.config.columns) {
             this.selectedCard.config.columns = [];
           }
           this.selectedCard.config.columns = columns;
-          console.log('Columns loaded:', columns);
+          console.log('Columns loaded from form fields:', columns);
         } else {
-          console.log('No issues found in submitted data');
+          console.log('No fields found in form config');
           this.selectedCard.config.columns = [];
         }
       } else {
-        console.error('Failed to fetch submitted responses:', response.status);
+        console.error('Failed to fetch form config:', response.status);
+        this.selectedCard.config.columns = [];
       }
     } catch (error) {
       console.error('Failed to load columns:', error);
@@ -311,6 +324,25 @@
       if (value.length > 100) return 'longtext';
     }
     return 'text';
+  },
+
+  inferFieldType(fieldType) {
+    switch (fieldType) {
+      case 'number':
+        return 'number';
+      case 'date':
+        return 'date';
+      case 'textarea':
+      case 'longtext':
+        return 'longtext';
+      case 'single_select':
+      case 'multiple_checkbox':
+        return 'select';
+      case 'file_upload':
+        return 'file';
+      default:
+        return 'text';
+    }
   },
 
   moveColumnUp(card, index) {
