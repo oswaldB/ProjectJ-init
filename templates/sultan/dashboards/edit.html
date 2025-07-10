@@ -186,12 +186,17 @@
 
   async loadDataSources() {
     try {
-      console.log('Loading data sources...');
+      console.log('=== loadDataSources() called ===');
+      console.log('Stack trace:', new Error().stack);
+      
       // Initialize availableDataSources
       this.availableDataSources = [];
 
       // Charger toutes les datasources disponibles depuis les formulaires soumis
+      console.log('About to fetch /pc-analytics-jaffar/forms/api/list');
       const formsResponse = await fetch('/pc-analytics-jaffar/forms/api/list');
+      console.log('Fetch completed with status:', formsResponse.status);
+      
       if (formsResponse.ok) {
         const forms = await formsResponse.json();
         console.log('Forms loaded:', forms);
