@@ -52,9 +52,7 @@ async function syncPouchDB(dbName) {
     await initializePouchDB(dbName);
     
     console.log(`Synchronization completed for ${dbName}`);
-    
-    // Refresh the page to update the datatable
-    window.location.reload();
+  
     
   } catch (error) {
     console.error(`Error synchronizing PouchDB (${dbName}):`, error);
