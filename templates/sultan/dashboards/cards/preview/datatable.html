@@ -84,7 +84,7 @@
     <div x-show="card.config.columns && card.config.columns.length > 0" class="overflow-x-auto">
       <!-- Table Header -->
       <div class="bg-gray-600 p-2 min-w-max">
-        <div class="grid gap-2 text-xs" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(120px, 1fr))`">
+        <div class="grid gap-2 text-xs" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(80px, 1fr))`">
           <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible)" :key="column.key">
             <div class="text-white font-medium truncate flex items-center">
               <span x-text="column.label" class="truncate"></span>
