@@ -538,7 +538,7 @@
         </svg>
       </button>
     </div>
-    <div x-show="selectedCard">
+    <template x-if="selectedCard">
       <div class="space-y-4">
         <!-- General Settings -->
         <div>
@@ -606,7 +606,7 @@
           </div>
         </template>
       </div>
-    </div>
+    </template>
   </div>
 </div>
 
