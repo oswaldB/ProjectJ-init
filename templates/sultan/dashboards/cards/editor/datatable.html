@@ -65,31 +65,98 @@
     <div x-show="selectedCard.config.columns && selectedCard.config.columns.length > 0" class="mt-4">
       <h4 class="text-sm font-medium text-gray-300 mb-2">Columns</h4>
       <div class="space-y-2 max-h-64 overflow-y-auto">
-        <template x-for="(column, index) in selectedCard.config.columns" :key="column.key">
-          <div class="bg-gray-700 p-2 rounded">
-            <div class="flex justify-between items-center mb-2">
-              <span class="text-white text-sm font-medium" x-text="column.label"></span>
-              <div class="flex space-x-1">
-                <button @click="moveColumnUp(selectedCard, index)" :disabled="index === 0" class="text-gray-400 hover:text-white disabled:text-gray-600 text-xs">↑</button>
-                <button @click="moveColumnDown(selectedCard, index)" :disabled="index === selectedCard.config.columns.length - 1" class="text-gray-400 hover:text-white disabled:text-gray-600 text-xs">↓</button>
+        <div class="space-y-3">
+          <template x-for="(column, index) in selectedCard.config.columns" :key="column.key">
+            <div class="p-3 bg-gray-700 rounded">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-3">
+                  <input type="checkbox" 
+                         x-model="column.visible" 
+                         class="rounded">
+                  <div>
+                    <div class="font-medium text-white" x-text="column.label"></div>
+                    <div class="text-sm text-gray-400" x-text="column.key"></div>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <button @click="moveColumnUp(selectedCard, index)" 
+                          :disabled="index === 0"
+                          class="p-1 text-gray-400 hover:text-white disabled:opacity-50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                    </svg>
+                  </button>
+                  <button @click="moveColumnDown(selectedCard, index)" 
+                          :disabled="index === selectedCard.config.columns.length - 1"
+                          class="p-1 text-gray-400 hover:text-white disabled:opacity-50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Predefined Filter Section -->
+              <div class="border-t border-gray-600 pt-3">
+                <label class="flex items-center space-x-2 mb-2">
+                  <input type="checkbox" 
+                         x-model="column.enablePredefinedFilter" 
+                         class="rounded">
+                  <span class="text-sm text-gray-300">Enable Predefined Filter</span>
+                </label>
+
+                <div x-show="column.enablePredefinedFilter" class="space-y-2">
+                  <!-- Multi-select for fields with options -->
+                  <template x-if="column.options && column.options.length > 0">
+                    <div x-data="{ 
+                      selectedOptions: column.filterValues || [],
+                      dropdownOpen: false,
+                      init() {
+                        this.$watch('selectedOptions', (value) => {
+                          column.filterValues = value;
+                        });
+                      }
+                    }" x-init="init()">
+                      <div class="relative">
+                        <button @click="dropdownOpen = !dropdownOpen" 
+                                class="w-full bg-gray-600 text-white p-2 rounded text-left flex items-center justify-between text-sm">
+                          <span x-text="selectedOptions.length > 0 ? `${selectedOptions.length} selected` : 'Select options'"></span>
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                          </svg>
+                        </button>
+
+                        <div x-show="dropdownOpen" 
+                             @click.away="dropdownOpen = false"
+                             class="absolute z-10 w-full mt-1 bg-gray-600 border border-gray-500 rounded max-h-40 overflow-y-auto">
+                          <template x-for="option in column.options" :key="option">
+                            <label class="flex items-center space-x-2 p-2 hover:bg-gray-500 cursor-pointer">
+                              <input type="checkbox" 
+                                     :value="option"
+                                     x-model="selectedOptions"
+                                     class="rounded">
+                              <span class="text-sm text-white" x-text="option"></span>
+                            </label>
+                          </template>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Text input for fields without options -->
+                  <template x-if="!column.options || column.options.length === 0">
+                    <div>
+                      <input type="text" 
+                             x-model="column.filterValue" 
+                             class="w-full bg-gray-600 text-white p-2 rounded text-sm"
+                             placeholder="Enter filter value">
+                    </div>
+                  </template>
+                </div>
               </div>
             </div>
-            <div class="grid grid-cols-3 gap-2">
-              <label class="flex items-center space-x-1">
-                <input type="checkbox" x-model="column.visible" class="rounded text-xs">
-                <span class="text-xs text-gray-300">Visible</span>
-              </label>
-              <label class="flex items-center space-x-1">
-                <input type="checkbox" x-model="column.sortable" class="rounded text-xs">
-                <span class="text-xs text-gray-300">Sortable</span>
-              </label>
-              <label class="flex items-center space-x-1">
-                <input type="checkbox" x-model="column.filterable" class="rounded text-xs">
-                <span class="text-xs text-gray-300">Filterable</span>
-              </label>
-            </div>
-          </div>
-        </template>
+          </template>
+        </div>
       </div>
     </div>
 

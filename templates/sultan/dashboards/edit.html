@@ -290,7 +290,11 @@
               type: this.inferFieldType(field.type),
               visible: true,
               sortable: true,
-              filterable: true
+              filterable: true,
+              enablePredefinedFilter: false,
+              filterValue: '',
+              filterValues: [],
+              options: field.options && Array.isArray(field.options) ? field.options.map(opt => opt.name) : []
             }));
 
           // Initialize columns if not exists
