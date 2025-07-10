@@ -423,14 +423,14 @@
         </div>
       </div>
 
-      <!-- Real Data Rows -->
-      <div class="p-2 space-y-1 max-h-32 overflow-y-auto min-w-max"></div>
-      <!-- Loading indicator -->
-      <div x-show="loading" class="text-center py-4">
-        <div class="text-xs text-gray-400">Loading data...</div>
-      </div>
+      <!-- Data Rows Container -->
+      <div class="p-2 space-y-1 max-h-32 overflow-y-auto min-w-max">
+        <!-- Loading indicator -->
+        <div x-show="loading" class="text-center py-4">
+          <div class="text-xs text-gray-400">Loading data...</div>
+        </div>
 
-      <!-- Real data rows -->
+        <!-- Real data rows -->
         <template x-for="(row, rowIndex) in previewData" :key="rowIndex">
           <div class="grid gap-2 text-xs text-gray-300 py-1 border-b border-gray-600" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(120px, 1fr))`">
             <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible)" :key="column.key">
