@@ -1,4 +1,3 @@
-
 <div class="bg-gray-800 p-4 rounded-lg h-full">
 
   <!-- Data Source Info -->
@@ -38,7 +37,7 @@
     </div>
 
     <!-- Sample Data Rows -->
-    <div x-show="card.config.columns && card.config.columns.length > 0" class="p-2 space-y-1 max-h-32 overflow-y-auto">
+    <div x-show="card.config.columns && card.config.columns.length > 0" class="p-2 space-y-1 max-h-32 overflow-y-auto overflow-x-auto">
       <template x-for="i in 3" :key="i">
         <div class="grid gap-2 text-xs text-gray-300 py-1 border-b border-gray-600" :style="`grid-template-columns: repeat(${Math.min((card.config.columns || []).filter(col => col.visible).length, 4)}, 1fr)`">
           <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible).slice(0, 4)" :key="column.key">
