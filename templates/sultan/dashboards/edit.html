@@ -3,6 +3,7 @@
 {% block title %}Edit Dashboard{% endblock %}
 
 {% block content %}
+{% include "services/pouchdb.html" %}
 <div class="flex h-screen" x-data="{
   page: 'dashboard-edit',
   dashboard: {
