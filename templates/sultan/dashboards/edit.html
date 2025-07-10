@@ -198,25 +198,13 @@
 
         if (forms && Array.isArray(forms)) {
           for (const form of forms) {
-            try {
-              // Vérifier s'il y a des données soumises pour ce formulaire depuis S3
-              const submittedResponse = await fetch(`/pc-analytics-jaffar/forms/api/submitted-responses/${form.id}?page=1&page_size=1`);
-              if (submittedResponse.ok) {
-                const submittedData = await submittedResponse.json();
-                console.log(`Form ${form.id} submitted data:`, submittedData);
-                if (submittedData.total > 0) {
-                  this.availableDataSources.push({
-                    id: form.id,
-                    name: form.name || `Form ${form.id}`,
-                    type: 'form',
-                    path: `/forms/${form.id}/submitted/`,
-                    recordCount: submittedData.total
-                  });
-                }
-              }
-            } catch (error) {
-              console.error(`Failed to check submitted data for form ${form.id}:`, error);
-            }
+            this.availableDataSources.push({
+              id: form.id,
+              name: form.name || `Form ${form.id}`,
+              type: 'form',
+              path: `/forms/${form.id}/submitted/`,
+              // Record count is no longer checked
+            });
           }
         }
         console.log('Available data sources:', this.availableDataSources);
