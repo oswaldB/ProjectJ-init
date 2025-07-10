@@ -475,7 +475,8 @@
         <template x-for="(card, index) in dashboard.cards" :key="card.id">
           <div 
             class="bg-gray-800 rounded-lg border border-gray-600 p-4 cursor-pointer hover:border-red-500 transition-colors"
-            :class="`col-span-${card.size?.width || 1} row-span-${card.size?.height || 1}`"
+            :class="`col-span-${card.size?.width || 1}`"
+            :style="`grid-row: span ${card.size?.height || 1}; min-height: ${(card.size?.height || 1) * 200}px;`"
             @click="selectCard(card)"
           >
             <div class="flex justify-between items-center mb-2">

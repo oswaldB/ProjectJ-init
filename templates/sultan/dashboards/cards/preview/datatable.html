@@ -42,9 +42,6 @@
   <div x-show="card.config.dataSource" class="mb-2 flex justify-between items-center">
     <div class="text-xs text-gray-400">
       Source: <span x-text="card.config.dataSource"></span>
-      <span x-show="card.config.saveToLocalDB" class="ml-2 text-green-400">
-        → <span x-text="card.config.localDBName || 'local_db'"></span>
-      </span>
     </div>
     <button @click="
       const formId = card.config.dataSource; 

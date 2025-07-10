@@ -45,23 +45,6 @@
       </label>
     </div>
 
-    <div x-show="selectedCard.config.dataSource" class="mt-4">
-      <label class="flex items-center space-x-2">
-        <input type="checkbox" x-model="selectedCard.config.saveToLocalDB" class="rounded">
-        <span class="text-sm text-gray-300">Save to Local DB</span>
-      </label>
-    </div>
-
-    <div x-show="selectedCard.config.dataSource && selectedCard.config.saveToLocalDB" class="mt-2">
-      <label class="block text-sm font-medium text-gray-300 mb-1">Local DB Name</label>
-      <input 
-        type="text" 
-        x-model="selectedCard.config.localDBName" 
-        class="w-full bg-gray-700 text-white p-2 rounded"
-        placeholder="local_db"
-      >
-    </div>
-
     <div x-show="selectedCard.config.columns && selectedCard.config.columns.length > 0" class="mt-4">
       <h4 class="text-sm font-medium text-gray-300 mb-2">Columns</h4>
       
