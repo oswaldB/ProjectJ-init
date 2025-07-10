@@ -526,7 +526,14 @@
 
   <!-- Card Configuration Panel -->
   <div x-show="selectedCard" class="w-80 bg-gray-800 border-l border-gray-700 p-4 overflow-y-auto">
-    <h3 class="text-white font-semibold mb-4">Card Configuration</h3>
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-white font-semibold">Card Configuration</h3>
+      <button @click="selectedCard = null" class="text-gray-400 hover:text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
     <div x-show="selectedCard">
       <div class="space-y-4">
         <!-- General Settings -->
