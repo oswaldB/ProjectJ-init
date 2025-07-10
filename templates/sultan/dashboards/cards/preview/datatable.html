@@ -415,8 +415,8 @@
       <div class="bg-gray-600 p-2 min-w-max">
         <div class="grid gap-2 text-xs" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(80px, 1fr))`">
           <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible)" :key="column.key">
-            <div class="text-white font-medium truncate flex items-center">
-              <span x-text="column.label" class="truncate"></span>
+            <div class="text-white font-medium flex items-center">
+              <span x-text="column.label" class="break-words"></span>
               <svg x-show="column.sortable" class="w-3 h-3 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
               </svg>
@@ -434,14 +434,14 @@
 
         <!-- Real data rows -->
         <template x-for="(row, rowIndex) in previewData" :key="rowIndex">
-          <div class="grid gap-2 text-xs text-gray-300 py-1 border-b border-gray-600" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(120px, 1fr))`">
+          <div class="grid gap-2 text-xs text-gray-300 py-2 border-b border-gray-600" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(120px, 1fr))`">
             <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible)" :key="column.key">
-              <div class="truncate">
+              <div class="break-words overflow-wrap-anywhere">
                 <template x-if="Array.isArray(row[column.key])">
-                  <span x-text="row[column.key].join(', ')"></span>
+                  <span x-text="row[column.key].join(', ')" class="whitespace-pre-wrap"></span>
                 </template>
                 <template x-if="!Array.isArray(row[column.key]) && row[column.key] !== null && row[column.key] !== undefined">
-                  <span x-text="row[column.key]"></span>
+                  <span x-text="row[column.key]" class="whitespace-pre-wrap"></span>
                 </template>
                 <template x-if="row[column.key] === null || row[column.key] === undefined">
                   <span class="text-gray-500">-</span>
