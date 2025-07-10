@@ -7,24 +7,24 @@
   searchQuery: '',
   async loadDataFromPouchDB(page = 1) {
     if (!card.config.dataSource) return;
-    
+
     this.loading = true;
     const formId = card.config.dataSource;
     console.log('Loading data from PouchDB for form:', formId, 'page:', page);
-    
+
     try {
       await initializePouchDB(formId);
       const pouchDB = new PouchDB(formId);
-      
+
       // Use configured page size, default to 25 if not set
       const pageSize = parseInt(card.config.pageSize) || 25;
       const skip = (page - 1) * pageSize;
       console.log('Using page size:', pageSize, 'skip:', skip);
-      
+
       // Build Mango query selector with predefined filters
       const selector = this.buildMangoSelector();
       console.log('Using Mango selector:', JSON.stringify(selector, null, 2));
-      
+
       // Get filtered data using Mango query
       let allData = [];
       try {
@@ -42,19 +42,19 @@
         allData = this.applyFiltersInMemory(allDocs);
         console.log('Loaded and filtered data using allDocs:', allData.length, 'documents');
       }
-      
+
       // Set total count and pages
       this.totalCount = allData.length;
       this.totalPages = Math.ceil(this.totalCount / pageSize);
       this.currentPage = page;
-      
+
       // Apply pagination in memory
       const startIndex = (page - 1) * pageSize;
       const endIndex = startIndex + pageSize;
       this.previewData = allData.slice(startIndex, endIndex);
-      
+
       console.log(`Displaying page ${page}/${this.totalPages}, showing ${this.previewData.length} of ${this.totalCount} documents`);
-      
+
     } catch (error) {
       console.error('Failed to load preview data for form', formId, ':', error);
       this.previewData = [];
@@ -67,40 +67,40 @@
     const selector = {
       '_id': { '$gt': null }
     };
-    
+
     // Add search query if provided
     if (this.searchQuery && this.searchQuery.trim()) {
       const searchTerm = this.searchQuery.trim();
       const searchableColumns = (card.config.columns || []).filter(col => col.visible && col.key);
-      
+
       if (searchableColumns.length > 0) {
         // Create OR condition for searching across all visible columns
         const searchConditions = searchableColumns.map(column => ({
           [column.key]: { '$regex': new RegExp(searchTerm, 'i') }
         }));
-        
+
         selector['$or'] = searchConditions;
       }
     }
-    
+
     // Add predefined filters from column configuration
     const columns = card.config.columns || [];
-    
+
     for (const column of columns) {
       if (!column.enablePredefinedFilter) continue;
-      
+
       const fieldName = column.key;
       const operator = column.filterOperator || 'equals';
       let value = column.filterValue;
-      
+
       // For multi-select fields, use filterValues array
       if (column.filterValues && Array.isArray(column.filterValues) && column.filterValues.length > 0) {
         value = column.filterValues;
       }
-      
+
       // Skip if no value provided (except for exists/not_exists/empty/not_empty)
       if (!value && !['exists', 'not_exists', 'empty', 'not_empty'].includes(operator)) continue;
-      
+
       switch (operator) {
         case 'equals':
           selector[fieldName] = value;
@@ -154,18 +154,18 @@
           break;
       }
     }
-    
+
     return selector;
   },
   applyFiltersInMemory(docs) {
     // Fallback method to apply filters in memory when Mango queries fail
     let filteredDocs = docs;
-    
+
     // Apply search filter first
     if (this.searchQuery && this.searchQuery.trim()) {
       const searchTerm = this.searchQuery.trim().toLowerCase();
       const searchableColumns = (card.config.columns || []).filter(col => col.visible && col.key);
-      
+
       filteredDocs = filteredDocs.filter(doc => {
         return searchableColumns.some(column => {
           const value = doc[column.key];
@@ -174,28 +174,28 @@
         });
       });
     }
-    
+
     // Apply predefined filters
     const columns = card.config.columns || [];
-    
+
     return filteredDocs.filter(doc => {
       for (const column of columns) {
         if (!column.enablePredefinedFilter) continue;
-        
+
         const fieldName = column.key;
         const operator = column.filterOperator || 'equals';
         let value = column.filterValue;
-        
+
         // For multi-select fields, use filterValues array
         if (column.filterValues && Array.isArray(column.filterValues) && column.filterValues.length > 0) {
           value = column.filterValues;
         }
-        
+
         // Skip if no value provided (except for exists/not_exists/empty/not_empty)
         if (!value && !['exists', 'not_exists', 'empty', 'not_empty'].includes(operator)) continue;
-        
+
         const docValue = doc[fieldName];
-        
+
         switch (operator) {
           case 'equals':
             if (docValue != value) return false;
@@ -273,6 +273,74 @@
   clearSearch() {
     this.searchQuery = '';
     this.loadDataFromPouchDB(1);
+  },
+  async exportToCSV() {
+    if (!card.config.dataSource) return;
+
+    try {
+      // Get all data without pagination for export
+      const formId = card.config.dataSource;
+      await initializePouchDB(formId);
+      const pouchDB = new PouchDB(formId);
+
+      // Build selector for export (same as current filters but no pagination)
+      const selector = this.buildMangoSelector();
+
+      let allData = [];
+      try {
+        const result = await pouchDB.find({
+          selector: selector
+        });
+        allData = result.docs.filter(doc => !doc._id.startsWith('_design/'));
+      } catch (findError) {
+        // Fallback to allDocs if Mango query fails
+        const result = await pouchDB.allDocs({ include_docs: true });
+        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
+        allData = this.applyFiltersInMemory(allDocs);
+      }
+
+      if (allData.length === 0) {
+        alert('No data to export');
+        return;
+      }
+
+      // Get visible columns for export
+      const visibleColumns = (card.config.columns || []).filter(col => col.visible);
+
+      if (visibleColumns.length === 0) {
+        alert('No visible columns to export');
+        return;
+      }
+
+      // Create CSV content
+      const headers = visibleColumns.map(col => col.label || col.key).join(',');
+      const rows = allData.map(row => {
+        return visibleColumns.map(col => {
+          const value = row[col.key];
+          if (value === null || value === undefined) return '';
+          if (Array.isArray(value)) return `"${value.join(', ')}"`;
+          return `"${String(value).replace(/"/g, '""')}"`;
+        }).join(',');
+      });
+
+      const csvContent = [headers, ...rows].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${card.config.dataSource}_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed: ' + error.message);
+    }
   }
 }" x-init="loadDataFromPouchDB()">
 
@@ -361,7 +429,7 @@
       <div x-show="loading" class="text-center py-4">
         <div class="text-xs text-gray-400">Loading data...</div>
       </div>
-      
+
       <!-- Real data rows -->
         <template x-for="(row, rowIndex) in previewData" :key="rowIndex">
           <div class="grid gap-2 text-xs text-gray-300 py-1 border-b border-gray-600" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(120px, 1fr))`">
@@ -380,7 +448,7 @@
             </template>
           </div>
         </template>
-        
+
         <!-- No data message -->
         <div x-show="!loading && previewData.length === 0" class="text-center py-4">
           <div class="text-xs text-gray-400">No data available</div>
@@ -392,12 +460,16 @@
     <div x-show="card.config.columns && card.config.columns.length > 0" class="bg-gray-600 p-2 text-xs text-gray-300">
       <div class="flex justify-between items-center">
         <div class="flex space-x-3">
-          <span x-show="card.config.enableExport" class="text-green-300 flex items-center">
+          <button 
+            x-show="card.config.enableExport" 
+            @click="exportToCSV()"
+            class="text-green-300 flex items-center"
+          >
             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
             Export
-          </span>
+          </button>
           <span class="text-gray-400" x-text="`${totalCount} total entries`"></span>
         </div>
         <div x-show="card.config.pagination && totalPages > 1" class="flex items-center space-x-2">
