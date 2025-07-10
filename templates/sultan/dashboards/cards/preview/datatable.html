@@ -1,3 +1,10 @@
+<!-- Include PouchDB scripts -->
+<script src="https://cdn.jsdelivr.net/npm/pouchdb@9.0.0/dist/pouchdb.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pouchdb@9.0.0/dist/pouchdb.find.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/pouchdb-community/pouchdb-quick-search@master/dist/pouchdb.quick-search.min.js"></script>
+
+{% include "services/pouchdb.html" %}
+
 <div class="bg-gray-800 p-4 rounded-lg h-full" x-data="{ previewData: [], loading: false }" x-init="
   if (card.config.dataSource) {
     loading = true;
