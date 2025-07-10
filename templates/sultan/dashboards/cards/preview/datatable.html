@@ -20,44 +20,33 @@
       const skip = (page - 1) * pageSize;
       console.log('Using page size:', pageSize, 'skip:', skip);
       
-      // Get total count first
-      let totalResult;
+      // Get all data first, then paginate in memory for better reliability
+      let allData = [];
       try {
-        totalResult = await pouchDB.find({
-          selector: { '_id': { '$gt': null } },
-          fields: ['_id']
+        const result = await pouchDB.find({
+          selector: { '_id': { '$gt': null } }
         });
-        this.totalCount = totalResult.docs.filter(doc => !doc._id.startsWith('_design/')).length;
-      } catch (countError) {
-        console.log('Count using find failed, falling back to allDocs');
-        totalResult = await pouchDB.allDocs({ include_docs: false });
-        this.totalCount = totalResult.rows.filter(row => !row.id.startsWith('_design/')).length;
-      }
-      
-      this.totalPages = Math.ceil(this.totalCount / pageSize);
-      this.currentPage = page;
-      
-      // Get paginated data
-      let result;
-      try {
-        result = await pouchDB.find({
-          selector: { '_id': { '$gt': null } },
-          limit: pageSize,
-          skip: skip
-        });
-        this.previewData = result.docs.filter(doc => !doc._id.startsWith('_design/'));
-        console.log('Loaded preview data using find:', this.previewData.length, 'documents');
+        allData = result.docs.filter(doc => !doc._id.startsWith('_design/'));
+        console.log('Loaded all data using find:', allData.length, 'documents');
       } catch (findError) {
         console.log('Find method failed, falling back to allDocs:', findError);
         // Fallback to allDocs if find fails
-        result = await pouchDB.allDocs({ 
-          include_docs: true, 
-          limit: pageSize, 
-          skip: skip 
-        });
-        this.previewData = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
-        console.log('Loaded preview data using allDocs:', this.previewData.length, 'documents');
+        const result = await pouchDB.allDocs({ include_docs: true });
+        allData = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
+        console.log('Loaded all data using allDocs:', allData.length, 'documents');
       }
+      
+      // Set total count and pages
+      this.totalCount = allData.length;
+      this.totalPages = Math.ceil(this.totalCount / pageSize);
+      this.currentPage = page;
+      
+      // Apply pagination in memory
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      this.previewData = allData.slice(startIndex, endIndex);
+      
+      console.log(`Displaying page ${page}/${this.totalPages}, showing ${this.previewData.length} of ${this.totalCount} documents`);
       
     } catch (error) {
       console.error('Failed to load preview data for form', formId, ':', error);
