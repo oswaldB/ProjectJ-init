@@ -89,7 +89,7 @@
       });
     " 
             class="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded text-xs flex items-center gap-1"
-            title="Synchroniser les données"
+            title="Synchronize data"
             :disabled="loading">
       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -130,7 +130,7 @@
       <div class="p-2 space-y-1 max-h-32 overflow-y-auto min-w-max"></div>
       <!-- Loading indicator -->
       <div x-show="loading" class="text-center py-4">
-        <div class="text-xs text-gray-400">Chargement des données...</div>
+        <div class="text-xs text-gray-400">Loading data...</div>
       </div>
       
       <!-- Real data rows -->
@@ -154,7 +154,7 @@
         
         <!-- No data message -->
         <div x-show="!loading && previewData.length === 0" class="text-center py-4">
-          <div class="text-xs text-gray-400">Aucune donnée disponible</div>
+          <div class="text-xs text-gray-400">No data available</div>
         </div>
       </div>
     </div>
@@ -169,7 +169,7 @@
             </svg>
             Export
           </span>
-          <span class="text-gray-400" x-text="`${totalCount} entrées au total`"></span>
+          <span class="text-gray-400" x-text="`${totalCount} total entries`"></span>
         </div>
         <div x-show="card.config.pagination && totalPages > 1" class="flex items-center space-x-2">
           <button 
@@ -190,7 +190,7 @@
   <!-- No Data Source -->
   <div x-show="!card.config.dataSource" class="bg-gray-700 p-4 rounded h-32 flex items-center justify-center">
     <div class="text-center text-gray-400">
-      <div class="text-sm">Sélectionnez une source de données</div>
+      <div class="text-sm">Select a data source</div>
     </div>
   </div>
 </div>
