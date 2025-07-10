@@ -11,23 +11,32 @@ from services.s3_service import (
     delete,
     get_max_from_global_db,
     get_one_file,
-    list_folder_with_filter,
-    save_sultan_object,
-    get_sultan_object,
-    list_sultan_objects
+    list_folder_with_filter
 )
 from services.email_service import Email
-from config import s3, BUCKET_NAME
+import boto3
+import os
+
+# Initialize S3 client
+REGION = os.environ.get('AWS_REGION') or 'eu-west-2'
+BUCKET_NAME = os.environ.get('BUCKET_NAME') or 'pc-analytics-jaffar'
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+
+s3 = boto3.client('s3',
+                  region_name=REGION,
+                  aws_access_key_id=AWS_ACCESS_KEY_ID,
+                  aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
 logger = logging.getLogger(__name__)
 
 # Create Jaffar API blueprint with prefix
-jaffar_api_bp = Blueprint('jaffar_api', __name__, url_prefix='/pc-analytics-jaffar/api/jaffar')
+jaffar_api_blueprint = Blueprint('jaffar_api', __name__, url_prefix='/pc-analytics-jaffar/api/jaffar')
 
 # Initialize a thread pool executor for handling email tasks
 email_executor = ThreadPoolExecutor(max_workers=5)
 
-@jaffar_api_bp.route('/templates/list')
+@jaffar_api_blueprint.route('/templates/list')
 def api_jaffar_templates_list():
     templates = []
     prefix = 'jaffar/configs/templates-'
@@ -57,7 +66,7 @@ def api_jaffar_templates_list():
         return jsonify({"error": str(e)}), 500
     return jsonify(templates)
 
-@jaffar_api_bp.route('/config')
+@jaffar_api_blueprint.route('/config')
 def api_jaffar_config():
     try:
         config = get_max_from_global_db('jaffarConfig')
@@ -69,7 +78,7 @@ def api_jaffar_config():
         logger.error(f"Failed to load Jaffar config: {e}")
         return jsonify({"error": "Config not found"}), 404
 
-@jaffar_api_bp.route('/issues/list', methods=['GET'])
+@jaffar_api_blueprint.route('/issues/list', methods=['GET'])
 def list_issues():
     try:
         page = int(request.args.get('page', 1))
@@ -127,7 +136,7 @@ def list_issues():
         logger.error(f"Error in list_issues: {e}")
         return jsonify({"error": str(e)}), 500
 
-@jaffar_api_bp.route('/issues/list2', methods=['GET'])
+@jaffar_api_blueprint.route('/issues/list2', methods=['GET'])
 def list_issues_v2():
     """
     Version améliorée : pagination, filtrage et tri côté serveur.
@@ -209,7 +218,7 @@ def list_issues_v2():
         logger.error(f"Error in list_issues_v2: {e}")
         return jsonify({"error": str(e)}), 500
 
-@jaffar_api_bp.route('/issues/<issue_id>', methods=['GET'])
+@jaffar_api_blueprint.route('/issues/<issue_id>', methods=['GET'])
 def get_issue(issue_id):
     for status in ['draft', 'new', 'open', 'failed', 'closed']:
         try:
@@ -224,7 +233,7 @@ def get_issue(issue_id):
             continue
     return jsonify({'error': 'Issue not found'}), 404
 
-@jaffar_api_bp.route('/issues/<issue_id>/changes', methods=['GET'])
+@jaffar_api_blueprint.route('/issues/<issue_id>/changes', methods=['GET'])
 def get_issue_changes(issue_id):
     try:
         key = f'jaffar/issues/changes/{issue_id}-changes.json'
@@ -236,7 +245,7 @@ def get_issue_changes(issue_id):
         logger.error(f"Failed to get changes for {issue_id}: {e}")
         return jsonify([])
 
-@jaffar_api_bp.route('/issues/<issue_id>/comments', methods=['POST'])
+@jaffar_api_blueprint.route('/issues/<issue_id>/comments', methods=['POST'])
 def add_comment(issue_id):
     comment = request.json
     if 'timestamp' not in comment:
@@ -265,7 +274,7 @@ def add_comment(issue_id):
         logger.error(f"Failed to save comment: {e}")
         return jsonify({"error": str(e)}), 500
 
-@jaffar_api_bp.route('/submit', methods=['POST'])
+@jaffar_api_blueprint.route('/submit', methods=['POST'])
 def submit_issue():
     data = request.json
     issue_id = data.get('issueId')
@@ -299,7 +308,7 @@ def submit_issue():
         logger.error(f"Failed to submit issue {issue_id}: {e}")
         return jsonify({'error': str(e)}), 500
 
-@jaffar_api_bp.route('/save', methods=['POST'])
+@jaffar_api_blueprint.route('/save', methods=['POST'])
 def save_issue():
     try:
         data = request.json
@@ -327,7 +336,7 @@ def save_issue():
         logger.error(f"Error saving issue: {e}")
         return jsonify({"error": str(e)}), 500
 
-@jaffar_api_bp.route('/acknowledge', methods=['POST'])
+@jaffar_api_blueprint.route('/acknowledge', methods=['POST'])
 def api_acknowledge():
     data = request.json
     issue_id = data.get('issueId')
@@ -370,7 +379,7 @@ def api_acknowledge():
 
     return jsonify({'error': 'Issue not found'}), 404
 
-@jaffar_api_bp.route('/issues/<issue_id>/delete', methods=['POST'])
+@jaffar_api_blueprint.route('/issues/<issue_id>/delete', methods=['POST'])
 def move_draft_to_deleted(issue_id):
     """
     Move a draft issue to the 'issues/delete' folder in S3.
@@ -399,7 +408,7 @@ def move_draft_to_deleted(issue_id):
         logger.error(f"Failed to move draft {issue_id} to delete folder: {e}")
         return jsonify({'error': str(e)}), 500
 
-@jaffar_api_bp.route('/similarity-search', methods=['POST'])
+@jaffar_api_blueprint.route('/similarity-search', methods=['POST'])
 def similarity_search():
     """
     Call the similarity search API with the provided issue details.
@@ -440,7 +449,7 @@ def similarity_search():
             {"error":
              "An error occurred while searching for similar issues"}), 500
 
-@jaffar_api_bp.route('/feedback/list')
+@jaffar_api_blueprint.route('/feedback/list')
 def list_feedback():
     try:
         key = 'users_feedbacks/ideas.json'
@@ -453,7 +462,7 @@ def list_feedback():
         logger.error(f"Error listing feedback: {e}")
         return jsonify({"error": str(e)}), 500
 
-@jaffar_api_bp.route('/feedback/submit', methods=['POST'])
+@jaffar_api_blueprint.route('/feedback/submit', methods=['POST'])
 def submit_feedback():
     try:
         data = request.json
@@ -485,7 +494,7 @@ def submit_feedback():
         logger.error(f"Error submitting feedback: {e}")
         return jsonify({"error": str(e)}), 500
 
-@jaffar_api_bp.route('/feedback/vote', methods=['POST'])
+@jaffar_api_blueprint.route('/feedback/vote', methods=['POST'])
 def vote_feedback():
     try:
         data = request.json
@@ -509,7 +518,7 @@ def vote_feedback():
         logger.error(f"Error voting on feedback: {e}")
         return jsonify({"error": str(e)}), 500
 
-@jaffar_api_bp.route('/feedback/comment', methods=['POST'])
+@jaffar_api_blueprint.route('/feedback/comment', methods=['POST'])
 def add_feedback_comment():
     try:
         data = request.json
@@ -554,7 +563,7 @@ def add_feedback_comment():
         logger.error(f"Error adding comment: {e}")
         return jsonify({"error": str(e)}), 500
 
-@jaffar_api_bp.route('/grid-views/save', methods=['POST'])
+@jaffar_api_blueprint.route('/grid-views/save', methods=['POST'])
 def save_grid_view():
     data = request.json
     user = data.get('user', 'anonymous')
@@ -566,7 +575,7 @@ def save_grid_view():
     s3.put_object(Bucket=BUCKET_NAME, Key=key, Body=json.dumps(config))
     return jsonify({'status': 'success'})
 
-@jaffar_api_bp.route('/grid-views/list')
+@jaffar_api_blueprint.route('/grid-views/list')
 def list_grid_views():
     user = request.args.get('user', 'anonymous')
     prefix = f'jaffar/grid-views/{user}/'
@@ -580,7 +589,7 @@ def list_grid_views():
     except Exception as e:
         return jsonify([])
 
-@jaffar_api_bp.route('/grid-views/get')
+@jaffar_api_blueprint.route('/grid-views/get')
 def get_grid_view():
     user = request.args.get('user', 'anonymous')
     name = request.args.get('name')
@@ -591,7 +600,7 @@ def get_grid_view():
     except Exception:
         return jsonify({}), 404
 
-@jaffar_api_bp.route('/escalation/send', methods=['POST'])
+@jaffar_api_blueprint.route('/escalation/send', methods=['POST'])
 def api_jaffar_escalation_send():
     data = request.json
     recipients = data.get('recipients', '')
@@ -633,7 +642,7 @@ def api_jaffar_escalation_send():
         logger.error(f"Failed to send escalation email: {e}")
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
-@jaffar_api_bp.route('/issues/<issue_id>/escalation', methods=['POST'])
+@jaffar_api_blueprint.route('/issues/<issue_id>/escalation', methods=['POST'])
 def save_escalation(issue_id):
     """
     Save escalation details in the issue JSON.
@@ -668,7 +677,7 @@ def save_escalation(issue_id):
         logger.error(f"Failed to save escalation for issue {issue_id}: {e}")
         return jsonify({'error': str(e)}), 500
 
-@jaffar_api_bp.route('/issues/<issue_id>/close', methods=['POST'])
+@jaffar_api_blueprint.route('/issues/<issue_id>/close', methods=['POST'])
 def close_issue(issue_id):
     """
     Close the issue, log the event in the changes file,
