@@ -20,20 +20,26 @@
       const skip = (page - 1) * pageSize;
       console.log('Using page size:', pageSize, 'skip:', skip);
       
-      // Get all data first, then paginate in memory for better reliability
+      // Build Mango query selector with permanent filters
+      const selector = this.buildMangoSelector();
+      console.log('Using Mango selector:', JSON.stringify(selector, null, 2));
+      
+      // Get filtered data using Mango query
       let allData = [];
       try {
         const result = await pouchDB.find({
-          selector: { '_id': { '$gt': null } }
+          selector: selector
         });
         allData = result.docs.filter(doc => !doc._id.startsWith('_design/'));
-        console.log('Loaded all data using find:', allData.length, 'documents');
+        console.log('Loaded filtered data using Mango query:', allData.length, 'documents');
       } catch (findError) {
-        console.log('Find method failed, falling back to allDocs:', findError);
-        // Fallback to allDocs if find fails
+        console.log('Mango query failed, falling back to allDocs:', findError);
+        // Fallback to allDocs if Mango query fails
         const result = await pouchDB.allDocs({ include_docs: true });
-        allData = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
-        console.log('Loaded all data using allDocs:', allData.length, 'documents');
+        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
+        // Apply filters in memory if Mango query failed
+        allData = this.applyFiltersInMemory(allDocs);
+        console.log('Loaded and filtered data using allDocs:', allData.length, 'documents');
       }
       
       // Set total count and pages
@@ -55,6 +61,143 @@
       this.loading = false;
     }
   },
+  buildMangoSelector() {
+    // Start with base selector to exclude design documents
+    const selector = {
+      '_id': { '$gt': null }
+    };
+    
+    // Add permanent filters from card configuration
+    const permanentFilters = card.config.permanentFilters || {};
+    
+    for (const [fieldName, filterConfig] of Object.entries(permanentFilters)) {
+      if (!filterConfig || !filterConfig.enabled) continue;
+      
+      const { operator, value } = filterConfig;
+      
+      switch (operator) {
+        case 'equals':
+          selector[fieldName] = value;
+          break;
+        case 'not_equals':
+          selector[fieldName] = { '$ne': value };
+          break;
+        case 'contains':
+          selector[fieldName] = { '$regex': new RegExp(value, 'i') };
+          break;
+        case 'not_contains':
+          selector[fieldName] = { '$not': { '$regex': new RegExp(value, 'i') } };
+          break;
+        case 'greater_than':
+          selector[fieldName] = { '$gt': parseFloat(value) || value };
+          break;
+        case 'less_than':
+          selector[fieldName] = { '$lt': parseFloat(value) || value };
+          break;
+        case 'greater_equal':
+          selector[fieldName] = { '$gte': parseFloat(value) || value };
+          break;
+        case 'less_equal':
+          selector[fieldName] = { '$lte': parseFloat(value) || value };
+          break;
+        case 'in':
+          const inValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
+          selector[fieldName] = { '$in': inValues };
+          break;
+        case 'not_in':
+          const notInValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
+          selector[fieldName] = { '$nin': notInValues };
+          break;
+        case 'exists':
+          selector[fieldName] = { '$exists': true };
+          break;
+        case 'not_exists':
+          selector[fieldName] = { '$exists': false };
+          break;
+        case 'empty':
+          selector[fieldName] = { '$in': [null, '', undefined] };
+          break;
+        case 'not_empty':
+          selector[fieldName] = { '$nin': [null, '', undefined] };
+          break;
+        case 'starts_with':
+          selector[fieldName] = { '$regex': new RegExp(`^${value}`, 'i') };
+          break;
+        case 'ends_with':
+          selector[fieldName] = { '$regex': new RegExp(`${value}$`, 'i') };
+          break;
+      }
+    }
+    
+    return selector;
+  },
+  applyFiltersInMemory(docs) {
+    // Fallback method to apply filters in memory when Mango queries fail
+    const permanentFilters = card.config.permanentFilters || {};
+    
+    return docs.filter(doc => {
+      for (const [fieldName, filterConfig] of Object.entries(permanentFilters)) {
+        if (!filterConfig || !filterConfig.enabled) continue;
+        
+        const { operator, value } = filterConfig;
+        const docValue = doc[fieldName];
+        
+        switch (operator) {
+          case 'equals':
+            if (docValue != value) return false;
+            break;
+          case 'not_equals':
+            if (docValue == value) return false;
+            break;
+          case 'contains':
+            if (!String(docValue || '').toLowerCase().includes(String(value || '').toLowerCase())) return false;
+            break;
+          case 'not_contains':
+            if (String(docValue || '').toLowerCase().includes(String(value || '').toLowerCase())) return false;
+            break;
+          case 'greater_than':
+            if (!(parseFloat(docValue) > parseFloat(value))) return false;
+            break;
+          case 'less_than':
+            if (!(parseFloat(docValue) < parseFloat(value))) return false;
+            break;
+          case 'greater_equal':
+            if (!(parseFloat(docValue) >= parseFloat(value))) return false;
+            break;
+          case 'less_equal':
+            if (!(parseFloat(docValue) <= parseFloat(value))) return false;
+            break;
+          case 'in':
+            const inValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
+            if (!inValues.includes(String(docValue))) return false;
+            break;
+          case 'not_in':
+            const notInValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
+            if (notInValues.includes(String(docValue))) return false;
+            break;
+          case 'exists':
+            if (docValue === null || docValue === undefined) return false;
+            break;
+          case 'not_exists':
+            if (docValue !== null && docValue !== undefined) return false;
+            break;
+          case 'empty':
+            if (docValue !== null && docValue !== undefined && docValue !== '') return false;
+            break;
+          case 'not_empty':
+            if (docValue === null || docValue === undefined || docValue === '') return false;
+            break;
+          case 'starts_with':
+            if (!String(docValue || '').toLowerCase().startsWith(String(value || '').toLowerCase())) return false;
+            break;
+          case 'ends_with':
+            if (!String(docValue || '').toLowerCase().endsWith(String(value || '').toLowerCase())) return false;
+            break;
+        }
+      }
+      return true;
+    });
+  },
   async goToPage(page) {
     if (page < 1 || page > this.totalPages || page === this.currentPage) return;
     await this.loadDataFromPouchDB(page);
@@ -73,8 +216,16 @@
 
   <!-- Data Source Info -->
   <div x-show="card.config.dataSource" class="mb-2 flex justify-between items-center">
-    <div class="text-xs text-gray-400">
-      Source: <span x-text="card.config.dataSource"></span>
+    <div class="text-xs text-gray-400 flex items-center gap-2">
+      <span>Source: <span x-text="card.config.dataSource"></span></span>
+      <span x-show="Object.keys(card.config.permanentFilters || {}).filter(key => card.config.permanentFilters[key].enabled).length > 0" 
+            class="bg-blue-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1"
+            :title="`${Object.keys(card.config.permanentFilters || {}).filter(key => card.config.permanentFilters[key].enabled).length} active filters`">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z"></path>
+        </svg>
+        <span x-text="Object.keys(card.config.permanentFilters || {}).filter(key => card.config.permanentFilters[key].enabled).length"></span>
+      </span>
     </div>
     <button @click="
       const formId = card.config.dataSource; 
