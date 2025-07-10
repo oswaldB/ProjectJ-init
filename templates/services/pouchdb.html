@@ -37,4 +37,27 @@ async function initializePouchDB(dbName) {
     console.error(`Error initializing PouchDB (${dbName}):`, error);
   }
 }
+
+async function syncPouchDB(dbName) {
+  if (!dbName) {
+    console.error('Database name is required for synchronization');
+    return;
+  }
+  
+  const pouchDB = new PouchDB(dbName);
+  try {
+    console.log(`Starting synchronization for ${dbName}...`);
+    
+    // Re-initialize the database to get fresh data
+    await initializePouchDB(dbName);
+    
+    console.log(`Synchronization completed for ${dbName}`);
+    
+    // Refresh the page to update the datatable
+    window.location.reload();
+    
+  } catch (error) {
+    console.error(`Error synchronizing PouchDB (${dbName}):`, error);
+  }
+}
 </script>
