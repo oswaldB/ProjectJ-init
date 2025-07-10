@@ -273,6 +273,74 @@
   clearSearch() {
     this.searchQuery = '';
     this.loadDataFromPouchDB(1);
+  },
+  async exportToCSV() {
+    if (!card.config.dataSource) return;
+    
+    try {
+      // Get all data without pagination for export
+      const formId = card.config.dataSource;
+      await initializePouchDB(formId);
+      const pouchDB = new PouchDB(formId);
+      
+      // Build selector for export (same as current filters but no pagination)
+      const selector = this.buildMangoSelector();
+      
+      let allData = [];
+      try {
+        const result = await pouchDB.find({
+          selector: selector
+        });
+        allData = result.docs.filter(doc => !doc._id.startsWith('_design/'));
+      } catch (findError) {
+        // Fallback to allDocs if Mango query fails
+        const result = await pouchDB.allDocs({ include_docs: true });
+        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
+        allData = this.applyFiltersInMemory(allDocs);
+      }
+      
+      if (allData.length === 0) {
+        alert('No data to export');
+        return;
+      }
+      
+      // Get visible columns for export
+      const visibleColumns = (card.config.columns || []).filter(col => col.visible);
+      
+      if (visibleColumns.length === 0) {
+        alert('No visible columns to export');
+        return;
+      }
+      
+      // Create CSV content
+      const headers = visibleColumns.map(col => col.label || col.key).join(',');
+      const rows = allData.map(row => {
+        return visibleColumns.map(col => {
+          const value = row[col.key];
+          if (value === null || value === undefined) return '';
+          if (Array.isArray(value)) return `"${value.join(', ')}"`;
+          return `"${String(value).replace(/"/g, '""')}"`;
+        }).join(',');
+      });
+      
+      const csvContent = [headers, ...rows].join('\n');
+      
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${card.config.dataSource}_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed: ' + error.message);
+    }
   }
 }" x-init="loadDataFromPouchDB()">
 
@@ -392,12 +460,16 @@
     <div x-show="card.config.columns && card.config.columns.length > 0" class="bg-gray-600 p-2 text-xs text-gray-300">
       <div class="flex justify-between items-center">
         <div class="flex space-x-3">
-          <span x-show="card.config.enableExport" class="text-green-300 flex items-center">
+          <button 
+            x-show="card.config.enableExport" 
+            @click="exportToCSV()"
+            class="text-green-300 hover:text-green-200 flex items-center cursor-pointer"
+            title="Export filtered data to CSV">
             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
-            Export
-          </span>
+            Export CSV
+          </button>
           <span class="text-gray-400" x-text="`${totalCount} total entries`"></span>
         </div>
         <div x-show="card.config.pagination && totalPages > 1" class="flex items-center space-x-2">
