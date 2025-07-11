@@ -312,12 +312,9 @@
           this.selectedCard.config.columns = columns;
           console.log('Columns loaded from form fields:', columns);
         } else {
-          console.log('No fields found in form config');
+          console.error('Failed to fetch form config:', response.status);
           this.selectedCard.config.columns = [];
         }
-      } else {
-        console.error('Failed to fetch form config:', response.status);
-        this.selectedCard.config.columns = [];
       }
     } catch (error) {
       console.error('Failed to load columns:', error);
