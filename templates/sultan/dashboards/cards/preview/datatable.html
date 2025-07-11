@@ -1,15 +1,16 @@
-<div class="bg-gray-800 p-4 rounded-lg h-full" x-data="{
+<div class='bg-gray-800 p-4 rounded-lg h-full' x-data='{
   previewData: [], 
   loading: false,
   currentPage: 1,
   totalPages: 1,
   totalCount: 0,
-  searchQuery: '',
+  searchQuery: "",
   async loadDataFromPouchDB(page = 1) {
     if (!card.config.dataSource) return;
 
     this.loading = true;
     const formId = card.config.dataSource;
+    console.log("Loading data from PouchDB for form:", formId, "page:", page);
 
     try {
       await initializePouchDB(formId);
@@ -18,9 +19,11 @@
       // Use configured page size, default to 25 if not set
       const pageSize = parseInt(card.config.pageSize) || 25;
       const skip = (page - 1) * pageSize;
+      console.log("Using page size:", pageSize, "skip:", skip);
 
       // Build Mango query selector with predefined filters
       const selector = this.buildMangoSelector();
+      console.log("Using Mango selector:", JSON.stringify(selector, null, 2));
 
       // Get filtered data using Mango query
       let allData = [];
@@ -28,13 +31,16 @@
         const result = await pouchDB.find({
           selector: selector
         });
-        allData = result.docs.filter(doc => !doc._id.startsWith('_design/'));
+        allData = result.docs.filter(doc => !doc._id.startsWith("_design/"));
+        console.log("Loaded filtered data using Mango query:", allData.length, "documents");
       } catch (findError) {
+        console.log("Mango query failed, falling back to allDocs:", findError);
         // Fallback to allDocs if Mango query fails
         const result = await pouchDB.allDocs({ include_docs: true });
-        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
+        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith("_design/"));
         // Apply filters in memory if Mango query failed
         allData = this.applyFiltersInMemory(allDocs);
+        console.log("Loaded and filtered data using allDocs:", allData.length, "documents");
       }
 
       // Set total count and pages
@@ -50,7 +56,7 @@
       console.log(`Displaying page ${page}/${this.totalPages}, showing ${this.previewData.length} of ${this.totalCount} documents`);
 
     } catch (error) {
-      console.error('Failed to load preview data for form', formId, ':', error);
+      console.error("Failed to load preview data for form", formId, ":", error);
       this.previewData = [];
     } finally {
       this.loading = false;
@@ -59,7 +65,7 @@
   buildMangoSelector() {
     // Start with base selector to exclude design documents
     const selector = {
-      '_id': { '$gt': null }
+      "_id": { "$gt": null }
     };
 
     // Add search query if provided
@@ -70,10 +76,10 @@
       if (searchableColumns.length > 0) {
         // Create OR condition for searching across all visible columns
         const searchConditions = searchableColumns.map(column => ({
-          [column.key]: { '$regex': new RegExp(searchTerm, 'i') }
+          [column.key]: { "$regex": new RegExp(searchTerm, "i") }
         }));
 
-        selector['$or'] = searchConditions;
+        selector["$or"] = searchConditions;
       }
     }
 
@@ -84,7 +90,7 @@
       if (!column.enablePredefinedFilter) continue;
 
       const fieldName = column.key;
-      const operator = column.filterOperator || 'equals';
+      const operator = column.filterOperator || "equals";
       let value = column.filterValue;
 
       // For multi-select fields, use filterValues array
@@ -93,58 +99,58 @@
       }
 
       // Skip if no value provided (except for exists/not_exists/empty/not_empty)
-      if (!value && !['exists', 'not_exists', 'empty', 'not_empty'].includes(operator)) continue;
+      if (!value && !["exists", "not_exists", "empty", "not_empty"].includes(operator)) continue;
 
       switch (operator) {
-        case 'equals':
+        case "equals":
           selector[fieldName] = value;
           break;
-        case 'not_equals':
-          selector[fieldName] = { '$ne': value };
+        case "not_equals":
+          selector[fieldName] = { "$ne": value };
           break;
-        case 'contains':
-          selector[fieldName] = { '$regex': new RegExp(value, 'i') };
+        case "contains":
+          selector[fieldName] = { "$regex": new RegExp(value, "i") };
           break;
-        case 'not_contains':
-          selector[fieldName] = { '$not': { '$regex': new RegExp(value, 'i') } };
+        case "not_contains":
+          selector[fieldName] = { "$not": { "$regex": new RegExp(value, "i") } };
           break;
-        case 'greater_than':
-          selector[fieldName] = { '$gt': parseFloat(value) || value };
+        case "greater_than":
+          selector[fieldName] = { "$gt": parseFloat(value) || value };
           break;
-        case 'less_than':
-          selector[fieldName] = { '$lt': parseFloat(value) || value };
+        case "less_than":
+          selector[fieldName] = { "$lt": parseFloat(value) || value };
           break;
-        case 'greater_equal':
-          selector[fieldName] = { '$gte': parseFloat(value) || value };
+        case "greater_equal":
+          selector[fieldName] = { "$gte": parseFloat(value) || value };
           break;
-        case 'less_equal':
-          selector[fieldName] = { '$lte': parseFloat(value) || value };
+        case "less_equal":
+          selector[fieldName] = { "$lte": parseFloat(value) || value };
           break;
-        case 'in':
-          const inValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
-          selector[fieldName] = { '$in': inValues };
+        case "in":
+          const inValues = Array.isArray(value) ? value : value.split(",").map(v => v.trim());
+          selector[fieldName] = { "$in": inValues };
           break;
-        case 'not_in':
-          const notInValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
-          selector[fieldName] = { '$nin': notInValues };
+        case "not_in":
+          const notInValues = Array.isArray(value) ? value : value.split(",").map(v => v.trim());
+          selector[fieldName] = { "$nin": notInValues };
           break;
-        case 'exists':
-          selector[fieldName] = { '$exists': true };
+        case "exists":
+          selector[fieldName] = { "$exists": true };
           break;
-        case 'not_exists':
-          selector[fieldName] = { '$exists': false };
+        case "not_exists":
+          selector[fieldName] = { "$exists": false };
           break;
-        case 'empty':
-          selector[fieldName] = { '$in': [null, '', undefined] };
+        case "empty":
+          selector[fieldName] = { "$in": [null, "", undefined] };
           break;
-        case 'not_empty':
-          selector[fieldName] = { '$nin': [null, '', undefined] };
+        case "not_empty":
+          selector[fieldName] = { "$nin": [null, "", undefined] };
           break;
-        case 'starts_with':
-          selector[fieldName] = { '$regex': new RegExp(`^${value}`, 'i') };
+        case "starts_with":
+          selector[fieldName] = { "$regex": new RegExp(`^${value}`, "i") };
           break;
-        case 'ends_with':
-          selector[fieldName] = { '$regex': new RegExp(`${value}$`, 'i') };
+        case "ends_with":
+          selector[fieldName] = { "$regex": new RegExp(`${value}$`, "i") };
           break;
       }
     }
@@ -177,7 +183,7 @@
         if (!column.enablePredefinedFilter) continue;
 
         const fieldName = column.key;
-        const operator = column.filterOperator || 'equals';
+        const operator = column.filterOperator || "equals";
         let value = column.filterValue;
 
         // For multi-select fields, use filterValues array
@@ -186,60 +192,60 @@
         }
 
         // Skip if no value provided (except for exists/not_exists/empty/not_empty)
-        if (!value && !['exists', 'not_exists', 'empty', 'not_empty'].includes(operator)) continue;
+        if (!value && !["exists", "not_exists", "empty", "not_empty"].includes(operator)) continue;
 
         const docValue = doc[fieldName];
 
         switch (operator) {
-          case 'equals':
+          case "equals":
             if (docValue != value) return false;
             break;
-          case 'not_equals':
+          case "not_equals":
             if (docValue == value) return false;
             break;
-          case 'contains':
-            if (!String(docValue || '').toLowerCase().includes(String(value || '').toLowerCase())) return false;
+          case "contains":
+            if (!String(docValue || "").toLowerCase().includes(String(value || "").toLowerCase())) return false;
             break;
-          case 'not_contains':
-            if (String(docValue || '').toLowerCase().includes(String(value || '').toLowerCase())) return false;
+          case "not_contains":
+            if (String(docValue || "").toLowerCase().includes(String(value || "").toLowerCase())) return false;
             break;
-          case 'greater_than':
+          case "greater_than":
             if (!(parseFloat(docValue) > parseFloat(value))) return false;
             break;
-          case 'less_than':
+          case "less_than":
             if (!(parseFloat(docValue) < parseFloat(value))) return false;
             break;
-          case 'greater_equal':
+          case "greater_equal":
             if (!(parseFloat(docValue) >= parseFloat(value))) return false;
             break;
-          case 'less_equal':
+          case "less_equal":
             if (!(parseFloat(docValue) <= parseFloat(value))) return false;
             break;
-          case 'in':
-            const inValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
+          case "in":
+            const inValues = Array.isArray(value) ? value : value.split(",").map(v => v.trim());
             if (!inValues.includes(String(docValue))) return false;
             break;
-          case 'not_in':
-            const notInValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
+          case "not_in":
+            const notInValues = Array.isArray(value) ? value : value.split(",").map(v => v.trim());
             if (notInValues.includes(String(docValue))) return false;
             break;
-          case 'exists':
+          case "exists":
             if (docValue === null || docValue === undefined) return false;
             break;
-          case 'not_exists':
+          case "not_exists":
             if (docValue !== null && docValue !== undefined) return false;
             break;
-          case 'empty':
-            if (docValue !== null && docValue !== undefined && docValue !== '') return false;
+          case "empty":
+            if (docValue !== null && docValue !== undefined && docValue !== "") return false;
             break;
-          case 'not_empty':
-            if (docValue === null || docValue === undefined || docValue === '') return false;
+          case "not_empty":
+            if (docValue === null || docValue === undefined || docValue === "") return false;
             break;
-          case 'starts_with':
-            if (!String(docValue || '').toLowerCase().startsWith(String(value || '').toLowerCase())) return false;
+          case "starts_with":
+            if (!String(docValue || "").toLowerCase().startsWith(String(value || "").toLowerCase())) return false;
             break;
-          case 'ends_with':
-            if (!String(docValue || '').toLowerCase().endsWith(String(value || '').toLowerCase())) return false;
+          case "ends_with":
+            if (!String(docValue || "").toLowerCase().endsWith(String(value || "").toLowerCase())) return false;
             break;
         }
       }
@@ -265,7 +271,7 @@
     await this.loadDataFromPouchDB(1);
   },
   clearSearch() {
-    this.searchQuery = '';
+    this.searchQuery = "";
     this.loadDataFromPouchDB(1);
   },
   async exportToCSV() {
@@ -285,16 +291,16 @@
         const result = await pouchDB.find({
           selector: selector
         });
-        allData = result.docs.filter(doc => !doc._id.startsWith('_design/'));
+        allData = result.docs.filter(doc => !doc._id.startsWith("_design/"));
       } catch (findError) {
         // Fallback to allDocs if Mango query fails
         const result = await pouchDB.allDocs({ include_docs: true });
-        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
+        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith("_design/"));
         allData = this.applyFiltersInMemory(allDocs);
       }
 
       if (allData.length === 0) {
-        alert('No data to export');
+        alert("No data to export");
         return;
       }
 
@@ -302,38 +308,38 @@
       const visibleColumns = (card.config.columns || []).filter(col => col.visible);
 
       if (visibleColumns.length === 0) {
-        alert('No visible columns to export');
+        alert("No visible columns to export");
         return;
       }
 
       // Create CSV content
-      const headers = visibleColumns.map(col => col.label || col.key).join(';');
+      const headers = visibleColumns.map(col => col.label || col.key).join(";");
       const rows = allData.map(row => {
         return visibleColumns.map(col => {
           const value = row[col.key];
-          if (value === null || value === undefined) return '';
-          if (Array.isArray(value)) return '\'' + value.join(', ') + '\'';
-          return '\'' + String(value).replace(/'/g, '\'\'') + '\'';
-        }).join(';');
+          if (value === null || value === undefined) return "";
+          if (Array.isArray(value)) return "\"" + value.join(", ") + "\"";
+          return "\"" + String(value).replace(/"/g, "\"\"") + "\"";
+        }).join(";");
       });
 
-      const csvContent = [headers, ...rows].join('\n');
+      const csvContent = [headers, ...rows].join("\n");
 
       // Create and download file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', card.config.dataSource + '_export_' + new Date().toISOString().split('T')[0] + '.csv');
-      link.style.visibility = 'hidden';
+      link.setAttribute("href", url);
+      link.setAttribute("download", card.config.dataSource + "_export_" + new Date().toISOString().split("T")[0] + ".csv");
+      link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
     } catch (error) {
-      console.error('Export failed:', error);
-      alert('Export failed: ' + error.message);
+      console.error("Export failed:", error);
+      alert("Export failed: " + error.message);
     }
   },
   async initializePouchDB() {
@@ -427,354 +433,8 @@
       } finally {
         this.loading = false;
       }
-    }
-}
-```
-
-I have found the mistake. There's an extra `}` at the end of line 431 in the original code.
-I will remove async initializePouchDB() and async loadData() function, and replace the exportToCSV() function with the new one.
-Then I will add `}` and `x-init="loadDataFromPouchDB()"` to the end of the Alpine.js data object.
-
-```html
-<div class="bg-gray-800 p-4 rounded-lg h-full" x-data="{
-  previewData: [], 
-  loading: false,
-  currentPage: 1,
-  totalPages: 1,
-  totalCount: 0,
-  searchQuery: '',
-  async loadDataFromPouchDB(page = 1) {
-    if (!card.config.dataSource) return;
-
-    this.loading = true;
-    const formId = card.config.dataSource;
-
-    try {
-      await initializePouchDB(formId);
-      const pouchDB = new PouchDB(formId);
-
-      // Use configured page size, default to 25 if not set
-      const pageSize = parseInt(card.config.pageSize) || 25;
-      const skip = (page - 1) * pageSize;
-
-      // Build Mango query selector with predefined filters
-      const selector = this.buildMangoSelector();
-
-      // Get filtered data using Mango query
-      let allData = [];
-      try {
-        const result = await pouchDB.find({
-          selector: selector
-        });
-        allData = result.docs.filter(doc => !doc._id.startsWith('_design/'));
-      } catch (findError) {
-        // Fallback to allDocs if Mango query fails
-        const result = await pouchDB.allDocs({ include_docs: true });
-        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
-        // Apply filters in memory if Mango query failed
-        allData = this.applyFiltersInMemory(allDocs);
-      }
-
-      // Set total count and pages
-      this.totalCount = allData.length;
-      this.totalPages = Math.ceil(this.totalCount / pageSize);
-      this.currentPage = page;
-
-      // Apply pagination in memory
-      const startIndex = (page - 1) * pageSize;
-      const endIndex = startIndex + pageSize;
-      this.previewData = allData.slice(startIndex, endIndex);
-
-      console.log(`Displaying page ${page}/${this.totalPages}, showing ${this.previewData.length} of ${this.totalCount} documents`);
-
-    } catch (error) {
-      console.error('Failed to load preview data for form', formId, ':', error);
-      this.previewData = [];
-    } finally {
-      this.loading = false;
-    }
-  },
-  buildMangoSelector() {
-    // Start with base selector to exclude design documents
-    const selector = {
-      '_id': { '$gt': null }
-    };
-
-    // Add search query if provided
-    if (this.searchQuery && this.searchQuery.trim()) {
-      const searchTerm = this.searchQuery.trim();
-      const searchableColumns = (card.config.columns || []).filter(col => col.visible && col.key);
-
-      if (searchableColumns.length > 0) {
-        // Create OR condition for searching across all visible columns
-        const searchConditions = searchableColumns.map(column => ({
-          [column.key]: { '$regex': new RegExp(searchTerm, 'i') }
-        }));
-
-        selector['$or'] = searchConditions;
-      }
-    }
-
-    // Add predefined filters from column configuration
-    const columns = card.config.columns || [];
-
-    for (const column of columns) {
-      if (!column.enablePredefinedFilter) continue;
-
-      const fieldName = column.key;
-      const operator = column.filterOperator || 'equals';
-      let value = column.filterValue;
-
-      // For multi-select fields, use filterValues array
-      if (column.filterValues && Array.isArray(column.filterValues) && column.filterValues.length > 0) {
-        value = column.filterValues;
-      }
-
-      // Skip if no value provided (except for exists/not_exists/empty/not_empty)
-      if (!value && !['exists', 'not_exists', 'empty', 'not_empty'].includes(operator)) continue;
-
-      switch (operator) {
-        case 'equals':
-          selector[fieldName] = value;
-          break;
-        case 'not_equals':
-          selector[fieldName] = { '$ne': value };
-          break;
-        case 'contains':
-          selector[fieldName] = { '$regex': new RegExp(value, 'i') };
-          break;
-        case 'not_contains':
-          selector[fieldName] = { '$not': { '$regex': new RegExp(value, 'i') } };
-          break;
-        case 'greater_than':
-          selector[fieldName] = { '$gt': parseFloat(value) || value };
-          break;
-        case 'less_than':
-          selector[fieldName] = { '$lt': parseFloat(value) || value };
-          break;
-        case 'greater_equal':
-          selector[fieldName] = { '$gte': parseFloat(value) || value };
-          break;
-        case 'less_equal':
-          selector[fieldName] = { '$lte': parseFloat(value) || value };
-          break;
-        case 'in':
-          const inValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
-          selector[fieldName] = { '$in': inValues };
-          break;
-        case 'not_in':
-          const notInValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
-          selector[fieldName] = { '$nin': notInValues };
-          break;
-        case 'exists':
-          selector[fieldName] = { '$exists': true };
-          break;
-        case 'not_exists':
-          selector[fieldName] = { '$exists': false };
-          break;
-        case 'empty':
-          selector[fieldName] = { '$in': [null, '', undefined] };
-          break;
-        case 'not_empty':
-          selector[fieldName] = { '$nin': [null, '', undefined] };
-          break;
-        case 'starts_with':
-          selector[fieldName] = { '$regex': new RegExp(`^${value}`, 'i') };
-          break;
-        case 'ends_with':
-          selector[fieldName] = { '$regex': new RegExp(`${value}$`, 'i') };
-          break;
-      }
-    }
-
-    return selector;
-  },
-  applyFiltersInMemory(docs) {
-    // Fallback method to apply filters in memory when Mango queries fail
-    let filteredDocs = docs;
-
-    // Apply search filter first
-    if (this.searchQuery && this.searchQuery.trim()) {
-      const searchTerm = this.searchQuery.trim().toLowerCase();
-      const searchableColumns = (card.config.columns || []).filter(col => col.visible && col.key);
-
-      filteredDocs = filteredDocs.filter(doc => {
-        return searchableColumns.some(column => {
-          const value = doc[column.key];
-          if (value === null || value === undefined) return false;
-          return String(value).toLowerCase().includes(searchTerm);
-        });
-      });
-    }
-
-    // Apply predefined filters
-    const columns = card.config.columns || [];
-
-    return filteredDocs.filter(doc => {
-      for (const column of columns) {
-        if (!column.enablePredefinedFilter) continue;
-
-        const fieldName = column.key;
-        const operator = column.filterOperator || 'equals';
-        let value = column.filterValue;
-
-        // For multi-select fields, use filterValues array
-        if (column.filterValues && Array.isArray(column.filterValues) && column.filterValues.length > 0) {
-          value = column.filterValues;
-        }
-
-        // Skip if no value provided (except for exists/not_exists/empty/not_empty)
-        if (!value && !['exists', 'not_exists', 'empty', 'not_empty'].includes(operator)) continue;
-
-        const docValue = doc[fieldName];
-
-        switch (operator) {
-          case 'equals':
-            if (docValue != value) return false;
-            break;
-          case 'not_equals':
-            if (docValue == value) return false;
-            break;
-          case 'contains':
-            if (!String(docValue || '').toLowerCase().includes(String(value || '').toLowerCase())) return false;
-            break;
-          case 'not_contains':
-            if (String(docValue || '').toLowerCase().includes(String(value || '').toLowerCase())) return false;
-            break;
-          case 'greater_than':
-            if (!(parseFloat(docValue) > parseFloat(value))) return false;
-            break;
-          case 'less_than':
-            if (!(parseFloat(docValue) < parseFloat(value))) return false;
-            break;
-          case 'greater_equal':
-            if (!(parseFloat(docValue) >= parseFloat(value))) return false;
-            break;
-          case 'less_equal':
-            if (!(parseFloat(docValue) <= parseFloat(value))) return false;
-            break;
-          case 'in':
-            const inValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
-            if (!inValues.includes(String(docValue))) return false;
-            break;
-          case 'not_in':
-            const notInValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
-            if (notInValues.includes(String(docValue))) return false;
-            break;
-          case 'exists':
-            if (docValue === null || docValue === undefined) return false;
-            break;
-          case 'not_exists':
-            if (docValue !== null && docValue !== undefined) return false;
-            break;
-          case 'empty':
-            if (docValue !== null && docValue !== undefined && docValue !== '') return false;
-            break;
-          case 'not_empty':
-            if (docValue === null || docValue === undefined || docValue === '') return false;
-            break;
-          case 'starts_with':
-            if (!String(docValue || '').toLowerCase().startsWith(String(value || '').toLowerCase())) return false;
-            break;
-          case 'ends_with':
-            if (!String(docValue || '').toLowerCase().endsWith(String(value || '').toLowerCase())) return false;
-            break;
-        }
-      }
-      return true;
-    });
-  },
-  async goToPage(page) {
-    if (page < 1 || page > this.totalPages || page === this.currentPage) return;
-    await this.loadDataFromPouchDB(page);
-  },
-  async nextPage() {
-    if (this.currentPage < this.totalPages) {
-      await this.goToPage(this.currentPage + 1);
-    }
-  },
-  async prevPage() {
-    if (this.currentPage > 1) {
-      await this.goToPage(this.currentPage - 1);
-    }
-  },
-  async performSearch() {
-    // Reset to first page when searching
-    await this.loadDataFromPouchDB(1);
-  },
-  clearSearch() {
-    this.searchQuery = '';
-    this.loadDataFromPouchDB(1);
-  },
-  async exportToCSV() {
-    if (!card.config.dataSource) return;
-
-    try {
-      // Get all data without pagination for export
-      const formId = card.config.dataSource;
-      await initializePouchDB(formId);
-      const pouchDB = new PouchDB(formId);
-
-      // Build selector for export (same as current filters but no pagination)
-      const selector = this.buildMangoSelector();
-
-      let allData = [];
-      try {
-        const result = await pouchDB.find({
-          selector: selector
-        });
-        allData = result.docs.filter(doc => !doc._id.startsWith('_design/'));
-      } catch (findError) {
-        // Fallback to allDocs if Mango query fails
-        const result = await pouchDB.allDocs({ include_docs: true });
-        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
-        allData = this.applyFiltersInMemory(allDocs);
-      }
-
-      if (allData.length === 0) {
-        alert('No data to export');
-        return;
-      }
-
-      // Get visible columns for export
-      const visibleColumns = (card.config.columns || []).filter(col => col.visible);
-
-      if (visibleColumns.length === 0) {
-        alert('No visible columns to export');
-        return;
-      }
-
-      // Create CSV content
-      const headers = visibleColumns.map(col => col.label || col.key).join(';');
-      const rows = allData.map(row => {
-        return visibleColumns.map(col => {
-          const value = row[col.key];
-          if (value === null || value === undefined) return '';
-          if (Array.isArray(value)) return '\"' + value.join(', ') + '\"';
-          return '\"' + String(value).replace(/\"/g, '\"\"') + '\"';
-        }).join(';');
-      });
-
-      const csvContent = [headers, ...rows].join('\n');
-
-      // Create and download file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', card.config.dataSource + '_export_' + new Date().toISOString().split('T')[0] + '.csv');
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert('Export failed: ' + error.message);
-    }
-  }
-}" x-init="loadDataFromPouchDB()">
+    },
+}' x-init='loadDataFromPouchDB()'>
 
   <!-- Data Source Info -->
   <div x-show="card.config.dataSource" class="mb-2 flex justify-between items-center">
@@ -805,112 +465,132 @@ Then I will add `}` and `x-init="loadDataFromPouchDB()"` to the end of the Alpin
             title="Synchronize data"
             :disabled="loading">
       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0A9.953 9.953 0 0112 21c-4.478 0-8.268-2.943-9.543-7a10.025 10.025 0 014.132-5.411"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
       </svg>
       Sync
     </button>
   </div>
 
-  <!-- Search Bar -->
-  <div x-show="card.config.dataSource" class="mb-4">
-    <div class="flex gap-2">
-      <input type="text" 
-             x-model="searchQuery" 
-             @keyup.enter="performSearch()"
-             placeholder="Search..."
-             class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600">
-      <button @click="performSearch()" 
-              class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded">
-        Search
-      </button>
-      <button @click="clearSearch()" 
-              class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded">
-        Clear
-      </button>
-    </div>
-  </div>
-
-  <!-- Export Button -->
-  <div x-show="card.config.dataSource && previewData.length > 0" class="mb-4">
-    <button @click="exportToCSV()" 
-            class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded flex items-center gap-2">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-      </svg>
-      Export CSV
-    </button>
-  </div>
-
-  <!-- Loading Indicator -->
-  <div x-show="loading" class="flex justify-center items-center p-8">
-    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-  </div>
-
-  <!-- Data Table -->
-  <div x-show="!loading && card.config.dataSource" class="overflow-x-auto">
-    <!-- No Data Message -->
-    <div x-show="previewData.length === 0" class="text-center py-8 text-gray-400">
-      No data available
+  <!-- Table Preview -->
+  <div x-show="card.config.dataSource" class="bg-gray-700 rounded overflow-hidden">
+    <!-- Search Bar (if enabled) -->
+    <div x-show="card.config.enableSearch" class="bg-gray-600 p-2 border-b border-gray-500">
+      <div class="flex items-center space-x-2">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input 
+          type="text" 
+          x-model="searchQuery"
+          @input.debounce.500ms="performSearch()"
+          @keyup.enter="performSearch()"
+          placeholder="Search in all columns..." 
+          class="bg-gray-700 text-white text-xs px-2 py-1 rounded border-none flex-1"
+        >
+        <button 
+          x-show="searchQuery"
+          @click="clearSearch()"
+          class="text-gray-400 hover:text-white px-1"
+          title="Clear search">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
     </div>
 
-    <!-- Table -->
-    <table x-show="previewData.length > 0" class="min-w-full bg-gray-700 rounded-lg overflow-hidden">
-      <thead class="bg-gray-600">
-        <tr>
-          <template x-for="column in (card.config.columns || []).filter(col => col.visible)">
-            <th class="px-4 py-2 text-left text-white font-medium" x-text="column.label || column.key"></th>
+    <!-- Table Container with Horizontal Scroll -->
+    <div x-show="card.config.columns && card.config.columns.length > 0" class="overflow-x-auto">
+      <!-- Table Header -->
+      <div class="bg-gray-600 p-2 min-w-max">
+        <div class="grid gap-2 text-xs" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(80px, 200px))`">
+          <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible)" :key="column.key">
+            <div class="text-white font-medium flex items-center">
+              <span x-text="column.label" class="break-words"></span>
+              <svg x-show="column.sortable" class="w-3 h-3 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+              </svg>
+            </div>
           </template>
-        </tr>
-      </thead>
-      <tbody>
-        <template x-for="(row, index) in previewData">
-          <tr class="border-t border-gray-600 hover:bg-gray-600">
-            <template x-for="column in (card.config.columns || []).filter(col => col.visible)">
-              <td class="px-4 py-2 text-gray-300">
-                <template x-if="column.isHtml">
-                  <div x-html="row[column.key] || ''"></div>
-                </template>
-                <template x-if="!column.isHtml">
-                  <span x-text="row[column.key] || ''"></span>
-                </template>
-              </td>
-            </template>
-          </tr>
-        </template>
-      </tbody>
-    </table>
-
-    <!-- Pagination -->
-    <div x-show="previewData.length > 0" class="mt-4 flex justify-between items-center text-sm text-gray-400">
-      <div>
-        <span>Showing page </span>
-        <span x-text="currentPage"></span>
-        <span> of </span>
-        <span x-text="totalPages"></span>
-        <span> (</span>
-        <span x-text="totalCount"></span>
-        <span> total records)</span>
+        </div>
       </div>
-      <div class="flex gap-2">
-        <button @click="prevPage()" 
-                :disabled="currentPage <= 1"
-                :class="currentPage <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-600'"
-                class="bg-gray-700 text-white px-3 py-1 rounded">
-          Previous
-        </button>
-        <button @click="nextPage()" 
-                :disabled="currentPage >= totalPages"
-                :class="currentPage >= totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-600'"
-                class="bg-gray-700 text-white px-3 py-1 rounded">
-          Next
-        </button>
+
+      <!-- Data Rows Container -->
+      <div class="p-2 space-y-1 max-h-32 overflow-y-auto min-w-max">
+        <!-- Loading indicator -->
+        <div x-show="loading" class="text-center py-4">
+          <div class="text-xs text-gray-400">Loading data...</div>
+        </div>
+
+        <!-- Real data rows -->
+        <template x-for="(row, rowIndex) in previewData" :key="rowIndex">
+          <div class="grid gap-2 text-xs text-gray-300 py-2 border-b border-gray-600" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(80px, 200px))`">
+            <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible)" :key="column.key">
+              <div class="break-words overflow-wrap-anywhere">
+                <!-- HTML Content -->
+                <template x-if="column.isHtml && !Array.isArray(row[column.key]) && row[column.key] !== null && row[column.key] !== undefined">
+                  <div x-html="row[column.key]" class="whitespace-pre-wrap"></div>
+                </template>
+                <!-- Array Content -->
+                <template x-if="!column.isHtml && Array.isArray(row[column.key])">
+                  <span x-text="row[column.key].join(', ')" class="whitespace-pre-wrap"></span>
+                </template>
+                <!-- Regular Text Content -->
+                <template x-if="!column.isHtml && !Array.isArray(row[column.key]) && row[column.key] !== null && row[column.key] !== undefined">
+                  <span x-text="row[column.key]" class="whitespace-pre-wrap"></span>
+                </template>
+                <!-- Empty Content -->
+                <template x-if="row[column.key] === null || row[column.key] === undefined">
+                  <span class="text-gray-500">-</span>
+                </template>
+              </div>
+            </template>
+          </div>
+        </template>
+
+        <!-- No data message -->
+        <div x-show="!loading && previewData.length === 0" class="text-center py-4">
+          <div class="text-xs text-gray-400">No data available</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Footer with Controls -->
+    <div x-show="card.config.columns && card.config.columns.length > 0" class="bg-gray-600 p-2 text-xs text-gray-300">
+      <div class="flex justify-between items-center">
+        <div class="flex space-x-3">
+          <button 
+            x-show="card.config.enableExport" 
+            @click="exportToCSV()"
+            class="text-green-300 flex items-center"
+          >
+            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Export
+          </button>
+          <span class="text-gray-400" x-text="`${totalCount} total entries`"></span>
+        </div>
+        <div x-show="card.config.pagination && totalPages > 1" class="flex items-center space-x-2">
+          <button 
+            @click="prevPage()" 
+            class="px-2 py-1 bg-gray-700 rounded disabled:opacity-50 hover:bg-gray-600"
+            :disabled="currentPage === 1 || loading">←</button>
+          <span x-text="`${currentPage} / ${totalPages}`"></span>
+          <button 
+            @click="nextPage()" 
+            class="px-2 py-1 bg-gray-700 rounded disabled:opacity-50 hover:bg-gray-600"
+            :disabled="currentPage === totalPages || loading">→</button>
+          <span x-text="`${card.config.pageSize || 25}/page`" class="ml-2"></span>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- No Data Source Message -->
-  <div x-show="!card.config.dataSource" class="text-center py-8 text-gray-400">
-    <p>No data source configured</p>
-    <p class="text-sm mt-2">Configure a data source in the card settings to display data</p>
+  <!-- No Data Source -->
+  <div x-show="!card.config.dataSource" class="bg-gray-700 p-4 rounded h-32 flex items-center justify-center">
+    <div class="text-center text-gray-400">
+      <div class="text-sm">Select a data source</div>
+    </div>
   </div>
 </div>
