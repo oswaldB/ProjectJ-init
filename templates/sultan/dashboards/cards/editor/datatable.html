@@ -252,40 +252,7 @@
                 </div>
               </div>
 
-              <!-- Button Column Option -->
-              <div class="border-t border-gray-600 pt-3">
-                <label class="flex items-center space-x-2 mb-2">
-                  <input type="checkbox" 
-                         x-model="column.isButton" 
-                         class="rounded">
-                  <span class="text-sm text-gray-300">Column is a button</span>
-                </label>
-                <div x-show="column.isButton" class="space-y-2">
-                  <div>
-                    <label class="block text-xs text-gray-400 mb-1">Button Label</label>
-                    <input type="text" 
-                           x-model="column.buttonLabel" 
-                           class="w-full bg-gray-600 text-white text-xs p-1 rounded border border-gray-500"
-                           placeholder="Button text">
-                  </div>
-                  <div>
-                    <label class="block text-xs text-gray-400 mb-1">Button URL</label>
-                    <input type="text" 
-                           x-model="column.buttonUrl" 
-                           class="w-full bg-gray-600 text-white text-xs p-1 rounded border border-gray-500"
-                           placeholder="URL (can use variables like ${responseId})">
-                  </div>
-                  <label class="flex items-center space-x-2">
-                    <input type="checkbox" 
-                           x-model="column.buttonNewWindow" 
-                           class="rounded">
-                    <span class="text-xs text-gray-300">Open in new window</span>
-                  </label>
-                  <div class="text-xs text-gray-400">
-                    <em>Available variables: ${responseId}, ${currentUser}, ${today}, etc.</em>
-                  </div>
-                </div>
-              </div>
+              
 
               <!-- Predefined Filter Section -->
               <div class="border-t border-gray-600 pt-3">
@@ -393,6 +360,88 @@
           </template>
         </div>
       </div>
+      </div>
+    </div>
+
+    <!-- Actions Columns Section -->
+    <div x-show="selectedCard.config.dataSource" class="mt-6">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="text-sm font-medium text-gray-300">Actions Columns</h4>
+        <button @click="selectedCard.config.actionsColumns = selectedCard.config.actionsColumns || []; selectedCard.config.actionsColumns.push({label: 'Actions', actions: [{label: '', url: '', openInNewWindow: false}]})" 
+                class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">
+          Add Actions Column
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <template x-for="(actionsColumn, columnIndex) in selectedCard.config.actionsColumns || []" :key="columnIndex">
+          <div class="p-3 bg-gray-700 rounded border border-gray-600">
+            <!-- Column Header -->
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Column Label</label>
+                <input type="text" 
+                       x-model="actionsColumn.label" 
+                       class="bg-gray-600 text-white text-sm p-2 rounded border border-gray-500"
+                       placeholder="Actions">
+              </div>
+              <button @click="selectedCard.config.actionsColumns.splice(columnIndex, 1)" 
+                      class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">
+                Remove Column
+              </button>
+            </div>
+
+            <!-- Actions in this column -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-xs text-gray-400">Actions in this column</label>
+                <button @click="actionsColumn.actions = actionsColumn.actions || []; actionsColumn.actions.push({label: '', url: '', openInNewWindow: false})" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">
+                  Add Action
+                </button>
+              </div>
+
+              <div class="space-y-2">
+                <template x-for="(action, actionIndex) in actionsColumn.actions || []" :key="actionIndex">
+                  <div class="p-2 bg-gray-600 rounded border border-gray-500">
+                    <div class="grid grid-cols-1 gap-2">
+                      <div>
+                        <label class="block text-xs text-gray-400 mb-1">Action Label</label>
+                        <input type="text" 
+                               x-model="action.label" 
+                               class="w-full bg-gray-700 text-white text-xs p-1 rounded border border-gray-400"
+                               placeholder="Action name">
+                      </div>
+                      <div>
+                        <label class="block text-xs text-gray-400 mb-1">Action URL</label>
+                        <input type="text" 
+                               x-model="action.url" 
+                               class="w-full bg-gray-700 text-white text-xs p-1 rounded border border-gray-400"
+                               placeholder="URL (can use variables like ${responseId})">
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <label class="flex items-center space-x-2">
+                          <input type="checkbox" 
+                                 x-model="action.openInNewWindow" 
+                                 class="rounded">
+                          <span class="text-xs text-gray-300">Open in new window</span>
+                        </label>
+                        <button @click="actionsColumn.actions.splice(actionIndex, 1)" 
+                                class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+
+              <div class="mt-2 text-xs text-gray-400">
+                <em>Available variables: ${responseId}, ${currentUser}, ${today}, etc.</em>
+              </div>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
 
