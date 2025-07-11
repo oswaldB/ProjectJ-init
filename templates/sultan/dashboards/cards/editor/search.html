@@ -6,56 +6,14 @@
       <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
       <input type="text" x-model="card.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Search title">
     </div>
-    
     <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
-      <select x-model="card.config.dataSource" class="w-full bg-gray-700 text-white p-2 rounded">
-        <option value="">Select a data source</option>
-        <template x-for="source in availableDataSources">
-          <option :value="source.id" x-text="`${source.name}`"></option>
-        </template>
-      </select>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Search API</label>
+      <input type="text" x-model="card.config.searchApi" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="/api/search">
     </div>
-    
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Placeholder</label>
       <input type="text" x-model="card.config.placeholder" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Search...">
     </div>
-    
-    <div x-show="card.config.dataSource" class="space-y-3">
-      <div>
-        <label class="block text-sm font-medium text-gray-300 mb-1">Search Fields</label>
-        <div class="text-xs text-gray-400 mb-2">Select which fields to search in</div>
-        <div class="space-y-2 max-h-32 overflow-y-auto">
-          <template x-for="column in (card.config.columns || [])" :key="column.key">
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" x-model="column.searchable" class="rounded">
-              <span class="text-sm text-gray-300" x-text="column.label"></span>
-            </label>
-          </template>
-        </div>
-      </div>
-      
-      <div>
-        <label class="block text-sm font-medium text-gray-300 mb-1">Results Display</label>
-        <select x-model="card.config.displayMode" class="w-full bg-gray-700 text-white p-2 rounded">
-          <option value="list">List View</option>
-          <option value="cards">Card View</option>
-          <option value="table">Table View</option>
-        </select>
-      </div>
-      
-      <div>
-        <label class="block text-sm font-medium text-gray-300 mb-1">Max Results</label>
-        <select x-model="card.config.maxResults" class="w-full bg-gray-700 text-white p-2 rounded">
-          <option value="10">10</option>
-          <option value="25">25</option>
-          <option value="50">50</option>
-          <option value="100">100</option>
-        </select>
-      </div>
-    </div>
-    
     <div>
       <label class="flex items-center text-gray-300">
         <input type="checkbox" x-model="card.config.instantSearch" class="mr-2">
