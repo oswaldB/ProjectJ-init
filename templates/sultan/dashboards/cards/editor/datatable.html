@@ -48,20 +48,112 @@
     <!-- Available Variables for Predefined Filters -->
     <div x-show="selectedCard.config.dataSource" class="mt-4">
       <h4 class="text-sm font-medium text-gray-300 mb-2">Available Variables for Predefined Filters</h4>
-      <div class="bg-gray-700 p-3 rounded border border-gray-600">
-        <div class="text-xs text-gray-400 mb-2">You can use these variables in your predefined filter values:</div>
-        <div class="space-y-1 text-xs">
-          <div class="flex items-center space-x-2">
-            <code class="bg-gray-800 text-green-400 px-2 py-1 rounded">${currentUser}</code>
-            <span class="text-gray-300">Current user's email (extracted from localStorage)</span>
-          </div>
-          <div class="flex items-center space-x-2">
-            <code class="bg-gray-800 text-green-400 px-2 py-1 rounded">${author2}</code>
-            <span class="text-gray-300">Full author2 value from localStorage (userId - name - email)</span>
+      <div class="bg-gray-700 p-3 rounded border border-gray-600 max-h-64 overflow-y-auto">
+        <div class="text-xs text-gray-400 mb-3">You can use these variables in your predefined filter values:</div>
+        
+        <!-- User Variables -->
+        <div class="mb-4">
+          <h5 class="text-xs font-semibold text-blue-300 mb-2">User Variables</h5>
+          <div class="space-y-1 text-xs">
+            <div class="flex items-center space-x-2">
+              <code class="bg-gray-800 text-green-400 px-2 py-1 rounded">${currentUser}</code>
+              <span class="text-gray-300">Current user's email</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <code class="bg-gray-800 text-green-400 px-2 py-1 rounded">${author2}</code>
+              <span class="text-gray-300">Full author2 value (userId - name - email)</span>
+            </div>
           </div>
         </div>
-        <div class="mt-2 text-xs text-gray-500">
-          Example: Use <code class="bg-gray-800 text-yellow-400 px-1">${currentUser}</code> in a filter value to automatically filter by the current user's email
+
+        <!-- Date Variables -->
+        <div class="mb-4">
+          <h5 class="text-xs font-semibold text-blue-300 mb-2">Date Variables</h5>
+          <div class="grid grid-cols-2 gap-1 text-xs">
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${now}</code>
+              <span class="text-gray-300 text-xs">Current datetime (ISO)</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${today}</code>
+              <span class="text-gray-300 text-xs">Today's date</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${yesterday}</code>
+              <span class="text-gray-300 text-xs">Yesterday's date</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${currentMonthStart}</code>
+              <span class="text-gray-300 text-xs">Current month start</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${currentMonthEnd}</code>
+              <span class="text-gray-300 text-xs">Current month end</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${lastMonthStart}</code>
+              <span class="text-gray-300 text-xs">Last month start</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${lastMonthEnd}</code>
+              <span class="text-gray-300 text-xs">Last month end</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${currentQuarterStart}</code>
+              <span class="text-gray-300 text-xs">Current quarter start</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${currentQuarterEnd}</code>
+              <span class="text-gray-300 text-xs">Current quarter end</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${lastQuarterStart}</code>
+              <span class="text-gray-300 text-xs">Last quarter start</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${lastQuarterEnd}</code>
+              <span class="text-gray-300 text-xs">Last quarter end</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${currentMidYearStart}</code>
+              <span class="text-gray-300 text-xs">Current mid-year start</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${currentMidYearEnd}</code>
+              <span class="text-gray-300 text-xs">Current mid-year end</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${lastMidYearStart}</code>
+              <span class="text-gray-300 text-xs">Last mid-year start</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${lastMidYearEnd}</code>
+              <span class="text-gray-300 text-xs">Last mid-year end</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${currentYearStart}</code>
+              <span class="text-gray-300 text-xs">Current year start</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${currentYearEnd}</code>
+              <span class="text-gray-300 text-xs">Current year end</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${lastYearStart}</code>
+              <span class="text-gray-300 text-xs">Last year start</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <code class="bg-gray-800 text-yellow-400 px-1 py-1 rounded text-xs">${lastYearEnd}</code>
+              <span class="text-gray-300 text-xs">Last year end</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-3 text-xs text-gray-500 border-t border-gray-600 pt-2">
+          <div class="font-semibold mb-1">Exemples d'utilisation :</div>
+          <div>• <code class="bg-gray-800 text-yellow-400 px-1">${currentUser}</code> pour filtrer par l'utilisateur actuel</div>
+          <div>• <code class="bg-gray-800 text-yellow-400 px-1">${today}</code> pour les données d'aujourd'hui</div>
+          <div>• <code class="bg-gray-800 text-yellow-400 px-1">${currentMonthStart}</code> pour le début du mois courant</div>
         </div>
       </div>
     </div>

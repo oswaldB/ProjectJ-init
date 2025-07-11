@@ -368,18 +368,118 @@
           return "";
         },
 
+        getDateVariables() {
+          const now = new Date();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+          // Yesterday
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
+
+          // Current month
+          const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+          // Last month
+          const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+          // Current quarter
+          const currentQuarter = Math.floor(now.getMonth() / 3);
+          const currentQuarterStart = new Date(now.getFullYear(), currentQuarter * 3, 1);
+          const currentQuarterEnd = new Date(now.getFullYear(), (currentQuarter + 1) * 3, 0);
+
+          // Last quarter
+          const lastQuarter = currentQuarter - 1;
+          const lastQuarterYear = lastQuarter < 0 ? now.getFullYear() - 1 : now.getFullYear();
+          const adjustedLastQuarter = lastQuarter < 0 ? 3 : lastQuarter;
+          const lastQuarterStart = new Date(lastQuarterYear, adjustedLastQuarter * 3, 1);
+          const lastQuarterEnd = new Date(lastQuarterYear, (adjustedLastQuarter + 1) * 3, 0);
+
+          // Current mid year (first half or second half)
+          const isFirstHalf = now.getMonth() < 6;
+          const currentMidYearStart = new Date(now.getFullYear(), isFirstHalf ? 0 : 6, 1);
+          const currentMidYearEnd = new Date(now.getFullYear(), isFirstHalf ? 5 : 11, isFirstHalf ? 30 : 31);
+
+          // Last mid year
+          const lastMidYearStart = isFirstHalf ? 
+            new Date(now.getFullYear() - 1, 6, 1) : 
+            new Date(now.getFullYear(), 0, 1);
+          const lastMidYearEnd = isFirstHalf ? 
+            new Date(now.getFullYear() - 1, 11, 31) : 
+            new Date(now.getFullYear(), 5, 30);
+
+          // Current year
+          const currentYearStart = new Date(now.getFullYear(), 0, 1);
+          const currentYearEnd = new Date(now.getFullYear(), 11, 31);
+
+          // Last year
+          const lastYearStart = new Date(now.getFullYear() - 1, 0, 1);
+          const lastYearEnd = new Date(now.getFullYear() - 1, 11, 31);
+
+          // Format function to ISO date string
+          const formatDate = (date) => date.toISOString().split('T')[0];
+
+          return {
+            now: now.toISOString(),
+            today: formatDate(today),
+            yesterday: formatDate(yesterday),
+            currentMonthStart: formatDate(currentMonthStart),
+            currentMonthEnd: formatDate(currentMonthEnd),
+            lastMonthStart: formatDate(lastMonthStart),
+            lastMonthEnd: formatDate(lastMonthEnd),
+            currentQuarterStart: formatDate(currentQuarterStart),
+            currentQuarterEnd: formatDate(currentQuarterEnd),
+            lastQuarterStart: formatDate(lastQuarterStart),
+            lastQuarterEnd: formatDate(lastQuarterEnd),
+            currentMidYearStart: formatDate(currentMidYearStart),
+            currentMidYearEnd: formatDate(currentMidYearEnd),
+            lastMidYearStart: formatDate(lastMidYearStart),
+            lastMidYearEnd: formatDate(lastMidYearEnd),
+            currentYearStart: formatDate(currentYearStart),
+            currentYearEnd: formatDate(currentYearEnd),
+            lastYearStart: formatDate(lastYearStart),
+            lastYearEnd: formatDate(lastYearEnd)
+          };
+        },
+
         async applyPrefilters() {
           this.prefilters = {};
           const enabledColumns = (this.card.config.columns || []).filter(col => col.enablePredefinedFilter);
+
+          // Get all available variables
+          const dateVars = this.getDateVariables();
 
           for (const column of enabledColumns) {
             if (column.predefinedFilterValue) {
               let filterValue = column.predefinedFilterValue;
 
               // Replace variables in filter value
-              if (typeof filterValue === "string") {
+              if (typeof filterValue === 'string') {
+                // User variables
                 filterValue = filterValue.replace(/\$\{currentUser\}/g, this.getCurrentUser());
-                filterValue = filterValue.replace(/\$\{author2\}/g, localStorage.getItem("author2") || "");
+                filterValue = filterValue.replace(/\$\{author2\}/g, localStorage.getItem('author2') || '');
+
+                // Date variables
+                filterValue = filterValue.replace(/\$\{now\}/g, dateVars.now);
+                filterValue = filterValue.replace(/\$\{today\}/g, dateVars.today);
+                filterValue = filterValue.replace(/\$\{yesterday\}/g, dateVars.yesterday);
+                filterValue = filterValue.replace(/\$\{currentMonthStart\}/g, dateVars.currentMonthStart);
+                filterValue = filterValue.replace(/\$\{currentMonthEnd\}/g, dateVars.currentMonthEnd);
+                filterValue = filterValue.replace(/\$\{lastMonthStart\}/g, dateVars.lastMonthStart);
+                filterValue = filterValue.replace(/\$\{lastMonthEnd\}/g, dateVars.lastMonthEnd);
+                filterValue = filterValue.replace(/\$\{currentQuarterStart\}/g, dateVars.currentQuarterStart);
+                filterValue = filterValue.replace(/\$\{currentQuarterEnd\}/g, dateVars.currentQuarterEnd);
+                filterValue = filterValue.replace(/\$\{lastQuarterStart\}/g, dateVars.lastQuarterStart);
+                filterValue = filterValue.replace(/\$\{lastQuarterEnd\}/g, dateVars.lastQuarterEnd);
+                filterValue = filterValue.replace(/\$\{currentMidYearStart\}/g, dateVars.currentMidYearStart);
+                filterValue = filterValue.replace(/\$\{currentMidYearEnd\}/g, dateVars.currentMidYearEnd);
+                filterValue = filterValue.replace(/\$\{lastMidYearStart\}/g, dateVars.lastMidYearStart);
+                filterValue = filterValue.replace(/\$\{lastMidYearEnd\}/g, dateVars.lastMidYearEnd);
+                filterValue = filterValue.replace(/\$\{currentYearStart\}/g, dateVars.currentYearStart);
+                filterValue = filterValue.replace(/\$\{currentYearEnd\}/g, dateVars.currentYearEnd);
+                filterValue = filterValue.replace(/\$\{lastYearStart\}/g, dateVars.lastYearStart);
+                filterValue = filterValue.replace(/\$\{lastYearEnd\}/g, dateVars.lastYearEnd);
               }
 
               this.prefilters[column.key] = filterValue;
