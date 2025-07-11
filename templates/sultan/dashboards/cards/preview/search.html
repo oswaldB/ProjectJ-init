@@ -255,14 +255,13 @@
   </div>
   
   <!-- Search Results -->
-  <div x-show="searchResults.length > 0" class="space-y-2" 
+  <div x-show="searchResults.length > 0" class="space-y-2 overflow-y-auto" 
        :class="{
          'max-h-32': card.size.height === 1,
          'max-h-48': card.size.height === 2,
          'max-h-64': card.size.height === 3,
          'max-h-96': card.size.height === 4
-       }"
-       class="overflow-y-auto">
+       }">
     <div class="text-xs text-gray-400 mb-2 sticky top-0 bg-gray-800 pb-1">
       Found <span x-text="searchResults.length"></span> result(s):
     </div>
