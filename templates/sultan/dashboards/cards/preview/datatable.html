@@ -9,55 +9,95 @@
     if (!card.config.dataSource) return;
 
     this.loading = true;
-    const formId = card.config.dataSource;
-    console.log("Loading data from PouchDB for form:", formId, "page:", page);
+    const dataSource = card.config.dataSource;
+    const isDrafts = dataSource.endsWith("_drafts");
+    const formId = isDrafts ? dataSource.replace("_drafts", "") : dataSource;
+    
+    console.log("Loading data for:", dataSource, "isDrafts:", isDrafts, "formId:", formId, "page:", page);
 
     try {
-      await initializePouchDB(formId);
-      const pouchDB = new PouchDB(formId);
+      // Check if we should use the API directly for drafts
+      if (isDrafts) {
+        // Use the new API route for drafts
+        const response = await fetch(`/pc-analytics-jaffar/forms/api/get-draft/${formId}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch draft data: ${response.statusText}`);
+        }
+        
+        let allData = await response.json();
+        console.log("Loaded draft data from API:", allData.length, "documents");
+        
+        // Extract answers from the response data
+        allData = allData.map(doc => doc.answers || doc).filter(doc => doc && typeof doc === 'object');
+        
+        // Apply filters in memory
+        allData = this.applyFiltersInMemory(allData);
+        
+        // Use configured page size, default to 25 if not set
+        const pageSize = parseInt(card.config.pageSize) || 25;
+        
+        // Set total count and pages
+        this.totalCount = allData.length;
+        this.totalPages = Math.ceil(this.totalCount / pageSize);
+        this.currentPage = page;
 
-      // Use configured page size, default to 25 if not set
-      const pageSize = parseInt(card.config.pageSize) || 25;
-      const skip = (page - 1) * pageSize;
-      console.log("Using page size:", pageSize, "skip:", skip);
+        // Apply pagination in memory
+        const startIndex = (page - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        this.previewData = allData.slice(startIndex, endIndex);
+        
+        console.log(`Displaying page ${page}/${this.totalPages}, showing ${this.previewData.length} of ${this.totalCount} draft documents`);
+        
+      } else {
+        // Use PouchDB for submitted data
+        await initializePouchDB(formId);
+        const pouchDB = new PouchDB(formId);
 
-      // Build Mango query selector with predefined filters
-      const selector = this.buildMangoSelector();
-      console.log("Using Mango selector:", JSON.stringify(selector, null, 2));
+        // Use configured page size, default to 25 if not set
+        const pageSize = parseInt(card.config.pageSize) || 25;
+        const skip = (page - 1) * pageSize;
+        console.log("Using page size:", pageSize, "skip:", skip);
 
-      // Get filtered data using Mango query
-      let allData = [];
-      try {
-        const result = await pouchDB.find({
-          selector: selector
-        });
-        allData = result.docs.filter(doc => !doc._id.startsWith("_design/"));
-        console.log("Loaded filtered data using Mango query:", allData.length, "documents");
-      } catch (findError) {
-        console.log("Mango query failed, falling back to allDocs:", findError);
-        // Fallback to allDocs if Mango query fails
-        const result = await pouchDB.allDocs({ include_docs: true });
-        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith("_design/"));
-        // Apply filters in memory if Mango query failed
-        allData = this.applyFiltersInMemory(allDocs);
-        console.log("Loaded and filtered data using allDocs:", allData.length, "documents");
+        // Build Mango query selector with predefined filters
+        const selector = this.buildMangoSelector();
+        console.log("Using Mango selector:", JSON.stringify(selector, null, 2));
+
+        // Get filtered data using Mango query
+        let allData = [];
+        try {
+          const result = await pouchDB.find({
+            selector: selector
+          });
+          allData = result.docs.filter(doc => !doc._id.startsWith("_design/"));
+          console.log("Loaded filtered data using Mango query:", allData.length, "documents");
+        } catch (findError) {
+          console.log("Mango query failed, falling back to allDocs:", findError);
+          // Fallback to allDocs if Mango query fails
+          const result = await pouchDB.allDocs({ include_docs: true });
+          const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith("_design/"));
+          // Apply filters in memory if Mango query failed
+          allData = this.applyFiltersInMemory(allDocs);
+          console.log("Loaded and filtered data using allDocs:", allData.length, "documents");
+        }
+
+        // Set total count and pages
+        this.totalCount = allData.length;
+        this.totalPages = Math.ceil(this.totalCount / pageSize);
+        this.currentPage = page;
+
+        // Apply pagination in memory
+        const startIndex = (page - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        this.previewData = allData.slice(startIndex, endIndex);
+
+        console.log(`Displaying page ${page}/${this.totalPages}, showing ${this.previewData.length} of ${this.totalCount} documents`);
       }
 
-      // Set total count and pages
-      this.totalCount = allData.length;
-      this.totalPages = Math.ceil(this.totalCount / pageSize);
-      this.currentPage = page;
-
-      // Apply pagination in memory
-      const startIndex = (page - 1) * pageSize;
-      const endIndex = startIndex + pageSize;
-      this.previewData = allData.slice(startIndex, endIndex);
-
-      console.log(`Displaying page ${page}/${this.totalPages}, showing ${this.previewData.length} of ${this.totalCount} documents`);
-
     } catch (error) {
-      console.error("Failed to load preview data for form", formId, ":", error);
+      console.error("Failed to load preview data for", dataSource, ":", error);
       this.previewData = [];
+      this.totalCount = 0;
+      this.totalPages = 0;
     } finally {
       this.loading = false;
     }
@@ -278,25 +318,43 @@
     if (!card.config.dataSource) return;
 
     try {
-      // Get all data without pagination for export
-      const formId = card.config.dataSource;
-      await initializePouchDB(formId);
-      const pouchDB = new PouchDB(formId);
-
-      // Build selector for export (same as current filters but no pagination)
-      const selector = this.buildMangoSelector();
-
+      const dataSource = card.config.dataSource;
+      const isDrafts = dataSource.endsWith("_drafts");
+      const formId = isDrafts ? dataSource.replace("_drafts", "") : dataSource;
+      
       let allData = [];
-      try {
-        const result = await pouchDB.find({
-          selector: selector
-        });
-        allData = result.docs.filter(doc => !doc._id.startsWith("_design/"));
-      } catch (findError) {
-        // Fallback to allDocs if Mango query fails
-        const result = await pouchDB.allDocs({ include_docs: true });
-        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith("_design/"));
-        allData = this.applyFiltersInMemory(allDocs);
+      
+      if (isDrafts) {
+        // Use the new API route for drafts
+        const response = await fetch(`/pc-analytics-jaffar/forms/api/get-draft/${formId}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch draft data: ${response.statusText}`);
+        }
+        
+        allData = await response.json();
+        // Extract answers from the response data
+        allData = allData.map(doc => doc.answers || doc).filter(doc => doc && typeof doc === 'object');
+        // Apply filters in memory
+        allData = this.applyFiltersInMemory(allData);
+      } else {
+        // Get all data without pagination for export using PouchDB
+        await initializePouchDB(formId);
+        const pouchDB = new PouchDB(formId);
+
+        // Build selector for export (same as current filters but no pagination)
+        const selector = this.buildMangoSelector();
+
+        try {
+          const result = await pouchDB.find({
+            selector: selector
+          });
+          allData = result.docs.filter(doc => !doc._id.startsWith("_design/"));
+        } catch (findError) {
+          // Fallback to allDocs if Mango query fails
+          const result = await pouchDB.allDocs({ include_docs: true });
+          const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith("_design/"));
+          allData = this.applyFiltersInMemory(allDocs);
+        }
       }
 
       if (allData.length === 0) {
@@ -319,6 +377,11 @@
           const value = row[col.key];
           if (value === null || value === undefined) return "";
           if (Array.isArray(value)) return "\"" + value.join(", ") + "\"";
+          // For HTML content, strip HTML tags for CSV export
+          if (col.isHtml && typeof value === 'string') {
+            const strippedValue = value.replace(/<[^>]*>/g, '');
+            return "\"" + strippedValue.replace(/"/g, "\"\"") + "\"";
+          }
           return "\"" + String(value).replace(/"/g, "\"\"") + "\"";
         }).join(";");
       });
@@ -330,7 +393,7 @@
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
-      link.setAttribute("download", card.config.dataSource + "_export_" + new Date().toISOString().split("T")[0] + ".csv");
+      link.setAttribute("download", dataSource + "_export_" + new Date().toISOString().split("T")[0] + ".csv");
       link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
@@ -450,16 +513,24 @@
       </span>
     </div>
     <button @click="
-      const formId = card.config.dataSource; 
-      console.log('Syncing form:', formId); 
+      const dataSource = card.config.dataSource;
+      const isDrafts = dataSource.endsWith('_drafts');
+      const formId = isDrafts ? dataSource.replace('_drafts', '') : dataSource;
+      console.log('Syncing:', dataSource, 'isDrafts:', isDrafts, 'formId:', formId); 
       loading = true;
-      syncPouchDB(formId).then(() => {
-        console.log('Sync completed, reloading data...');
-        return loadDataFromPouchDB(1);
-      }).catch(error => {
-        console.error('Sync failed:', error);
-        loading = false;
-      });
+      if (isDrafts) {
+        // For drafts, just reload data directly from API
+        loadDataFromPouchDB(1);
+      } else {
+        // For submitted data, sync PouchDB then reload
+        syncPouchDB(formId).then(() => {
+          console.log('Sync completed, reloading data...');
+          return loadDataFromPouchDB(1);
+        }).catch(error => {
+          console.error('Sync failed:', error);
+          loading = false;
+        });
+      }
     " 
             class="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded text-xs flex items-center gap-1"
             title="Synchronize data"
