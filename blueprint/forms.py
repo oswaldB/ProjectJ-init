@@ -428,6 +428,40 @@ def api_pouchdb_init_drafts(form_id):
         logger.error(f"Failed to initialize PouchDB with drafts for form {form_id}: {e}")
         return jsonify({"error": str(e)}), 500
 
+@forms_blueprint.route('/api/get-draft/<form_id>', methods=['GET'])
+def api_get_draft(form_id):
+    """
+    Fetch draft responses for a form from S3, excluding submitted folder.
+    Returns documents in /forms/form-id/ but not in /forms/form-id/submitted/
+    """
+    try:
+        prefix = f'forms/{form_id}/'
+        all_documents = []
+
+        # List all objects in the form folder
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        for obj in response.get('Contents', []):
+            key = obj['Key']
+            # Skip files in the submitted folder
+            if '/submitted/' in key or key.endswith('/'):
+                continue
+            # Only process JSON files that are direct children of the form folder
+            if key.count('/') != 2 or not key.endswith('.json'):
+                continue
+            
+            try:
+                response_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+                response_data = json.loads(response_obj['Body'].read().decode('utf-8'))
+                all_documents.append(response_data)
+            except Exception as e:
+                logger.error(f"Error loading draft document {key}: {e}")
+
+        logger.info(f"Found {len(all_documents)} draft documents for form {form_id}")
+        return jsonify(all_documents)
+    except Exception as e:
+        logger.error(f"Error in api_get_draft: {e}")
+        return jsonify({"error": str(e)}), 500
+
 @forms_blueprint.route('/api/draft-responses/<form_id>', methods=['GET'])
 def api_draft_responses(form_id):
     """
