@@ -23,10 +23,8 @@
     { type: 'stats', name: 'Stats Card', icon: '' }
   ],
   selectedCard: null,
-  gridColumns: Array.from({length: 3}, (_, i) => i + 1),
+  gridColumns: Array.from({length: 12}, (_, i) => i + 1),
   sidebarOpen: false,
-  showAuthUsers: false,
-  showCardConfig: false,
 
   // Form and data source management
   availableForms: [],
@@ -62,7 +60,7 @@
       id: Date.now().toString(),
       type: type,
       title: `New ${type}`,
-      size: { width: 1, height: 3 },
+      size: { width: 4, height: 3 },
       config: this.getDefaultConfig(type)
     };
     this.dashboard.cards.push(card);
@@ -169,10 +167,9 @@
 
   selectCard(card) {
     this.selectedCard = card;
-    this.showCardConfig = true;
     // Ensure the card has the required structure
     if (!card.size) {
-      card.size = { width: 1, height: 3 };
+      card.size = { width: 4, height: 3 };
     }
     if (!card.config) {
       card.config = this.getDefaultConfig(card.type);
@@ -475,26 +472,14 @@
 
           <!-- Privacy Settings -->
           <div class="mt-4">
-            <div class="flex items-center space-x-4">
-              <label class="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  x-model="dashboard.isPrivate" 
-                  class="bg-gray-700 border-gray-600"
-                >
-                <span class="text-white text-sm">Make this dashboard private</span>
-              </label>
-              <button 
-                x-show="dashboard.isPrivate"
-                @click="showAuthUsers = !showAuthUsers"
-                class="bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 text-sm flex items-center space-x-1"
+            <label class="flex items-center space-x-2">
+              <input 
+                type="checkbox" 
+                x-model="dashboard.isPrivate" 
+                class="bg-gray-700 border-gray-600"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-                </svg>
-                <span x-text="showAuthUsers ? 'Hide Users' : 'Manage Users'"></span>
-              </button>
-            </div>
+              <span class="text-white text-sm">Make this dashboard private</span>
+            </label>
           </div>
         </div>
         <div class="flex space-x-2">
@@ -510,11 +495,11 @@
 
     <!-- Dashboard Preview -->
     <div class="flex-1 p-4 bg-gray-900 overflow-auto">
-      <div class="grid grid-cols-3 gap-4 auto-rows-min">
+      <div class="grid grid-cols-4 gap-4 auto-rows-min">
         <template x-for="(card, index) in dashboard.cards" :key="card.id">
           <div 
             class="bg-gray-800 rounded-lg border border-gray-600 p-4 cursor-pointer hover:border-red-500 transition-colors"
-            :class="`col-span-${Math.min(card.size?.width || 1, 3)}`"
+            :class="`col-span-${card.size?.width || 1}`"
             :style="`grid-row: span ${card.size?.height || 1}; min-height: ${(card.size?.height || 1) * 200}px;`"
             @click="selectCard(card)"
           >
@@ -569,25 +554,26 @@
     </div>
   </div>
 
-  <!-- Authorized Users Panel (Floating) -->
-  <div 
-    x-show="showAuthUsers && dashboard.isPrivate" 
-    x-transition
-    class="fixed top-20 right-4 w-80 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50 overflow-y-auto max-h-96"
-  >
-    <div class="p-4">
+  <!-- Right Sidebar -->
+  <div class="w-80 bg-gray-800 border-l border-gray-700 overflow-y-auto">
+
+    <!-- Privacy Settings Panel -->
+    <div x-show="dashboard.isPrivate" class="p-4 border-b border-gray-700" x-data="{ showUsers: false }">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-white font-semibold">Authorized Users</h3>
         <button 
-          @click="showAuthUsers = false"
+          @click="showUsers = !showUsers"
           class="text-gray-400 hover:text-white"
+          :class="{ 'text-red-400': showUsers }"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform transition-transform" 
+               :class="{ 'rotate-180': showUsers }" 
+               fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
       </div>
-      <div class="space-y-2">
+      <div x-show="showUsers" x-transition class="space-y-2">
         <template x-for="(email, index) in (dashboard.authorizedUsers || [])" :key="index">
           <div class="flex items-center space-x-2">
             <input 
@@ -612,18 +598,12 @@
         </button>
       </div>
     </div>
-  </div>
 
-  <!-- Card Configuration Panel (Right Sidebar) -->
-  <div 
-    x-show="showCardConfig && selectedCard" 
-    x-transition
-    class="fixed top-0 right-0 w-80 h-full bg-gray-800 border-l border-gray-700 overflow-y-auto z-40"
-  >
-    <div class="p-4">
+    <!-- Card Configuration Panel -->
+    <div x-show="selectedCard" class="p-4">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-white font-semibold">Card Configuration</h3>
-        <button @click="showCardConfig = false; selectedCard = null" class="text-gray-400 hover:text-white">
+        <button @click="selectedCard = null" class="text-gray-400 hover:text-white">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -644,7 +624,7 @@
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">Card Width (columns)</label>
             <select x-model="selectedCard.size.width" class="w-full bg-gray-700 text-white p-2 rounded">
-              <template x-for="col in [1,2,3]" :key="col">
+              <template x-for="col in [1,2,3,4]" :key="col">
                 <option :value="col" x-text="col"></option>
               </template>
             </select>
@@ -698,6 +678,7 @@
           </template>
         </div>
       </template>
+    </div>
     </div>
   </div>
 </div>
