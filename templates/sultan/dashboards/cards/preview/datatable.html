@@ -354,6 +354,40 @@
         console.error("Error initializing PouchDB for", dataSource, ":", error);
       }
     },
+    getCurrentUser() {
+          try {
+            const author2 = localStorage.getItem('author2');
+            if (author2) {
+              // Extract email from "userId - name - email" format
+              const parts = author2.split(' - ');
+              return parts.length >= 3 ? parts[2].trim() : author2;
+            }
+          } catch (e) {
+            console.error('Error getting current user:', e);
+          }
+          return '';
+        },
+
+        async applyPrefilters() {
+          this.prefilters = {};
+          const enabledColumns = (this.card.config.columns || []).filter(col => col.enablePredefinedFilter);
+
+          for (const column of enabledColumns) {
+            if (column.predefinedFilterValue) {
+              let filterValue = column.predefinedFilterValue;
+
+              // Replace variables in filter value
+              if (typeof filterValue === 'string') {
+                filterValue = filterValue.replace(/\$\{currentUser\}/g, this.getCurrentUser());
+                filterValue = filterValue.replace(/\$\{author2\}/g, localStorage.getItem('author2') || '');
+              }
+
+              this.prefilters[column.key] = filterValue;
+            }
+          }
+
+          await this.loadData();
+        },
     async loadData(page = 1) {
       if (!this.card.config.dataSource) return;
 
