@@ -8,13 +8,43 @@
     
     this.loading = true;
     try {
-      const response = await fetch(card.config.dataSource);
-      if (response.ok) {
-        const data = await response.json();
-        this.kanbanData = data.issues || data.data || data || [];
+      // Extract form ID from data source URL
+      let formId = null;
+      let isDrafts = false;
+      
+      if (card.config.dataSource.startsWith('/pc-analytics-jaffar/forms/api/pouchdb/init/')) {
+        formId = card.config.dataSource.split('/').pop();
+      } else if (card.config.dataSource.includes('forms/')) {
+        const parts = card.config.dataSource.split('/');
+        const formsIndex = parts.indexOf('forms');
+        if (formsIndex >= 0 && formsIndex < parts.length - 1) {
+          formId = parts[formsIndex + 1];
+        }
       }
+      
+      if (!formId) {
+        console.error('Could not extract form ID from data source:', card.config.dataSource);
+        return;
+      }
+      
+      // Check if it's a drafts database
+      isDrafts = formId.endsWith('_drafts');
+      const cleanFormId = isDrafts ? formId.replace('_drafts', '') : formId;
+      
+      console.log('Loading kanban data from PouchDB for form:', cleanFormId, 'isDrafts:', isDrafts);
+      
+      // Initialize PouchDB for the form
+      await initializePouchDB(formId);
+      const pouchDB = new PouchDB(formId);
+      
+      // Get all documents from PouchDB
+      const result = await pouchDB.allDocs({ include_docs: true });
+      this.kanbanData = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
+      
+      console.log('Loaded kanban data:', this.kanbanData.length, 'items');
     } catch (error) {
       console.error('Error loading kanban data:', error);
+      this.kanbanData = [];
     } finally {
       this.loading = false;
     }
