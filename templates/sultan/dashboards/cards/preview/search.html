@@ -6,70 +6,116 @@
   showSyncButton: false,
   isSyncing: false,
   async performSearch() {
-    if (!this.searchQuery.trim() || !card.config.dataSource) return;
+    console.log('performSearch called with:', {
+      searchQuery: this.searchQuery,
+      dataSource: card.config.dataSource,
+      searchFields: card.config.searchFields
+    });
+    
+    if (!this.searchQuery.trim() || !card.config.dataSource) {
+      console.log('Search aborted - missing query or dataSource');
+      return;
+    }
     
     this.isSearching = true;
     this.showSyncButton = false;
     this.searchResults = [];
     
     try {
+      console.log('Creating PouchDB instance for:', card.config.dataSource);
       const pouchDB = new PouchDB(card.config.dataSource);
       
-      // Perform search using PouchDB Quick Search
-      const searchResult = await pouchDB.search({
+      const searchFields = (card.config.searchFields || []).filter(f => f.enabled).map(f => f.field);
+      console.log('Filtered search fields:', searchFields);
+      
+      const searchOptions = {
         query: this.searchQuery,
-        fields: (card.config.searchFields || []).filter(f => f.enabled).map(f => f.field),
+        fields: searchFields,
         include_docs: true,
         highlighting: true
-      });
+      };
+      console.log('Search options:', searchOptions);
+      
+      // Perform search using PouchDB Quick Search
+      console.log('Performing PouchDB search...');
+      const searchResult = await pouchDB.search(searchOptions);
+      console.log('Search result:', searchResult);
       
       if (searchResult.rows && searchResult.rows.length > 0) {
+        console.log('Found results:', searchResult.rows.length);
         this.searchResults = searchResult.rows.map(row => ({
           id: row.id,
           doc: row.doc,
           highlighting: row.highlighting
         }));
+        console.log('Mapped search results:', this.searchResults);
         this.showSyncButton = false;
       } else {
+        console.log('No results found, showing sync button');
         // No results found, show sync button
         this.searchResults = [];
         this.showSyncButton = true;
       }
     } catch (error) {
       console.error('Search error:', error);
+      console.log('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
       // If search fails (e.g., index not found), show sync button
       this.searchResults = [];
       this.showSyncButton = true;
     } finally {
+      console.log('Search completed, isSearching set to false');
       this.isSearching = false;
     }
   },
   async syncAndSearch() {
-    if (!card.config.dataSource) return;
+    console.log('syncAndSearch called for dataSource:', card.config.dataSource);
+    
+    if (!card.config.dataSource) {
+      console.log('No dataSource available for sync');
+      return;
+    }
     
     this.isSyncing = true;
     this.showSyncButton = false;
+    console.log('Starting sync process...');
     
     try {
       // Call the PouchDB init route to sync data
+      console.log('Calling initializePouchDB...');
       await initializePouchDB(card.config.dataSource);
+      console.log('PouchDB initialization completed');
       
       // Wait a moment for indexing
+      console.log('Waiting for indexing...');
       await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Indexing wait completed');
       
       // Retry the search
+      console.log('Retrying search after sync...');
       await this.performSearch();
     } catch (error) {
       console.error('Sync error:', error);
+      console.log('Sync error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
       this.showSyncButton = true;
     } finally {
+      console.log('Sync process completed, isSyncing set to false');
       this.isSyncing = false;
     }
   },
   clearSearch() {
+    console.log('clearSearch called');
     this.searchQuery = '';
     this.searchResults = [];
     this.showSyncButton = false;
+    console.log('Search cleared');
   }
 }">
   <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Search'"></h3>
