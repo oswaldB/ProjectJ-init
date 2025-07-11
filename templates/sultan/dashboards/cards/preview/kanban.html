@@ -151,9 +151,9 @@
   </div>
   
   <!-- Kanban Board -->
-  <div x-show="card.config.dataSource && !loading" class="grid gap-3 h-96 overflow-x-auto" :style="`grid-template-columns: repeat(${(card.config.columns || []).length}, 1fr)`">
+  <div x-show="card.config.dataSource && !loading" class="flex space-x-3 h-96 overflow-x-auto">
     <template x-for="column in card.config.columns || []">
-      <div class="bg-gray-700 rounded p-3 min-w-0"></div>
+      <div class="bg-gray-700 rounded p-3 min-w-64 flex-shrink-0">
         <!-- Column Header -->
         <div class="flex items-center justify-between mb-3">
           <h4 class="text-sm font-medium text-white" x-text="column.title"></h4>
