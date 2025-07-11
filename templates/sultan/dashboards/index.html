@@ -24,7 +24,7 @@
   async loadDashboards() {
     try {
       this.state.loading = true;
-      const response = await fetch('/sultan/dashboard/api/list');
+      const response = await fetch('/pc-analytics-jaffar/sultan/dashboard/api/list');
       if (!response.ok) throw new Error('Failed to load dashboards');
       this.dashboards = await response.json();
     } catch (error) {
@@ -39,7 +39,7 @@
   async deleteDashboard(id) {
     if (!confirm('Are you sure you want to delete this dashboard?')) return;
     try {
-      const response = await fetch(`/sultan/dashboard/api/delete/${id}`, { method: 'DELETE' });
+      const response = await fetch(`/pc-analytics-jaffar/sultan/dashboard/api/delete/${id}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete dashboard');
       this.dashboards = this.dashboards.filter(d => d.id !== id);
     } catch (error) {
