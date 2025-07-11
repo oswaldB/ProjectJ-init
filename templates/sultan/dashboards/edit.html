@@ -315,6 +315,32 @@
             this.selectedCard.config.columns = [];
           }
           this.selectedCard.config.columns = columns;
+          
+          // Set default values for search cards
+          if (this.selectedCard.type === 'search') {
+            this.selectedCard.config.maxResults = this.selectedCard.config.maxResults || 10;
+            this.selectedCard.config.displayMode = this.selectedCard.config.displayMode || 'list';
+            this.selectedCard.config.instantSearch = this.selectedCard.config.instantSearch || false;
+          }
+          
+          console.log('Columns updated:', this.selectedCard.config.columns);
+        } else {
+          console.log('No fields found in form config');
+        }
+      } else {
+        console.log('Failed to load form config:', response.status);
+      }
+    } catch (error) {
+      console.error('Error loading data source columns:', error);
+    }
+  },
+  
+  // Watch for data source changes in search cards
+  $watch('selectedCard.config.dataSource', function(newValue, oldValue) {
+    if (this.selectedCard && this.selectedCard.type === 'search' && newValue && newValue !== oldValue) {
+      this.loadDataSourceColumns();
+    }
+  });ard.config.columns = columns;
           console.log('Columns loaded from form fields:', columns);
         } else {
           console.log('No fields found in form config');
