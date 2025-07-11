@@ -588,84 +588,85 @@
     </div>
 
     <!-- Card Configuration Panel -->
-    <div x-show="selectedCard" class="p-4"></div>
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-white font-semibold">Card Configuration</h3>
-      <button @click="selectedCard = null" class="text-gray-400 hover:text-white">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-    <template x-if="selectedCard">
-      <div class="space-y-4">
-        <!-- General Settings -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
-          <input 
-            type="text" 
-            x-model="selectedCard.title" 
-            class="w-full bg-gray-700 text-white p-2 rounded"
-          >
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">Card Width (columns)</label>
-          <select x-model="selectedCard.size.width" class="w-full bg-gray-700 text-white p-2 rounded">
-            <template x-for="col in [1,2,3,4]" :key="col">
-              <option :value="col" x-text="col"></option>
-            </template>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">Card Height</label>
-          <select x-model="selectedCard.size.height" class="w-full bg-gray-700 text-white p-2 rounded">
-            <option value="1">Small</option>
-            <option value="2">Medium</option>
-            <option value="3">Large</option>
-            <option value="4">Extra Large</option>
-          </select>
-        </div>
-
-        <!-- Type-specific Editor Includes -->
-        <template x-if="selectedCard && selectedCard.type === 'datatable'">
-          <div>
-            {% include "sultan/dashboards/cards/editor/datatable.html" %}
-          </div>
-        </template>
-        <template x-if="selectedCard && selectedCard.type === 'graph'">
-          <div>
-            {% include "sultan/dashboards/cards/editor/graph.html" %}
-          </div>
-        </template>
-        <template x-if="selectedCard && selectedCard.type === 'kanban'">
-          <div>
-            {% include "sultan/dashboards/cards/editor/kanban.html" %}
-          </div>
-        </template>
-        <template x-if="selectedCard && selectedCard.type === 'actions'">
-          <div>
-            {% include "sultan/dashboards/cards/editor/actions.html" %}
-          </div>
-        </template>
-        <template x-if="selectedCard && selectedCard.type === 'chat'">
-          <div>
-            {% include "sultan/dashboards/cards/editor/chat.html" %}
-          </div>
-        </template>
-        <template x-if="selectedCard && selectedCard.type === 'search'">
-          <div>
-            {% include "sultan/dashboards/cards/editor/search.html" %}
-          </div>
-        </template>
-        <template x-if="selectedCard && selectedCard.type === 'stats'">
-          <div>
-            {% include "sultan/dashboards/cards/editor/stats.html" %}
-          </div>
-        </template>
+    <div x-show="selectedCard" class="p-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-white font-semibold">Card Configuration</h3>
+        <button @click="selectedCard = null" class="text-gray-400 hover:text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
-    </template>
+      <template x-if="selectedCard">
+        <div class="space-y-4">
+          <!-- General Settings -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
+            <input 
+              type="text" 
+              x-model="selectedCard.title" 
+              class="w-full bg-gray-700 text-white p-2 rounded"
+            >
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Card Width (columns)</label>
+            <select x-model="selectedCard.size.width" class="w-full bg-gray-700 text-white p-2 rounded">
+              <template x-for="col in [1,2,3,4]" :key="col">
+                <option :value="col" x-text="col"></option>
+              </template>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Card Height</label>
+            <select x-model="selectedCard.size.height" class="w-full bg-gray-700 text-white p-2 rounded">
+              <option value="1">Small</option>
+              <option value="2">Medium</option>
+              <option value="3">Large</option>
+              <option value="4">Extra Large</option>
+            </select>
+          </div>
+
+          <!-- Type-specific Editor Includes -->
+          <template x-if="selectedCard && selectedCard.type === 'datatable'">
+            <div>
+              {% include "sultan/dashboards/cards/editor/datatable.html" %}
+            </div>
+          </template>
+          <template x-if="selectedCard && selectedCard.type === 'graph'">
+            <div>
+              {% include "sultan/dashboards/cards/editor/graph.html" %}
+            </div>
+          </template>
+          <template x-if="selectedCard && selectedCard.type === 'kanban'">
+            <div>
+              {% include "sultan/dashboards/cards/editor/kanban.html" %}
+            </div>
+          </template>
+          <template x-if="selectedCard && selectedCard.type === 'actions'">
+            <div>
+              {% include "sultan/dashboards/cards/editor/actions.html" %}
+            </div>
+          </template>
+          <template x-if="selectedCard && selectedCard.type === 'chat'">
+            <div>
+              {% include "sultan/dashboards/cards/editor/chat.html" %}
+            </div>
+          </template>
+          <template x-if="selectedCard && selectedCard.type === 'search'">
+            <div>
+              {% include "sultan/dashboards/cards/editor/search.html" %}
+            </div>
+          </template>
+          <template x-if="selectedCard && selectedCard.type === 'stats'">
+            <div>
+              {% include "sultan/dashboards/cards/editor/stats.html" %}
+            </div>
+          </template>
+        </div>
+      </template>
+    </div>
     </div>
   </div>
 </div>
