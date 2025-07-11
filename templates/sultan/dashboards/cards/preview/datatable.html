@@ -356,10 +356,8 @@
 
         let response;
         if (isDrafts) {
-          // Fetch drafts data
-          response = await fetch(`/pc-analytics-jaffar/forms/api/pouchdb/init-drafts/${formId}`, {
-            method: "POST"
-          });
+          // Fetch drafts data using the get-draft route
+          response = await fetch(`/pc-analytics-jaffar/forms/api/get-draft/${formId}`);
         } else {
           // Fetch submitted data
           response = await fetch(`/pc-analytics-jaffar/forms/api/pouchdb/init/${formId}`, {
@@ -371,21 +369,39 @@
           throw new Error(`Failed to fetch data: ${response.statusText}`);
         }
 
-        const data = await response.json();
-        const chunks = data.chunks || [];
-
-        // Store chunks in PouchDB
-        for (let i = 0; i < chunks.length; i++) {
-          const chunk = chunks[i];
-          if (chunk && chunk.length > 0) {
+        if (isDrafts) {
+          // Handle draft data response (returns array of documents)
+          const draftData = await response.json();
+          // Extract answers from each draft document
+          const answers = draftData.map(doc => doc.answers || {});
+          
+          // Store draft answers in PouchDB
+          if (answers.length > 0) {
             await pouchDB.put({
-              _id: `chunk_${i}`,
-              data: chunk
+              _id: `chunk_0`,
+              data: answers
             });
           }
-        }
+          
+          console.log(`Initialized PouchDB for ${dataSource} with ${answers.length} draft documents`);
+        } else {
+          // Handle submitted data response (chunked)
+          const data = await response.json();
+          const chunks = data.chunks || [];
 
-        console.log(`Initialized PouchDB for ${dataSource} with ${chunks.length} chunks`);
+          // Store chunks in PouchDB
+          for (let i = 0; i < chunks.length; i++) {
+            const chunk = chunks[i];
+            if (chunk && chunk.length > 0) {
+              await pouchDB.put({
+                _id: `chunk_${i}`,
+                data: chunk
+              });
+            }
+          }
+
+          console.log(`Initialized PouchDB for ${dataSource} with ${chunks.length} chunks`);
+        }
       } catch (error) {
         console.error("Error initializing PouchDB for", dataSource, ":", error);
       }
@@ -406,8 +422,9 @@
 
           let response;
           if (isDrafts) {
+            // Use the specific get-draft route for draft data
             response = await fetch(
-              `/pc-analytics-jaffar/forms/api/draft-responses/${formId}?page=${page}&page_size=${pageSize}`
+              `/pc-analytics-jaffar/forms/api/get-draft/${formId}`
             );
           } else {
             response = await fetch(
@@ -419,11 +436,22 @@
             throw new Error(`Failed to fetch data: ${response.statusText}`);
           }
 
-          const data = await response.json();
-          this.rawData = data.issues || [];
-          this.totalRecords = data.total || 0;
-          this.currentPage = data.page || 1;
-          this.totalPages = data.total_pages || 1;
+          if (isDrafts) {
+            // Handle draft data response (returns array of documents)
+            const draftData = await response.json();
+            // Extract answers from each draft document
+            this.rawData = draftData.map(doc => doc.answers || {});
+            this.totalRecords = this.rawData.length;
+            this.currentPage = 1;
+            this.totalPages = 1;
+          } else {
+            // Handle submitted data response (paginated)
+            const data = await response.json();
+            this.rawData = data.issues || [];
+            this.totalRecords = data.total || 0;
+            this.currentPage = data.page || 1;
+            this.totalPages = data.total_pages || 1;
+          }
         }
 
         this.applyFilters();
