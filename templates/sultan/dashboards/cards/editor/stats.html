@@ -11,7 +11,7 @@
     
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
-      <select x-model="selectedCard.config.dataSource" @change="loadStatsFields()" class="w-full bg-gray-700 text-white p-2 rounded">
+      <select x-model="selectedCard.config.dataSource" class="w-full bg-gray-700 text-white p-2 rounded">
         <option value="">Select a data source</option>
         <template x-for="source in availableDataSources">
           <option :value="source.id" x-text="source.name"></option>
@@ -22,12 +22,7 @@
     
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Value Field</label>
-      <select x-model="selectedCard.config.valueField" class="w-full bg-gray-700 text-white p-2 rounded">
-        <option value="">Select a field</option>
-        <template x-for="field in availableStatsFields || []" :key="field.key">
-          <option :value="field.key" x-text="field.label"></option>
-        </template>
-      </select>
+      <input type="text" x-model="selectedCard.config.valueField" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="amount">
       <p class="text-xs text-gray-400 mt-1">Numeric field to calculate statistics on</p>
     </div>
     
