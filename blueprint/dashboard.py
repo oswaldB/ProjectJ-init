@@ -24,6 +24,8 @@ def create_new_dashboard():
             'description': 'Dashboard created automatically',
             'cards': [],
             'layout': 'grid',
+            'isPrivate': False,
+            'authorizedUsers': [],
             'createdAt': time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
         }
         

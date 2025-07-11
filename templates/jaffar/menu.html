@@ -23,9 +23,14 @@
       <div x-data="{ dashboards: [], userEmail: (localStorage.getItem('author2').split('-').pop().trim().toLowerCase() || '').toLowerCase() }" 
            x-init="fetch('/pc-analytics-jaffar/api/sultan/dashboards/list')
             .then(res => res.json())
-            .then(data => dashboards = data.filter(d => d.active))">
+            .then(data => dashboards = data.filter(d => {
+              if (d.isPrivate) {
+                return d.authorizedUsers && d.authorizedUsers.includes(userEmail);
+              }
+              return true;
+            }))">
         <template x-for="dashboard in dashboards">
-          <li x-show="!dashboard.authorizedUsers || dashboard.authorizedUsers.split(',').includes(userEmail)">
+          <li>
             <a :href="`/pc-analytics-jaffar/dashboard/${dashboard.id}`" class="cursor-pointer flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group">
               <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" stroke-linecap="round" stroke-linejoin="round"/>

@@ -10,18 +10,31 @@
   page: 'dashboards',
   dashboards: [],
   searchQuery: '',
+  currentUserEmail: '',
   state: {
     loading: true,
     error: null
   },
   filteredDashboards() {
-    return this.dashboards.filter(dashboard => 
-      dashboard.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-      dashboard.id?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-      dashboard.description?.toLowerCase().includes(this.searchQuery.toLowerCase())
-    );
+    return this.dashboards.filter(dashboard => {
+      // Check search query match
+      const matchesSearch = dashboard.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        dashboard.id?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        dashboard.description?.toLowerCase().includes(this.searchQuery.toLowerCase());
+      
+      // Check privacy permissions
+      if (dashboard.isPrivate) {
+        const authorizedUsers = dashboard.authorizedUsers || [];
+        const hasAccess = authorizedUsers.includes(this.currentUserEmail);
+        return matchesSearch && hasAccess;
+      }
+      
+      return matchesSearch;
+    });
   },
   async init() {
+    // Get current user email from localStorage or session
+    this.currentUserEmail = (localStorage.getItem('author2') || '').split('-').pop().trim().toLowerCase();
     await this.loadDashboards();
   },
   async loadDashboards() {
@@ -88,9 +101,17 @@
       <template x-for="dashboard in filteredDashboards()">
         <div class="bg-gray-800 p-4 rounded-lg hover:bg-gray-750 transition">
           <div class="flex justify-between items-start mb-2">
-            <div>
-              <h3 class="text-lg font-semibold text-white" x-text="dashboard.name"></h3>
+            <div class="flex-1">
+              <div class="flex items-center space-x-2 mb-1">
+                <h3 class="text-lg font-semibold text-white" x-text="dashboard.name"></h3>
+                <span x-show="dashboard.isPrivate" class="bg-yellow-500 text-black px-2 py-1 rounded text-xs font-medium">
+                  Private
+                </span>
+              </div>
               <p class="text-sm text-gray-400" x-text="dashboard.description"></p>
+              <div x-show="dashboard.isPrivate && dashboard.authorizedUsers" class="text-xs text-gray-500 mt-1">
+                <span class="font-medium">Authorized users:</span> <span x-text="(dashboard.authorizedUsers || []).join(', ')"></span>
+              </div>
             </div>
             <div class="flex space-x-2">
               <a :href="`/pc-analytics-jaffar/sultan/dashboard/edit/${dashboard.id}`" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">
