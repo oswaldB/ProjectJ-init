@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, redirect
 from services.s3_service import list_sultan_objects, get_sultan_object, save_sultan_object, delete_sultan_object
 
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/sultan/dashboard')
@@ -10,6 +10,29 @@ def index():
 @dashboard_bp.route('/edit/<dashboard_id>')
 def edit(dashboard_id):
     return render_template('sultan/dashboards/edit.html')
+
+@dashboard_bp.route('/new/')
+def create_new_dashboard():
+    import time
+    try:
+        timestamp = int(time.time())
+        dashboard_id = f'dashboard-{timestamp}'
+        
+        new_dashboard = {
+            'id': dashboard_id,
+            'name': 'New Dashboard',
+            'description': 'Dashboard created automatically',
+            'cards': [],
+            'layout': 'grid',
+            'createdAt': time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
+        }
+        
+        if save_sultan_object('dashboards', dashboard_id, new_dashboard):
+            return redirect(f'/sultan/dashboard/{dashboard_id}')
+        else:
+            return "Failed to create dashboard", 500
+    except Exception as e:
+        return f"Error creating dashboard: {str(e)}", 500
 
 @dashboard_bp.route('/<dashboard_id>')
 def view_dashboard(dashboard_id):
