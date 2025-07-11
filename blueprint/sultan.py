@@ -225,7 +225,10 @@ def api_forms():
 def api_form_by_id(form_id):
     """Fetch a specific form by its ID"""
     try:
-        form = get_sultan_object('forms', form_id)
+        # Remove _drafts suffix if present
+        clean_form_id = form_id.replace('_drafts', '') if form_id.endswith('_drafts') else form_id
+        
+        form = get_sultan_object('forms', clean_form_id)
         if form:
             return jsonify(form)
         else:
