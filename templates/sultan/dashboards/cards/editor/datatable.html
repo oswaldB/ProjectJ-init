@@ -45,6 +45,27 @@
       </label>
     </div>
 
+    <!-- Available Variables for Predefined Filters -->
+    <div x-show="selectedCard.config.dataSource" class="mt-4">
+      <h4 class="text-sm font-medium text-gray-300 mb-2">Available Variables for Predefined Filters</h4>
+      <div class="bg-gray-700 p-3 rounded border border-gray-600">
+        <div class="text-xs text-gray-400 mb-2">You can use these variables in your predefined filter values:</div>
+        <div class="space-y-1 text-xs">
+          <div class="flex items-center space-x-2">
+            <code class="bg-gray-800 text-green-400 px-2 py-1 rounded">${currentUser}</code>
+            <span class="text-gray-300">Current user's email (extracted from localStorage)</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <code class="bg-gray-800 text-green-400 px-2 py-1 rounded">${author2}</code>
+            <span class="text-gray-300">Full author2 value from localStorage (userId - name - email)</span>
+          </div>
+        </div>
+        <div class="mt-2 text-xs text-gray-500">
+          Example: Use <code class="bg-gray-800 text-yellow-400 px-1">${currentUser}</code> in a filter value to automatically filter by the current user's email
+        </div>
+      </div>
+    </div>
+
     <div x-show="selectedCard.config.columns && selectedCard.config.columns.length > 0" class="mt-4">
       <h4 class="text-sm font-medium text-gray-300 mb-2">Columns</h4>
 
