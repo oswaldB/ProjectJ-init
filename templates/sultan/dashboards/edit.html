@@ -215,12 +215,22 @@
 
         if (forms && Array.isArray(forms)) {
           for (const form of forms) {
+            // Add submitted responses
             this.availableDataSources.push({
               id: form.id,
               name: form.name || `Form ${form.id}`,
               type: 'form',
               path: `/forms/${form.id}/submitted/`,
               // Record count is no longer checked
+            });
+            
+            // Add drafts
+            this.availableDataSources.push({
+              id: `${form.id}_drafts`,
+              name: `${form.name || `Form ${form.id}`} (Drafts)`,
+              type: 'form_drafts',
+              path: `/forms/${form.id}/`,
+              formId: form.id
             });
           }
         }

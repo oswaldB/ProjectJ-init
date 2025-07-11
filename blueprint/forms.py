@@ -388,3 +388,93 @@ def api_pouchdb_init(form_id):
     except Exception as e:
         logger.error(f"Failed to initialize PouchDB for form {form_id}: {e}")
         return jsonify({"error": str(e)}), 500
+
+@forms_blueprint.route('/api/pouchdb/init-drafts/<form_id>', methods=['POST'])
+def api_pouchdb_init_drafts(form_id):
+    """
+    Initialize PouchDB with draft data from S3 for the given form ID.
+    """
+    logger.info(f"Initializing PouchDB with drafts for form {form_id}")
+    prefix = f'forms/{form_id}/'
+    try:
+        # List all draft responses (excluding submitted folder)
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        chunks = []
+        
+        if 'Contents' not in response:
+            logger.info(f"No draft data found for form {form_id}")
+            return jsonify({"chunks": []}), 200
+            
+        for obj in response.get('Contents', []):
+            key = obj['Key']
+            # Skip files in the submitted folder
+            if '/submitted/' in key or key.endswith('/'):
+                continue
+            # Only process JSON files that are direct children of the form folder
+            if key.count('/') != 2 or not key.endswith('.json'):
+                continue
+                
+            response_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+            response_data = json.loads(response_obj['Body'].read().decode('utf-8'))
+            chunks.append(response_data.get('answers', {}))
+
+        logger.info(f"Found {len(chunks)} draft responses for form {form_id}")
+        
+        # Split data into chunks for PouchDB
+        chunk_size = 100
+        chunked_data = [chunks[i:i + chunk_size] for i in range(0, len(chunks), chunk_size)]
+        return jsonify({"chunks": chunked_data}), 200
+    except Exception as e:
+        logger.error(f"Failed to initialize PouchDB with drafts for form {form_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@forms_blueprint.route('/api/draft-responses/<form_id>', methods=['GET'])
+def api_draft_responses(form_id):
+    """
+    Fetch draft responses for a form from S3 with pagination.
+    """
+    try:
+        page = int(request.args.get('page', 1))
+        page_size = int(request.args.get('page_size', 10))
+        prefix = f'forms/{form_id}/'
+        all_keys = []
+
+        # List all draft responses (excluding submitted folder)
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+        for obj in response.get('Contents', []):
+            key = obj['Key']
+            # Skip files in the submitted folder
+            if '/submitted/' in key or key.endswith('/'):
+                continue
+            # Only process JSON files that are direct children of the form folder
+            if key.count('/') != 2 or not key.endswith('.json'):
+                continue
+            all_keys.append((key, obj.get('LastModified')))
+
+        # Sort by last modified date (descending)
+        all_keys.sort(key=lambda x: x[1] or '', reverse=True)
+        total = len(all_keys)
+        start = (page - 1) * page_size
+        end = start + page_size
+        page_keys = all_keys[start:end]
+
+        # Fetch only the current page's responses
+        responses = []
+        for key, _ in page_keys:
+            try:
+                response_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+                response_data = json.loads(response_obj['Body'].read().decode('utf-8'))
+                responses.append(response_data.get('answers', {}))
+            except Exception as e:
+                logger.error(f"Error loading draft response {key}: {e}")
+
+        return jsonify({
+            "issues": responses,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": (total + page_size - 1) // page_size
+        })
+    except Exception as e:
+        logger.error(f"Error in api_draft_responses: {e}")
+        return jsonify({"error": str(e)}), 500
