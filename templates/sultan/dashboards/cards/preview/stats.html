@@ -37,10 +37,13 @@
       }
       
       // Build map-reduce function for stats
+      const prefilters = card.config.prefilters || [];
+      const valueField = card.config.valueField;
+      
       const mapReduceFun = {
         map: function (doc) {
           // Apply prefilters
-          const filters = card.config.prefilters || [];
+          const filters = ${JSON.stringify(prefilters)};
           for (const filter of filters) {
             if (!filter.enabled || !filter.field) continue;
             
@@ -74,7 +77,7 @@
           }
           
           // Emit the numeric value for stats calculation
-          const value = doc[card.config.valueField];
+          const value = doc['${valueField}'];
           if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
             emit(doc._id, parseFloat(value));
           }
