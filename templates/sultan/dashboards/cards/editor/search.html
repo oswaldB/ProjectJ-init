@@ -5,7 +5,7 @@
     <label class="block text-sm font-medium text-gray-300 mb-2">Title</label>
     <input 
       type="text" 
-      x-model="card.config.title" 
+      x-model="selectedCard.config.title" 
       class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
       placeholder="Search"
     >
@@ -15,8 +15,8 @@
   <div>
     <label class="block text-sm font-medium text-gray-300 mb-2">Data Source</label>
     <select 
-      x-model="card.config.dataSource" 
-      @change="card.config.searchFields = []"
+      x-model="selectedCard.config.dataSource" 
+      @change="selectedCard.config.searchFields = []; loadSearchFields()"
       class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
     >
       <option value="">Select a data source</option>
@@ -34,17 +34,17 @@
     <label class="block text-sm font-medium text-gray-300 mb-2">Placeholder Text</label>
     <input 
       type="text" 
-      x-model="card.config.placeholder" 
+      x-model="selectedCard.config.placeholder" 
       class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
       placeholder="Search..."
     >
   </div>
 
   <!-- Search Fields Configuration -->
-  <div x-show="card.config.dataSource">
+  <div x-show="selectedCard.config.dataSource">
     <label class="block text-sm font-medium text-gray-300 mb-2">Search Fields</label>
     <div class="space-y-2 max-h-48 overflow-y-auto">
-      <template x-for="(searchField, index) in card.config.searchFields || []" :key="index">
+      <template x-for="(searchField, index) in selectedCard.config.searchFields || []" :key="index">
         <div class="flex items-center gap-2 bg-gray-700 p-2 rounded">
           <input 
             type="checkbox" 
@@ -53,12 +53,14 @@
           >
           <input 
             type="text" 
-            x-model="searchField.field"
+            x-model="searchField.key"
             class="flex-1 bg-gray-800 text-white px-2 py-1 rounded border border-gray-600 focus:outline-none focus:border-red-500"
-            placeholder="Field name"
+            placeholder="Field key"
+            readonly
           >
+          <span class="text-xs text-gray-400" x-text="searchField.label"></span>
           <button 
-            @click="card.config.searchFields.splice(index, 1)"
+            @click="selectedCard.config.searchFields.splice(index, 1)"
             class="text-red-400 hover:text-red-300"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,10 +71,10 @@
       </template>
       
       <button 
-        @click="card.config.searchFields = (card.config.searchFields || []); card.config.searchFields.push({field: '', enabled: true})"
+        @click="loadSearchFields()"
         class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm"
       >
-        Add Search Field
+        Load Available Fields
       </button>
     </div>
     
