@@ -4,18 +4,18 @@
   <div class="space-y-3">
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
-      <input type="text" x-model="card.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Actions title">
+      <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Actions title">
     </div>
     
     <div>
       <h4 class="text-sm font-medium text-gray-300 mb-2">Action Buttons</h4>
       <div class="space-y-2">
-        <button @click="card.config.actions = card.config.actions || []; card.config.actions.push({label: '', url: '', openInNewWindow: false})" 
+        <button @click="selectedCard.config.actions = selectedCard.config.actions || []; selectedCard.config.actions.push({label: '', url: '', openInNewWindow: false})" 
                 class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
           Add Button
         </button>
         
-        <template x-for="(action, index) in card.config.actions || []" :key="index">
+        <template x-for="(action, index) in selectedCard.config.actions || []" :key="index">
           <div class="bg-gray-700 p-3 rounded border border-gray-600">
             <div class="grid grid-cols-1 gap-2">
               <div>
@@ -34,7 +34,7 @@
                   <span class="text-xs text-gray-300">Open in new window</span>
                 </label>
                 
-                <button @click="card.config.actions.splice(index, 1)" 
+                <button @click="selectedCard.config.actions.splice(index, 1)" 
                         class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">
                   Remove
                 </button>
