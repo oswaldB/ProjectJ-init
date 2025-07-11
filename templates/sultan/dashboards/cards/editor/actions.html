@@ -6,9 +6,43 @@
       <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
       <input type="text" x-model="card.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Actions title">
     </div>
+    
     <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">Actions (JSON)</label>
-      <textarea x-model="card.config.actions" class="w-full bg-gray-700 text-white p-2 rounded h-32" placeholder='[{"label": "Create New", "action": "create", "url": "/create"}, {"label": "Export", "action": "export", "url": "/export"}]'></textarea>
+      <h4 class="text-sm font-medium text-gray-300 mb-2">Action Buttons</h4>
+      <div class="space-y-2">
+        <button @click="card.config.actions = card.config.actions || []; card.config.actions.push({label: '', url: '', openInNewWindow: false})" 
+                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+          Add Button
+        </button>
+        
+        <template x-for="(action, index) in card.config.actions || []" :key="index">
+          <div class="bg-gray-700 p-3 rounded border border-gray-600">
+            <div class="grid grid-cols-1 gap-2">
+              <div>
+                <label class="block text-xs font-medium text-gray-300 mb-1">Button Label</label>
+                <input type="text" x-model="action.label" class="w-full bg-gray-600 text-white p-2 rounded text-sm" placeholder="Button text">
+              </div>
+              
+              <div>
+                <label class="block text-xs font-medium text-gray-300 mb-1">URL</label>
+                <input type="text" x-model="action.url" class="w-full bg-gray-600 text-white p-2 rounded text-sm" placeholder="https://example.com">
+              </div>
+              
+              <div class="flex items-center justify-between">
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" x-model="action.openInNewWindow" class="rounded">
+                  <span class="text-xs text-gray-300">Open in new window</span>
+                </label>
+                
+                <button @click="card.config.actions.splice(index, 1)" 
+                        class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
     </div>
   </div>
 </div>
