@@ -406,8 +406,8 @@
           
           // Replace any row field values using ${fieldName} syntax
           Object.keys(row).forEach(key => {
-            const regex = new RegExp(`\\$\\{${key}\\}`, 'g');
-            processedUrl = processedUrl.replace(regex, row[key] || '');
+            const regex = new RegExp(`\\$\\{${key}\\}`, "g");
+            processedUrl = processedUrl.replace(regex, row[key] || "");
           });
           
           return processedUrl;
