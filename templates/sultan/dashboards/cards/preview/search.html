@@ -269,9 +269,24 @@
       <div class="bg-gray-700 p-3 rounded text-sm">
         <!-- Display actual field values from the document -->
         <template x-for="(value, key) in result.doc" :key="key">
-          <div x-show="!key.startsWith('_') && value && typeof value !== 'object'" class="mb-1">
+          <div x-show="!key.startsWith('_') && value" class="mb-1">
             <span class="text-blue-300 text-xs font-medium" x-text="key + ':'"></span>
-            <span class="text-gray-300 text-xs ml-1" x-text="typeof value === 'string' ? (value.length > 100 ? value.substring(0, 100) + '...' : value) : value"></span>
+            <!-- Handle arrays with red tags -->
+            <template x-if="Array.isArray(value)">
+              <div class="ml-1 flex flex-wrap gap-1">
+                <template x-for="item in value" :key="item">
+                  <span class="bg-red-600 text-white px-2 py-1 rounded text-xs" x-text="item"></span>
+                </template>
+              </div>
+            </template>
+            <!-- Handle other types -->
+            <template x-if="!Array.isArray(value) && typeof value !== 'object'">
+              <span class="text-gray-300 text-xs ml-1" x-text="typeof value === 'string' ? (value.length > 100 ? value.substring(0, 100) + '...' : value) : value"></span>
+            </template>
+            <!-- Handle objects (but not arrays) -->
+            <template x-if="typeof value === 'object' && value !== null && !Array.isArray(value)">
+              <span class="text-gray-400 text-xs ml-1">[Object]</span>
+            </template>
           </div>
         </template>
         
