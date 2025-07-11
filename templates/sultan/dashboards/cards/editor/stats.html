@@ -6,24 +6,24 @@
     <!-- Basic Configuration -->
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
-      <input type="text" x-model="card.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Statistics">
+      <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Statistics">
     </div>
     
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
-      <input type="text" x-model="card.config.dataSource" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="forms-1234567890">
+      <input type="text" x-model="selectedCard.config.dataSource" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="forms-1234567890">
       <p class="text-xs text-gray-400 mt-1">PouchDB database name (form ID or form ID + '_drafts')</p>
     </div>
     
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Value Field</label>
-      <input type="text" x-model="card.config.valueField" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="amount">
+      <input type="text" x-model="selectedCard.config.valueField" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="amount">
       <p class="text-xs text-gray-400 mt-1">Numeric field to calculate statistics on</p>
     </div>
     
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Statistic Type</label>
-      <select x-model="card.config.statType" class="w-full bg-gray-700 text-white p-2 rounded">
+      <select x-model="selectedCard.config.statType" class="w-full bg-gray-700 text-white p-2 rounded">
         <option value="count">Count</option>
         <option value="sum">Sum</option>
         <option value="min">Minimum</option>
@@ -34,32 +34,32 @@
     
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Icon</label>
-      <input type="text" x-model="card.config.icon" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="📊">
+      <input type="text" x-model="selectedCard.config.icon" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="📊">
     </div>
     
     <!-- Prefilters Configuration -->
     <div class="border-t border-gray-600 pt-4">
       <div class="flex items-center justify-between mb-3">
         <h4 class="text-sm font-medium text-gray-300">Prefilters</h4>
-        <button @click="if (!card.config.prefilters) card.config.prefilters = []; card.config.prefilters.push({enabled: true, field: '', operator: 'equals', value: ''})" 
+        <button @click="if (!selectedCard.config.prefilters) selectedCard.config.prefilters = []; selectedCard.config.prefilters.push({enabled: true, field: '', operator: 'equals', value: ''})" 
                 class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs">
           Add Filter
         </button>
       </div>
       
-      <div x-show="!card.config.prefilters || card.config.prefilters.length === 0" 
+      <div x-show="!selectedCard.config.prefilters || selectedCard.config.prefilters.length === 0" 
            class="text-xs text-gray-400 text-center py-2">
         No prefilters configured
       </div>
       
       <div class="space-y-3">
-        <template x-for="(filter, index) in card.config.prefilters || []" :key="index">
+        <template x-for="(filter, index) in selectedCard.config.prefilters || []" :key="index">
           <div class="bg-gray-700 p-3 rounded border border-gray-600">
             <div class="flex items-center gap-2 mb-2">
               <input type="checkbox" x-model="filter.enabled" class="rounded">
               <span class="text-xs text-gray-300">Enabled</span>
               <div class="flex-1"></div>
-              <button @click="card.config.prefilters.splice(index, 1)" 
+              <button @click="selectedCard.config.prefilters.splice(index, 1)" 
                       class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">
                 Remove
               </button>
