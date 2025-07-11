@@ -31,6 +31,7 @@
   availableForms: [],
   availableDataSources: [],
   dataSourcesLoaded: false,
+  availableKanbanFields: [],
 
   async init() {
     const dashboardId = window.location.pathname.split('/').pop();
@@ -225,7 +226,7 @@
               path: `/forms/${form.id}/submitted/`,
               // Record count is no longer checked
             });
-            
+
             // Add drafts
             this.availableDataSources.push({
               id: `${form.id}_drafts`,
@@ -274,45 +275,37 @@
   },
 
   async loadDataSourceColumns() {
-    if (!this.selectedCard || !this.selectedCard.config.dataSource) {
-      console.log('No selected card or data source');
+    if (!this.selectedCard || !this.selectedCard.config || !this.selectedCard.config.dataSource) {
       return;
     }
 
+    const dataSource = this.selectedCard.config.dataSource;
+    console.log('Loading columns for data source:', dataSource);
+
     try {
-      console.log('Loading columns for data source:', this.selectedCard.config.dataSource);
-      const formId = this.selectedCard.config.dataSource;
+      // Check if it's a form data source
+      if (dataSource.startsWith('/pc-analytics-jaffar/forms/api/pouchdb/init/')) {
+        const formId = dataSource.split('/').pop();
+        console.log('Loading form config for form ID:', formId);
 
-      // Find the selected data source in availableDataSources
-      const selectedDataSource = this.availableDataSources.find(ds => ds.id === formId);
-      if (!selectedDataSource) {
-        console.log('Data source not found in availableDataSources');
-        return;
-      }
+        const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${formId}`);
+        if (response.ok) {
+          const formConfig = await response.json();
+          console.log('Form config loaded:', formConfig);
 
-      // Load form configuration to get fields
-      const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${formId}`);
-      if (response.ok) {
-        const formConfig = await response.json();
-        console.log('Form config loaded:', formConfig);
+          const columns = [];
+          if (formConfig.fields && Array.isArray(formConfig.fields)) {
+            formConfig.fields.forEach(field => {
+              columns.push({
+                key: field.key,
+                label: field.label || field.key,
+                type: this.inferFieldType(field.type),
+                sortable: true,
+                filterable: true
+              });
+            });
+          }
 
-        if (formConfig && formConfig.fields && Array.isArray(formConfig.fields)) {
-          const columns = formConfig.fields
-            .filter(field => field.key) // Only include fields with keys
-            .map(field => ({
-              key: field.key,
-              label: field.label || field.key.charAt(0).toUpperCase() + field.key.slice(1).replace(/_/g, ' '),
-              type: this.inferFieldType(field.type),
-              visible: true,
-              sortable: true,
-              filterable: true,
-              enablePredefinedFilter: false,
-              filterValue: '',
-              filterValues: [],
-              options: field.options && Array.isArray(field.options) ? field.options.map(opt => opt.name) : []
-            }));
-
-          // Initialize columns if not exists
           if (!this.selectedCard.config.columns) {
             this.selectedCard.config.columns = [];
           }
@@ -331,6 +324,70 @@
       if (this.selectedCard && this.selectedCard.config) {
         this.selectedCard.config.columns = [];
       }
+    }
+  },
+
+  async loadKanbanDataSourceColumns() {
+    if (!this.selectedCard || !this.selectedCard.config || !this.selectedCard.config.dataSource) {
+      console.log('No data source selected for kanban');
+      return;
+    }
+
+    const dataSource = this.selectedCard.config.dataSource;
+    console.log('Loading kanban columns for data source:', dataSource);
+
+    try {
+      // Extract form ID from data source URL
+      let formId = null;
+      if (dataSource.startsWith('/pc-analytics-jaffar/forms/api/pouchdb/init/')) {
+        formId = dataSource.split('/').pop();
+      } else if (dataSource.includes('forms/')) {
+        // Handle other form URL patterns
+        const parts = dataSource.split('/');
+        const formsIndex = parts.indexOf('forms');
+        if (formsIndex >= 0 && formsIndex < parts.length - 1) {
+          formId = parts[formsIndex + 1];
+        }
+      }
+
+      if (!formId) {
+        console.error('Could not extract form ID from data source:', dataSource);
+        return;
+      }
+
+      console.log('Loading form config for kanban, form ID:', formId);
+
+      const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${formId}`);
+      if (response.ok) {
+        const formConfig = await response.json();
+        console.log('Form config loaded for kanban:', formConfig);
+
+        // Initialize available fields for kanban configuration
+        this.availableKanbanFields = [];
+        if (formConfig.fields && Array.isArray(formConfig.fields)) {
+          formConfig.fields.forEach(field => {
+            this.availableKanbanFields.push({
+              key: field.key,
+              label: field.label || field.key,
+              type: this.inferFieldType(field.type),
+              options: field.options || []
+            });
+          });
+        }
+
+        // Initialize kanban columns if not already set
+        if (!this.selectedCard.config.columns) {
+          this.selectedCard.config.columns = [];
+        }
+
+        console.log('Available kanban fields loaded:', this.availableKanbanFields);
+      } else {
+        console.error('Failed to fetch form config for kanban:', response.status);
+        this.availableKanbanFields = [];
+      }
+    } catch (error) {
+      console.error('Failed to load kanban columns:', error);
+      this.availableKanbanFields = [];
     }
   },
 
