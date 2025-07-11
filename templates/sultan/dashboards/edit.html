@@ -24,6 +24,7 @@
   ],
   selectedCard: null,
   gridColumns: Array.from({length: 12}, (_, i) => i + 1),
+  sidebarOpen: false,
 
   // Form and data source management
   availableForms: [],
@@ -423,7 +424,7 @@
 }" x-init="init()">
 
   <!-- Sidebar for adding cards -->
-  <div class="w-64 bg-gray-800 border-r border-gray-700 p-4 overflow-y-auto">
+  <div class="w-64 bg-gray-800 border-r border-gray-700 p-4 overflow-y-auto" x-show="sidebarOpen">
     <h3 class="text-white font-semibold mb-4">Add Cards</h3>
     <div class="space-y-2">
       <template x-for="cardType in availableCards" :key="cardType.type">
@@ -445,6 +446,17 @@
     <!-- Header -->
     <div class="bg-gray-800 p-4 border-b border-gray-700">
       <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+          <button 
+            @click="sidebarOpen = !sidebarOpen"
+            class="bg-gray-700 text-white px-3 py-2 rounded hover:bg-gray-600 flex items-center space-x-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <span x-text="sidebarOpen ? 'Hide Cards' : 'Show Cards'"></span>
+          </button>
+        </div>
         <div class="flex-1 mr-4">
           <input 
             type="text" 
@@ -457,7 +469,7 @@
             placeholder="Description"
             class="bg-gray-700 text-white px-3 py-2 rounded w-full mt-2 h-20"
           ></textarea>
-          
+
           <!-- Privacy Settings -->
           <div class="mt-4">
             <label class="flex items-center space-x-2">
@@ -544,7 +556,7 @@
 
   <!-- Right Sidebar -->
   <div class="w-80 bg-gray-800 border-l border-gray-700 overflow-y-auto">
-    
+
     <!-- Privacy Settings Panel -->
     <div x-show="dashboard.isPrivate" class="p-4 border-b border-gray-700" x-data="{ showUsers: false }">
       <div class="flex justify-between items-center mb-4">
