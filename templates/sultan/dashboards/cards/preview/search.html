@@ -145,6 +145,31 @@
     this.searchResults = [];
     this.showSyncButton = false;
     this.syncCompleted = false;
+  },
+  replaceVariables(url, doc) {
+    if (!url) return '';
+    
+    let processedUrl = url;
+    
+    // Replace document field variables
+    if (doc) {
+      Object.keys(doc).forEach(key => {
+        const regex = new RegExp(`\\$\\{${key}\\}`, 'g');
+        processedUrl = processedUrl.replace(regex, doc[key] || '');
+      });
+    }
+    
+    // Replace common variables
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const currentUser = 'user@example.com'; // This should be replaced with actual current user
+    
+    processedUrl = processedUrl.replace(/\$\{responseId\}/g, doc?._id || doc?.id || '');
+    processedUrl = processedUrl.replace(/\$\{currentUser\}/g, currentUser);
+    processedUrl = processedUrl.replace(/\$\{today\}/g, today);
+    processedUrl = processedUrl.replace(/\$\{now\}/g, now.toISOString());
+    
+    return processedUrl;
   }
 }">
   <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Search'"></h3>
@@ -260,6 +285,22 @@
               <span class="text-yellow-300" x-html="highlights.join(' ... ')"></span>
             </div>
           </template>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div x-show="card.config.resultActions && card.config.resultActions.length > 0" class="mt-3 pt-2 border-t border-gray-600">
+          <div class="flex flex-wrap gap-2">
+            <template x-for="action in card.config.resultActions" :key="action.label">
+              <a :href="replaceVariables(action.url, result.doc)" 
+                 :target="action.openInNewWindow ? '_blank' : '_self'"
+                 class="inline-flex items-center px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors">
+                <span x-text="action.label"></span>
+                <svg x-show="action.openInNewWindow" class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                </svg>
+              </a>
+            </template>
+          </div>
         </div>
         
         <!-- Document ID as fallback -->
