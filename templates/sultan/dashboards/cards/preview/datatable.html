@@ -368,6 +368,51 @@
           return "";
         },
 
+        processButtonUrl(url, row) {
+          if (!url) return "#";
+          
+          let processedUrl = url;
+          
+          // Get all available variables
+          const dateVars = this.getDateVariables();
+          
+          // Replace user variables
+          processedUrl = processedUrl.replace(/\$\{currentUser\}/g, this.getCurrentUser());
+          processedUrl = processedUrl.replace(/\$\{author2\}/g, localStorage.getItem("author2") || "");
+          
+          // Replace row-specific variables
+          processedUrl = processedUrl.replace(/\$\{responseId\}/g, row._id || row.id || "");
+          
+          // Replace date variables
+          processedUrl = processedUrl.replace(/\$\{now\}/g, dateVars.now);
+          processedUrl = processedUrl.replace(/\$\{today\}/g, dateVars.today);
+          processedUrl = processedUrl.replace(/\$\{yesterday\}/g, dateVars.yesterday);
+          processedUrl = processedUrl.replace(/\$\{currentMonthStart\}/g, dateVars.currentMonthStart);
+          processedUrl = processedUrl.replace(/\$\{currentMonthEnd\}/g, dateVars.currentMonthEnd);
+          processedUrl = processedUrl.replace(/\$\{lastMonthStart\}/g, dateVars.lastMonthStart);
+          processedUrl = processedUrl.replace(/\$\{lastMonthEnd\}/g, dateVars.lastMonthEnd);
+          processedUrl = processedUrl.replace(/\$\{currentQuarterStart\}/g, dateVars.currentQuarterStart);
+          processedUrl = processedUrl.replace(/\$\{currentQuarterEnd\}/g, dateVars.currentQuarterEnd);
+          processedUrl = processedUrl.replace(/\$\{lastQuarterStart\}/g, dateVars.lastQuarterStart);
+          processedUrl = processedUrl.replace(/\$\{lastQuarterEnd\}/g, dateVars.lastQuarterEnd);
+          processedUrl = processedUrl.replace(/\$\{currentMidYearStart\}/g, dateVars.currentMidYearStart);
+          processedUrl = processedUrl.replace(/\$\{currentMidYearEnd\}/g, dateVars.currentMidYearEnd);
+          processedUrl = processedUrl.replace(/\$\{lastMidYearStart\}/g, dateVars.lastMidYearStart);
+          processedUrl = processedUrl.replace(/\$\{lastMidYearEnd\}/g, dateVars.lastMidYearEnd);
+          processedUrl = processedUrl.replace(/\$\{currentYearStart\}/g, dateVars.currentYearStart);
+          processedUrl = processedUrl.replace(/\$\{currentYearEnd\}/g, dateVars.currentYearEnd);
+          processedUrl = processedUrl.replace(/\$\{lastYearStart\}/g, dateVars.lastYearStart);
+          processedUrl = processedUrl.replace(/\$\{lastYearEnd\}/g, dateVars.lastYearEnd);
+          
+          // Replace any row field values using ${fieldName} syntax
+          Object.keys(row).forEach(key => {
+            const regex = new RegExp(`\\$\\{${key}\\}`, 'g');
+            processedUrl = processedUrl.replace(regex, row[key] || '');
+          });
+          
+          return processedUrl;
+        },
+
         getDateVariables() {
           const now = new Date();
           const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -638,20 +683,28 @@
           <div class="grid gap-2 text-xs text-gray-300 py-2 border-b border-gray-600" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(80px, 200px))`">
             <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible)" :key="column.key">
               <div class="break-words overflow-wrap-anywhere">
+                <!-- Button Column -->
+                <template x-if="column.isButton">
+                  <button 
+                    @click="window.open(processButtonUrl(column.buttonUrl, row), column.buttonNewWindow ? '_blank' : '_self')"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs"
+                    x-text="column.buttonLabel || 'Action'">
+                  </button>
+                </template>
                 <!-- HTML Content -->
-                <template x-if="column.isHtml && !Array.isArray(row[column.key]) && row[column.key] !== null && row[column.key] !== undefined">
+                <template x-if="!column.isButton && column.isHtml && !Array.isArray(row[column.key]) && row[column.key] !== null && row[column.key] !== undefined">
                   <div x-html="row[column.key]" class="whitespace-pre-wrap"></div>
                 </template>
                 <!-- Array Content -->
-                <template x-if="!column.isHtml && Array.isArray(row[column.key])">
+                <template x-if="!column.isButton && !column.isHtml && Array.isArray(row[column.key])">
                   <span x-text="row[column.key].join(', ')" class="whitespace-pre-wrap"></span>
                 </template>
                 <!-- Regular Text Content -->
-                <template x-if="!column.isHtml && !Array.isArray(row[column.key]) && row[column.key] !== null && row[column.key] !== undefined">
+                <template x-if="!column.isButton && !column.isHtml && !Array.isArray(row[column.key]) && row[column.key] !== null && row[column.key] !== undefined">
                   <span x-text="row[column.key]" class="whitespace-pre-wrap"></span>
                 </template>
                 <!-- Empty Content -->
-                <template x-if="row[column.key] === null || row[column.key] === undefined">
+                <template x-if="!column.isButton && (row[column.key] === null || row[column.key] === undefined)">
                   <span class="text-gray-500">-</span>
                 </template>
               </div>

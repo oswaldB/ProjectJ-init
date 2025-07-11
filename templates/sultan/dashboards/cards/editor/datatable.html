@@ -90,6 +90,10 @@
               <code class="bg-gray-800 text-green-400 px-2 py-1 rounded">${author2}</code>
               <span class="text-gray-300">Full author2 value (userId - name - email)</span>
             </div>
+            <div class="flex items-center space-x-2">
+              <code class="bg-gray-800 text-green-400 px-2 py-1 rounded">${responseId}</code>
+              <span class="text-gray-300">Current row's unique ID</span>
+            </div>
           </div>
         </div>
 
@@ -245,6 +249,41 @@
                 </label>
                 <div x-show="column.isHtml" class="text-xs text-gray-400">
                   <em>Enable this if the column content contains HTML formatting that should be rendered</em>
+                </div>
+              </div>
+
+              <!-- Button Column Option -->
+              <div class="border-t border-gray-600 pt-3">
+                <label class="flex items-center space-x-2 mb-2">
+                  <input type="checkbox" 
+                         x-model="column.isButton" 
+                         class="rounded">
+                  <span class="text-sm text-gray-300">Column is a button</span>
+                </label>
+                <div x-show="column.isButton" class="space-y-2">
+                  <div>
+                    <label class="block text-xs text-gray-400 mb-1">Button Label</label>
+                    <input type="text" 
+                           x-model="column.buttonLabel" 
+                           class="w-full bg-gray-600 text-white text-xs p-1 rounded border border-gray-500"
+                           placeholder="Button text">
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-400 mb-1">Button URL</label>
+                    <input type="text" 
+                           x-model="column.buttonUrl" 
+                           class="w-full bg-gray-600 text-white text-xs p-1 rounded border border-gray-500"
+                           placeholder="URL (can use variables like ${responseId})">
+                  </div>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" 
+                           x-model="column.buttonNewWindow" 
+                           class="rounded">
+                    <span class="text-xs text-gray-300">Open in new window</span>
+                  </label>
+                  <div class="text-xs text-gray-400">
+                    <em>Available variables: ${responseId}, ${currentUser}, ${today}, etc.</em>
+                  </div>
                 </div>
               </div>
 
