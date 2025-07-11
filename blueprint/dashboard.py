@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, redirect
 from services.s3_service import list_sultan_objects, get_sultan_object, save_sultan_object, delete_sultan_object
 
-dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/sultan/dashboard')
+dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/pc-analytics-jaffar/sultan/dashboard')
 
 @dashboard_bp.route('/')
 def index():
@@ -28,7 +28,7 @@ def create_new_dashboard():
         }
         
         if save_sultan_object('dashboards', dashboard_id, new_dashboard):
-            return redirect(f'/sultan/dashboard/{dashboard_id}')
+            return redirect(f'/pc-analytics-jaffar/sultan/dashboard/{dashboard_id}')
         else:
             return "Failed to create dashboard", 500
     except Exception as e:
