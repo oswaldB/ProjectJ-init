@@ -9,12 +9,13 @@
     if (!card.config.dataSource) return;
 
     this.loading = true;
-    const formId = card.config.dataSource;
-    console.log("Loading data from PouchDB for form:", formId, "page:", page);
+    const isDrafts = card.config.dataSource.endsWith("_drafts");
+    const formId = isDrafts ? card.config.dataSource.replace("_drafts", "") : card.config.dataSource;
+    console.log("Loading data from PouchDB for form:", formId, "isDrafts:", isDrafts, "page:", page);
 
     try {
-      await initializePouchDB(formId);
-      const pouchDB = new PouchDB(formId);
+      await initializePouchDB(card.config.dataSource);
+      const pouchDB = new PouchDB(card.config.dataSource);
 
       // Use configured page size, default to 25 if not set
       const pageSize = parseInt(card.config.pageSize) || 25;
@@ -342,16 +343,16 @@
       alert("Export failed: " + error.message);
     }
   },
-  async initializePouchDB() {
-      if (!this.card.config.localDBName || !this.card.config.dataSource) return;
+  async initializePouchDB(dataSource) {
+      if (!dataSource) return;
 
       try {
-        // Initialize PouchDB
-        this.localDB = new PouchDB(this.card.config.localDBName);
+        // Initialize PouchDB with the data source name
+        const pouchDB = new PouchDB(dataSource);
 
         // Check if this is a drafts data source
-        const isDrafts = this.card.config.dataSource.endsWith("_drafts");
-        const formId = isDrafts ? this.card.config.dataSource.replace("_drafts", "") : this.card.config.dataSource;
+        const isDrafts = dataSource.endsWith("_drafts");
+        const formId = isDrafts ? dataSource.replace("_drafts", "") : dataSource;
 
         let response;
         if (isDrafts) {
@@ -377,16 +378,16 @@
         for (let i = 0; i < chunks.length; i++) {
           const chunk = chunks[i];
           if (chunk && chunk.length > 0) {
-            await this.localDB.put({
+            await pouchDB.put({
               _id: `chunk_${i}`,
               data: chunk
             });
           }
         }
 
-        console.log(`Initialized PouchDB with ${chunks.length} chunks`);
+        console.log(`Initialized PouchDB for ${dataSource} with ${chunks.length} chunks`);
       } catch (error) {
-        console.error("Error initializing PouchDB:", error);
+        console.error("Error initializing PouchDB for", dataSource, ":", error);
       }
     },
     async loadData(page = 1) {
@@ -450,10 +451,10 @@
       </span>
     </div>
     <button @click="
-      const formId = card.config.dataSource; 
-      console.log('Syncing form:', formId); 
+      const dataSource = card.config.dataSource; 
+      console.log('Syncing data source:', dataSource); 
       loading = true;
-      syncPouchDB(formId).then(() => {
+      syncPouchDB(dataSource).then(() => {
         console.log('Sync completed, reloading data...');
         return loadDataFromPouchDB(1);
       }).catch(error => {
