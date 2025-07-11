@@ -190,9 +190,5 @@
     </template>
   </div>
   
-  <!-- No Results (when search was performed but no sync button) -->
-  <div x-show="searchQuery && searchResults.length === 0 && !showSyncButton && !isSearching && !isSyncing && !syncCompleted" 
-       class="mt-3 bg-gray-700 p-3 rounded text-center">
-    <div class="text-gray-400 text-sm">No results found for "<span x-text="searchQuery"></span>"</div>
-  </div>
+  
 </div>
