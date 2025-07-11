@@ -153,7 +153,7 @@
   <!-- Kanban Board -->
   <div x-show="card.config.dataSource && !loading" class="flex space-x-3 h-96 overflow-x-auto">
     <template x-for="column in card.config.columns || []">
-      <div class="bg-gray-700 rounded p-3 min-w-64 flex-shrink-0">
+      <div class="bg-gray-700 rounded p-3 min-w-64 max-w-80 flex-shrink-0">
         <!-- Column Header -->
         <div class="flex items-center justify-between mb-3">
           <h4 class="text-sm font-medium text-white" x-text="column.title"></h4>
