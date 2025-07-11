@@ -30,7 +30,9 @@
         return;
       }
       
-      const searchFields = (card.config.searchFields || []).filter(f => f.enabled).map(f => f.field);
+      const searchFields = (card.config.searchFields || [])
+        .filter(f => f && f.enabled && f.field)
+        .map(f => f.field);
       
       // Si aucun champ de recherche n'est configuré, rechercher dans tous les champs
       const searchOptions = {
@@ -39,15 +41,41 @@
         highlighting: true
       };
       
-      // Ajouter les champs seulement s'ils sont configurés
+      // Ajouter les champs seulement s'ils sont configurés et valides
       if (searchFields.length > 0) {
         searchOptions.fields = searchFields;
       }
       
       console.log('Search options:', searchOptions);
       
-      const searchResult = await pouchDB.search(searchOptions);
-      console.log('Search result:', searchResult);
+      let searchResult;
+      try {
+        searchResult = await pouchDB.search(searchOptions);
+        console.log('Search result:', searchResult);
+      } catch (searchError) {
+        console.log('PouchDB search failed, trying fallback search:', searchError);
+        
+        // Fallback: utiliser find avec regex si search échoue
+        const allDocs = await pouchDB.allDocs({ include_docs: true });
+        const filteredDocs = allDocs.rows.filter(row => {
+          const doc = row.doc;
+          if (!doc || doc._id.startsWith('_design/')) return false;
+          
+          // Rechercher dans tous les champs du document
+          const docString = JSON.stringify(doc).toLowerCase();
+          return docString.includes(this.searchQuery.toLowerCase());
+        });
+        
+        searchResult = {
+          rows: filteredDocs.map(row => ({
+            id: row.id,
+            doc: row.doc,
+            highlighting: {}
+          }))
+        };
+        
+        console.log('Fallback search result:', searchResult);
+      }
       
       if (searchResult.rows && searchResult.rows.length > 0) {
         this.searchResults = searchResult.rows.map(row => ({
