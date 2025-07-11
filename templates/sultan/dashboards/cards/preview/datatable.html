@@ -418,7 +418,7 @@
           const lastYearEnd = new Date(now.getFullYear() - 1, 11, 31);
 
           // Format function to ISO date string
-          const formatDate = (date) => date.toISOString().split('T')[0];
+          const formatDate = (date) => date.toISOString().split("T")[0];
 
           return {
             now: now.toISOString(),
@@ -455,10 +455,10 @@
               let filterValue = column.predefinedFilterValue;
 
               // Replace variables in filter value
-              if (typeof filterValue === 'string') {
+              if (typeof filterValue === "string") {
                 // User variables
                 filterValue = filterValue.replace(/\$\{currentUser\}/g, this.getCurrentUser());
-                filterValue = filterValue.replace(/\$\{author2\}/g, localStorage.getItem('author2') || '');
+                filterValue = filterValue.replace(/\$\{author2\}/g, localStorage.getItem("author2") || "");
 
                 // Date variables
                 filterValue = filterValue.replace(/\$\{now\}/g, dateVars.now);
