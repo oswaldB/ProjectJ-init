@@ -24,9 +24,12 @@
   async loadDashboards() {
     try {
       this.state.loading = true;
+      console.log('DEBUG: Starting to load dashboards...');
       const response = await fetch('/pc-analytics-jaffar/sultan/dashboard/api/list');
+      console.log('DEBUG: Response received:', response.status, response.statusText);
       if (!response.ok) throw new Error('Failed to load dashboards');
       this.dashboards = await response.json();
+      console.log('DEBUG: Dashboards loaded:', this.dashboards.length);
     } catch (error) {
       console.error('Failed to load dashboards:', error);
       this.state.error = error.message;

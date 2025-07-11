@@ -40,10 +40,13 @@ def view_dashboard(dashboard_id):
 
 @dashboard_bp.route('/api/list')
 def api_list():
+    print(f"DEBUG: api_list route called")
     try:
         dashboards = list_sultan_objects('dashboards')
+        print(f"DEBUG: Found {len(dashboards)} dashboards")
         return jsonify(dashboards)
     except Exception as e:
+        print(f"DEBUG: Error in api_list: {e}")
         return jsonify([]), 500
 
 @dashboard_bp.route('/api/<dashboard_id>')
