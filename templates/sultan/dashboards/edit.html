@@ -459,7 +459,7 @@
           ></textarea>
           
           <!-- Privacy Settings -->
-          <div class="mt-4 space-y-3">
+          <div class="mt-4">
             <label class="flex items-center space-x-2">
               <input 
                 type="checkbox" 
@@ -468,38 +468,10 @@
               >
               <span class="text-white text-sm">Make this dashboard private</span>
             </label>
-            
-            <div x-show="dashboard.isPrivate" class="space-y-2">
-              <label class="block text-sm font-medium text-gray-300">Authorized Users (emails)</label>
-              <div class="space-y-2">
-                <template x-for="(email, index) in (dashboard.authorizedUsers || [])" :key="index">
-                  <div class="flex items-center space-x-2">
-                    <input 
-                      type="email" 
-                      x-model="dashboard.authorizedUsers[index]"
-                      placeholder="user@example.com"
-                      class="flex-1 bg-gray-700 text-white px-3 py-2 rounded border border-gray-600"
-                    >
-                    <button 
-                      @click="dashboard.authorizedUsers.splice(index, 1)"
-                      class="bg-red-500 text-white px-2 py-2 rounded hover:bg-red-600"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </template>
-                <button 
-                  @click="if (!dashboard.authorizedUsers) dashboard.authorizedUsers = []; dashboard.authorizedUsers.push('')"
-                  class="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 text-sm"
-                >
-                  + Add User
-                </button>
-              </div>
-            </div>
           </div>
         </div>
         <div class="flex space-x-2">
-          <a href="/pc-analytics-jaffar/sultan/dashboards" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+          <a href="/pc-analytics-jaffar/sultan/dashboards" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
             Cancel
           </a>
           <button @click="saveDashboard()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
@@ -570,8 +542,40 @@
     </div>
   </div>
 
-  <!-- Card Configuration Panel -->
-  <div x-show="selectedCard" class="w-80 bg-gray-800 border-l border-gray-700 p-4 overflow-y-auto">
+  <!-- Right Sidebar -->
+  <div class="w-80 bg-gray-800 border-l border-gray-700 overflow-y-auto">
+    
+    <!-- Privacy Settings Panel -->
+    <div x-show="dashboard.isPrivate" class="p-4 border-b border-gray-700">
+      <h3 class="text-white font-semibold mb-4">Authorized Users</h3>
+      <div class="space-y-2">
+        <template x-for="(email, index) in (dashboard.authorizedUsers || [])" :key="index">
+          <div class="flex items-center space-x-2">
+            <input 
+              type="email" 
+              x-model="dashboard.authorizedUsers[index]"
+              placeholder="user@example.com"
+              class="flex-1 bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 text-sm"
+            >
+            <button 
+              @click="dashboard.authorizedUsers.splice(index, 1)"
+              class="bg-red-500 text-white px-2 py-2 rounded hover:bg-red-600"
+            >
+              ×
+            </button>
+          </div>
+        </template>
+        <button 
+          @click="if (!dashboard.authorizedUsers) dashboard.authorizedUsers = []; dashboard.authorizedUsers.push('')"
+          class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 text-sm w-full"
+        >
+          + Add User
+        </button>
+      </div>
+    </div>
+
+    <!-- Card Configuration Panel -->
+    <div x-show="selectedCard" class="p-4"></div>
     <div class="flex justify-between items-center mb-4">
       <h3 class="text-white font-semibold">Card Configuration</h3>
       <button @click="selectedCard = null" class="text-gray-400 hover:text-white">
@@ -649,6 +653,7 @@
         </template>
       </div>
     </template>
+    </div>
   </div>
 </div>
 
