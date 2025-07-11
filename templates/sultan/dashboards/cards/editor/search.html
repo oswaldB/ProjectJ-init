@@ -1,60 +1,94 @@
 
-<div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
-  <h3 class="text-white font-semibold mb-3">Search Bar Configuration</h3>
-  <div class="space-y-3">
-    <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
-      <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Search title">
-    </div>
-    
-    <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
-      <select x-model="selectedCard.config.dataSource" class="w-full bg-gray-700 text-white p-2 rounded">
-        <option value="">Select a data source</option>
-        <template x-for="source in availableDataSources">
-          <option :value="source.id" x-text="`${source.name}`"></option>
-        </template>
-      </select>
-    </div>
-    
-    <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">Placeholder</label>
-      <input type="text" x-model="selectedCard.config.placeholder" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Search...">
-    </div>
-    
-    <div x-show="selectedCard.config.dataSource">
-      <label class="block text-sm font-medium text-gray-300 mb-1">Search Fields</label>
-      <div class="space-y-2">
-        <div class="text-xs text-gray-400">Select which fields to search in:</div>
-        <div class="max-h-32 overflow-y-auto space-y-1">
-          <template x-for="field in (selectedCard.config.searchFields || [])" :key="field.key">
-            <div class="flex items-center space-x-2">
-              <input type="checkbox" x-model="field.enabled" class="rounded">
-              <span class="text-sm text-gray-300" x-text="field.label"></span>
-            </div>
-          </template>
+<div class="space-y-4">
+  <!-- Title -->
+  <div>
+    <label class="block text-sm font-medium text-gray-300 mb-2">Title</label>
+    <input 
+      type="text" 
+      x-model="card.config.title" 
+      class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+      placeholder="Search"
+    >
+  </div>
+
+  <!-- Data Source Selection -->
+  <div>
+    <label class="block text-sm font-medium text-gray-300 mb-2">Data Source</label>
+    <select 
+      x-model="card.config.dataSource" 
+      @change="card.config.searchFields = []"
+      class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+    >
+      <option value="">Select a data source</option>
+      <template x-for="form in availableForms" :key="form.id">
+        <option :value="form.id" x-text="form.name + ' (' + form.id + ')'"></option>
+      </template>
+      <template x-for="form in availableForms" :key="form.id + '_drafts'">
+        <option :value="form.id + '_drafts'" x-text="form.name + ' - Drafts (' + form.id + '_drafts)'"></option>
+      </template>
+    </select>
+  </div>
+
+  <!-- Placeholder -->
+  <div>
+    <label class="block text-sm font-medium text-gray-300 mb-2">Placeholder Text</label>
+    <input 
+      type="text" 
+      x-model="card.config.placeholder" 
+      class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+      placeholder="Search..."
+    >
+  </div>
+
+  <!-- Search Fields Configuration -->
+  <div x-show="card.config.dataSource">
+    <label class="block text-sm font-medium text-gray-300 mb-2">Search Fields</label>
+    <div class="space-y-2 max-h-48 overflow-y-auto">
+      <template x-for="(searchField, index) in card.config.searchFields || []" :key="index">
+        <div class="flex items-center gap-2 bg-gray-700 p-2 rounded">
+          <input 
+            type="checkbox" 
+            x-model="searchField.enabled"
+            class="rounded border-gray-600"
+          >
+          <input 
+            type="text" 
+            x-model="searchField.field"
+            class="flex-1 bg-gray-800 text-white px-2 py-1 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+            placeholder="Field name"
+          >
+          <button 
+            @click="card.config.searchFields.splice(index, 1)"
+            class="text-red-400 hover:text-red-300"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
         </div>
-        <button @click="loadSearchFields()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
-          Load Fields from Data Source
-        </button>
-      </div>
+      </template>
+      
+      <button 
+        @click="card.config.searchFields = (card.config.searchFields || []); card.config.searchFields.push({field: '', enabled: true})"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm"
+      >
+        Add Search Field
+      </button>
     </div>
     
-    <div x-show="selectedCard.config.dataSource">
-      <label class="flex items-center text-gray-300">
-        <input type="checkbox" x-model="selectedCard.config.instantSearch" class="mr-2">
-        Enable Instant Search
-      </label>
+    <div class="mt-2 text-xs text-gray-400">
+      <p>Configure which fields should be searchable. Leave empty to search all fields.</p>
     </div>
-    
-    <div x-show="selectedCard.config.dataSource">
-      <label class="block text-sm font-medium text-gray-300 mb-1">Results per page</label>
-      <select x-model="selectedCard.config.resultsPerPage" class="w-full bg-gray-700 text-white p-2 rounded">
-        <option value="5">5</option>
-        <option value="10">10</option>
-        <option value="20">20</option>
-        <option value="50">50</option>
-      </select>
-    </div>
+  </div>
+
+  <!-- Help Text -->
+  <div class="bg-gray-700 p-3 rounded text-sm text-gray-300">
+    <p class="mb-2"><strong>Search Functionality:</strong></p>
+    <ul class="list-disc list-inside space-y-1 text-xs">
+      <li>Uses PouchDB Quick Search for full-text search</li>
+      <li>If no results found, a sync button appears</li>
+      <li>Sync button re-initializes PouchDB and retries search</li>
+      <li>Configure search fields to limit searchable data</li>
+    </ul>
   </div>
 </div>

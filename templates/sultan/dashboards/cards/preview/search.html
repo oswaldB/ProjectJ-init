@@ -1,5 +1,77 @@
 
-<div class="bg-gray-800 p-4 rounded-lg h-full">
+<div class="bg-gray-800 p-4 rounded-lg h-full" x-data="{
+  searchQuery: '',
+  searchResults: [],
+  isSearching: false,
+  showSyncButton: false,
+  isSyncing: false,
+  async performSearch() {
+    if (!this.searchQuery.trim() || !card.config.dataSource) return;
+    
+    this.isSearching = true;
+    this.showSyncButton = false;
+    this.searchResults = [];
+    
+    try {
+      const pouchDB = new PouchDB(card.config.dataSource);
+      
+      // Perform search using PouchDB Quick Search
+      const searchResult = await pouchDB.search({
+        query: this.searchQuery,
+        fields: (card.config.searchFields || []).filter(f => f.enabled).map(f => f.field),
+        include_docs: true,
+        highlighting: true
+      });
+      
+      if (searchResult.rows && searchResult.rows.length > 0) {
+        this.searchResults = searchResult.rows.map(row => ({
+          id: row.id,
+          doc: row.doc,
+          highlighting: row.highlighting
+        }));
+        this.showSyncButton = false;
+      } else {
+        // No results found, show sync button
+        this.searchResults = [];
+        this.showSyncButton = true;
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      // If search fails (e.g., index not found), show sync button
+      this.searchResults = [];
+      this.showSyncButton = true;
+    } finally {
+      this.isSearching = false;
+    }
+  },
+  async syncAndSearch() {
+    if (!card.config.dataSource) return;
+    
+    this.isSyncing = true;
+    this.showSyncButton = false;
+    
+    try {
+      // Call the PouchDB init route to sync data
+      await initializePouchDB(card.config.dataSource);
+      
+      // Wait a moment for indexing
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Retry the search
+      await this.performSearch();
+    } catch (error) {
+      console.error('Sync error:', error);
+      this.showSyncButton = true;
+    } finally {
+      this.isSyncing = false;
+    }
+  },
+  clearSearch() {
+    this.searchQuery = '';
+    this.searchResults = [];
+    this.showSyncButton = false;
+  }
+}">
   <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Search'"></h3>
   
   <!-- Data Source Info -->
@@ -13,15 +85,39 @@
     </div>
   </div>
   
-  <div class="relative">
+  <!-- Search Input -->
+  <div class="relative mb-3">
     <input 
       type="text" 
-      class="w-full bg-gray-700 text-white px-4 py-2 pl-10 rounded-lg border border-gray-600 focus:outline-none focus:border-red-500"
+      x-model="searchQuery"
+      @keyup.enter="performSearch()"
+      class="w-full bg-gray-700 text-white px-4 py-2 pl-10 pr-20 rounded-lg border border-gray-600 focus:outline-none focus:border-red-500"
       :placeholder="card.config.placeholder || 'Search...'"
+      :disabled="isSearching || isSyncing"
     >
     <svg class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
     </svg>
+    
+    <!-- Search Button -->
+    <button 
+      @click="performSearch()"
+      :disabled="isSearching || isSyncing || !searchQuery.trim()"
+      class="absolute right-2 top-1.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white px-3 py-1 rounded text-sm"
+    >
+      <span x-show="!isSearching">Search</span>
+      <span x-show="isSearching">...</span>
+    </button>
+  </div>
+  
+  <!-- Clear Button -->
+  <div x-show="searchQuery || searchResults.length > 0" class="mb-3">
+    <button 
+      @click="clearSearch()"
+      class="text-gray-400 hover:text-white text-sm"
+    >
+      Clear search
+    </button>
   </div>
   
   <!-- No Data Source -->
@@ -30,11 +126,50 @@
     <div class="text-gray-500 text-xs mt-1">Configure a data source to enable search</div>
   </div>
   
-  <!-- Sample Results -->
-  <div x-show="card.config.dataSource" class="mt-3 space-y-1">
-    <div class="text-xs text-gray-400 mb-2">Sample search results:</div>
-    <div class="bg-gray-700 p-2 rounded text-sm text-gray-300">Search result 1</div>
-    <div class="bg-gray-700 p-2 rounded text-sm text-gray-300">Search result 2</div>
-    <div class="bg-gray-700 p-2 rounded text-sm text-gray-300">Search result 3</div>
+  <!-- Sync Button -->
+  <div x-show="showSyncButton && !isSyncing" class="mb-3">
+    <button 
+      @click="syncAndSearch()"
+      class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
+    >
+      Sync and Search Again
+    </button>
+    <p class="text-xs text-gray-400 mt-1 text-center">No results found. Click to sync data and retry search.</p>
+  </div>
+  
+  <!-- Syncing Indicator -->
+  <div x-show="isSyncing" class="mb-3 text-center">
+    <div class="inline-flex items-center gap-2 text-blue-400">
+      <div class="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+      <span class="text-sm">Syncing data...</span>
+    </div>
+  </div>
+  
+  <!-- Search Results -->
+  <div x-show="searchResults.length > 0" class="space-y-2">
+    <div class="text-xs text-gray-400 mb-2">
+      Found <span x-text="searchResults.length"></span> result(s):
+    </div>
+    <template x-for="result in searchResults" :key="result.id">
+      <div class="bg-gray-700 p-3 rounded text-sm">
+        <div class="text-gray-300 font-medium mb-1" x-text="result.doc.title || result.doc.name || result.id"></div>
+        <div class="text-gray-400 text-xs" x-text="result.doc.description || 'No description'"></div>
+        <!-- Show highlighted matches if available -->
+        <div x-show="result.highlighting" class="mt-2">
+          <template x-for="(highlights, field) in result.highlighting || {}" :key="field">
+            <div class="text-xs">
+              <span class="text-blue-300" x-text="field + ': '"></span>
+              <span class="text-yellow-300" x-html="highlights.join(' ... ')"></span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+  </div>
+  
+  <!-- No Results (when search was performed but no sync button) -->
+  <div x-show="searchQuery && searchResults.length === 0 && !showSyncButton && !isSearching && !isSyncing" 
+       class="mt-3 bg-gray-700 p-3 rounded text-center">
+    <div class="text-gray-400 text-sm">No results found for "<span x-text="searchQuery"></span>"</div>
   </div>
 </div>
