@@ -1,15 +1,364 @@
 
-<div class="bg-gray-800 p-4 rounded-lg h-full">
+<div class="bg-gray-800 p-4 rounded-lg h-full" x-data="{
+  loading: false,
+  statsData: {
+    sum: 0,
+    count: 0,
+    min: 0,
+    max: 0,
+    sumsqr: 0
+  },
+  showSyncButton: false,
+  isSyncing: false,
+  syncCompleted: false,
+  
+  async loadStatsData() {
+    if (!card.config.dataSource || !card.config.valueField) {
+      return;
+    }
+    
+    this.loading = true;
+    this.showSyncButton = false;
+    this.syncCompleted = false;
+    
+    try {
+      console.log('Loading stats for:', card.config.dataSource, 'field:', card.config.valueField);
+      
+      // Initialize PouchDB
+      await initializePouchDB(card.config.dataSource);
+      const pouchDB = new PouchDB(card.config.dataSource);
+      
+      // Check if database has data
+      const info = await pouchDB.info();
+      if (info.doc_count === 0) {
+        console.log('Database is empty, showing sync button');
+        this.showSyncButton = true;
+        return;
+      }
+      
+      // Build map-reduce function for stats
+      const mapReduceFun = {
+        map: function (doc) {
+          // Apply prefilters
+          const filters = card.config.prefilters || [];
+          for (const filter of filters) {
+            if (!filter.enabled || !filter.field) continue;
+            
+            const docValue = doc[filter.field];
+            const filterValue = filter.value;
+            const operator = filter.operator || 'equals';
+            
+            switch (operator) {
+              case 'equals':
+                if (docValue != filterValue) return;
+                break;
+              case 'not_equals':
+                if (docValue == filterValue) return;
+                break;
+              case 'contains':
+                if (!String(docValue || '').toLowerCase().includes(String(filterValue || '').toLowerCase())) return;
+                break;
+              case 'greater_than':
+                if (parseFloat(docValue) <= parseFloat(filterValue)) return;
+                break;
+              case 'less_than':
+                if (parseFloat(docValue) >= parseFloat(filterValue)) return;
+                break;
+              case 'exists':
+                if (docValue === null || docValue === undefined) return;
+                break;
+              case 'not_exists':
+                if (docValue !== null && docValue !== undefined) return;
+                break;
+            }
+          }
+          
+          // Emit the numeric value for stats calculation
+          const value = doc[card.config.valueField];
+          if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
+            emit(doc._id, parseFloat(value));
+          }
+        }.toString(),
+        reduce: '_stats'
+      };
+      
+      console.log('Running stats query with map-reduce:', mapReduceFun);
+      
+      try {
+        const result = await pouchDB.query(mapReduceFun, { reduce: true });
+        console.log('Stats result:', result);
+        
+        if (result.rows && result.rows.length > 0) {
+          this.statsData = result.rows[0].value || {
+            sum: 0,
+            count: 0,
+            min: 0,
+            max: 0,
+            sumsqr: 0
+          };
+        } else {
+          // No matching documents found
+          this.statsData = {
+            sum: 0,
+            count: 0,
+            min: 0,
+            max: 0,
+            sumsqr: 0
+          };
+        }
+        
+      } catch (queryError) {
+        console.error('Stats query failed:', queryError);
+        // Fallback: calculate stats manually
+        await this.calculateStatsManually(pouchDB);
+      }
+      
+    } catch (error) {
+      console.error('Error loading stats:', error);
+      this.showSyncButton = true;
+    } finally {
+      this.loading = false;
+    }
+  },
+  
+  async calculateStatsManually(pouchDB) {
+    try {
+      const result = await pouchDB.allDocs({ include_docs: true });
+      const docs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
+      
+      const values = [];
+      
+      // Apply filters and collect values
+      for (const doc of docs) {
+        // Apply prefilters
+        const filters = card.config.prefilters || [];
+        let passesFilters = true;
+        
+        for (const filter of filters) {
+          if (!filter.enabled || !filter.field) continue;
+          
+          const docValue = doc[filter.field];
+          const filterValue = filter.value;
+          const operator = filter.operator || 'equals';
+          
+          switch (operator) {
+            case 'equals':
+              if (docValue != filterValue) passesFilters = false;
+              break;
+            case 'not_equals':
+              if (docValue == filterValue) passesFilters = false;
+              break;
+            case 'contains':
+              if (!String(docValue || '').toLowerCase().includes(String(filterValue || '').toLowerCase())) passesFilters = false;
+              break;
+            case 'greater_than':
+              if (parseFloat(docValue) <= parseFloat(filterValue)) passesFilters = false;
+              break;
+            case 'less_than':
+              if (parseFloat(docValue) >= parseFloat(filterValue)) passesFilters = false;
+              break;
+            case 'exists':
+              if (docValue === null || docValue === undefined) passesFilters = false;
+              break;
+            case 'not_exists':
+              if (docValue !== null && docValue !== undefined) passesFilters = false;
+              break;
+          }
+          
+          if (!passesFilters) break;
+        }
+        
+        if (passesFilters) {
+          const value = doc[card.config.valueField];
+          if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
+            values.push(parseFloat(value));
+          }
+        }
+      }
+      
+      // Calculate stats manually
+      if (values.length > 0) {
+        const sum = values.reduce((a, b) => a + b, 0);
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const sumsqr = values.reduce((a, b) => a + (b * b), 0);
+        
+        this.statsData = {
+          sum: sum,
+          count: values.length,
+          min: min,
+          max: max,
+          sumsqr: sumsqr
+        };
+      } else {
+        this.statsData = {
+          sum: 0,
+          count: 0,
+          min: 0,
+          max: 0,
+          sumsqr: 0
+        };
+      }
+      
+    } catch (error) {
+      console.error('Manual stats calculation failed:', error);
+    }
+  },
+  
+  async syncAndReload() {
+    if (!card.config.dataSource) {
+      return;
+    }
+    
+    this.isSyncing = true;
+    this.showSyncButton = false;
+    this.syncCompleted = false;
+    
+    try {
+      console.log('Starting sync for:', card.config.dataSource);
+      
+      // Re-initialize PouchDB to sync data
+      await initializePouchDB(card.config.dataSource);
+      
+      // Wait for indexation
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      this.syncCompleted = true;
+      
+      // Wait 2 seconds to show success message
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Reload stats
+      await this.loadStatsData();
+      
+    } catch (error) {
+      console.error('Sync error:', error);
+      this.showSyncButton = true;
+    } finally {
+      this.isSyncing = false;
+      this.syncCompleted = false;
+    }
+  },
+  
+  getDisplayValue() {
+    const statType = card.config.statType || 'count';
+    const value = this.statsData[statType] || 0;
+    
+    // Format large numbers
+    if (value >= 1000000) {
+      return (value / 1000000).toFixed(1) + 'M';
+    } else if (value >= 1000) {
+      return (value / 1000).toFixed(1) + 'K';
+    } else if (statType === 'sum' || statType === 'min' || statType === 'max') {
+      return Number(value).toFixed(2);
+    } else {
+      return Math.round(value);
+    }
+  },
+  
+  getStatLabel() {
+    const statType = card.config.statType || 'count';
+    const labels = {
+      count: 'Count',
+      sum: 'Sum',
+      min: 'Minimum', 
+      max: 'Maximum',
+      sumsqr: 'Sum of Squares'
+    };
+    return labels[statType] || 'Count';
+  }
+}" x-init="loadStatsData()">
+
   <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Statistics'"></h3>
-  <div class="flex items-center">
-    <div class="text-4xl mr-4" x-text="card.config.icon || '📈'"></div>
-    <div>
-      <div class="text-2xl font-bold text-white">1,234</div>
-      <div class="text-sm text-gray-400">Total Count</div>
+  
+  <!-- Data Source Info -->
+  <div x-show="card.config.dataSource" class="mb-3">
+    <div class="text-xs text-gray-400 flex items-center gap-2">
+      <span>Source: <span x-text="card.config.dataSource"></span></span>
+      <span x-show="card.config.valueField" class="bg-blue-600 text-white px-2 py-1 rounded text-xs">
+        Field: <span x-text="card.config.valueField"></span>
+      </span>
+      <span x-show="(card.config.prefilters || []).filter(f => f.enabled).length > 0" 
+            class="bg-green-600 text-white px-2 py-1 rounded text-xs">
+        <span x-text="(card.config.prefilters || []).filter(f => f.enabled).length"></span> filters
+      </span>
     </div>
   </div>
-  <div class="mt-4 flex items-center text-sm">
-    <span class="text-green-400">+12%</span>
-    <span class="text-gray-400 ml-2">from last month</span>
+  
+  <!-- No Data Source -->
+  <div x-show="!card.config.dataSource" class="mt-3 bg-gray-700 p-3 rounded text-center">
+    <div class="text-gray-400 text-sm">No data source selected</div>
+    <div class="text-gray-500 text-xs mt-1">Configure a data source to enable statistics</div>
   </div>
+  
+  <!-- No Value Field -->
+  <div x-show="card.config.dataSource && !card.config.valueField" class="mt-3 bg-gray-700 p-3 rounded text-center">
+    <div class="text-gray-400 text-sm">No value field selected</div>
+    <div class="text-gray-500 text-xs mt-1">Configure a numeric field for calculations</div>
+  </div>
+  
+  <!-- Sync Button -->
+  <div x-show="showSyncButton && !isSyncing && !syncCompleted" class="mb-3">
+    <button 
+      @click="syncAndReload()"
+      class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
+    >
+      Sync Data
+    </button>
+    <p class="text-xs text-gray-400 mt-1 text-center">No data found. Click to sync data.</p>
+  </div>
+  
+  <!-- Syncing Indicator -->
+  <div x-show="isSyncing" class="mb-3 text-center">
+    <div class="inline-flex items-center gap-2 text-blue-400">
+      <div class="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+      <span class="text-sm">Syncing data...</span>
+    </div>
+  </div>
+  
+  <!-- Sync Completed Message -->
+  <div x-show="syncCompleted" class="mb-3 text-center">
+    <div class="inline-flex items-center gap-2 text-green-400">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      <span class="text-sm">Sync completed!</span>
+    </div>
+  </div>
+  
+  <!-- Loading Indicator -->
+  <div x-show="loading" class="flex items-center justify-center py-8">
+    <div class="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+  
+  <!-- Stats Display -->
+  <div x-show="!loading && card.config.dataSource && card.config.valueField" class="flex items-center">
+    <div class="text-4xl mr-4" x-text="card.config.icon || '📊'"></div>
+    <div>
+      <div class="text-2xl font-bold text-white" x-text="getDisplayValue()"></div>
+      <div class="text-sm text-gray-400" x-text="getStatLabel()"></div>
+    </div>
+  </div>
+  
+  <!-- Additional Stats Info -->
+  <div x-show="!loading && card.config.dataSource && card.config.valueField && statsData.count > 0" 
+       class="mt-4 text-xs text-gray-300 space-y-1">
+    <div class="flex justify-between">
+      <span>Count:</span>
+      <span x-text="statsData.count"></span>
+    </div>
+    <div x-show="card.config.statType !== 'sum'" class="flex justify-between">
+      <span>Sum:</span>
+      <span x-text="Number(statsData.sum).toFixed(2)"></span>
+    </div>
+    <div x-show="card.config.statType !== 'min'" class="flex justify-between">
+      <span>Min:</span>
+      <span x-text="Number(statsData.min).toFixed(2)"></span>
+    </div>
+    <div x-show="card.config.statType !== 'max'" class="flex justify-between">
+      <span>Max:</span>
+      <span x-text="Number(statsData.max).toFixed(2)"></span>
+    </div>
+  </div>
+  
 </div>
