@@ -136,7 +136,6 @@
     <input 
       type="text" 
       x-model="searchQuery"
-      @keyup.enter="performSearch()"
       class="w-full bg-gray-700 text-white px-4 py-2 pl-10 pr-20 rounded-lg border border-gray-600 focus:outline-none focus:border-red-500"
       :placeholder="card.config.placeholder || 'Search...'"
       :disabled="isSearching || isSyncing"
