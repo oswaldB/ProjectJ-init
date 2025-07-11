@@ -1,6 +1,18 @@
 
 <div class="bg-gray-800 p-4 rounded-lg h-full">
   <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Search'"></h3>
+  
+  <!-- Data Source Info -->
+  <div x-show="card.config.dataSource" class="mb-3">
+    <div class="text-xs text-gray-400 flex items-center gap-2">
+      <span>Source: <span x-text="card.config.dataSource"></span></span>
+      <span x-show="(card.config.searchFields || []).filter(f => f.enabled).length > 0" 
+            class="bg-blue-600 text-white px-2 py-1 rounded text-xs">
+        <span x-text="(card.config.searchFields || []).filter(f => f.enabled).length"></span> fields
+      </span>
+    </div>
+  </div>
+  
   <div class="relative">
     <input 
       type="text" 
@@ -11,8 +23,18 @@
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
     </svg>
   </div>
-  <div class="mt-3 space-y-1">
+  
+  <!-- No Data Source -->
+  <div x-show="!card.config.dataSource" class="mt-3 bg-gray-700 p-3 rounded text-center">
+    <div class="text-gray-400 text-sm">No data source selected</div>
+    <div class="text-gray-500 text-xs mt-1">Configure a data source to enable search</div>
+  </div>
+  
+  <!-- Sample Results -->
+  <div x-show="card.config.dataSource" class="mt-3 space-y-1">
+    <div class="text-xs text-gray-400 mb-2">Sample search results:</div>
     <div class="bg-gray-700 p-2 rounded text-sm text-gray-300">Search result 1</div>
     <div class="bg-gray-700 p-2 rounded text-sm text-gray-300">Search result 2</div>
+    <div class="bg-gray-700 p-2 rounded text-sm text-gray-300">Search result 3</div>
   </div>
 </div>
