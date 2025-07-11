@@ -18,16 +18,36 @@
     
     try {
       const pouchDB = new PouchDB(card.config.dataSource);
+      
+      // Vérifier si la base de données existe et contient des données
+      const info = await pouchDB.info();
+      console.log('Database info:', info);
+      
+      if (info.doc_count === 0) {
+        console.log('Database is empty, showing sync button');
+        this.searchResults = [];
+        this.showSyncButton = true;
+        return;
+      }
+      
       const searchFields = (card.config.searchFields || []).filter(f => f.enabled).map(f => f.field);
       
+      // Si aucun champ de recherche n'est configuré, rechercher dans tous les champs
       const searchOptions = {
         query: this.searchQuery,
-        fields: searchFields,
         include_docs: true,
         highlighting: true
       };
       
+      // Ajouter les champs seulement s'ils sont configurés
+      if (searchFields.length > 0) {
+        searchOptions.fields = searchFields;
+      }
+      
+      console.log('Search options:', searchOptions);
+      
       const searchResult = await pouchDB.search(searchOptions);
+      console.log('Search result:', searchResult);
       
       if (searchResult.rows && searchResult.rows.length > 0) {
         this.searchResults = searchResult.rows.map(row => ({
@@ -42,6 +62,7 @@
         this.showSyncButton = true;
       }
     } catch (error) {
+      console.error('Search error:', error);
       // Erreur de recherche (ex: index non trouvé), afficher le bouton de sync
       this.searchResults = [];
       this.showSyncButton = true;
@@ -59,17 +80,29 @@
     this.syncCompleted = false;
     
     try {
+      console.log('Starting sync for:', card.config.dataSource);
+      
       // Appeler la route init PouchDB pour synchroniser les données
       await initializePouchDB(card.config.dataSource);
       
-      // Attendre un peu pour l'indexation
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Attendre un peu plus pour l'indexation PouchDB Quick Search
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Vérifier que la base de données contient des données
+      const pouchDB = new PouchDB(card.config.dataSource);
+      const info = await pouchDB.info();
+      console.log('Post-sync database info:', info);
       
       // Indiquer que la sync est terminée
       this.syncCompleted = true;
       
       // Attendre 2 secondes pour que l'utilisateur voie le message
       await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Relancer automatiquement la recherche si une requête existe
+      if (this.searchQuery.trim()) {
+        await this.performSearch();
+      }
       
     } catch (error) {
       console.error('Erreur de synchronisation:', error);
