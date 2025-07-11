@@ -437,12 +437,19 @@
           <div class="grid gap-2 text-xs text-gray-300 py-2 border-b border-gray-600" :style="`grid-template-columns: repeat(${(card.config.columns || []).filter(col => col.visible).length}, minmax(80px, 200px))`">
             <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible)" :key="column.key">
               <div class="break-words overflow-wrap-anywhere">
-                <template x-if="Array.isArray(row[column.key])">
+                <!-- HTML Content -->
+                <template x-if="column.isHtml && !Array.isArray(row[column.key]) && row[column.key] !== null && row[column.key] !== undefined">
+                  <div x-html="row[column.key]" class="whitespace-pre-wrap"></div>
+                </template>
+                <!-- Array Content -->
+                <template x-if="!column.isHtml && Array.isArray(row[column.key])">
                   <span x-text="row[column.key].join(', ')" class="whitespace-pre-wrap"></span>
                 </template>
-                <template x-if="!Array.isArray(row[column.key]) && row[column.key] !== null && row[column.key] !== undefined">
+                <!-- Regular Text Content -->
+                <template x-if="!column.isHtml && !Array.isArray(row[column.key]) && row[column.key] !== null && row[column.key] !== undefined">
                   <span x-text="row[column.key]" class="whitespace-pre-wrap"></span>
                 </template>
+                <!-- Empty Content -->
                 <template x-if="row[column.key] === null || row[column.key] === undefined">
                   <span class="text-gray-500">-</span>
                 </template>
