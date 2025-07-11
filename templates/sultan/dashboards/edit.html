@@ -25,6 +25,7 @@
   selectedCard: null,
   gridColumns: Array.from({length: 12}, (_, i) => i + 1),
   sidebarOpen: false,
+  showUsers: false,
 
   // Form and data source management
   availableForms: [],
@@ -460,15 +461,23 @@
           ></textarea>
 
           <!-- Privacy Settings -->
-          <div class="mt-4">
-            <label class="flex items-center space-x-2">
+          <div class="flex items-center space-x-4 mt-2">
+            <div class="flex items-center space-x-2">
               <input 
                 type="checkbox" 
-                x-model="dashboard.isPrivate" 
+                x-model="dashboard.isPrivate"
                 class="bg-gray-700 border-gray-600"
               >
-              <span class="text-white text-sm">Make this dashboard private</span>
-            </label>
+              <span class="text-white text-sm">Private Dashboard</span>
+            </div>
+            <template x-if="dashboard.isPrivate">
+              <button 
+                @click="showUsers = !showUsers"
+                class="text-blue-400 hover:text-blue-300 text-sm underline"
+              >
+                <span x-text="showUsers ? 'Hide Users' : 'Manage Users'"></span>
+              </button>
+            </template>
           </div>
         </div>
         <div class="flex space-x-2">
@@ -544,25 +553,14 @@
   </div>
 
   <!-- Right Sidebar -->
-  
+
 
     <!-- Privacy Settings Panel -->
-    <div x-show="dashboard.isPrivate" class="p-4 border-b border-gray-700 w-80 bg-gray-800 border-l border-gray-700 overflow-y-auto" x-data="{ showUsers: false }">
+    <div x-show="dashboard.isPrivate && showUsers" class="p-4 border-b border-gray-700 w-80 bg-gray-800 border-l border-gray-700 overflow-y-auto">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-white font-semibold">Authorized Users</h3>
-        <button 
-          @click="showUsers = !showUsers"
-          class="text-gray-400 hover:text-white"
-          :class="{ 'text-red-400': showUsers }"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform transition-transform" 
-               :class="{ 'rotate-180': showUsers }" 
-               fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
       </div>
-      <div x-show="showUsers" x-transition class="space-y-2">
+      <div class="space-y-2">
         <template x-for="(email, index) in (dashboard.authorizedUsers || [])" :key="index">
           <div class="flex items-center space-x-2">
             <input 
@@ -669,7 +667,7 @@
       </template>
     </div>
     </div>
-  
+
 </div>
 
 {% include "services/pouchdb.html" %}
