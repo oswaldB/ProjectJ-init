@@ -347,61 +347,9 @@
       if (!dataSource) return;
 
       try {
-        // Initialize PouchDB with the data source name
-        const pouchDB = new PouchDB(dataSource);
-
-        // Check if this is a drafts data source
-        const isDrafts = dataSource.endsWith("_drafts");
-        const formId = isDrafts ? dataSource.replace("_drafts", "") : dataSource;
-
-        let response;
-        if (isDrafts) {
-          // Fetch drafts data using the get-draft route
-          response = await fetch(`/pc-analytics-jaffar/forms/api/get-draft/${formId}`);
-        } else {
-          // Fetch submitted data
-          response = await fetch(`/pc-analytics-jaffar/forms/api/pouchdb/init/${formId}`, {
-            method: "POST"
-          });
-        }
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch data: ${response.statusText}`);
-        }
-
-        if (isDrafts) {
-          // Handle draft data response (returns array of documents)
-          const draftData = await response.json();
-          // Extract answers from each draft document
-          const answers = draftData.map(doc => doc.answers || {});
-          
-          // Store draft answers in PouchDB
-          if (answers.length > 0) {
-            await pouchDB.put({
-              _id: `chunk_0`,
-              data: answers
-            });
-          }
-          
-          console.log(`Initialized PouchDB for ${dataSource} with ${answers.length} draft documents`);
-        } else {
-          // Handle submitted data response (chunked)
-          const data = await response.json();
-          const chunks = data.chunks || [];
-
-          // Store chunks in PouchDB
-          for (let i = 0; i < chunks.length; i++) {
-            const chunk = chunks[i];
-            if (chunk && chunk.length > 0) {
-              await pouchDB.put({
-                _id: `chunk_${i}`,
-                data: chunk
-              });
-            }
-          }
-
-          console.log(`Initialized PouchDB for ${dataSource} with ${chunks.length} chunks`);
-        }
+        // Use the global initializePouchDB function which now handles drafts automatically
+        await window.initializePouchDB(dataSource);
+        console.log(`Initialized PouchDB for ${dataSource}`);
       } catch (error) {
         console.error("Error initializing PouchDB for", dataSource, ":", error);
       }

@@ -359,27 +359,57 @@ def api_submitted_responses(form_id):
 def api_pouchdb_init(form_id):
     """
     Initialize PouchDB with data from S3 for the given form ID.
+    Supports both submitted responses and drafts based on isDrafts parameter.
     """
-    logger.info(f"Initializing PouchDB for form {form_id}")
-    prefix = f'forms/{form_id}/submitted/'
+    data = request.json or {}
+    is_drafts = data.get('isDrafts', False)
+    
+    logger.info(f"Initializing PouchDB for form {form_id}, isDrafts: {is_drafts}")
+    
     try:
-        # List all submitted responses
-        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
         chunks = []
         
-        if 'Contents' not in response:
-            logger.info(f"No submitted data found for form {form_id}")
-            return jsonify({"chunks": []}), 200
+        if is_drafts:
+            # Use the get-draft API to fetch draft documents
+            prefix = f'forms/{form_id}/'
+            response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
             
-        for obj in response.get('Contents', []):
-            key = obj['Key']
-            if key.endswith('/'):
-                continue
-            response_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-            response_data = json.loads(response_obj['Body'].read().decode('utf-8'))
-            chunks.append(response_data.get('answers', {}))
+            if 'Contents' not in response:
+                logger.info(f"No draft data found for form {form_id}")
+                return jsonify({"chunks": []}), 200
+                
+            for obj in response.get('Contents', []):
+                key = obj['Key']
+                # Skip files in the submitted folder
+                if '/submitted/' in key or key.endswith('/'):
+                    continue
+                # Only process JSON files that are direct children of the form folder
+                if key.count('/') != 2 or not key.endswith('.json'):
+                    continue
+                    
+                response_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+                response_data = json.loads(response_obj['Body'].read().decode('utf-8'))
+                chunks.append(response_data.get('answers', {}))
 
-        logger.info(f"Found {len(chunks)} submitted responses for form {form_id}")
+            logger.info(f"Found {len(chunks)} draft responses for form {form_id}")
+        else:
+            # Fetch submitted responses
+            prefix = f'forms/{form_id}/submitted/'
+            response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+            
+            if 'Contents' not in response:
+                logger.info(f"No submitted data found for form {form_id}")
+                return jsonify({"chunks": []}), 200
+                
+            for obj in response.get('Contents', []):
+                key = obj['Key']
+                if key.endswith('/'):
+                    continue
+                response_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+                response_data = json.loads(response_obj['Body'].read().decode('utf-8'))
+                chunks.append(response_data.get('answers', {}))
+
+            logger.info(f"Found {len(chunks)} submitted responses for form {form_id}")
         
         # Split data into chunks for PouchDB
         chunk_size = 100

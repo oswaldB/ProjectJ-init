@@ -7,12 +7,25 @@ async function initializePouchDB(dbName) {
     await pouchDB.destroy();
 
     const newPouchDB = new PouchDB(dbName);
-    const apiEndpoint = dbName === 'issuesDB' 
-      ? '/pc-analytics-jaffar/api/jaffar/pouchdb/init' 
-      : `/pc-analytics-jaffar/forms/api/pouchdb/init/${dbName}`;
+    
+    let apiEndpoint;
+    let requestBody = {};
+    
+    if (dbName === 'issuesDB') {
+      apiEndpoint = '/pc-analytics-jaffar/api/jaffar/pouchdb/init';
+    } else {
+      // Check if this is a drafts database
+      const isDrafts = dbName.endsWith('_drafts');
+      const formId = isDrafts ? dbName.replace('_drafts', '') : dbName;
+      
+      apiEndpoint = `/pc-analytics-jaffar/forms/api/pouchdb/init/${formId}`;
+      requestBody = { isDrafts: isDrafts };
+    }
+    
     const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
