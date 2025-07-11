@@ -23,7 +23,7 @@
     { type: 'stats', name: 'Stats Card', icon: '' }
   ],
   selectedCard: null,
-  gridColumns: Array.from({length: 12}, (_, i) => i + 1),
+  gridColumns: Array.from({length: 3}, (_, i) => i + 1),
   sidebarOpen: false,
   showAuthUsers: false,
   showCardConfig: false,
@@ -62,7 +62,7 @@
       id: Date.now().toString(),
       type: type,
       title: `New ${type}`,
-      size: { width: 4, height: 3 },
+      size: { width: 1, height: 3 },
       config: this.getDefaultConfig(type)
     };
     this.dashboard.cards.push(card);
@@ -172,7 +172,7 @@
     this.showCardConfig = true;
     // Ensure the card has the required structure
     if (!card.size) {
-      card.size = { width: 4, height: 3 };
+      card.size = { width: 1, height: 3 };
     }
     if (!card.config) {
       card.config = this.getDefaultConfig(card.type);
@@ -510,11 +510,11 @@
 
     <!-- Dashboard Preview -->
     <div class="flex-1 p-4 bg-gray-900 overflow-auto">
-      <div class="grid grid-cols-4 gap-4 auto-rows-min">
+      <div class="grid grid-cols-3 gap-4 auto-rows-min">
         <template x-for="(card, index) in dashboard.cards" :key="card.id">
           <div 
             class="bg-gray-800 rounded-lg border border-gray-600 p-4 cursor-pointer hover:border-red-500 transition-colors"
-            :class="`col-span-${card.size?.width || 1}`"
+            :class="`col-span-${Math.min(card.size?.width || 1, 3)}`"
             :style="`grid-row: span ${card.size?.height || 1}; min-height: ${(card.size?.height || 1) * 200}px;`"
             @click="selectCard(card)"
           >
@@ -644,7 +644,7 @@
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">Card Width (columns)</label>
             <select x-model="selectedCard.size.width" class="w-full bg-gray-700 text-white p-2 rounded">
-              <template x-for="col in [1,2,3,4]" :key="col">
+              <template x-for="col in [1,2,3]" :key="col">
                 <option :value="col" x-text="col"></option>
               </template>
             </select>
