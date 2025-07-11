@@ -11,6 +11,10 @@ def index():
 def edit(dashboard_id):
     return render_template('sultan/dashboards/edit.html')
 
+@dashboard_bp.route('/<dashboard_id>')
+def view_dashboard(dashboard_id):
+    return render_template('sultan/dashboards/edit.html')
+
 @dashboard_bp.route('/api/list')
 def api_list():
     try:
