@@ -350,19 +350,19 @@
         this.localDB = new PouchDB(this.card.config.localDBName);
 
         // Check if this is a drafts data source
-        const isDrafts = this.card.config.dataSource.endsWith('_drafts');
-        const formId = isDrafts ? this.card.config.dataSource.replace('_drafts', '') : this.card.config.dataSource;
+        const isDrafts = this.card.config.dataSource.endsWith("_drafts");
+        const formId = isDrafts ? this.card.config.dataSource.replace("_drafts", "") : this.card.config.dataSource;
 
         let response;
         if (isDrafts) {
           // Fetch drafts data
           response = await fetch(`/pc-analytics-jaffar/forms/api/pouchdb/init-drafts/${formId}`, {
-            method: 'POST'
+            method: "POST"
           });
         } else {
           // Fetch submitted data
           response = await fetch(`/pc-analytics-jaffar/forms/api/pouchdb/init/${formId}`, {
-            method: 'POST'
+            method: "POST"
           });
         }
 
@@ -386,7 +386,7 @@
 
         console.log(`Initialized PouchDB with ${chunks.length} chunks`);
       } catch (error) {
-        console.error('Error initializing PouchDB:', error);
+        console.error("Error initializing PouchDB:", error);
       }
     },
     async loadData(page = 1) {
@@ -399,8 +399,8 @@
         if (this.card.config.saveToLocalDB && this.localDB) {
           await this.loadDataFromPouchDB(page);
         } else {
-          const isDrafts = this.card.config.dataSource.endsWith('_drafts');
-          const formId = isDrafts ? this.card.config.dataSource.replace('_drafts', '') : this.card.config.dataSource;
+          const isDrafts = this.card.config.dataSource.endsWith("_drafts");
+          const formId = isDrafts ? this.card.config.dataSource.replace("_drafts", "") : this.card.config.dataSource;
           const pageSize = this.card.config.pageSize || 25;
 
           let response;
@@ -427,8 +427,8 @@
 
         this.applyFilters();
       } catch (error) {
-        console.error('Error loading data:', error);
-        this.error = 'Failed to load data';
+        console.error("Error loading data:", error);
+        this.error = "Failed to load data";
         this.rawData = [];
       } finally {
         this.loading = false;
