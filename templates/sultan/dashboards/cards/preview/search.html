@@ -164,7 +164,7 @@
     const today = now.toISOString().split('T')[0];
     const currentUser = 'user@example.com'; // This should be replaced with actual current user
     
-    processedUrl = processedUrl.replace(/\$\{responseId\}/g, doc?.responseId || doc?._id || doc?.id || '');
+    processedUrl = processedUrl.replace(/\$\{rc\}/g, doc?.responseId || doc?._id || doc?.id || '');
     processedUrl = processedUrl.replace(/\$\{currentUser\}/g, currentUser);
     processedUrl = processedUrl.replace(/\$\{today\}/g, today);
     processedUrl = processedUrl.replace(/\$\{now\}/g, now.toISOString());

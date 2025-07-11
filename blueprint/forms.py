@@ -389,7 +389,12 @@ def api_pouchdb_init(form_id):
                     
                 response_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
                 response_data = json.loads(response_obj['Body'].read().decode('utf-8'))
-                chunks.append(response_data.get('answers', {}))
+                # Extract responseId and flatten the answers into the main dictionary
+                response_id = response_data.get('responseId')
+                answers = response_data.get('answers', {})
+                # Merge answers into the dictionary, removing 'answers' as a key
+                flattened_data = {**answers, 'responseId': response_id}
+                chunks.append(flattened_data)
 
             logger.info(f"Found {len(chunks)} draft responses for form {form_id}")
         else:
@@ -407,7 +412,12 @@ def api_pouchdb_init(form_id):
                     continue
                 response_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
                 response_data = json.loads(response_obj['Body'].read().decode('utf-8'))
-                chunks.append(response_data.get('answers', {}))
+                # Extract responseId and flatten the answers into the main dictionary
+                response_id = response_data.get('responseId')
+                answers = response_data.get('answers', {})
+                # Merge answers into the dictionary, removing 'answers' as a key
+                flattened_data = {**answers, 'responseId': response_id}
+                chunks.append(flattened_data)
 
             logger.info(f"Found {len(chunks)} submitted responses for form {form_id}")
         
