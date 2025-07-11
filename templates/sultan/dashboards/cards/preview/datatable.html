@@ -10,7 +10,6 @@
 
     this.loading = true;
     const formId = card.config.dataSource;
-    console.log("Loading data from PouchDB for form:", formId, "page:", page);
 
     try {
       await initializePouchDB(formId);
@@ -19,11 +18,9 @@
       // Use configured page size, default to 25 if not set
       const pageSize = parseInt(card.config.pageSize) || 25;
       const skip = (page - 1) * pageSize;
-      console.log("Using page size:", pageSize, "skip:", skip);
 
       // Build Mango query selector with predefined filters
       const selector = this.buildMangoSelector();
-      console.log("Using Mango selector:", JSON.stringify(selector, null, 2));
 
       // Get filtered data using Mango query
       let allData = [];
@@ -31,16 +28,13 @@
         const result = await pouchDB.find({
           selector: selector
         });
-        allData = result.docs.filter(doc => !doc._id.startsWith("_design/"));
-        console.log("Loaded filtered data using Mango query:", allData.length, "documents");
+        allData = result.docs.filter(doc => !doc._id.startsWith('_design/'));
       } catch (findError) {
-        console.log("Mango query failed, falling back to allDocs:", findError);
         // Fallback to allDocs if Mango query fails
         const result = await pouchDB.allDocs({ include_docs: true });
-        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith("_design/"));
+        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
         // Apply filters in memory if Mango query failed
         allData = this.applyFiltersInMemory(allDocs);
-        console.log("Loaded and filtered data using allDocs:", allData.length, "documents");
       }
 
       // Set total count and pages
@@ -56,7 +50,7 @@
       console.log(`Displaying page ${page}/${this.totalPages}, showing ${this.previewData.length} of ${this.totalCount} documents`);
 
     } catch (error) {
-      console.error("Failed to load preview data for form", formId, ":", error);
+      console.error('Failed to load preview data for form', formId, ':', error);
       this.previewData = [];
     } finally {
       this.loading = false;
@@ -65,7 +59,7 @@
   buildMangoSelector() {
     // Start with base selector to exclude design documents
     const selector = {
-      "_id": { "$gt": null }
+      '_id': { '$gt': null }
     };
 
     // Add search query if provided
@@ -76,10 +70,10 @@
       if (searchableColumns.length > 0) {
         // Create OR condition for searching across all visible columns
         const searchConditions = searchableColumns.map(column => ({
-          [column.key]: { "$regex": new RegExp(searchTerm, "i") }
+          [column.key]: { '$regex': new RegExp(searchTerm, 'i') }
         }));
 
-        selector["$or"] = searchConditions;
+        selector['$or'] = searchConditions;
       }
     }
 
@@ -90,7 +84,7 @@
       if (!column.enablePredefinedFilter) continue;
 
       const fieldName = column.key;
-      const operator = column.filterOperator || "equals";
+      const operator = column.filterOperator || 'equals';
       let value = column.filterValue;
 
       // For multi-select fields, use filterValues array
@@ -99,58 +93,58 @@
       }
 
       // Skip if no value provided (except for exists/not_exists/empty/not_empty)
-      if (!value && !["exists", "not_exists", "empty", "not_empty"].includes(operator)) continue;
+      if (!value && !['exists', 'not_exists', 'empty', 'not_empty'].includes(operator)) continue;
 
       switch (operator) {
-        case "equals":
+        case 'equals':
           selector[fieldName] = value;
           break;
-        case "not_equals":
-          selector[fieldName] = { "$ne": value };
+        case 'not_equals':
+          selector[fieldName] = { '$ne': value };
           break;
-        case "contains":
-          selector[fieldName] = { "$regex": new RegExp(value, "i") };
+        case 'contains':
+          selector[fieldName] = { '$regex': new RegExp(value, 'i') };
           break;
-        case "not_contains":
-          selector[fieldName] = { "$not": { "$regex": new RegExp(value, "i") } };
+        case 'not_contains':
+          selector[fieldName] = { '$not': { '$regex': new RegExp(value, 'i') } };
           break;
-        case "greater_than":
-          selector[fieldName] = { "$gt": parseFloat(value) || value };
+        case 'greater_than':
+          selector[fieldName] = { '$gt': parseFloat(value) || value };
           break;
-        case "less_than":
-          selector[fieldName] = { "$lt": parseFloat(value) || value };
+        case 'less_than':
+          selector[fieldName] = { '$lt': parseFloat(value) || value };
           break;
-        case "greater_equal":
-          selector[fieldName] = { "$gte": parseFloat(value) || value };
+        case 'greater_equal':
+          selector[fieldName] = { '$gte': parseFloat(value) || value };
           break;
-        case "less_equal":
-          selector[fieldName] = { "$lte": parseFloat(value) || value };
+        case 'less_equal':
+          selector[fieldName] = { '$lte': parseFloat(value) || value };
           break;
-        case "in":
-          const inValues = Array.isArray(value) ? value : value.split(",").map(v => v.trim());
-          selector[fieldName] = { "$in": inValues };
+        case 'in':
+          const inValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
+          selector[fieldName] = { '$in': inValues };
           break;
-        case "not_in":
-          const notInValues = Array.isArray(value) ? value : value.split(",").map(v => v.trim());
-          selector[fieldName] = { "$nin": notInValues };
+        case 'not_in':
+          const notInValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
+          selector[fieldName] = { '$nin': notInValues };
           break;
-        case "exists":
-          selector[fieldName] = { "$exists": true };
+        case 'exists':
+          selector[fieldName] = { '$exists': true };
           break;
-        case "not_exists":
-          selector[fieldName] = { "$exists": false };
+        case 'not_exists':
+          selector[fieldName] = { '$exists': false };
           break;
-        case "empty":
-          selector[fieldName] = { "$in": [null, "", undefined] };
+        case 'empty':
+          selector[fieldName] = { '$in': [null, '', undefined] };
           break;
-        case "not_empty":
-          selector[fieldName] = { "$nin": [null, "", undefined] };
+        case 'not_empty':
+          selector[fieldName] = { '$nin': [null, '', undefined] };
           break;
-        case "starts_with":
-          selector[fieldName] = { "$regex": new RegExp(`^${value}`, "i") };
+        case 'starts_with':
+          selector[fieldName] = { '$regex': new RegExp(`^${value}`, 'i') };
           break;
-        case "ends_with":
-          selector[fieldName] = { "$regex": new RegExp(`${value}$`, "i") };
+        case 'ends_with':
+          selector[fieldName] = { '$regex': new RegExp(`${value}$`, 'i') };
           break;
       }
     }
@@ -183,7 +177,7 @@
         if (!column.enablePredefinedFilter) continue;
 
         const fieldName = column.key;
-        const operator = column.filterOperator || "equals";
+        const operator = column.filterOperator || 'equals';
         let value = column.filterValue;
 
         // For multi-select fields, use filterValues array
@@ -192,60 +186,60 @@
         }
 
         // Skip if no value provided (except for exists/not_exists/empty/not_empty)
-        if (!value && !["exists", "not_exists", "empty", "not_empty"].includes(operator)) continue;
+        if (!value && !['exists', 'not_exists', 'empty', 'not_empty'].includes(operator)) continue;
 
         const docValue = doc[fieldName];
 
         switch (operator) {
-          case "equals":
+          case 'equals':
             if (docValue != value) return false;
             break;
-          case "not_equals":
+          case 'not_equals':
             if (docValue == value) return false;
             break;
-          case "contains":
-            if (!String(docValue || "").toLowerCase().includes(String(value || "").toLowerCase())) return false;
+          case 'contains':
+            if (!String(docValue || '').toLowerCase().includes(String(value || '').toLowerCase())) return false;
             break;
-          case "not_contains":
-            if (String(docValue || "").toLowerCase().includes(String(value || "").toLowerCase())) return false;
+          case 'not_contains':
+            if (String(docValue || '').toLowerCase().includes(String(value || '').toLowerCase())) return false;
             break;
-          case "greater_than":
+          case 'greater_than':
             if (!(parseFloat(docValue) > parseFloat(value))) return false;
             break;
-          case "less_than":
+          case 'less_than':
             if (!(parseFloat(docValue) < parseFloat(value))) return false;
             break;
-          case "greater_equal":
+          case 'greater_equal':
             if (!(parseFloat(docValue) >= parseFloat(value))) return false;
             break;
-          case "less_equal":
+          case 'less_equal':
             if (!(parseFloat(docValue) <= parseFloat(value))) return false;
             break;
-          case "in":
-            const inValues = Array.isArray(value) ? value : value.split(",").map(v => v.trim());
+          case 'in':
+            const inValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
             if (!inValues.includes(String(docValue))) return false;
             break;
-          case "not_in":
-            const notInValues = Array.isArray(value) ? value : value.split(",").map(v => v.trim());
+          case 'not_in':
+            const notInValues = Array.isArray(value) ? value : value.split(',').map(v => v.trim());
             if (notInValues.includes(String(docValue))) return false;
             break;
-          case "exists":
+          case 'exists':
             if (docValue === null || docValue === undefined) return false;
             break;
-          case "not_exists":
+          case 'not_exists':
             if (docValue !== null && docValue !== undefined) return false;
             break;
-          case "empty":
-            if (docValue !== null && docValue !== undefined && docValue !== "") return false;
+          case 'empty':
+            if (docValue !== null && docValue !== undefined && docValue !== '') return false;
             break;
-          case "not_empty":
-            if (docValue === null || docValue === undefined || docValue === "") return false;
+          case 'not_empty':
+            if (docValue === null || docValue === undefined || docValue === '') return false;
             break;
-          case "starts_with":
-            if (!String(docValue || "").toLowerCase().startsWith(String(value || "").toLowerCase())) return false;
+          case 'starts_with':
+            if (!String(docValue || '').toLowerCase().startsWith(String(value || '').toLowerCase())) return false;
             break;
-          case "ends_with":
-            if (!String(docValue || "").toLowerCase().endsWith(String(value || "").toLowerCase())) return false;
+          case 'ends_with':
+            if (!String(docValue || '').toLowerCase().endsWith(String(value || '').toLowerCase())) return false;
             break;
         }
       }
@@ -271,7 +265,7 @@
     await this.loadDataFromPouchDB(1);
   },
   clearSearch() {
-    this.searchQuery = "";
+    this.searchQuery = '';
     this.loadDataFromPouchDB(1);
   },
   async exportToCSV() {
@@ -291,16 +285,16 @@
         const result = await pouchDB.find({
           selector: selector
         });
-        allData = result.docs.filter(doc => !doc._id.startsWith("_design/"));
+        allData = result.docs.filter(doc => !doc._id.startsWith('_design/'));
       } catch (findError) {
         // Fallback to allDocs if Mango query fails
         const result = await pouchDB.allDocs({ include_docs: true });
-        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith("_design/"));
+        const allDocs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
         allData = this.applyFiltersInMemory(allDocs);
       }
 
       if (allData.length === 0) {
-        alert("No data to export");
+        alert('No data to export');
         return;
       }
 
@@ -308,38 +302,38 @@
       const visibleColumns = (card.config.columns || []).filter(col => col.visible);
 
       if (visibleColumns.length === 0) {
-        alert("No visible columns to export");
+        alert('No visible columns to export');
         return;
       }
 
       // Create CSV content
-      const headers = visibleColumns.map(col => col.label || col.key).join(";");
+      const headers = visibleColumns.map(col => col.label || col.key).join(';');
       const rows = allData.map(row => {
         return visibleColumns.map(col => {
           const value = row[col.key];
-          if (value === null || value === undefined) return "";
-          if (Array.isArray(value)) return "\"" + value.join(", ") + "\"";
-          return "\"" + String(value).replace(/"/g, "\"\"") + "\"";
-        }).join(";");
+          if (value === null || value === undefined) return '';
+          if (Array.isArray(value)) return '\'' + value.join(', ') + '\'';
+          return '\'' + String(value).replace(/'/g, '\'\'') + '\'';
+        }).join(';');
       });
 
-      const csvContent = [headers, ...rows].join("\n");
+      const csvContent = [headers, ...rows].join('\n');
 
       // Create and download file
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", card.config.dataSource + "_export_" + new Date().toISOString().split("T")[0] + ".csv");
-      link.style.visibility = "hidden";
+      link.setAttribute('href', url);
+      link.setAttribute('download', card.config.dataSource + '_export_' + new Date().toISOString().split('T')[0] + '.csv');
+      link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
     } catch (error) {
-      console.error("Export failed:", error);
-      alert("Export failed: " + error.message);
+      console.error('Export failed:', error);
+      alert('Export failed: ' + error.message);
     }
   },
   async initializePouchDB() {
@@ -434,7 +428,7 @@
         this.loading = false;
       }
     }
-}" x-init="loadDataFromPouchDB()">
+}' x-init='loadDataFromPouchDB()'>
 
   <!-- Data Source Info -->
   <div x-show="card.config.dataSource" class="mb-2 flex justify-between items-center">
