@@ -546,9 +546,22 @@
   <div class="w-80 bg-gray-800 border-l border-gray-700 overflow-y-auto">
     
     <!-- Privacy Settings Panel -->
-    <div x-show="dashboard.isPrivate" class="p-4 border-b border-gray-700">
-      <h3 class="text-white font-semibold mb-4">Authorized Users</h3>
-      <div class="space-y-2">
+    <div x-show="dashboard.isPrivate" class="p-4 border-b border-gray-700" x-data="{ showUsers: false }">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-white font-semibold">Authorized Users</h3>
+        <button 
+          @click="showUsers = !showUsers"
+          class="text-gray-400 hover:text-white"
+          :class="{ 'text-red-400': showUsers }"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform transition-transform" 
+               :class="{ 'rotate-180': showUsers }" 
+               fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+      <div x-show="showUsers" x-transition class="space-y-2">
         <template x-for="(email, index) in (dashboard.authorizedUsers || [])" :key="index">
           <div class="flex items-center space-x-2">
             <input 
