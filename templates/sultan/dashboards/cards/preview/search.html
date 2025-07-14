@@ -51,18 +51,24 @@
       try {
         searchResult = await pouchDB.search(searchOptions);
         console.log('Search result:', searchResult);
-      console.log('Search result rows:', searchResult.rows);
-      console.log('Search result rows length:', searchResult.rows ? searchResult.rows.length : 'undefined');
+        console.log('Search result rows:', searchResult.rows);
+        console.log('Search result rows length:', searchResult.rows ? searchResult.rows.length : 'undefined');
 
-      if (searchResult.rows && searchResult.rows.length > 0) {
-        this.searchResults = searchResult.rows.map(row => ({
-          id: row.id,
-          doc: row.doc,
-          highlighting: row.highlighting
-        }));
-        this.showSyncButton = false;
-      } else {
-        // Aucun résultat trouvé, afficher le bouton de sync
+        if (searchResult.rows && searchResult.rows.length > 0) {
+          this.searchResults = searchResult.rows.map(row => ({
+            id: row.id,
+            doc: row.doc,
+            highlighting: row.highlighting
+          }));
+          this.showSyncButton = false;
+        } else {
+          // Aucun résultat trouvé, afficher le bouton de sync
+          this.searchResults = [];
+          this.showSyncButton = true;
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+        // Erreur de recherche (ex: index non trouvé), afficher le bouton de sync
         this.searchResults = [];
         this.showSyncButton = true;
       }
