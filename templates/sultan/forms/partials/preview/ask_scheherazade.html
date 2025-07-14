@@ -1,40 +1,38 @@
-
 <template x-if="field.type === 'ask_scheherazade'">
 <div class="mb-4">
   <label class="block text-sm font-medium text-gray-300 mb-2">
     <span x-text="field.label"></span>
     <span x-show="field.required" class="text-red-400 ml-1">*</span>
   </label>
-  
+
   <div x-show="field.description" class="text-sm text-gray-400 mb-2" x-text="field.description"></div>
-  
+
   <div class="space-y-3">
     <!-- AI Response Display -->
-    <div x-show="responses[field.key]" class="bg-gray-700 rounded p-3 border border-gray-600">
+    <div x-show="responses && responses[field.key]" class="bg-gray-700 rounded p-3 border border-gray-600">
       <div class="flex items-center justify-between mb-2">
         <span class="text-xs text-gray-400">AI Response:</span>
-        <button @click="editResponse(field.key)" class="text-blue-400 hover:text-blue-300 text-xs">
-          Edit
+        <button @click="editingResponse = editingResponse === field.key ? null : field.key" class="text-blue-400 hover:text-blue-300 text-xs">
+          <span x-text="editingResponse === field.key ? 'Save' : 'Edit'"></span>
         </button>
       </div>
       <div class="text-white text-sm">
         <textarea x-show="editingResponse === field.key" 
                   x-model="responses[field.key]" 
-                  @blur="editingResponse = null"
                   rows="6"
                   class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"></textarea>
         <div x-show="editingResponse !== field.key" 
              class="whitespace-pre-wrap" 
-             x-text="responses[field.key]"></div>
+             x-text="responses && responses[field.key] ? responses[field.key] : ''"></div>
       </div>
     </div>
-    
+
     <!-- Ask Button -->
     <button @click="askScheherazade(field)" 
-            :disabled="loadingStates[field.key]"
+            :disabled="loadingStates && loadingStates[field.key]"
             class="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white px-4 py-2 rounded transition-colors">
-      <span x-show="!loadingStates[field.key]" x-text="field.buttonLabel || 'Ask Scheherazade'"></span>
-      <span x-show="loadingStates[field.key]" class="flex items-center">
+      <span x-show="!loadingStates || !loadingStates[field.key]" x-text="field.buttonLabel || 'Ask Scheherazade'"></span>
+      <span x-show="loadingStates && loadingStates[field.key]" class="flex items-center">
         <svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -42,117 +40,11 @@
         Processing...
       </span>
     </button>
-    
+
     <!-- Error Display -->
-    <div x-show="errors[field.key]" class="bg-red-500 bg-opacity-10 border border-red-500 text-red-400 px-3 py-2 rounded text-sm">
-      <span x-text="errors[field.key]"></span>
+    <div x-show="errors && errors[field.key]" class="bg-red-500 bg-opacity-10 border border-red-500 text-red-400 px-3 py-2 rounded text-sm">
+      <span x-text="errors && errors[field.key] ? errors[field.key] : ''"></span>
     </div>
   </div>
 </div>
 </template>
-
-<script>
-document.addEventListener('alpine:init', () => {
-  Alpine.data('formPreview', () => ({
-    responses: {},
-    loadingStates: {},
-    errors: {},
-    editingResponse: null,
-    
-    editResponse(fieldKey) {
-      this.editingResponse = fieldKey;
-    },
-    
-    async askScheherazade(field) {
-      if (!field.apiUrl || !field.apiKey || !field.prompt) {
-        this.errors[field.key] = 'Missing required configuration (API URL, API Key, or Prompt)';
-        return;
-      }
-      
-      this.loadingStates[field.key] = true;
-      this.errors[field.key] = null;
-      
-      try {
-        // Replace field references in prompt
-        let processedPrompt = field.prompt;
-        
-        // Get current form data
-        const formData = new FormData(document.querySelector('form'));
-        const formValues = {};
-        for (let [key, value] of formData.entries()) {
-          formValues[key] = value;
-        }
-        
-        // Replace {{field_key}} with actual values
-        processedPrompt = processedPrompt.replace(/\{\{([^}]+)\}\}/g, (match, fieldKey) => {
-          return formValues[fieldKey] || match;
-        });
-        
-        // Prepare request body
-        const requestBody = {
-          model: field.model,
-          messages: [
-            {
-              role: 'user',
-              content: processedPrompt
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 1000
-        };
-        
-        // Add response format instruction if provided
-        if (field.responseFormat) {
-          requestBody.messages.unshift({
-            role: 'system',
-            content: `Please respond in the following JSON format: ${field.responseFormat}`
-          });
-        }
-        
-        const response = await fetch(field.apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${field.apiKey}`
-          },
-          body: JSON.stringify(requestBody)
-        });
-        
-        if (!response.ok) {
-          throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        
-        // Extract response content
-        let responseContent = '';
-        if (data.choices && data.choices[0] && data.choices[0].message) {
-          responseContent = data.choices[0].message.content;
-        } else if (data.response) {
-          responseContent = data.response;
-        } else {
-          responseContent = JSON.stringify(data, null, 2);
-        }
-        
-        this.responses[field.key] = responseContent;
-        
-        // Try to parse JSON if response format was specified
-        if (field.responseFormat) {
-          try {
-            const parsedResponse = JSON.parse(responseContent);
-            this.responses[field.key] = JSON.stringify(parsedResponse, null, 2);
-          } catch (e) {
-            // Keep original response if not valid JSON
-          }
-        }
-        
-      } catch (error) {
-        console.error('Error calling AI API:', error);
-        this.errors[field.key] = error.message;
-      } finally {
-        this.loadingStates[field.key] = false;
-      }
-    }
-  }));
-});
-</script>

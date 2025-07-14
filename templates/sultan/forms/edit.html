@@ -6,12 +6,16 @@
 <!-- comment -->
 <div class="h-screen bg-gray-900 text-white" x-data="{
   formData: [],
+  previewValues: {},
+  responses: {},
+  loadingStates: {},
+  errors: {},
+  editingResponse: null,
   sidebarOpen: true,
   page: 'form-editor',
   form: { id: '', name: '', fields: [], status: 'Draft' },
   preview: true,
   saveFormDebounced: null,
-  previewValues: {},
   async init() {
     this.$watch('form', () => {
       this.saveForm();
@@ -170,7 +174,7 @@
                   Question #<span x-text="index + 1"></span>
                   <span x-show="!field.key" class="ml-2 text-yellow-300 flex items-center space-x-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 10 0 100 20 10 10 0 000-20z" />
                     </svg>
                     <span>Key is empty</span>
                   </span>
