@@ -279,17 +279,6 @@
           </div>
         </template>
 
-        <!-- Show highlighted matches if available -->
-        <div x-show="result.highlighting && Object.keys(result.highlighting).length > 0" class="mt-2 pt-2 border-t border-gray-600">
-          <div class="text-xs text-yellow-400 font-medium mb-1">Matches:</div>
-          <template x-for="(highlights, field) in result.highlighting || {}" :key="field">
-            <div class="text-xs mb-1">
-              <span class="text-blue-300" x-text="field + ': '"></span>
-              <span class="text-yellow-300" x-html="highlights.join(' ... ')"></span>
-            </div>
-          </template>
-        </div>
-
         <!-- Action Buttons -->
         <div x-show="card.config.resultActions && card.config.resultActions.length > 0" class="mt-3 pt-2 border-t border-gray-600">
           <div class="flex flex-wrap gap-2">
