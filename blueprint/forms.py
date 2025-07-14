@@ -1,3 +1,4 @@
+# Updating the ask-scheherazade endpoint to use the Authorization header for API key authentication.
 from flask import Blueprint, render_template, jsonify, request, redirect  # Add import for redirect
 import logging
 import json  # Add import for JSON
@@ -48,7 +49,7 @@ def api_forms_list():
         logger.info(f"Listing forms with prefix: {prefix}")
         response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
         logger.info(f"S3 response: {response}")
-        
+
         for obj in response.get('Contents', []):
             key = obj['Key']
             if key.endswith('.json'):
@@ -59,7 +60,7 @@ def api_forms_list():
                     logger.info(f"Loaded form: {form_data.get('id', 'unknown')}")
                 except Exception as e:
                     logger.error(f"Failed to load form {key}: {e}")
-        
+
         logger.info(f"Total forms found: {len(forms)}")
         return jsonify(forms)
     except Exception as e:
@@ -363,21 +364,21 @@ def api_pouchdb_init(form_id):
     """
     data = request.json or {}
     is_drafts = data.get('isDrafts', False)
-    
+
     logger.info(f"Initializing PouchDB for form {form_id}, isDrafts: {is_drafts}")
-    
+
     try:
         chunks = []
-        
+
         if is_drafts:
             # Use the get-draft API to fetch draft documents
             prefix = f'forms/{form_id}/'
             response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-            
+
             if 'Contents' not in response:
                 logger.info(f"No draft data found for form {form_id}")
                 return jsonify({"chunks": []}), 200
-                
+
             for obj in response.get('Contents', []):
                 key = obj['Key']
                 # Skip files in the submitted folder
@@ -386,7 +387,7 @@ def api_pouchdb_init(form_id):
                 # Only process JSON files that are direct children of the form folder
                 if key.count('/') != 2 or not key.endswith('.json'):
                     continue
-                    
+
                 response_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
                 response_data = json.loads(response_obj['Body'].read().decode('utf-8'))
                 # Extract responseId and flatten the answers into the main dictionary
@@ -401,11 +402,11 @@ def api_pouchdb_init(form_id):
             # Fetch submitted responses
             prefix = f'forms/{form_id}/submitted/'
             response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
-            
+
             if 'Contents' not in response:
                 logger.info(f"No submitted data found for form {form_id}")
                 return jsonify({"chunks": []}), 200
-                
+
             for obj in response.get('Contents', []):
                 key = obj['Key']
                 if key.endswith('/'):
@@ -420,7 +421,7 @@ def api_pouchdb_init(form_id):
                 chunks.append(flattened_data)
 
             logger.info(f"Found {len(chunks)} submitted responses for form {form_id}")
-        
+
         # Split data into chunks for PouchDB
         chunk_size = 100
         chunked_data = [chunks[i:i + chunk_size] for i in range(0, len(chunks), chunk_size)]
@@ -440,11 +441,11 @@ def api_pouchdb_init_drafts(form_id):
         # List all draft responses (excluding submitted folder)
         response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
         chunks = []
-        
+
         if 'Contents' not in response:
             logger.info(f"No draft data found for form {form_id}")
             return jsonify({"chunks": []}), 200
-            
+
         for obj in response.get('Contents', []):
             key = obj['Key']
             # Skip files in the submitted folder
@@ -453,13 +454,13 @@ def api_pouchdb_init_drafts(form_id):
             # Only process JSON files that are direct children of the form folder
             if key.count('/') != 2 or not key.endswith('.json'):
                 continue
-                
+
             response_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
             response_data = json.loads(response_obj['Body'].read().decode('utf-8'))
             chunks.append(response_data.get('answers', {}))
 
         logger.info(f"Found {len(chunks)} draft responses for form {form_id}")
-        
+
         # Split data into chunks for PouchDB
         chunk_size = 100
         chunked_data = [chunks[i:i + chunk_size] for i in range(0, len(chunks), chunk_size)]
@@ -488,7 +489,7 @@ def api_get_draft(form_id):
             # Only process JSON files that are direct children of the form folder
             if key.count('/') != 2 or not key.endswith('.json'):
                 continue
-            
+
             try:
                 response_obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
                 response_data = json.loads(response_obj['Body'].read().decode('utf-8'))
@@ -552,3 +553,31 @@ def api_draft_responses(form_id):
     except Exception as e:
         logger.error(f"Error in api_draft_responses: {e}")
         return jsonify({"error": str(e)}), 500
+
+@forms_blueprint.route('/api/ask-scheherazade', methods=['POST'])
+def ask_scheherazade():
+    try:
+        data = request.json
+        prompt = data.get('prompt', '')
+        response_format = data.get('responseFormat', '')
+
+        # Get API key from Authorization header
+        auth_header = request.headers.get('Authorization', '')
+        if not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Missing bearer authentication in header'}), 401
+
+        api_key = auth_header.replace('Bearer ', '', 1)
+
+        if not prompt:
+            return jsonify({'error': 'Prompt is required'}), 400
+
+        if not api_key:
+            return jsonify({'error': 'API key is required'}), 400
+
+        # TODO: Call the LLM API with the prompt, response_format, and api_key
+        # and return the result.  This is a placeholder.
+        return jsonify({'response': f'LLM response to prompt: {prompt}'})
+    except Exception as e:
+        logger.error(f"Error in ask_scheherazade: {e}")
+        return jsonify({"error": str(e)}), 500
+</replit_final_file>
