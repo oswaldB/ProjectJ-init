@@ -8,9 +8,7 @@
      }"
      x-data="{
   kanbanData: [],
-  filteredData: [],
   loading: false,
-  filterQuery: '',
   
   async loadKanbanData() {
     if (!card.config.dataSource) return;
@@ -49,7 +47,6 @@
       // Get all documents from PouchDB
       const result = await pouchDB.allDocs({ include_docs: true });
       this.kanbanData = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
-      this.filteredData = this.kanbanData;
       
       console.log('Loaded kanban data:', this.kanbanData.length, 'items');
     } catch (error) {
@@ -59,80 +56,11 @@
       this.loading = false;
     }
   },
-
-  async performFilter() {
-    if (!this.filterQuery.trim()) {
-      this.filteredData = this.kanbanData;
-      return;
-    }
-
-    if (!card.config.dataSource) return;
-
-    try {
-      const formId = card.config.dataSource.split('/').pop();
-      const pouchDB = new PouchDB(formId);
-
-      // Build a flexible search selector that searches across multiple fields
-      const searchTerms = this.filterQuery.toLowerCase().split(' ').filter(term => term.length > 0);
-      
-      // Create OR conditions for each search term across common fields
-      const orConditions = [];
-      
-      // Common field names to search in
-      const searchFields = ['name', 'title', 'description', 'status', 'type', 'category', 'assignee', 'priority'];
-      
-      for (const term of searchTerms) {
-        const fieldConditions = [];
-        
-        // Search in each field
-        for (const field of searchFields) {
-          fieldConditions.push({
-            [field]: { $regex: new RegExp(term, 'i') }
-          });
-        }
-        
-        // Also search in any field that might contain the term (for dynamic fields)
-        orConditions.push({ $or: fieldConditions });
-      }
-
-      let selector = {};
-      if (orConditions.length === 1) {
-        selector = orConditions[0];
-      } else if (orConditions.length > 1) {
-        selector = { $and: orConditions };
-      }
-
-      console.log('Filter selector:', JSON.stringify(selector, null, 2));
-
-      const result = await pouchDB.find({
-        selector: selector,
-        limit: 1000
-      });
-
-      this.filteredData = result.docs.filter(doc => !doc._id.startsWith('_design/'));
-      console.log('Filtered data:', this.filteredData.length, 'items');
-
-    } catch (error) {
-      console.error('Filter error:', error);
-      // Fallback to simple text filtering if PouchDB find fails
-      this.filteredData = this.kanbanData.filter(item => {
-        const searchText = this.filterQuery.toLowerCase();
-        return Object.values(item).some(value => 
-          String(value || '').toLowerCase().includes(searchText)
-        );
-      });
-    }
-  },
-
-  clearFilter() {
-    this.filterQuery = '';
-    this.filteredData = this.kanbanData;
-  },
   
   getColumnData(column) {
-    if (!this.filteredData.length || !column.filters) return [];
+    if (!this.kanbanData.length || !column.filters) return [];
     
-    return this.filteredData.filter(item => {
+    return this.kanbanData.filter(item => {
       return column.filters.every(filter => {
         const fieldValue = item[filter.field];
         const filterValue = filter.value;
@@ -188,35 +116,10 @@
   }
 }" x-init="loadKanbanData()">
 
-  <!-- Filter Search Bar -->
-  <div x-show="card.config.dataSource && !loading" class="mb-3">
-    <div class="relative">
-      <input 
-        type="text" 
-        x-model="filterQuery"
-        @input="performFilter()"
-        @keyup.enter="performFilter()"
-        class="w-full bg-gray-700 text-white px-4 py-2 pl-10 pr-20 rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 text-sm"
-        placeholder="Filter kanban items..."
-      >
-      <svg class="absolute left-3 top-2.5 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-      </svg>
-      <button 
-        x-show="filterQuery"
-        @click="clearFilter()"
-        class="absolute right-2 top-1.5 bg-gray-600 hover:bg-gray-500 text-white px-2 py-1 rounded text-xs"
-      >
-        Clear
-      </button>
-    </div>
-  </div>
-
   <!-- Sync Button -->
   <div x-show="card.config.dataSource" class="flex justify-end items-center gap-2 mb-3">
     <span class="text-xs text-gray-400">
-      <span x-show="!filterQuery" x-text="kanbanData.length"></span>
-      <span x-show="filterQuery" x-text="filteredData.length + ' of ' + kanbanData.length"></span> items
+      <span x-text="kanbanData.length"></span> items
     </span>
     <button @click="
       console.log('Syncing kanban data source:', card.config.dataSource);
