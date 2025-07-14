@@ -42,6 +42,33 @@
            placeholder="Your API key">
   </div>
 
+  <!-- Use Existing Answer Toggle -->
+  <div class="mb-4 p-3 bg-gray-700 rounded border border-blue-500">
+    <label class="flex items-center space-x-2 text-blue-300 font-medium cursor-pointer">
+      <input type="checkbox" x-model="field.useExistingAnswer" class="form-checkbox h-4 w-4 text-blue-500 bg-gray-800 border-gray-600 rounded focus:ring-blue-500">
+      <span>Use existing answers from previous fields</span>
+    </label>
+
+    <template x-if="field.useExistingAnswer">
+      <div class="mt-3 p-2 bg-gray-800 rounded text-xs">
+        <div class="text-gray-300 font-medium mb-2">Available field references - Click to copy:</div>
+        <div class="grid grid-cols-1 gap-1">
+          <template x-for="formField in form.fields" :key="formField.key">
+            <div x-show="formField.key && formField.key !== field.key" class="flex items-center justify-between py-1">
+              <span class="text-gray-400 text-xs" x-text="(formField.label || formField.key) + ' (' + formField.type + ')'"></span>
+              <code class="text-green-400 bg-gray-900 px-2 py-1 rounded text-xs cursor-pointer hover:bg-gray-600"
+                    @click="navigator.clipboard.writeText('{{' + formField.key + '}}'); $event.target.textContent = 'Copied!'; setTimeout(() => $event.target.textContent = '{{' + formField.key + '}}', 1000)"
+                    x-text="'{{' + formField.key + '}}'"></code>
+            </div>
+          </template>
+        </div>
+        <div class="mt-2 text-gray-500 text-xs">
+          💡 Copy any {{field_key}} above and paste it into your prompts below
+        </div>
+      </div>
+    </template>
+  </div>
+
   <!-- System Prompt -->
   <div>
     <label class="block text-sm font-medium text-gray-300 mb-2">System Prompt</label>
@@ -49,33 +76,20 @@
               rows="3"
               class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
               placeholder="System instructions for the AI..."></textarea>
+    <div class="text-xs text-gray-400 mt-1">
+      Use {{field_key}} to reference other form fields in your system prompt.
+    </div>
   </div>
 
   <!-- Prompt -->
   <div>
-    <label class="block text-sm font-medium text-gray-300 mb-2">Prompt</label>
+    <label class="block text-sm font-medium text-gray-300 mb-2">User Prompt</label>
     <textarea x-model="field.prompt" 
               rows="4"
               class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
               placeholder="Enter your prompt here..."></textarea>
     <div class="text-xs text-gray-400 mt-1">
-      Use {{field_key}} to reference other form fields in your prompt.
-    </div>
-    
-    <!-- Available Fields Helper -->
-    <div class="mt-2 p-2 bg-gray-700 rounded text-xs">
-      <div class="text-gray-300 font-medium mb-1">Available field references:</div>
-      <div class="space-y-1">
-        <template x-for="formField in form.fields" :key="formField.key">
-          <div x-show="formField.key && formField.key !== field.key" class="flex items-center justify-between">
-            <span class="text-gray-400" x-text="formField.label || formField.key"></span>
-            <button @click="field.prompt = (field.prompt || '') + '{{' + formField.key + '}}'" 
-                    class="text-blue-400 hover:text-blue-300 text-xs px-2 py-1 rounded bg-gray-600 hover:bg-gray-500">
-              Add <span x-text="formField.key"></span>
-            </button>
-          </div>
-        </template>
-      </div>
+      Use {{field_key}} to reference other form fields in your user prompt.
     </div>
   </div>
 
@@ -87,7 +101,7 @@
               class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
               placeholder='{"field1": "value1", "field2": "value2"}'></textarea>
     <div class="text-xs text-gray-400 mt-1">
-      Define the expected JSON structure for the AI response.
+      Define the expected JSON structure for the AI response. You can also use {{field_key}} here.
     </div>
   </div>
 
