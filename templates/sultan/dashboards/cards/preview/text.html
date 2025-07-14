@@ -1,35 +1,37 @@
 
 <style>
-  /* Hide Quill toolbar in preview mode */
-  .text-preview-quill .ql-toolbar {
-    display: none !important;
+  .text-content ul {
+    list-style-type: disc !important;
+    margin-left: 2rem !important;
+    margin-bottom: 1rem !important;
+    padding-left: 0 !important;
+    display: block !important;
   }
-  
-  /* Make Quill editor look like regular content */
-  .text-preview-quill .ql-container {
-    border: none !important;
-    background: transparent !important;
+  .text-content ol {
+    list-style-type: decimal !important;
+    margin-left: 2rem !important;
+    margin-bottom: 1rem !important;
+    padding-left: 0 !important;
+    display: block !important;
   }
-  
-  .text-preview-quill .ql-editor {
-    padding: 0 !important;
-    background: transparent !important;
-    color: white !important;
+  .text-content li {
+    margin-bottom: 0.25rem !important;
+    padding-left: 0.5rem !important;
+    display: list-item !important;
+    list-style-position: outside !important;
   }
-  
-  /* Ensure lists display properly */
-  .text-preview-quill .ql-editor ul {
-    list-style-type: disc;
-    margin-left: 1.5rem;
+  .text-content ul ul {
+    list-style-type: circle !important;
+    margin-top: 0.25rem !important;
+    margin-left: 1.5rem !important;
   }
-  
-  .text-preview-quill .ql-editor ol {
-    list-style-type: decimal;
-    margin-left: 1.5rem;
+  .text-content ul ul ul {
+    list-style-type: square !important;
   }
-  
-  .text-preview-quill .ql-editor li {
-    list-style-position: outside;
+  .text-content ol ol {
+    list-style-type: lower-alpha !important;
+    margin-top: 0.25rem !important;
+    margin-left: 1.5rem !important;
   }
 </style>
 
@@ -43,58 +45,11 @@
      :class="[
        card.config.backgroundColor || 'bg-gray-800',
        card.config.showBorder ? (card.config.borderColor || 'border-gray-600') + ' border' : ''
-     ]"
-     x-data="{ previewQuill: null }">
+     ]">
 
   <!-- Content Display -->
-  <div class="text-white h-full">
-    <div x-show="card.config.content" class="h-full">
-      <!-- Quill Preview Editor -->
-      <div 
-        x-ref="textPreviewQuill"
-        x-init="
-          setTimeout(() => {
-            if (!previewQuill) {
-              previewQuill = new Quill($refs.textPreviewQuill, {
-                theme: 'snow',
-                readOnly: true,
-                modules: {
-                  toolbar: false
-                }
-              });
-              
-              // Set initial content using getContents/setContents approach
-              if (card.config.content) {
-                // Create a temporary editor to parse the HTML content
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = card.config.content;
-                const tempQuill = new Quill(tempDiv, { theme: 'snow' });
-                const delta = tempQuill.getContents();
-                previewQuill.setContents(delta);
-              }
-              
-              // Watch for content changes and update using Delta
-              Alpine.effect(() => {
-                if (card.config.content && previewQuill) {
-                  const tempDiv = document.createElement('div');
-                  tempDiv.innerHTML = card.config.content;
-                  const tempQuill = new Quill(tempDiv, { theme: 'snow' });
-                  const delta = tempQuill.getContents();
-                  
-                  // Only update if content is different
-                  const currentDelta = previewQuill.getContents();
-                  if (JSON.stringify(delta) !== JSON.stringify(currentDelta)) {
-                    previewQuill.setContents(delta);
-                  }
-                }
-              });
-            }
-          }, 100);
-        "
-        class="text-preview-quill h-full">
-      </div>
-    </div>
-    
+  <div class="text-white">
+    <div x-show="card.config.content" x-html="card.config.content" class="prose prose-invert max-w-none text-content"></div>
     <div x-show="!card.config.content" class="text-gray-400 text-center py-8">
       <p>No content configured</p>
       <p class="text-sm mt-2">Configure the text content in the editor</p>
