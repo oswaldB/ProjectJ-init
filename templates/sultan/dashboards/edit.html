@@ -19,7 +19,8 @@
     { type: 'actions', name: 'Actions', icon: '' },
     { type: 'chat', name: 'Chat', icon: '' },
     { type: 'search', name: 'Search Bar', icon: '' },
-    { type: 'stats', name: 'Stats Card', icon: '' }
+    { type: 'stats', name: 'Stats Card', icon: '' },
+    { type: 'text', name: 'Text Card', icon: '' }
   ],
   selectedCard: null,
   gridColumns: Array.from({length: 12}, (_, i) => i + 1),
@@ -124,6 +125,13 @@
         endpoint: '',
         maxMessages: 50,
         allowFileUpload: false
+      },
+      text: {
+        title: '',
+        content: '',
+        backgroundColor: 'bg-gray-800',
+        showBorder: false,
+        borderColor: 'border-gray-600'
       }
     };
 
@@ -700,6 +708,11 @@
                 {% include "sultan/dashboards/cards/preview/stats.html" %}
               </div>
             </template>
+            <template x-if="card && card.type === 'text'">
+              <div>
+                {% include "sultan/dashboards/cards/preview/text.html" %}
+              </div>
+            </template>
           </div>
         </template>
       </div>
@@ -810,6 +823,11 @@
           <template x-if="selectedCard && selectedCard.type === 'stats'">
             <div>
               {% include "sultan/dashboards/cards/editor/stats.html" %}
+            </div>
+          </template>
+          <template x-if="selectedCard && selectedCard.type === 'text'">
+            <div>
+              {% include "sultan/dashboards/cards/editor/text.html" %}
             </div>
           </template>
         </div>
