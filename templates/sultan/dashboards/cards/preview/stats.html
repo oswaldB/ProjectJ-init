@@ -78,7 +78,7 @@
           }
         }
         
-        // Emit the numeric value for stats calculation
+        // Emit the value for stats calculation
         const value = doc[targetField];
         
         // Debug logs (remove in production)
@@ -89,8 +89,16 @@
           console.log('Is numeric:', !isNaN(parseFloat(value)));
         }
         
-        if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
-          emit(doc._id, parseFloat(value));
+        // For count, we just need the field to exist
+        // For numeric stats (sum, min, max), we need numeric values
+        if (value !== null && value !== undefined) {
+          // If it's numeric, emit the number for all stats
+          if (!isNaN(parseFloat(value))) {
+            emit(doc._id, parseFloat(value));
+          } else {
+            // For non-numeric values, emit 1 for count purposes
+            emit(doc._id, 1);
+          }
         }
       };
       
