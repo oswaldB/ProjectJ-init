@@ -126,7 +126,7 @@
         let processedText = text;
         this.form.fields.forEach(formField => {
           if (formField.key && this.previewValues[formField.key]) {
-            const regex = new RegExp(`{{${formField.key}}}`, 'g');
+           
             let fieldValue = this.previewValues[formField.key];
 
             // Handle different field types
