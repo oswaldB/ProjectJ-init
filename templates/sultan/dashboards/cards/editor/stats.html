@@ -87,12 +87,7 @@
               
               <div>
                 <label class="block text-xs text-gray-400 mb-1">Value</label>
-                <select x-model="filter.value" class="w-full bg-gray-600 text-white p-1 rounded text-sm">
-                  <option value="">Select a value</option>
-                  <template x-for="field in selectedCard.config.availableFields || []" :key="field.key">
-                    <option :value="field.key" x-text="field.label + ' (' + field.key + ')'"></option>
-                  </template>
-                </select>
+                <input type="text" x-model="filter.value" class="w-full bg-gray-600 text-white p-1 rounded text-sm" placeholder="filter_value">
               </div>
             </div>
           </div>
