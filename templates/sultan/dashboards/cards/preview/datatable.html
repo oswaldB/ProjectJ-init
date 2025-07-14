@@ -1,4 +1,11 @@
-<div class='bg-gray-800 p-4 rounded-lg h-full' style="max-height: 70vh;" x-data='{
+<div class='bg-gray-800 p-4 rounded-lg h-full' 
+     :style="{
+       minHeight: card.size.height === 1 ? '200px' : 
+                 card.size.height === 2 ? '300px' : 
+                 card.size.height === 3 ? '400px' : 
+                 card.size.height === 4 ? '500px' : '600px'
+     }"
+     x-data='{
   previewData: [], 
   loading: false,
   currentPage: 1,
@@ -370,19 +377,19 @@
 
         processButtonUrl(url, row) {
           if (!url) return "#";
-
+          
           let processedUrl = url;
-
+          
           // Get all available variables
           const dateVars = this.getDateVariables();
-
+          
           // Replace user variables
           processedUrl = processedUrl.replace(/\$\{currentUser\}/g, this.getCurrentUser());
           processedUrl = processedUrl.replace(/\$\{author2\}/g, localStorage.getItem("author2") || "");
-
+          
           // Replace row-specific variables
           processedUrl = processedUrl.replace(/\$\{responseId\}/g, row._id || row.id || "");
-
+          
           // Replace date variables
           processedUrl = processedUrl.replace(/\$\{now\}/g, dateVars.now);
           processedUrl = processedUrl.replace(/\$\{today\}/g, dateVars.today);
@@ -403,13 +410,13 @@
           processedUrl = processedUrl.replace(/\$\{currentYearEnd\}/g, dateVars.currentYearEnd);
           processedUrl = processedUrl.replace(/\$\{lastYearStart\}/g, dateVars.lastYearStart);
           processedUrl = processedUrl.replace(/\$\{lastYearEnd\}/g, dateVars.lastYearEnd);
-
+          
           // Replace any row field values using ${fieldName} syntax
           Object.keys(row).forEach(key => {
             const regex = new RegExp(`\\$\\{${key}\\}`, "g");
             processedUrl = processedUrl.replace(regex, row[key] || "");
           });
-
+          
           return processedUrl;
         },
 
@@ -590,14 +597,7 @@
         this.loading = false;
       }
     },
-}' 
-     :style="{
-       minHeight: card.size.height === 1 ? '200px' : 
-                 card.size.height === 2 ? '300px' : 
-                 card.size.height === 3 ? '400px' : 
-                 card.size.height === 4 ? '500px' : '600px'
-     }"
-     x-init='loadDataFromPouchDB()'>
+}' x-init='loadDataFromPouchDB()'>
 
   <!-- Data Source Info -->
   <div x-show="card.config.dataSource" class="mb-2 flex justify-between items-center">
@@ -684,7 +684,7 @@
       </div>
 
       <!-- Data Rows Container -->
-      <div class="p-2 space-y-1 overflow-y-auto min-w-max" style="max-height: 50vh;"></div>
+      <div class="p-2 space-y-1 overflow-y-auto min-w-max">
         <!-- Loading indicator -->
         <div x-show="loading" class="text-center py-4">
           <div class="text-xs text-gray-400">Loading data...</div>
