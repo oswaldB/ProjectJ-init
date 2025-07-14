@@ -16,6 +16,64 @@
       </select>
     </div>
 
+    <!-- Global Filters Configuration -->
+    <div x-show="selectedCard.config.dataSource" class="mt-4">
+      <label class="block text-sm font-medium text-gray-300 mb-2">Global Filters</label>
+      <div class="bg-gray-700 p-3 rounded border border-gray-600">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-xs text-gray-400">Filter all data before applying to columns</span>
+          <button @click="
+            if (!selectedCard.config.globalFilters) selectedCard.config.globalFilters = [];
+            selectedCard.config.globalFilters.push({
+              field: '',
+              operator: 'equals',
+              value: ''
+            });
+          " class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">
+            + Add Filter
+          </button>
+        </div>
+        
+        <div x-show="selectedCard.config.globalFilters && selectedCard.config.globalFilters.length > 0" class="space-y-2">
+          <template x-for="(filter, index) in selectedCard.config.globalFilters || []" :key="index">
+            <div class="flex items-center gap-2 bg-gray-600 p-2 rounded">
+              <input type="text" 
+                     x-model="filter.field"
+                     placeholder="Field name"
+                     class="flex-1 bg-gray-800 text-white px-2 py-1 rounded text-xs">
+              
+              <select x-model="filter.operator" class="bg-gray-800 text-white px-2 py-1 rounded text-xs">
+                <option value="equals">Equals</option>
+                <option value="not_equals">Not Equals</option>
+                <option value="contains">Contains</option>
+                <option value="not_contains">Not Contains</option>
+                <option value="greater_than">Greater Than</option>
+                <option value="less_than">Less Than</option>
+                <option value="exists">Field Exists</option>
+                <option value="not_exists">Field Not Exists</option>
+              </select>
+              
+              <input type="text" 
+                     x-model="filter.value"
+                     placeholder="Value"
+                     x-show="!['exists', 'not_exists'].includes(filter.operator)"
+                     class="flex-1 bg-gray-800 text-white px-2 py-1 rounded text-xs">
+              
+              <button @click="selectedCard.config.globalFilters.splice(index, 1)" 
+                      class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">
+                ×
+              </button>
+            </div>
+          </template>
+        </div>
+        
+        <div x-show="!selectedCard.config.globalFilters || selectedCard.config.globalFilters.length === 0" 
+             class="text-gray-400 text-xs text-center py-2">
+          No global filters configured
+        </div>
+      </div>
+    </div>
+
     <!-- Columns Configuration -->
     <div x-show="selectedCard.config.dataSource" class="mt-6">
       <div class="flex items-center justify-between mb-3">
