@@ -135,14 +135,14 @@
       // Add system message if provided
       if (field.systemPrompt && field.systemPrompt.trim()) {
         messages.push({
-          role: 'system',
+          role: "system",
           content: field.systemPrompt.trim()
         });
       }
       
       // Add user message with the processed prompt
       messages.push({
-        role: 'user',
+        role: "user",
         content: processedPrompt
       });
 
