@@ -39,7 +39,16 @@
     <input type="password" 
            x-model="field.apiKey"
            class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
-           placeholder="sk-...">
+           placeholder="Your API key">
+  </div>
+
+  <!-- System Prompt -->
+  <div>
+    <label class="block text-sm font-medium text-gray-300 mb-2">System Prompt</label>
+    <textarea x-model="field.systemPrompt" 
+              rows="3"
+              class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+              placeholder="System instructions for the AI..."></textarea>
   </div>
 
   <!-- Prompt -->

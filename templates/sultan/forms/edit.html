@@ -129,12 +129,29 @@
         }
       });
 
+      // Prepare the messages array for LLM API
+      const messages = [];
+      
+      // Add system message if provided
+      if (field.systemPrompt && field.systemPrompt.trim()) {
+        messages.push({
+          role: "system",
+          content: field.systemPrompt.trim()
+        });
+      }
+      
+      // Add user message with the processed prompt
+      messages.push({
+        role: "user",
+        content: processedPrompt
+      });
+
       // Prepare the request payload
       const payload = {
         model: field.model,
-        prompt: processedPrompt,
-        apiKey: field.apiKey,
-        expectedFormat: field.expectedFormat
+        messages: messages,
+        max_tokens: 1000,
+        temperature: 0.7
       };
 
       // Make the API call
@@ -153,9 +170,23 @@
 
       const result = await response.json();
 
-      // Store the response
+      // Store the response (handle different response formats)
       if (!this.responses) this.responses = {};
-      this.responses[field.key] = result.response || result.content || result.text || JSON.stringify(result);
+      let responseContent = '';
+      
+      if (result.choices && result.choices[0] && result.choices[0].message) {
+        responseContent = result.choices[0].message.content;
+      } else if (result.response) {
+        responseContent = result.response;
+      } else if (result.content) {
+        responseContent = result.content;
+      } else if (result.text) {
+        responseContent = result.text;
+      } else {
+        responseContent = JSON.stringify(result);
+      }
+      
+      this.responses[field.key] = responseContent;
 
       // Update Quill editor if it exists
       if (window.quillInstances && window.quillInstances[`response_${field.key}`]) {

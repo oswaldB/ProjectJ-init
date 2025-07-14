@@ -558,8 +558,10 @@ def api_draft_responses(form_id):
 def ask_scheherazade():
     try:
         data = request.json
-        prompt = data.get('prompt', '')
-        response_format = data.get('responseFormat', '')
+        messages = data.get('messages', [])
+        model = data.get('model', 'gpt-3.5-turbo')
+        max_tokens = data.get('max_tokens', 1000)
+        temperature = data.get('temperature', 0.7)
 
         # Get API key from Authorization header
         auth_header = request.headers.get('Authorization', '')
@@ -568,15 +570,23 @@ def ask_scheherazade():
 
         api_key = auth_header.replace('Bearer ', '', 1)
 
-        if not prompt:
-            return jsonify({'error': 'Prompt is required'}), 400
+        if not messages:
+            return jsonify({'error': 'Messages are required'}), 400
 
         if not api_key:
             return jsonify({'error': 'API key is required'}), 400
 
-        # TODO: Call the LLM API with the prompt, response_format, and api_key
-        # and return the result.  This is a placeholder.
-        return jsonify({'response': f'LLM response to prompt: {prompt}'})
+        # TODO: Call the LLM API with the messages, model, and other parameters
+        # and return the result. This is a placeholder.
+        user_message = next((msg['content'] for msg in messages if msg['role'] == 'user'), '')
+        return jsonify({
+            'choices': [{
+                'message': {
+                    'role': 'assistant',
+                    'content': f'LLM response to: {user_message}'
+                }
+            }]
+        })
     except Exception as e:
         logger.error(f"Error in ask_scheherazade: {e}")
         return jsonify({"error": str(e)}), 500
