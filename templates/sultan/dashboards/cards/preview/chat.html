@@ -1,4 +1,47 @@
 
+<style>
+.markdown-content pre {
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 8px;
+  border-radius: 4px;
+  margin: 4px 0;
+  overflow-x: auto;
+}
+.markdown-content code {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-family: 'Courier New', monospace;
+}
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+}
+.markdown-content p {
+  margin: 4px 0;
+}
+.markdown-content ul, .markdown-content ol {
+  margin: 4px 0;
+  padding-left: 16px;
+}
+.markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4, .markdown-content h5, .markdown-content h6 {
+  margin: 8px 0 4px 0;
+  font-weight: bold;
+}
+.markdown-content blockquote {
+  border-left: 3px solid #666;
+  padding-left: 8px;
+  margin: 4px 0;
+  font-style: italic;
+}
+.markdown-content strong {
+  font-weight: bold;
+}
+.markdown-content em {
+  font-style: italic;
+}
+</style>
+
 <div class="bg-gray-800 p-4 rounded-lg flex flex-col h-full" 
      :style="{
        minHeight: card.size.height === 1 ? '200px' : 
@@ -33,7 +76,23 @@
     
     if (hasCodeBlocks || hasMarkdownSyntax) {
       console.log('✅ Rendering as markdown');
-      return window.marked ? marked(text) : text;
+      if (window.marked) {
+        try {
+          // Configure marked for better rendering
+          marked.setOptions({
+            breaks: true,
+            gfm: true,
+            sanitize: false
+          });
+          return marked(text);
+        } catch (error) {
+          console.error('Markdown rendering error:', error);
+          return text;
+        }
+      } else {
+        console.warn('Marked library not available');
+        return text;
+      }
     }
     
     console.log('❌ Rendering as plain text');
@@ -386,7 +445,7 @@
                    'bg-red-500 text-white': message.sender === 'user',
                    'bg-gray-600 text-gray-100': message.sender === 'ai'
                  }">
-              <div x-html="renderMarkdownIfNeeded(message.text)"></div>
+              <div class="markdown-content" x-html="renderMarkdownIfNeeded(message.text)"></div>
               <div class="text-xs opacity-75 mt-1" 
                    x-text="new Date(message.timestamp).toLocaleTimeString()"></div>
             </div>
