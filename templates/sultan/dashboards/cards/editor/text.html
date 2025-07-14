@@ -1,0 +1,55 @@
+
+<div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
+  <h3 class="text-white font-semibold mb-3">Text Card Configuration</h3>
+  <div class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Card Title</label>
+      <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Text card title">
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">Content</label>
+      <div 
+        x-ref="textQuillEditor"
+        x-init="window.initQuill($refs.textQuillEditor, val => selectedCard.config.content = (val !== undefined ? val : selectedCard.config.content))"
+        class="bg-white text-black rounded border border-gray-600 min-h-[200px]"></div>
+      <div class="mt-1 text-gray-400 text-sm border-l-4 border-blue-700 pl-2" x-show="selectedCard.config.content">
+        <span class="font-semibold text-blue-300">Preview:</span>
+        <div x-html="selectedCard.config.content"></div>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Background Color</label>
+      <select x-model="selectedCard.config.backgroundColor" class="w-full bg-gray-700 text-white p-2 rounded">
+        <option value="bg-gray-800">Gray (Default)</option>
+        <option value="bg-blue-800">Blue</option>
+        <option value="bg-green-800">Green</option>
+        <option value="bg-red-800">Red</option>
+        <option value="bg-yellow-800">Yellow</option>
+        <option value="bg-purple-800">Purple</option>
+        <option value="bg-indigo-800">Indigo</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="flex items-center space-x-2 text-white">
+        <input type="checkbox" x-model="selectedCard.config.showBorder" class="bg-gray-800 border-gray-600">
+        <span>Show border</span>
+      </label>
+    </div>
+
+    <div x-show="selectedCard.config.showBorder">
+      <label class="block text-sm font-medium text-gray-300 mb-1">Border Color</label>
+      <select x-model="selectedCard.config.borderColor" class="w-full bg-gray-700 text-white p-2 rounded">
+        <option value="border-gray-600">Gray (Default)</option>
+        <option value="border-blue-500">Blue</option>
+        <option value="border-green-500">Green</option>
+        <option value="border-red-500">Red</option>
+        <option value="border-yellow-500">Yellow</option>
+        <option value="border-purple-500">Purple</option>
+        <option value="border-indigo-500">Indigo</option>
+      </select>
+    </div>
+  </div>
+</div>

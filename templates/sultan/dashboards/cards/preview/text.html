@@ -1,0 +1,25 @@
+
+<div class="p-4 rounded-lg h-full"
+     :style="{
+       minHeight: card.size.height === 1 ? '200px' : 
+                 card.size.height === 2 ? '300px' : 
+                 card.size.height === 3 ? '400px' : 
+                 card.size.height === 4 ? '500px' : '600px'
+     }"
+     :class="[
+       card.config.backgroundColor || 'bg-gray-800',
+       card.config.showBorder ? (card.config.borderColor || 'border-gray-600') + ' border' : ''
+     ]">
+
+  <!-- Card Title -->
+  <h3 x-show="card.config.title" class="text-white font-semibold mb-3" x-text="card.config.title"></h3>
+
+  <!-- Content Display -->
+  <div class="text-white">
+    <div x-show="card.config.content" x-html="card.config.content" class="prose prose-invert max-w-none"></div>
+    <div x-show="!card.config.content" class="text-gray-400 text-center py-8">
+      <p>No content configured</p>
+      <p class="text-sm mt-2">Configure the text content in the editor</p>
+    </div>
+  </div>
+</div>
