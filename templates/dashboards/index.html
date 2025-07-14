@@ -29,7 +29,7 @@
       this.loading = true;
       this.error = null;
       
-      const response = await fetch(`/pc-analytics-jaffar/sultan/dashboard/api/${id}`);
+      const response = await fetch(`/pc-analytics-jaffar/dashboards/api/${id}`);
       if (!response.ok) {
         throw new Error('Dashboard not found');
       }

@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template, request, jsonify, redirect
 from services.s3_service import list_sultan_objects, get_sultan_object, save_sultan_object, delete_sultan_object
 
-dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/pc-analytics-jaffar/sultan/dashboard')
+dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/pc-analytics-jaffar/dashboards')
 
 @dashboard_bp.route('/')
 def index():
-    return render_template('sultan/dashboards/index.html')
+    return render_template('/dashboards/index.html')
 
 @dashboard_bp.route('/edit/<dashboard_id>')
 def edit(dashboard_id):
@@ -39,7 +39,7 @@ def create_new_dashboard():
 
 @dashboard_bp.route('/<dashboard_id>')
 def view_dashboard(dashboard_id):
-    return render_template('sultan/dashboards/edit.html')
+    return render_template('/dashboards/index.html')
 
 @dashboard_bp.route('/preview/<dashboard_id>')
 def preview_dashboard(dashboard_id):

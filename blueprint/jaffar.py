@@ -41,10 +41,6 @@ def index():
 def grid():
     return render_template('jaffar/grid.html')
 
-@jaffar_blueprint.route('/dashboard/<dashboard_id>')
-def dashboard_grid(dashboard_id):
-    return render_template('jaffar/dashboard.html')
-
 @jaffar_blueprint.route('/edit')
 def edit():
     return render_template('jaffar/edit.html')
