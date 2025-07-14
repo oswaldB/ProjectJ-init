@@ -79,11 +79,13 @@
       if (window.marked) {
         try {
           // Configure marked for better rendering
-          marked.setOptions({
-            breaks: true,
-            gfm: true,
-            sanitize: false
-          });
+          if (typeof marked.setOptions === 'function') {
+            marked.setOptions({
+              breaks: true,
+              gfm: true,
+              sanitize: false
+            });
+          }
           return marked(text);
         } catch (error) {
           console.error('Markdown rendering error:', error);
@@ -98,6 +100,18 @@
     console.log('❌ Rendering as plain text');
     // If no markdown syntax detected, return as plain text
     return text;
+  },
+
+  // Helper function to render message content
+  renderMessageContent(element, text) {
+    const renderedText = this.renderMarkdownIfNeeded(text);
+    if (renderedText !== text) {
+      // It's markdown, use innerHTML
+      element.innerHTML = renderedText;
+    } else {
+      // It's plain text, use textContent for security
+      element.textContent = text;
+    }
   },
 
   // Initialize chat
@@ -445,7 +459,11 @@
                    'bg-red-500 text-white': message.sender === 'user',
                    'bg-gray-600 text-gray-100': message.sender === 'ai'
                  }">
-              <div class="markdown-content" x-html="renderMarkdownIfNeeded(message.text)"></div>
+              <div class="markdown-content" x-text="message.text" x-init="
+                if (renderMarkdownIfNeeded(message.text) !== message.text) {
+                  $el.innerHTML = renderMarkdownIfNeeded(message.text);
+                }
+              "></div>
               <div class="text-xs opacity-75 mt-1" 
                    x-text="new Date(message.timestamp).toLocaleTimeString()"></div>
             </div>
