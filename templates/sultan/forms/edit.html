@@ -126,7 +126,7 @@
         let processedText = text;
         this.form.fields.forEach(formField => {
           if (formField.key && this.previewValues[formField.key]) {
-           
+
             let fieldValue = this.previewValues[formField.key];
 
             // Handle different field types
@@ -139,6 +139,7 @@
               fieldValue = fieldValue.replace(/<[^>]*>/g, '');
             }
 
+            const regex = new RegExp(`&&${formField.key}&&`, 'g');
             processedText = processedText.replace(regex, fieldValue || '');
           }
         });
