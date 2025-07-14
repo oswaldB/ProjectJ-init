@@ -39,6 +39,7 @@
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         // Alpine x-init runs before DOM is ready for Quill, so use setTimeout to defer
+        
         window.initQuill = function($el, model) {
           if (!$el) return;
           if ($el._quill) return;
@@ -68,6 +69,10 @@
     <!-- Quill CSS -->
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
     <style>
+      /* force the bullet display */
+      ol li[data-list="bullet"] {
+          list-style-type: disc;
+      }
       /* Quill editor dark background and white toolbar buttons */
       .ql-toolbar.ql-snow {
         background: #rgb(31 41 55 / var(--tw-bg-opacity, 1)) !important;
