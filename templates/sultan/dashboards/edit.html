@@ -497,14 +497,9 @@
 
     try {
       console.log('Loading search fields for data source:', this.selectedCard.config.dataSource);
+      const formId = this.selectedCard.config.dataSource;
 
-      // Extract form ID from data source (remove _drafts suffix if present)
-      let formId = this.selectedCard.config.dataSource;
-      if (formId.endsWith('_drafts')) {
-        formId = formId.replace('_drafts', '');
-      }
-
-      // Load form configuration to get fields using the correct API endpoint
+      // Load form configuration to get fields
       const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${formId}`);
       if (response.ok) {
         const formConfig = await response.json();
@@ -514,7 +509,7 @@
           const searchFields = formConfig.fields
             .filter(field => field.key) // Only include fields with keys
             .map(field => ({
-              field: field.key, // Use 'field' instead of 'key' to match PouchDB search
+              key: field.key,
               label: field.label || field.key.charAt(0).toUpperCase() + field.key.slice(1).replace(/_/g, ' '),
               type: field.type || 'text',
               enabled: true // Enable all fields by default
@@ -528,12 +523,14 @@
           this.selectedCard.config.searchFields = [];
         }
       } else {
-        console.error('Failed to load form config:', response.status);
+        console.error('Failed to fetch form config:', response.status);
         this.selectedCard.config.searchFields = [];
       }
     } catch (error) {
-      console.error('Error loading search fields:', error);
-      this.selectedCard.config.searchFields = [];
+      console.error('Failed to load search fields:', error);
+      if (this.selectedCard && this.selectedCard.config) {
+        this.selectedCard.config.searchFields = [];
+      }
     }
   }
 }" x-init="init()">

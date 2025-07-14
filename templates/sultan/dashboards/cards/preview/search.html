@@ -5,35 +5,6 @@
   showSyncButton: false,
   isSyncing: false,
   syncCompleted: false,
-  availableFields: [], // Add availableFields array
-  async init() { // Initialize function to load fields on component load
-    if (card.config.dataSource) {
-      await this.loadAvailableFields(card.config.dataSource);
-    }
-  },
-  async loadAvailableFields(dataSource) {
-    if (!dataSource) {
-      this.availableFields = [];
-      return;
-    }
-
-    try {
-      const formId = dataSource.split('/').pop(); // Extract form ID from data source URL
-      const apiUrl = `/pc-analytics-jaffar/sultan/api/forms/${formId}`;
-      const response = await fetch(apiUrl);
-      if (!response.ok) {
-        console.error('Failed to load available fields:', response.status);
-        this.availableFields = [];
-        return;
-      }
-      const data = await response.json();
-      console.log('Available fields data:', data);
-      this.availableFields = data.fields || []; // Assuming the API returns a 'fields' array
-    } catch (error) {
-      console.error('Error loading available fields:', error);
-      this.availableFields = [];
-    }
-  },
   async performSearch() {
     if (!this.searchQuery.trim() || !card.config.dataSource) {
       return;
@@ -177,7 +148,7 @@
 
     return processedUrl;
   }
-}" x-init="init()">
+}">
   <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Search'"></h3>
 
   <!-- Data Source Info -->
@@ -188,10 +159,6 @@
             class="bg-blue-600 text-white px-2 py-1 rounded text-xs">
         <span x-text="(card.config.searchFields || []).filter(f => f.enabled).length"></span> fields
       </span>
-    </div>
-    <!-- Available Fields Info -->
-    <div x-show="availableFields.length > 0" class="text-xs text-gray-500 mt-1">
-      Available fields: <span x-text="availableFields.join(', ')"></span>
     </div>
   </div>
 
