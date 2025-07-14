@@ -1,4 +1,3 @@
-
 <div class="bg-gray-800 p-4 rounded-lg h-full" x-data="{
   searchQuery: '',
   searchResults: [],
@@ -10,73 +9,51 @@
     if (!this.searchQuery.trim() || !card.config.dataSource) {
       return;
     }
-    
+
     this.isSearching = true;
     this.showSyncButton = false;
     this.syncCompleted = false;
     this.searchResults = [];
-    
+
     try {
       const pouchDB = new PouchDB(card.config.dataSource);
-      
+
       // Vérifier si la base de données existe et contient des données
       const info = await pouchDB.info();
       console.log('Database info:', info);
-      
+
       if (info.doc_count === 0) {
         console.log('Database is empty, showing sync button');
         this.searchResults = [];
         this.showSyncButton = true;
         return;
       }
-      
+
       const searchFields = (card.config.searchFields || [])
         .filter(f => f && f.enabled && f.field)
         .map(f => f.field);
-      
+
       // Si aucun champ de recherche n'est configuré, rechercher dans tous les champs
       const searchOptions = {
         query: this.searchQuery,
         include_docs: true,
         highlighting: true
       };
-      
+
       // Ajouter les champs seulement s'ils sont configurés et valides
       if (searchFields.length > 0) {
         searchOptions.fields = searchFields;
       }
-      
+
       console.log('Search options:', searchOptions);
-      
+
       let searchResult;
       try {
         searchResult = await pouchDB.search(searchOptions);
         console.log('Search result:', searchResult);
-      } catch (searchError) {
-        console.log('PouchDB search failed, trying fallback search:', searchError);
-        
-        // Fallback: utiliser find avec regex si search échoue
-        const allDocs = await pouchDB.allDocs({ include_docs: true });
-        const filteredDocs = allDocs.rows.filter(row => {
-          const doc = row.doc;
-          if (!doc || doc._id.startsWith('_design/')) return false;
-          
-          // Rechercher dans tous les champs du document
-          const docString = JSON.stringify(doc).toLowerCase();
-          return docString.includes(this.searchQuery.toLowerCase());
-        });
-        
-        searchResult = {
-          rows: filteredDocs.map(row => ({
-            id: row.id,
-            doc: row.doc,
-            highlighting: {}
-          }))
-        };
-        
-        console.log('Fallback search result:', searchResult);
-      }
-      
+      console.log('Search result rows:', searchResult.rows);
+      console.log('Search result rows length:', searchResult.rows ? searchResult.rows.length : 'undefined');
+
       if (searchResult.rows && searchResult.rows.length > 0) {
         this.searchResults = searchResult.rows.map(row => ({
           id: row.id,
@@ -102,36 +79,36 @@
     if (!card.config.dataSource) {
       return;
     }
-    
+
     this.isSyncing = true;
     this.showSyncButton = false;
     this.syncCompleted = false;
-    
+
     try {
       console.log('Starting sync for:', card.config.dataSource);
-      
+
       // Appeler la route init PouchDB pour synchroniser les données
       await initializePouchDB(card.config.dataSource);
-      
+
       // Attendre un peu plus pour l'indexation PouchDB Quick Search
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Vérifier que la base de données contient des données
       const pouchDB = new PouchDB(card.config.dataSource);
       const info = await pouchDB.info();
       console.log('Post-sync database info:', info);
-      
+
       // Indiquer que la sync est terminée
       this.syncCompleted = true;
-      
+
       // Attendre 2 secondes pour que l'utilisateur voie le message
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Relancer automatiquement la recherche si une requête existe
       if (this.searchQuery.trim()) {
         await this.performSearch();
       }
-      
+
     } catch (error) {
       console.error('Erreur de synchronisation:', error);
       this.showSyncButton = true;
@@ -148,9 +125,9 @@
   },
   replaceVariables(url, doc) {
     if (!url) return '';
-    
+
     let processedUrl = url;
-    
+
     // Replace document field variables
     if (doc) {
       Object.keys(doc).forEach(key => {
@@ -158,22 +135,22 @@
         processedUrl = processedUrl.replace(regex, doc[key] || '');
       });
     }
-    
+
     // Replace common variables
     const now = new Date();
     const today = now.toISOString().split('T')[0];
     const currentUser = 'user@example.com'; // This should be replaced with actual current user
-    
+
     processedUrl = processedUrl.replace(/\$\{rc\}/g, doc?.responseId || doc?._id || doc?.id || '');
     processedUrl = processedUrl.replace(/\$\{currentUser\}/g, currentUser);
     processedUrl = processedUrl.replace(/\$\{today\}/g, today);
     processedUrl = processedUrl.replace(/\$\{now\}/g, now.toISOString());
-    
+
     return processedUrl;
   }
 }">
   <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Search'"></h3>
-  
+
   <!-- Data Source Info -->
   <div x-show="card.config.dataSource" class="mb-3">
     <div class="text-xs text-gray-400 flex items-center gap-2">
@@ -184,7 +161,7 @@
       </span>
     </div>
   </div>
-  
+
   <!-- Search Input -->
   <div class="relative mb-3">
     <input 
@@ -197,7 +174,7 @@
     <svg class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
     </svg>
-    
+
     <!-- Search Button -->
     <button 
       @click="performSearch()"
@@ -208,7 +185,7 @@
       <span x-show="isSearching">...</span>
     </button>
   </div>
-  
+
   <!-- Clear Button -->
   <div x-show="searchQuery || searchResults.length > 0" class="mb-3">
     <button 
@@ -218,13 +195,13 @@
       Clear search
     </button>
   </div>
-  
+
   <!-- No Data Source -->
   <div x-show="!card.config.dataSource" class="mt-3 bg-gray-700 p-3 rounded text-center">
     <div class="text-gray-400 text-sm">No data source selected</div>
     <div class="text-gray-500 text-xs mt-1">Configure a data source to enable search</div>
   </div>
-  
+
   <!-- Sync Button -->
   <div x-show="showSyncButton && !isSyncing && !syncCompleted" class="mb-3">
     <button 
@@ -235,7 +212,7 @@
     </button>
     <p class="text-xs text-gray-400 mt-1 text-center">No results found. Click to sync data.</p>
   </div>
-  
+
   <!-- Syncing Indicator -->
   <div x-show="isSyncing" class="mb-3 text-center">
     <div class="inline-flex items-center gap-2 text-blue-400">
@@ -243,7 +220,7 @@
       <span class="text-sm">Syncing data...</span>
     </div>
   </div>
-  
+
   <!-- Sync Completed Message -->
   <div x-show="syncCompleted" class="mb-3 text-center">
     <div class="inline-flex items-center gap-2 text-green-400">
@@ -253,7 +230,7 @@
       <span class="text-sm">Sync completed!</span>
     </div>
   </div>
-  
+
   <!-- Search Results -->
   <div x-show="searchResults.length > 0" class="space-y-2 overflow-y-auto" 
        :class="{
@@ -289,7 +266,7 @@
             </template>
           </div>
         </template>
-        
+
         <!-- Show highlighted matches if available -->
         <div x-show="result.highlighting && Object.keys(result.highlighting).length > 0" class="mt-2 pt-2 border-t border-gray-600">
           <div class="text-xs text-yellow-400 font-medium mb-1">Matches:</div>
@@ -300,7 +277,7 @@
             </div>
           </template>
         </div>
-        
+
         <!-- Action Buttons -->
         <div x-show="card.config.resultActions && card.config.resultActions.length > 0" class="mt-3 pt-2 border-t border-gray-600">
           <div class="flex flex-wrap gap-2">
@@ -316,7 +293,7 @@
             </template>
           </div>
         </div>
-        
+
         <!-- Document ID as fallback -->
         <div class="text-xs text-gray-500 mt-2 pt-1 border-t border-gray-600">
           ID: <span x-text="result.id"></span>
@@ -324,6 +301,6 @@
       </div>
     </template>
   </div>
-  
-  
+
+
 </div>
