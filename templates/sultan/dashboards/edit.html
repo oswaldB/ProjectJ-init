@@ -48,7 +48,7 @@
 
   async loadDashboard(id) {
     try {
-      const response = await fetch(`/pc-analytics-jaffar/sultan/dashboard/api/${id}`);
+      const response = await fetch(`/pc-analytics-jaffar/dashboards/api/${id}`);
       if (response.ok) {
         this.dashboard = await response.json();
       }
@@ -161,7 +161,7 @@
 
   async saveDashboard() {
     try {
-      const response = await fetch('/pc-analytics-jaffar/sultan/dashboard/api/save', {
+      const response = await fetch('/pc-analytics-jaffar/dashboards/api/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

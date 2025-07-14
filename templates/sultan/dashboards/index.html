@@ -41,7 +41,7 @@
     try {
       this.state.loading = true;
       console.log('DEBUG: Starting to load dashboards...');
-      const response = await fetch('/pc-analytics-jaffar/sultan/dashboard/api/list');
+      const response = await fetch('/pc-analytics-jaffar/dashboards/api/list');
       console.log('DEBUG: Response received:', response.status, response.statusText);
       if (!response.ok) throw new Error('Failed to load dashboards');
       this.dashboards = await response.json();
@@ -114,7 +114,7 @@
               </div>
             </div>
             <div class="flex space-x-2">
-              <a :href="`/pc-analytics-jaffar/sultan/dashboard/edit/${dashboard.id}`" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">
+              <a :href="`/pc-analytics-jaffar/dashboards/edit/${dashboard.id}`" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">
                 Edit
               </a>
               <button @click="deleteDashboard(dashboard.id)" class="bg-red-700 text-white px-3 py-1 rounded text-sm hover:bg-red-800">
