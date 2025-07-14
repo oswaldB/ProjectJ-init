@@ -51,7 +51,6 @@
 
     <!-- Ask Button -->
     <button @click="askScheherazade(field)" 
-            :disabled="loadingStates && loadingStates[field.key]"
             class="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white px-4 py-2 rounded transition-colors">
       <span x-show="!loadingStates || !loadingStates[field.key]" x-text="field.buttonLabel || 'Ask Scheherazade'"></span>
       <span x-show="loadingStates && loadingStates[field.key]" class="flex items-center">
