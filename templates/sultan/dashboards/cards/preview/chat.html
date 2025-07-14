@@ -13,6 +13,22 @@
   chatHistory: [],
   currentChatId: null,
 
+  // Function to detect and render markdown if needed
+  renderMarkdownIfNeeded(text) {
+    if (!text) return '';
+    
+    // Check if text contains markdown code blocks or other markdown syntax
+    const hasCodeBlocks = text.includes('```');
+    const hasMarkdownSyntax = /(\*\*|__|\*|_|`|#|>|\[.*\]\(.*\)|\n-|\n\*|\n\d+\.)/.test(text);
+    
+    if (hasCodeBlocks || hasMarkdownSyntax) {
+      return window.marked ? marked(text) : text;
+    }
+    
+    // If no markdown syntax detected, return as plain text
+    return text;
+  },
+
   // Initialize chat
   init() {
     this.loadChatHistory();
@@ -358,7 +374,7 @@
                    'bg-red-500 text-white': message.sender === 'user',
                    'bg-gray-600 text-gray-100': message.sender === 'ai'
                  }">
-              <div x-html="window.marked ? marked(message.text) : message.text"></div>
+              <div x-html="renderMarkdownIfNeeded(message.text)"></div>
               <div class="text-xs opacity-75 mt-1" 
                    x-text="new Date(message.timestamp).toLocaleTimeString()"></div>
             </div>
