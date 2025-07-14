@@ -8,22 +8,44 @@
   <div x-show="field.description" class="text-sm text-gray-400 mb-2" x-text="field.description"></div>
 
   <div class="space-y-3">
-    <!-- AI Response Display -->
+    <!-- AI Response Display with Quill Editor -->
     <div x-show="responses && responses[field.key]" class="bg-gray-700 rounded p-3 border border-gray-600">
       <div class="flex items-center justify-between mb-2">
         <span class="text-xs text-gray-400">AI Response:</span>
-        <button @click="editingResponse = editingResponse === field.key ? null : field.key" class="text-blue-400 hover:text-blue-300 text-xs">
-          <span x-text="editingResponse === field.key ? 'Save' : 'Edit'"></span>
-        </button>
       </div>
       <div class="text-white text-sm">
-        <textarea x-show="editingResponse === field.key" 
-                  x-model="responses[field.key]" 
-                  rows="6"
-                  class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"></textarea>
-        <div x-show="editingResponse !== field.key" 
-             class="whitespace-pre-wrap" 
-             x-text="responses && responses[field.key] ? responses[field.key] : ''"></div>
+        <div :ref="`quillResponse_${field.key}`"
+             x-init="
+               if (!window.quillInstances) window.quillInstances = {};
+               $nextTick(() => {
+                 if (!window.quillInstances[`response_${field.key}`]) {
+                   const quill = new Quill($refs[`quillResponse_${field.key}`], {
+                     theme: 'snow',
+                     modules: {
+                       toolbar: [
+                         ['bold', 'italic', 'underline'],
+                         [{'list': 'ordered'}, {'list': 'bullet'}],
+                         ['link'],
+                         [{'header': [1, 2, 3, false]}]
+                       ]
+                     }
+                   });
+                   
+                   if (responses && responses[field.key]) {
+                     quill.root.innerHTML = responses[field.key];
+                   }
+                   
+                   quill.on('text-change', function() {
+                     if (!responses) responses = {};
+                     responses[field.key] = quill.root.innerHTML;
+                   });
+                   
+                   window.quillInstances[`response_${field.key}`] = quill;
+                 }
+               });
+             "
+             class="bg-white text-black rounded border border-gray-600 min-h-[120px]">
+        </div>
       </div>
     </div>
 

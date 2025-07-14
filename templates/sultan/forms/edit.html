@@ -103,6 +103,76 @@
       }
     });
   },
+  async askScheherazade(field) {
+    if (!field.apiUrl || !field.model || !field.prompt) {
+      if (!this.errors) this.errors = {};
+      this.errors[field.key] = 'Missing configuration: API URL, model, or prompt';
+      return;
+    }
+
+    // Set loading state
+    if (!this.loadingStates) this.loadingStates = {};
+    this.loadingStates[field.key] = true;
+    
+    // Clear previous errors
+    if (this.errors && this.errors[field.key]) {
+      delete this.errors[field.key];
+    }
+
+    try {
+      // Replace field references in prompt with actual values
+      let processedPrompt = field.prompt;
+      this.form.fields.forEach(formField => {
+        if (formField.key && this.previewValues[formField.key]) {
+          const regex = new RegExp(`{{${formField.key}}}`, 'g');
+          processedPrompt = processedPrompt.replace(regex, this.previewValues[formField.key]);
+        }
+      });
+
+      // Prepare the request payload
+      const payload = {
+        model: field.model,
+        prompt: processedPrompt,
+        apiKey: field.apiKey,
+        expectedFormat: field.expectedFormat
+      };
+
+      // Make the API call
+      const response = await fetch(field.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${field.apiKey}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`API call failed: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      // Store the response
+      if (!this.responses) this.responses = {};
+      this.responses[field.key] = result.response || result.content || result.text || JSON.stringify(result);
+
+      // Update Quill editor if it exists
+      if (window.quillInstances && window.quillInstances[`response_${field.key}`]) {
+        window.quillInstances[`response_${field.key}`].root.innerHTML = this.responses[field.key];
+      }
+
+    } catch (error) {
+      console.error('Error calling Scheherazade:', error);
+      if (!this.errors) this.errors = {};
+      this.errors[field.key] = `Error: ${error.message}`;
+    } finally {
+      // Clear loading state
+      if (this.loadingStates) {
+        this.loadingStates[field.key] = false;
+      }
+    }
+  },
   addField() {
     this.form.fields.push({
       type: 'text',
