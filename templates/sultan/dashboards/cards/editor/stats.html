@@ -11,13 +11,19 @@
     
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
-      <select x-model="selectedCard.config.dataSource" class="w-full bg-gray-700 text-white p-2 rounded">
+      <select x-model="selectedCard.config.dataSource" @change="loadFormDescription()" class="w-full bg-gray-700 text-white p-2 rounded">
         <option value="">Select a data source</option>
         <template x-for="source in availableDataSources">
           <option :value="source.id" x-text="source.name"></option>
         </template>
       </select>
       <p class="text-xs text-gray-400 mt-1">PouchDB database name (form ID or form ID + '_drafts')</p>
+      
+      <!-- Form Description Display -->
+      <div x-show="selectedCard.config.formDescription" class="mt-2 p-2 bg-gray-700 rounded text-xs text-gray-300">
+        <strong>Form Description:</strong>
+        <div x-text="selectedCard.config.formDescription" class="mt-1"></div>
+      </div>
     </div>
     
     <div>

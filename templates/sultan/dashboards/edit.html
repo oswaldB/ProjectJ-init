@@ -274,6 +274,39 @@
     }
   },
 
+  async loadFormDescription() {
+    if (!this.selectedCard || !this.selectedCard.config || !this.selectedCard.config.dataSource) {
+      this.selectedCard.config.formDescription = '';
+      return;
+    }
+
+    const dataSource = this.selectedCard.config.dataSource;
+    console.log('Loading form description for data source:', dataSource);
+
+    try {
+      // Extract form ID from data source (remove _drafts suffix if present)
+      let formId = dataSource.replace('_drafts', '');
+      
+      console.log('Loading form config for form ID:', formId);
+
+      const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${formId}`);
+      if (response.ok) {
+        const formConfig = await response.json();
+        console.log('Form config loaded:', formConfig);
+
+        // Store the form description
+        this.selectedCard.config.formDescription = formConfig.description || formConfig.name || 'No description available';
+        console.log('Form description set:', this.selectedCard.config.formDescription);
+      } else {
+        console.error('Failed to fetch form config:', response.status);
+        this.selectedCard.config.formDescription = 'Failed to load form description';
+      }
+    } catch (error) {
+      console.error('Failed to load form description:', error);
+      this.selectedCard.config.formDescription = 'Error loading form description';
+    }
+  },
+
   async loadDataSourceColumns() {
     if (!this.selectedCard || !this.selectedCard.config || !this.selectedCard.config.dataSource) {
       return;
