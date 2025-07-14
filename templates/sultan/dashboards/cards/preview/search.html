@@ -179,7 +179,7 @@
     <button 
       @click="performSearch()"
       :disabled="isSearching || isSyncing || !searchQuery.trim()"
-      class="absolute right-2 top-1.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white px-3 py-1 rounded text-sm"
+      class="absolute right-2 top-1.5 bg-red-500 hover:bg-red-600 disabled:bg-gray-600 text-white px-3 py-1 rounded text-sm"
     >
       <span x-show="!isSearching">Search</span>
       <span x-show="isSearching">...</span>

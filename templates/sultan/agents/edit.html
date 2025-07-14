@@ -23,7 +23,7 @@
                 </button>
                 <button @click="saveAgent()" 
                         :disabled="saving"
-                        class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-6 py-2 rounded-lg flex items-center gap-2">
+                        class="bg-red-500 hover:bg-red-600 disabled:bg-gray-600 text-white px-6 py-2 rounded-lg flex items-center gap-2">
                     <span x-show="!saving">Save Agent</span>
                     <span x-show="saving">Saving...</span>
                 </button>
@@ -135,7 +135,7 @@
                                class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
                                placeholder="Add specialization (e.g., Data Analysis, Customer Support)">
                         <button @click="addSpecialization()" 
-                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
                             Add
                         </button>
                     </div>
@@ -341,7 +341,7 @@
         <button 
           @click="saveAgent()" 
           :disabled="saving"
-          class="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg">
+          class="bg-red-500 hover:bg-red-600 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg">
           <span x-show="!saving">Save</span>
           <span x-show="saving">Saving...</span>
         </button>
