@@ -277,6 +277,7 @@
   async loadFormDescription() {
     if (!this.selectedCard || !this.selectedCard.config || !this.selectedCard.config.dataSource) {
       this.selectedCard.config.formDescription = '';
+      this.selectedCard.config.availableFields = [];
       return;
     }
 
@@ -297,13 +298,28 @@
         // Store the form description
         this.selectedCard.config.formDescription = formConfig.description || formConfig.name || 'No description available';
         console.log('Form description set:', this.selectedCard.config.formDescription);
+
+        // Store available fields for Value Field select
+        this.selectedCard.config.availableFields = [];
+        if (formConfig.fields && Array.isArray(formConfig.fields)) {
+          this.selectedCard.config.availableFields = formConfig.fields
+            .filter(field => field.key) // Only include fields with keys
+            .map(field => ({
+              key: field.key,
+              label: field.label || field.key,
+              type: field.type
+            }));
+        }
+        console.log('Available fields loaded:', this.selectedCard.config.availableFields);
       } else {
         console.error('Failed to fetch form config:', response.status);
         this.selectedCard.config.formDescription = 'Failed to load form description';
+        this.selectedCard.config.availableFields = [];
       }
     } catch (error) {
       console.error('Failed to load form description:', error);
       this.selectedCard.config.formDescription = 'Error loading form description';
+      this.selectedCard.config.availableFields = [];
     }
   },
 
