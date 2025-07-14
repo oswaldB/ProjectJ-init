@@ -1,6 +1,10 @@
 <div class="bg-gray-800 p-4 rounded-lg h-full" x-data="{
   searchQuery: '',
   searchResults: [],
+  paginatedResults: [],
+  currentPage: 1,
+  totalPages: 1,
+  resultsPerPage: 3,
   isSearching: false,
   showSyncButton: false,
   isSyncing: false,
@@ -66,22 +70,26 @@
             doc: row.doc,
             highlighting: row.highlighting
           }));
+          this.setupPagination();
           this.showSyncButton = false;
         } else {
           // Aucun résultat trouvé, afficher le bouton de sync
           this.searchResults = [];
+          this.paginatedResults = [];
           this.showSyncButton = true;
         }
       } catch (error) {
         console.error('Search error:', error);
         // Erreur de recherche (ex: index non trouvé), afficher le bouton de sync
         this.searchResults = [];
+        this.paginatedResults = [];
         this.showSyncButton = true;
       }
     } catch (error) {
       console.error('Search error:', error);
       // Erreur de recherche (ex: index non trouvé), afficher le bouton de sync
       this.searchResults = [];
+      this.paginatedResults = [];
       this.showSyncButton = true;
     } finally {
       this.isSearching = false;
@@ -129,9 +137,36 @@
       this.syncCompleted = false;
     }
   },
+  setupPagination() {
+    // Calculate results per page based on card height (3 results per height unit)
+    this.resultsPerPage = (card.size?.height || 1) * 3;
+    this.totalPages = Math.ceil(this.searchResults.length / this.resultsPerPage);
+    this.currentPage = 1;
+    this.updatePaginatedResults();
+  },
+  updatePaginatedResults() {
+    const start = (this.currentPage - 1) * this.resultsPerPage;
+    const end = start + this.resultsPerPage;
+    this.paginatedResults = this.searchResults.slice(start, end);
+  },
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.updatePaginatedResults();
+    }
+  },
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.updatePaginatedResults();
+    }
+  },
   clearSearch() {
     this.searchQuery = '';
     this.searchResults = [];
+    this.paginatedResults = [];
+    this.currentPage = 1;
+    this.totalPages = 1;
     this.showSyncButton = false;
     this.syncCompleted = false;
   },
@@ -244,12 +279,30 @@
   </div>
 
   <!-- Search Results -->
-  <div x-show="searchResults.length > 0" class="space-y-2 overflow-y-auto max-h-64" 
-       style="max-height: 400px;"></div>
-    <div class="text-xs text-gray-400 mb-2 sticky top-0 bg-gray-800 pb-1">
-      Found <span x-text="searchResults.length"></span> result(s):
+  <div x-show="searchResults.length > 0">
+    <!-- Results Header with Pagination Controls -->
+    <div class="flex justify-between items-center mb-2 text-xs text-gray-400">
+      <div>
+        Found <span x-text="searchResults.length"></span> result(s)
+        <span x-show="totalPages > 1"> - Page <span x-text="currentPage"></span> of <span x-text="totalPages"></span></span>
+      </div>
+      <div x-show="totalPages > 1" class="flex items-center space-x-2">
+        <button 
+          @click="prevPage()" 
+          :disabled="currentPage === 1"
+          class="px-2 py-1 bg-gray-700 rounded disabled:opacity-50 hover:bg-gray-600 text-xs"
+        >←</button>
+        <button 
+          @click="nextPage()" 
+          :disabled="currentPage === totalPages"
+          class="px-2 py-1 bg-gray-700 rounded disabled:opacity-50 hover:bg-gray-600 text-xs"
+        >→</button>
+      </div>
     </div>
-    <template x-for="result in searchResults" :key="result.id">
+    
+    <!-- Results List -->
+    <div class="space-y-2 overflow-y-auto max-h-64" style="max-height: 400px;">
+      <template x-for="result in paginatedResults" :key="result.id">
       <div class="bg-gray-700 p-3 rounded text-sm">
         <!-- Display actual field values from the document -->
         <template x-for="(value, key) in result.doc" :key="key">
@@ -295,8 +348,8 @@
           ID: <span x-text="result.id"></span>
         </div>
       </div>
-    </template>
+      </template>
+    </div>
   </div>
-
 
 </div>
