@@ -124,8 +124,20 @@
       let processedPrompt = field.prompt;
       this.form.fields.forEach(formField => {
         if (formField.key && this.previewValues[formField.key]) {
-          const regex = new RegExp(formField.key, 'g');
-          processedPrompt = processedPrompt.replace(regex, this.previewValues[formField.key]);
+          const regex = new RegExp(`{{${formField.key}}}`, 'g');
+          let fieldValue = this.previewValues[formField.key];
+          
+          // Handle different field types
+          if (Array.isArray(fieldValue)) {
+            fieldValue = fieldValue.join(', ');
+          } else if (typeof fieldValue === 'object') {
+            fieldValue = JSON.stringify(fieldValue);
+          } else if (fieldValue && typeof fieldValue === 'string' && fieldValue.includes('<')) {
+            // Strip HTML tags for clean text
+            fieldValue = fieldValue.replace(/<[^>]*>/g, '');
+          }
+          
+          processedPrompt = processedPrompt.replace(regex, fieldValue || '');
         }
       });
 

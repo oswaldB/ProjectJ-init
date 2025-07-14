@@ -61,6 +61,22 @@
     <div class="text-xs text-gray-400 mt-1">
       Use {{field_key}} to reference other form fields in your prompt.
     </div>
+    
+    <!-- Available Fields Helper -->
+    <div class="mt-2 p-2 bg-gray-700 rounded text-xs">
+      <div class="text-gray-300 font-medium mb-1">Available field references:</div>
+      <div class="space-y-1">
+        <template x-for="formField in form.fields" :key="formField.key">
+          <div x-show="formField.key && formField.key !== field.key" class="flex items-center justify-between">
+            <span class="text-gray-400" x-text="formField.label || formField.key"></span>
+            <button @click="field.prompt = (field.prompt || '') + '{{' + formField.key + '}}'" 
+                    class="text-blue-400 hover:text-blue-300 text-xs px-2 py-1 rounded bg-gray-600 hover:bg-gray-500">
+              Add {{<span x-text="formField.key"></span>}}
+            </button>
+          </div>
+        </template>
+      </div>
+    </div>
   </div>
 
   <!-- Expected Response Format -->
