@@ -107,8 +107,8 @@
     if (!text) return text;
     let processedText = text;
     this.form.fields.forEach(formField => {
-      if (formField.key && this.previewValues[formField.key]) {
-        let fieldValue = this.previewValues[formField.key];
+      if (formField.key && this.formData[formField.key]) {
+        let fieldValue = this.formData[formField.key];
 
         // Handle different field types
         if (Array.isArray(fieldValue)) {
@@ -148,9 +148,9 @@
         if (!text) return text;
         let processedText = text;
         this.form.fields.forEach(formField => {
-          if (formField.key && this.previewValues[formField.key]) {
+          if (formField.key && this.formData[formField.key]) {
 
-            let fieldValue = this.previewValues[formField.key];
+            let fieldValue = this.formData[formField.key];
 
             // Handle different field types
             if (Array.isArray(fieldValue)) {
