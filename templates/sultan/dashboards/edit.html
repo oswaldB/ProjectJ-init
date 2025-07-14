@@ -14,7 +14,6 @@
     layout: 'grid'
   },
   availableCards: [
-    { type: 'graph', name: 'Graph', icon: '' },
     { type: 'datatable', name: 'Data Table', icon: '' },
     { type: 'kanban', name: 'Kanban Board', icon: '' },
     { type: 'actions', name: 'Actions', icon: '' },
@@ -676,11 +675,6 @@
                 {% include "sultan/dashboards/cards/preview/datatable.html" %}
               </div>
             </template>
-            <template x-if="card && card.type === 'graph'">
-              <div>
-                {% include "sultan/dashboards/cards/preview/graph.html" %}
-              </div>
-            </template>
             <template x-if="card && card.type === 'kanban'">
               <div>
                 {% include "sultan/dashboards/cards/preview/kanban.html" %}
@@ -791,11 +785,6 @@
           <template x-if="selectedCard && selectedCard.type === 'datatable'">
             <div>
               {% include "sultan/dashboards/cards/editor/datatable.html" %}
-            </div>
-          </template>
-          <template x-if="selectedCard && selectedCard.type === 'graph'">
-            <div>
-              {% include "sultan/dashboards/cards/editor/graph.html" %}
             </div>
           </template>
           <template x-if="selectedCard && selectedCard.type === 'kanban'">
