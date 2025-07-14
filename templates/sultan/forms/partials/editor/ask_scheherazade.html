@@ -71,7 +71,7 @@
             <span class="text-gray-400" x-text="formField.label || formField.key"></span>
             <button @click="field.prompt = (field.prompt || '') + '{{' + formField.key + '}}'" 
                     class="text-blue-400 hover:text-blue-300 text-xs px-2 py-1 rounded bg-gray-600 hover:bg-gray-500">
-              Add {{<span x-text="formField.key"></span>}}
+              Add <span x-text="formField.key"></span>
             </button>
           </div>
         </template>
