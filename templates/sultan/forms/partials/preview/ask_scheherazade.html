@@ -14,12 +14,12 @@
         <span class="text-xs text-gray-400">AI Response:</span>
       </div>
       <div class="text-white text-sm">
-        <div :ref="`quillResponse_${field.key}`"
+        <div x-ref="quillResponseElement"
              x-init="
                if (!window.quillInstances) window.quillInstances = {};
                $nextTick(() => {
-                 if (!window.quillInstances[`response_${field.key}`]) {
-                   const quill = new Quill($refs[`quillResponse_${field.key}`], {
+                 if (!window.quillInstances[`response_${field.key}`] && $refs.quillResponseElement) {
+                   const quill = new Quill($refs.quillResponseElement, {
                      theme: 'snow',
                      modules: {
                        toolbar: [
