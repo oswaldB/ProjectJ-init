@@ -1,5 +1,5 @@
-
-<div class="bg-gray-800 p-4 rounded-lg h-full">
+<div class="bg-gray-800 p-4 rounded-lg h-full" style="max-height: 70vh;" x-data="{
+  }">
   <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Actions'"></h3>
   <div class="space-y-2">
     <template x-for="action in card.config.actions || []" :key="action.label">
@@ -10,7 +10,7 @@
          x-text="action.label || 'Unnamed Action'">
       </a>
     </template>
-    
+
     <!-- Fallback buttons if no actions configured -->
     <template x-if="!card.config.actions || card.config.actions.length === 0">
       <div class="space-y-2">
