@@ -13,6 +13,14 @@
   border-radius: 2px;
   font-family: 'Courier New', monospace;
 }
+
+  .markdown-content table {
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 2px 4px;
+    border-radius: 2px;
+    font-family: 'Courier New', monospace;
+  }
+  
 .markdown-content pre code {
   background-color: transparent;
   padding: 0;
@@ -476,11 +484,7 @@
                    'bg-red-500 text-white': message.sender === 'user',
                    'bg-gray-600 text-gray-100': message.sender === 'ai'
                  }">
-              <div class="markdown-content" x-text="message.text" x-init="
-                if (renderMarkdownIfNeeded(message.text) !== message.text) {
-                  $el.innerHTML = renderMarkdownIfNeeded(message.text);
-                }
-              "></div>
+              <div class="markdown-content" x-html="window.marked.parse(message.text)"></div>
               <div class="text-xs opacity-75 mt-1" 
                    x-text="new Date(message.timestamp).toLocaleTimeString()"></div>
             </div>
