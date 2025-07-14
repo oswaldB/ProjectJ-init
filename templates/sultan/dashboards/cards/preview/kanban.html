@@ -1,4 +1,3 @@
-
 <div class="bg-gray-800 p-4 rounded-lg h-full"
      :style="{
        minHeight: card.size.height === 1 ? '200px' : 
@@ -9,16 +8,18 @@
      x-data="{
   kanbanData: [],
   loading: false,
-  
+  filterQuery: '',
+  filteredData: [],
+
   async loadKanbanData() {
     if (!card.config.dataSource) return;
-    
+
     this.loading = true;
     try {
       // Extract form ID from data source URL
       let formId = null;
       let isDrafts = false;
-      
+
       if (card.config.dataSource.startsWith('/pc-analytics-jaffar/forms/api/pouchdb/init/')) {
         formId = card.config.dataSource.split('/').pop();
       } else if (card.config.dataSource.includes('forms/')) {
@@ -28,43 +29,78 @@
           formId = parts[formsIndex + 1];
         }
       }
-      
+
       if (!formId) {
         console.error('Could not extract form ID from data source:', card.config.dataSource);
         return;
       }
-      
+
       // Check if it's a drafts database
       isDrafts = formId.endsWith('_drafts');
       const cleanFormId = isDrafts ? formId.replace('_drafts', '') : formId;
-      
+
       console.log('Loading kanban data from PouchDB for form:', cleanFormId, 'isDrafts:', isDrafts);
-      
+
       // Initialize PouchDB for the form
       await initializePouchDB(formId);
       const pouchDB = new PouchDB(formId);
-      
+
       // Get all documents from PouchDB
       const result = await pouchDB.allDocs({ include_docs: true });
       this.kanbanData = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
-      
+      this.filteredData = [...this.kanbanData]; // Initialize filteredData with all data
+
       console.log('Loaded kanban data:', this.kanbanData.length, 'items');
     } catch (error) {
       console.error('Error loading kanban data:', error);
       this.kanbanData = [];
+      this.filteredData = [];
     } finally {
       this.loading = false;
     }
   },
-  
+
+  performFilter() {
+    if (!this.filterQuery.trim()) {
+      this.filteredData = this.kanbanData;
+      return;
+    }
+
+    // Frontend-only filtering - search through all loaded data
+    const searchText = this.filterQuery.toLowerCase();
+    this.filteredData = this.kanbanData.filter(item => {
+      // Search across all item properties
+      return Object.values(item).some(value => {
+        if (value === null || value === undefined) return false;
+
+        // Handle arrays by searching each element
+        if (Array.isArray(value)) {
+          return value.some(arrayItem => 
+            String(arrayItem || '').toLowerCase().includes(searchText)
+          );
+        }
+
+        // Handle objects by searching their string representation
+        if (typeof value === 'object') {
+          return JSON.stringify(value).toLowerCase().includes(searchText);
+        }
+
+        // Handle primitive values
+        return String(value).toLowerCase().includes(searchText);
+      });
+    });
+
+    console.log('Frontend filter applied:', this.filteredData.length, 'of', this.kanbanData.length, 'items match');
+  },
+
   getColumnData(column) {
-    if (!this.kanbanData.length || !column.filters) return [];
-    
-    return this.kanbanData.filter(item => {
+    if (!this.filteredData.length || !column.filters) return [];
+
+    return this.filteredData.filter(item => {
       return column.filters.every(filter => {
         const fieldValue = item[filter.field];
         const filterValue = filter.value;
-        
+
         switch (filter.operator) {
           case 'equals':
             return fieldValue == filterValue;
@@ -92,10 +128,10 @@
       });
     });
   },
-  
+
   formatFieldValue(value, type) {
     if (!value) return '';
-    
+
     switch (type) {
       case 'date':
         return new Date(value).toLocaleDateString();
@@ -107,7 +143,7 @@
         return String(value);
     }
   },
-  
+
   replaceUrlTokens(url, item) {
     if (!url || !item) return url;
     return url.replace(/\$\{([^}]+)\}/g, (match, field) => {
@@ -141,18 +177,25 @@
       </svg>
       Sync
     </button>
+
+    <!-- Filter Input -->
+    <input type="text" 
+           placeholder="Filter items..."
+           x-model="filterQuery"
+           @input="performFilter()"
+           class="bg-gray-700 text-white rounded px-2 py-1 text-xs w-32">
   </div>
-  
+
   <!-- No Data Source -->
   <div x-show="!card.config.dataSource" class="bg-gray-700 p-4 rounded h-32 flex items-center justify-center">
     <span class="text-gray-400 text-sm">Select a data source to configure kanban board</span>
   </div>
-  
+
   <!-- Loading -->
   <div x-show="loading && card.config.dataSource" class="bg-gray-700 p-4 rounded h-32 flex items-center justify-center">
     <span class="text-gray-400 text-sm">Loading kanban data...</span>
   </div>
-  
+
   <!-- Kanban Board -->
   <div x-show="card.config.dataSource && !loading" class="flex space-x-3 h-96 overflow-x-auto">
     <template x-for="column in card.config.columns || []">
@@ -163,7 +206,7 @@
           <span class="text-xs text-gray-400 bg-gray-600 px-2 py-1 rounded" 
                 x-text="getColumnData(column).length"></span>
         </div>
-        
+
         <!-- Column Cards -->
         <div class="space-y-2 max-h-80 overflow-y-auto">
           <template x-for="item in getColumnData(column)" :key="item.id || Math.random()">
@@ -183,7 +226,7 @@
                   </div>
                 </div>
               </template>
-              
+
               <!-- Card Actions -->
               <div x-show="column.actions && column.actions.length > 0" class="mt-3 pt-2 border-t border-gray-500">
                 <div class="flex flex-wrap gap-1">
@@ -197,7 +240,7 @@
               </div>
             </div>
           </template>
-          
+
           <!-- Empty State -->
           <div x-show="getColumnData(column).length === 0" 
                class="text-center text-gray-400 text-xs py-4">
@@ -206,7 +249,7 @@
         </div>
       </div>
     </template>
-    
+
     <!-- No Columns -->
     <div x-show="!card.config.columns || card.config.columns.length === 0" 
          class="bg-gray-700 p-4 rounded h-32 flex items-center justify-center w-full">
