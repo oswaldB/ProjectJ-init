@@ -40,10 +40,12 @@
       const prefilters = card.config.prefilters || [];
       const valueField = card.config.valueField;
       
-      // Create map function string with proper escaping
-      const mapFunctionString = `function (doc) {
-        // Apply prefilters
-        const filters = ${JSON.stringify(prefilters).replace(/\\/g, '\\\\').replace(/"/g, '\\"')};
+      // Create map function as actual function, then convert to string
+      const mapFunction = function (doc) {
+        // This will be replaced with actual filters data
+        const filters = 'FILTERS_PLACEHOLDER';
+        const targetField = 'FIELD_PLACEHOLDER';
+        
         for (const filter of filters) {
           if (!filter.enabled || !filter.field) continue;
           
@@ -77,11 +79,16 @@
         }
         
         // Emit the numeric value for stats calculation
-        const value = doc["${valueField}"];
+        const value = doc[targetField];
         if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
           emit(doc._id, parseFloat(value));
         }
-      }`;
+      };
+      
+      // Convert to string and replace placeholders
+      const mapFunctionString = mapFunction.toString()
+        .replace('"FILTERS_PLACEHOLDER"', JSON.stringify(prefilters))
+        .replace('"FIELD_PLACEHOLDER"', JSON.stringify(valueField));
       
       const mapReduceFun = {
         map: mapFunctionString,
