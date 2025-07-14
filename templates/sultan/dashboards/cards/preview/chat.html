@@ -71,22 +71,38 @@
       hasCodeBlocks,
       hasMarkdownSyntax,
       willRenderAsMarkdown: hasCodeBlocks || hasMarkdownSyntax,
-      markedAvailable: !!window.marked
+      markedAvailable: !!window.marked,
+      markedType: typeof window.marked
     });
     
     if (hasCodeBlocks || hasMarkdownSyntax) {
       console.log('✅ Rendering as markdown');
       if (window.marked) {
         try {
-          // Configure marked for better rendering
-          if (typeof marked.setOptions === 'function') {
-            marked.setOptions({
+          // Handle different versions of marked
+          let markdownParser;
+          
+          if (typeof window.marked === 'function') {
+            // Version 4+ (marked as function)
+            markdownParser = window.marked;
+          } else if (window.marked.parse && typeof window.marked.parse === 'function') {
+            // Version 5+ (marked.parse)
+            markdownParser = window.marked.parse;
+          } else {
+            console.warn('Unable to determine marked API version');
+            return text;
+          }
+          
+          // Configure options if available
+          if (typeof window.marked.setOptions === 'function') {
+            window.marked.setOptions({
               breaks: true,
               gfm: true,
               sanitize: false
             });
           }
-          return marked(text);
+          
+          return markdownParser(text);
         } catch (error) {
           console.error('Markdown rendering error:', error);
           return text;
