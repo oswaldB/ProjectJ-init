@@ -41,6 +41,10 @@ def create_new_dashboard():
 def view_dashboard(dashboard_id):
     return render_template('sultan/dashboards/edit.html')
 
+@dashboard_bp.route('/preview/<dashboard_id>')
+def preview_dashboard(dashboard_id):
+    return render_template('dashboards/index.html')
+
 @dashboard_bp.route('/api/list')
 def api_list():
     print(f"DEBUG: api_list route called")

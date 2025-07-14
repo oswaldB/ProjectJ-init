@@ -1,0 +1,135 @@
+
+{% extends "dashboards/base.html" %}
+
+{% block title %}Dashboard Preview{% endblock %}
+
+{% block content %}
+{% include "services/pouchdb.html" %}
+
+<div class="container mx-auto" x-data="{
+  dashboard: {
+    id: '',
+    name: '',
+    description: '',
+    cards: [],
+    layout: 'grid'
+  },
+  loading: true,
+  error: null,
+  
+  async init() {
+    const dashboardId = window.location.pathname.split('/').pop();
+    if (dashboardId) {
+      await this.loadDashboard(dashboardId);
+    }
+  },
+  
+  async loadDashboard(id) {
+    try {
+      this.loading = true;
+      this.error = null;
+      
+      const response = await fetch(`/pc-analytics-jaffar/sultan/dashboard/api/${id}`);
+      if (!response.ok) {
+        throw new Error('Dashboard not found');
+      }
+      
+      this.dashboard = await response.json();
+      
+      if (!this.dashboard || !this.dashboard.cards) {
+        throw new Error('Invalid dashboard data');
+      }
+      
+    } catch (error) {
+      console.error('Failed to load dashboard:', error);
+      this.error = error.message;
+    } finally {
+      this.loading = false;
+    }
+  }
+}" x-init="init()">
+
+  <!-- Loading State -->
+  <div x-show="loading" class="flex justify-center items-center h-64">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
+  </div>
+
+  <!-- Error State -->
+  <div x-show="error" class="bg-red-500 bg-opacity-10 border border-red-500 text-red-500 px-4 py-3 rounded mb-6">
+    <p x-text="error"></p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div x-show="!loading && !error">
+    <!-- Dashboard Header -->
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-white mb-2" x-text="dashboard.name || 'Dashboard'"></h1>
+      <p class="text-gray-400" x-text="dashboard.description"></p>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <div class="grid grid-cols-4 gap-4 auto-rows-min">
+      <template x-for="(card, index) in dashboard.cards" :key="card.id">
+        <div :class="`col-span-${card.size?.width || 1} row-span-${card.size?.height || 1}`">
+          
+          <!-- Data Table Card -->
+          <template x-if="card && card.type === 'datatable'">
+            <div style="max-height: 70vh;">
+              {% include "sultan/dashboards/cards/preview/datatable.html" %}
+            </div>
+          </template>
+          
+          <!-- Kanban Card -->
+          <template x-if="card && card.type === 'kanban'">
+            <div style="max-height: 70vh;">
+              {% include "sultan/dashboards/cards/preview/kanban.html" %}
+            </div>
+          </template>
+          
+          <!-- Actions Card -->
+          <template x-if="card && card.type === 'actions'">
+            <div style="max-height: 70vh;">
+              {% include "sultan/dashboards/cards/preview/actions.html" %}
+            </div>
+          </template>
+          
+          <!-- Chat Card -->
+          <template x-if="card && card.type === 'chat'">
+            <div style="max-height: 70vh;">
+              {% include "sultan/dashboards/cards/preview/chat.html" %}
+            </div>
+          </template>
+          
+          <!-- Search Card -->
+          <template x-if="card && card.type === 'search'">
+            <div style="max-height: 70vh;">
+              {% include "sultan/dashboards/cards/preview/search.html" %}
+            </div>
+          </template>
+          
+          <!-- Stats Card -->
+          <template x-if="card && card.type === 'stats'">
+            <div style="max-height: 70vh;">
+              {% include "sultan/dashboards/cards/preview/stats.html" %}
+            </div>
+          </template>
+          
+          <!-- Text Card -->
+          <template x-if="card && card.type === 'text'">
+            <div style="max-height: 70vh;">
+              {% include "sultan/dashboards/cards/preview/text.html" %}
+            </div>
+          </template>
+          
+        </div>
+      </template>
+    </div>
+    
+    <!-- Empty State -->
+    <div x-show="dashboard.cards && dashboard.cards.length === 0" class="text-center py-12">
+      <div class="text-gray-400 text-lg">No cards configured for this dashboard</div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

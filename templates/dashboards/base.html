@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
+    <title>Dashboard - {% block title %}{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pouchdb@9.0.0/dist/pouchdb.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pouchdb@9.0.0/dist/pouchdb.find.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/pouchdb-community/pouchdb-quick-search@master/dist/pouchdb.quick-search.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/ui/trumbowyg.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/plugins/table/ui/trumbowyg.table.min.css">
+    <style>
+      .trumbowyg-editor table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+      }
+      .trumbowyg-editor th,
+      .trumbowyg-editor td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      .trumbowyg-editor th {
+        background-color: #f2f2f2;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/trumbowyg.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/plugins/colors/trumbowyg.colors.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/plugins/fontsize/trumbowyg.fontsize.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/plugins/fontfamily/trumbowyg.fontfamily.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/plugins/table/trumbowyg.table.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Quill JS and Alpine integration -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        // Alpine x-init runs before DOM is ready for Quill, so use setTimeout to defer
+        
+        window.initQuill = function($el, model) {
+          if (!$el) return;
+          if ($el._quill) return;
+          setTimeout(() => {
+            if ($el._quill) return;
+            var quill = new Quill($el, {
+              theme: 'snow',
+              modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
+            });
+            $el._quill = quill;
+            // Set initial value
+            quill.root.innerHTML = model();
+            // Update Alpine model on change
+            quill.on('text-change', function() {
+              model(quill.root.innerHTML);
+            });
+            // Update Quill if model changes externally
+            $el.__watcher = Alpine.effect(() => {
+              if (quill.root.innerHTML !== model()) {
+                quill.root.innerHTML = model() || '';
+              }
+            });
+          }, 0);
+        };
+      });
+    </script>
+    <!-- Quill CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+    <style>
+      /* force the bullet display */
+      ol li[data-list="bullet"] {
+          list-style-type: disc;
+      }
+      
+      /* Proper list styling for text preview */
+      .prose ol {
+          list-style-type: decimal;
+          margin-left: 1.5rem;
+          margin-bottom: 1rem;
+      }
+      
+      .prose ul {
+          list-style-type: disc;
+          margin-left: 1.5rem;
+          margin-bottom: 1rem;
+      }
+      
+      .prose ol li, .prose ul li {
+          margin-bottom: 0.25rem;
+          display: list-item;
+      }
+      
+      /* Handle Quill's data-list attribute */
+      .prose ol li[data-list="bullet"] {
+          list-style-type: disc !important;
+      }
+      
+      .prose ol li[data-list="ordered"] {
+          list-style-type: decimal !important;
+      }
+      /* Quill editor dark background and white toolbar buttons */
+      .ql-toolbar.ql-snow {
+        background: #rgb(31 41 55 / var(--tw-bg-opacity, 1)) !important;
+        border-color: #374151 !important;
+      }
+      .ql-toolbar.ql-snow .ql-picker,
+      .ql-toolbar.ql-snow .ql-stroke,
+      .ql-toolbar.ql-snow .ql-fill,
+      .ql-toolbar.ql-snow .ql-picker-label,
+      .ql-toolbar.ql-snow .ql-picker-item,
+      .ql-toolbar.ql-snow button {
+        color: #fff !important;
+        stroke: #fff !important;
+      }
+      .ql-toolbar.ql-snow .ql-picker-options {
+        background: #18181b !important;
+        color: #fff !important;
+      }
+      .ql-toolbar.ql-snow .ql-picker-item {
+        color: #fff !important;
+      }
+      .ql-toolbar.ql-snow button:hover,
+      .ql-toolbar.ql-snow button:focus,
+      .ql-toolbar.ql-snow .ql-picker-label:hover,
+      .ql-toolbar.ql-snow .ql-picker-label.ql-active {
+        color: #fff !important;
+        background: #27272a !important;
+      }
+      .ql-container.ql-snow {
+        background: #18181b !important;
+        color: #fff !important;
+        border-color: #374151 !important;
+        min-height: 80px;
+      }
+      .ql-editor {
+        background:rgb(31 41 55 / var(--tw-bg-opacity, 1)) !important;
+        color: #fff !important;
+        min-height: 80px;
+      }
+      </style>
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="min-h-screen">
+        <!-- Main Content -->
+        <main class="p-6">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
