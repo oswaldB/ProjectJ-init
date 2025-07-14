@@ -147,7 +147,7 @@
 <body class="bg-gray-900 text-white">
     <div class="min-h-screen flex">
         <!-- Sidebar -->
-        <aside class="w-64 bg-gray-800 border-r border-gray-700 p-4 overflow-y-auto">
+        <aside class="fixed left-0 top-0 w-64 h-screen bg-gray-800 border-r border-gray-700 p-4 overflow-y-auto z-10">
             <div class="mb-6">
                 <h2 class="text-xl font-bold text-white mb-4">Jaffar</h2>
             </div>
@@ -157,7 +157,7 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 p-6">
+        <main class="ml-64 p-6">
             {% block content %}{% endblock %}
         </main>
     </div>
