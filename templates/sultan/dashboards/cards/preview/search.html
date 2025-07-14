@@ -30,8 +30,8 @@
       }
 
       const searchFields = (card.config.searchFields || [])
-        .filter(f => f && f.enabled && f.field)
-        .map(f => f.field);
+        .filter(f => f && f.enabled && f.key)
+        .map(f => f.key);
 
       // Si aucun champ de recherche n'est configuré, rechercher dans tous les champs
       const searchOptions = {
@@ -43,6 +43,12 @@
       // Ajouter les champs seulement s'ils sont configurés et valides
       if (searchFields.length > 0) {
         searchOptions.fields = searchFields;
+      }
+
+      // S'assurer que les options sont valides
+      if (!searchOptions.query || searchOptions.query.trim() === '') {
+        console.log('Empty search query');
+        return;
       }
 
       console.log('Search options:', searchOptions);
