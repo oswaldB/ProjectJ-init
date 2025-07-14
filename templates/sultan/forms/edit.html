@@ -124,7 +124,7 @@
       let processedPrompt = field.prompt;
       this.form.fields.forEach(formField => {
         if (formField.key && this.previewValues[formField.key]) {
-          const regex = new RegExp(`{{${formField.key}}}`, 'g');
+          const regex = new RegExp(formField.key, 'g');
           processedPrompt = processedPrompt.replace(regex, this.previewValues[formField.key]);
         }
       });
