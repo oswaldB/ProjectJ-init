@@ -49,19 +49,12 @@
               modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
             });
             $el._quill = quill;
-            
             // Set initial value
             quill.root.innerHTML = model();
-            
             // Update Alpine model on change
             quill.on('text-change', function() {
-              let content = quill.root.innerHTML;
-              // Convert ol with data-list="bullet" to ul
-              content = content.replace(/<ol[^>]*data-list="bullet"[^>]*>/g, '<ul>');
-              content = content.replace(/<\/ol>/g, '</ul>');
-              model(content);
+              model(quill.root.innerHTML);
             });
-            
             // Update Quill if model changes externally
             $el.__watcher = Alpine.effect(() => {
               if (quill.root.innerHTML !== model()) {
