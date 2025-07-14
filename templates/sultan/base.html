@@ -38,51 +38,6 @@
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', () => {
-        // Custom Quill blot for unordered lists using ul tags
-        const List = Quill.import('formats/list');
-        const ListItem = Quill.import('formats/list/item');
-        
-        // Create a custom blot for unordered lists
-        class UnorderedList extends List {
-          static create(value) {
-            let node = super.create();
-            node.setAttribute('data-list', value);
-            return node;
-          }
-
-          static formats(domNode) {
-            return domNode.getAttribute('data-list') || undefined;
-          }
-        }
-
-        // Configure the custom blot
-        UnorderedList.blotName = 'list';
-        UnorderedList.tagName = 'UL';
-        UnorderedList.className = 'ql-list';
-
-        // Create a custom list item for unordered lists
-        class UnorderedListItem extends ListItem {
-          static create(value) {
-            let node = super.create();
-            node.setAttribute('data-list', value);
-            return node;
-          }
-
-          static formats(domNode) {
-            return domNode.getAttribute('data-list') || undefined;
-          }
-        }
-
-        // Configure the custom list item
-        UnorderedListItem.blotName = 'list-item';
-        UnorderedListItem.tagName = 'LI';
-
-        // Register the custom blots with Quill
-        Quill.register({
-          'formats/list': UnorderedList,
-          'formats/list/item': UnorderedListItem
-        }, true);
-
         // Alpine x-init runs before DOM is ready for Quill, so use setTimeout to defer
         window.initQuill = function($el, model) {
           if (!$el) return;
@@ -94,12 +49,19 @@
               modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
             });
             $el._quill = quill;
+            
             // Set initial value
             quill.root.innerHTML = model();
+            
             // Update Alpine model on change
             quill.on('text-change', function() {
-              model(quill.root.innerHTML);
+              let content = quill.root.innerHTML;
+              // Convert ol with data-list="bullet" to ul
+              content = content.replace(/<ol[^>]*data-list="bullet"[^>]*>/g, '<ul>');
+              content = content.replace(/<\/ol>/g, '</ul>');
+              model(content);
             });
+            
             // Update Quill if model changes externally
             $el.__watcher = Alpine.effect(() => {
               if (quill.root.innerHTML !== model()) {
