@@ -121,7 +121,16 @@
 }" x-init="init()">
   <!-- Top Bar -->
   <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
-    <h1 class="text-2xl font-bold text-white">Form Editor</h1>
+    <div class="flex flex-col">
+      <h1 class="text-2xl font-bold text-white">Form Editor</h1>
+      <!-- Warning for missing submit button -->
+      <div x-show="!form.fields.some(field => field.type === 'submit_issue')" class="mt-2 p-2 bg-yellow-600 bg-opacity-20 border border-yellow-500 rounded flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.732 15.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+        <span class="text-yellow-300 text-sm">⚠️ This form doesn't have a submit button. Users won't be able to submit their responses.</span>
+      </div>
+    </div>
     <div class="flex space-x-4">
       <a href="/pc-analytics-jaffar/sultan/forms" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Back</a>
     </div>
