@@ -4,10 +4,6 @@
   <div class="space-y-4">
     
     <!-- Basic Configuration -->
-    <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
-      <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Statistics">
-    </div>
     
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
@@ -17,15 +13,8 @@
           <option :value="source.id" x-text="source.name"></option>
         </template>
       </select>
-      <p class="text-xs text-gray-400 mt-1">PouchDB database name (form ID or form ID + '_drafts')</p>
       
-      <!-- Form Description Display -->
-      <div x-show="selectedCard.config.formDescription" class="mt-2 p-2 bg-gray-700 rounded text-xs text-gray-300">
-        <strong>Form Description:</strong>
-        <div x-text="selectedCard.config.formDescription" class="mt-1"></div>
-      </div>
-    </div>
-    
+   
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Value Field</label>
       <select x-model="selectedCard.config.valueField" class="w-full bg-gray-700 text-white p-2 rounded">
@@ -36,12 +25,6 @@
       </select>
       <p class="text-xs text-gray-400 mt-1">Numeric field to calculate statistics on</p>
       
-      <!-- Fallback input if no fields are loaded -->
-      <div x-show="!selectedCard.config.availableFields || selectedCard.config.availableFields.length === 0" class="mt-2">
-        <input type="text" x-model="selectedCard.config.valueField" class="w-full bg-gray-600 text-white p-2 rounded text-sm" placeholder="Enter field name manually">
-        <p class="text-xs text-gray-500 mt-1">Manual field entry (fields will load when data source is selected)</p>
-      </div>
-    </div>
     
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Statistic Type</label>
@@ -54,10 +37,6 @@
       </select>
     </div>
     
-    <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">Icon</label>
-      <input type="text" x-model="selectedCard.config.icon" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="📊">
-    </div>
     
     <!-- Prefilters Configuration -->
     <div class="border-t border-gray-600 pt-4">

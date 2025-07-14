@@ -376,25 +376,4 @@
     <div class="text-sm text-gray-400" x-text="getStatLabel()"></div>
   </div>
   
-  <!-- Additional Stats Info -->
-  <div x-show="!loading && card.config.dataSource && card.config.valueField && statsData.count > 0" 
-       class="mt-4 text-xs text-gray-300 space-y-1">
-    <div class="flex justify-between">
-      <span>Count:</span>
-      <span x-text="statsData.count"></span>
-    </div>
-    <div x-show="card.config.statType !== 'sum'" class="flex justify-between">
-      <span>Sum:</span>
-      <span x-text="Number(statsData.sum).toFixed(2)"></span>
-    </div>
-    <div x-show="card.config.statType !== 'min'" class="flex justify-between">
-      <span>Min:</span>
-      <span x-text="Number(statsData.min).toFixed(2)"></span>
-    </div>
-    <div x-show="card.config.statType !== 'max'" class="flex justify-between">
-      <span>Max:</span>
-      <span x-text="Number(statsData.max).toFixed(2)"></span>
-    </div>
-  </div>
-  
 </div>
