@@ -75,11 +75,10 @@
     }
   },
 
-  // Send message to AI
+  // Send message
   async sendMessage() {
-    if (!this.newMessage.trim()) return;
+    if (!this.newMessage.trim() || this.isLoading) return;
 
-    // Add user message
     const userMessage = {
       id: Date.now(),
       text: this.newMessage,
@@ -93,16 +92,16 @@
     this.isLoading = true;
 
     try {
-      let aiResponse;
+      // Simulate AI response (replace with actual API call)
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Check if custom API configuration is provided
-      if (card.config.apiUrl && card.config.apiToken) {
-        aiResponse = await this.callCustomAPI(messageText);
-      } else if (card.config.selectedAgent) {
-        aiResponse = await this.callAgentAPI(messageText);
-      } else {
-        // Fallback to default behavior
-        aiResponse = `I received your message: "${messageText}". Please configure an API URL and token in the card settings.`;
+      let aiResponse = 'I understand your question. Let me help you with that.';
+
+      // Customize response based on configuration
+      if (card.config.selectedAgent) {
+        aiResponse = `As ${card.config.selectedAgent.name}, I would say: ${this.generateAgentResponse(messageText)}`;
+      } else if (card.config.dataSource && card.config.systemPrompt) {
+        aiResponse = this.generateDataResponse(messageText);
       }
 
       const aiMessage = {
@@ -113,160 +112,56 @@
       };
 
       this.messages.push(aiMessage);
-      this.updateChatInHistory(aiMessage.text);
-      this.saveChatToStorage();
+
+      // Update chat history
+      const chatIndex = this.chatHistory.findIndex(c => c.id === this.currentChatId);
+      if (chatIndex >= 0) {
+        this.chatHistory[chatIndex].lastMessage = aiResponse;
+        this.chatHistory[chatIndex].timestamp = new Date().toISOString();
+        this.chatHistory[chatIndex].messageCount = this.messages.length;
+
+        // Update title if it's still 'New Chat'
+        if (this.chatHistory[chatIndex].title === 'New Chat') {
+          this.chatHistory[chatIndex].title = messageText.substring(0, 30) + '...';
+        }
+      }
 
     } catch (error) {
-      console.error('Error sending message:', error);
-      const errorMessage = {
+      this.messages.push({
         id: Date.now() + 1,
-        text: `Erreur: ${error.message}`,
+        text: 'Sorry, I encountered an error. Please try again.',
         sender: 'ai',
         timestamp: new Date().toISOString()
-      };
-      this.messages.push(errorMessage);
-    } finally {
-      this.isLoading = false;
-      this.$nextTick(() => this.scrollToBottom());
-    }
-  },
-
-  // Call custom API with user configuration
-  async callCustomAPI(message) {
-    const apiUrl = card.config.apiUrl;
-    const apiToken = card.config.apiToken;
-    const model = card.config.model || 'gpt-3.5-turbo';
-
-    // Prepare headers
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiToken}`
-    };
-
-    // Add additional headers if configured
-    if (card.config.additionalHeaders) {
-      try {
-        const additionalHeaders = JSON.parse(card.config.additionalHeaders);
-        Object.assign(headers, additionalHeaders);
-      } catch (e) {
-        console.warn('Invalid additional headers JSON:', e);
-      }
+      });
     }
 
-    // Prepare system message based on configuration
-    let systemMessage = 'You are a helpful assistant.';
-    if (card.config.chatType === 'data' && card.config.systemPrompt) {
-      systemMessage = card.config.systemPrompt;
-    } else if (card.config.customInstructions) {
-      systemMessage = card.config.customInstructions;
-    }
-
-    // Prepare messages array for the API
-    const messages = [
-      { role: 'system', content: systemMessage }
-    ];
-
-    // Add recent conversation history if memory is enabled
-    if (card.config.enableMemory) {
-      const maxMessages = card.config.maxMemoryMessages || 10;
-      const recentMessages = this.messages.slice(-maxMessages);
-      for (const msg of recentMessages) {
-        messages.push({
-          role: msg.sender === 'user' ? 'user' : 'assistant',
-          content: msg.text
-        });
-      }
-    }
-
-    // Add current message
-    messages.push({ role: 'user', content: message });
-
-    // Prepare request body
-    const requestBody = {
-      model: model,
-      messages: messages,
-      temperature: parseFloat(card.config.temperature) || 0.7
-    };
-
-    // Add max_tokens if configured
-    if (card.config.maxTokens) {
-      requestBody.max_tokens = parseInt(card.config.maxTokens);
-    }
-
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify(requestBody)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`API Error (${response.status}): ${errorText}`);
-    }
-
-    const data = await response.json();
-
-    // Extract response based on common API formats
-    if (data.choices && data.choices[0] && data.choices[0].message) {
-      return data.choices[0].message.content;
-    } else if (data.content) {
-      return data.content;
-    } else if (data.response) {
-      return data.response;
-    } else {
-      throw new Error('Unexpected API response format');
-    }
-  },
-
-  // Call agent API (existing functionality)
-  async callAgentAPI(message) {
-    const response = await fetch('/pc-analytics-jaffar/sultan/agents/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        agent_id: card.config.selectedAgentId,
-        message: message,
-        chat_history: this.messages.slice(-10) // Last 10 messages
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to get response from agent');
-    }
-
-    const data = await response.json();
-    return data.message || 'No response from agent';
-  },
-
-  // Update chat in history
-  updateChatInHistory(lastMessage) {
-    const chatIndex = this.chatHistory.findIndex(c => c.id === this.currentChatId);
-    if (chatIndex >= 0) {
-      this.chatHistory[chatIndex].lastMessage = lastMessage;
-      this.chatHistory[chatIndex].timestamp = new Date().toISOString();
-      this.chatHistory[chatIndex].messageCount = this.messages.length;
-
-      // Update title if it's still 'New Chat'
-      if (this.chatHistory[chatIndex].title === 'New Chat') {
-        this.chatHistory[chatIndex].title = this.messages[0].text.substring(0, 30) + '...';
-      }
-    }
-  },
-
-  // Save chat to local storage
-  saveChatToStorage() {
+    this.isLoading = false;
     this.saveChatMessages();
     this.saveChatHistory();
+
+    // Scroll to bottom
+    this.$nextTick(() => {
+      const container = this.$refs.messagesContainer;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    });
   },
 
-  // Scroll to bottom of messages
-  scrollToBottom() {
-    const container = this.$refs.messagesContainer;
-    if (container) {
-      container.scrollTop = container.scrollHeight;
-    }
+  // Generate agent-specific response
+  generateAgentResponse(message) {
+    const responses = [
+      'Based on my expertise, I would recommend...',
+      'From my perspective as ' + (card.config.selectedAgent?.name || 'an AI assistant') + ', here\'s what I think...',
+      'Let me analyze this for you...',
+      'That\'s an interesting question. Here\'s my take...'
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
+  },
+
+  // Generate data-specific response
+  generateDataResponse(message) {
+    return `Based on the data from ${card.config.dataSource} and using the prompt: '${card.config.systemPrompt}', I can tell you that...`;
   },
 
   // Delete a chat
@@ -356,7 +251,189 @@
     </div>
   </div>
 
-  <!-- Message input -->
+  // Send message to API or agent
+  async sendMessage() {
+    if (!this.newMessage.trim() || this.isLoading) return;
+
+    const userMessage = {
+      id: Date.now(),
+      text: this.newMessage,
+      sender: 'user',
+      timestamp: new Date().toISOString()
+    };
+
+    this.messages.push(userMessage);
+    const messageText = this.newMessage;
+    this.newMessage = '';
+    this.isLoading = true;
+
+    try {
+      // Simulate AI response (replace with actual API call)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      let aiResponse = 'I understand your question. Let me help you with that.';
+
+      // Customize response based on configuration
+      if (card.config.selectedAgent) {
+        aiResponse = `As ${card.config.selectedAgent.name}, I would say: ${this.generateAgentResponse(messageText)}`;
+      } else if (card.config.dataSource && card.config.systemPrompt) {
+        aiResponse = this.generateDataResponse(messageText);
+      }
+
+      const aiMessage = {
+        id: Date.now() + 1,
+        text: aiResponse,
+        sender: 'ai',
+        timestamp: new Date().toISOString()
+      };
+
+      this.messages.push(aiMessage);
+
+      // Update chat history
+      const chatIndex = this.chatHistory.findIndex(c => c.id === this.currentChatId);
+      if (chatIndex >= 0) {
+        this.chatHistory[chatIndex].lastMessage = aiResponse;
+        this.chatHistory[chatIndex].timestamp = new Date().toISOString();
+        this.chatHistory[chatIndex].messageCount = this.messages.length;
+
+        // Update title if it's still 'New Chat'
+        if (this.chatHistory[chatIndex].title === 'New Chat') {
+          this.chatHistory[chatIndex].title = messageText.substring(0, 30) + '...';
+        }
+      }
+
+    } catch (error) {
+      this.messages.push({
+        id: Date.now() + 1,
+        text: 'Sorry, I encountered an error. Please try again.',
+        sender: 'ai',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    this.isLoading = false;
+    this.saveChatMessages();
+    this.saveChatHistory();
+
+    // Scroll to bottom
+    this.$nextTick(() => {
+      const container = this.$refs.messagesContainer;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    });
+  },
+
+  // Generate agent-specific response
+  generateAgentResponse(message) {
+    const responses = [
+      'Based on my expertise, I would recommend...',
+      'From my perspective as ' + (card.config.selectedAgent?.name || 'an AI assistant') + ', here\'s what I think...',
+      'Let me analyze this for you...',
+      'That\'s an interesting question. Here\'s my take...'
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
+  },
+
+  // Generate data-specific response
+  generateDataResponse(message) {
+    return `Based on the data from ${card.config.dataSource} and using the prompt: '${card.config.systemPrompt}', I can tell you that...`;
+  },
+
+  // Send message to API or agent
+  async sendMessage() {
+    if (!this.currentMessage.trim()) return;
+
+    const userMessage = {
+      id: Date.now(),
+      role: 'user',
+      content: this.currentMessage,
+      timestamp: new Date().toISOString()
+    };
+
+    this.messages.push(userMessage);
+    this.saveMessages();
+
+    const messageContent = this.currentMessage;
+    this.currentMessage = '';
+    this.isTyping = true;
+
+    try {
+      let response;
+
+      if (card.config.apiUrl && card.config.apiToken) {
+        response = await this.sendToCustomAPI(messageContent);
+      } else if (card.config.selectedAgent) {
+        response = await this.sendToAgent(messageContent, card.config.selectedAgent.id);
+      } else {
+        response = await this.sendToGeneral(messageContent);
+      }
+
+      const aiMessage = {
+        id: Date.now() + 1,
+        role: 'assistant',
+        content: response,
+        timestamp: new Date().toISOString()
+      };
+
+      this.messages.push(aiMessage);
+      this.saveMessages();
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      const errorMessage = {
+        id: Date.now() + 1,
+        role: 'assistant',
+        content: 'Désolé, une erreur s\'est produite lors de l\'envoi du message.',
+        timestamp: new Date().toISOString()
+      };
+      this.messages.push(errorMessage);
+      this.saveMessages();
+    } finally {
+      this.isTyping = false;
+      this.scrollToBottom();
+    }
+  },
+
+  // Send to custom API
+  async sendToCustomAPI(message) {
+    const model = card.config.customModel || card.config.model || 'gpt-3.5-turbo';
+
+    const requestBody = {
+      model: model,
+      messages: [
+        {
+          role: 'system',
+          content: card.config.systemPrompt || 'You are a helpful assistant.'
+        },
+        ...this.messages.slice(-10), // Include last 10 messages for context
+        {
+          role: 'user',
+          content: message
+        }
+      ],
+      temperature: card.config.temperature || 0.7,
+      max_tokens: card.config.maxTokens || 1000
+    };
+
+    const response = await fetch(card.config.apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${card.config.apiToken}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  },
+
+  // Message input
   <div class="flex gap-2">
     <input type="text" 
            x-model="newMessage"

@@ -132,7 +132,7 @@
   </div>
 
   <!-- API Configuration -->
-  <div x-data="{ showApiConfig: false }" class="border-t border-gray-600 pt-4">
+  <div x-data="{ showApiConfig: false }">
     <button @click="showApiConfig = !showApiConfig" 
             class="flex items-center gap-2 text-sm text-gray-300 hover:text-white">
       <svg class="w-4 h-4 transform transition-transform" :class="{ 'rotate-90': showApiConfig }" 
@@ -149,9 +149,9 @@
         <input type="url" 
                x-model="selectedCard.config.apiUrl" 
                class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
-               placeholder="https://api.openai.com/v1/chat/completions">
+               placeholder="https://api.example.com/v1/chat/completions">
         <div class="text-xs text-gray-400 mt-1">
-          URL de l'API de chat (ex: OpenAI, Anthropic, etc.)
+          URL de l'API pour les requêtes de chat
         </div>
       </div>
 
@@ -167,27 +167,32 @@
         </div>
       </div>
 
-      <!-- Model -->
+      <!-- Model Selection -->
       <div>
         <label class="block text-sm font-medium text-gray-300 mb-2">Model</label>
-        <input type="text" 
-               x-model="selectedCard.config.model" 
-               class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
-               placeholder="gpt-3.5-turbo">
+        <select x-model="selectedCard.config.model" 
+                class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500">
+          <option value="">Select Model</option>
+          <option value="phi4">Phi4</option>
+          <option value="deepseek">Deep-seek</option>
+          <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+          <option value="gpt-4">GPT-4</option>
+          <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+        </select>
         <div class="text-xs text-gray-400 mt-1">
-          Nom du modèle à utiliser (ex: gpt-3.5-turbo, claude-3-sonnet, etc.)
+          Modèle à utiliser pour les réponses
         </div>
       </div>
 
-      <!-- Headers (optionnel) -->
+      <!-- Custom Model -->
       <div>
-        <label class="block text-sm font-medium text-gray-300 mb-2">Headers additionnels (JSON)</label>
-        <textarea x-model="selectedCard.config.additionalHeaders" 
-                  rows="2"
-                  class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
-                  placeholder='{"Organization": "org-xxx", "Content-Type": "application/json"}'></textarea>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Custom Model Name</label>
+        <input type="text" 
+               x-model="selectedCard.config.customModel" 
+               class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+               placeholder="model-name">
         <div class="text-xs text-gray-400 mt-1">
-          Headers HTTP additionnels au format JSON (optionnel)
+          Nom personnalisé du modèle si non listé ci-dessus
         </div>
       </div>
     </div>
@@ -278,9 +283,9 @@
       <!-- API Configuration Preview -->
       <div x-show="selectedCard.config.apiUrl" class="mt-2 pt-2 border-t border-gray-500">
         <strong>API Configuration:</strong>
-        <br><span class="text-xs">URL: <span x-text="selectedCard.config.apiUrl"></span></span>
-        <br><span class="text-xs">Model: <span x-text="selectedCard.config.model || 'Default'"></span></span>
-        <br><span class="text-xs">Token: <span x-text="selectedCard.config.apiToken ? '●●●●●●●●' : 'Not configured'"></span></span>
+        <br>URL: <span x-text="selectedCard.config.apiUrl"></span>
+        <br>Model: <span x-text="selectedCard.config.customModel || selectedCard.config.model || 'Default'"></span>
+        <br>Token: <span x-text="selectedCard.config.apiToken ? '●●●●●●●●' : 'Not set'"></span>
       </div>
     </div>
   </div>
