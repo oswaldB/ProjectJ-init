@@ -7,9 +7,9 @@
 <div class="h-screen bg-gray-900 text-white" x-data="{
   formData: [],
   previewValues: {},
+  errors: {},
   responses: {},
   loadingStates: {},
-  errors: {},
   editingResponse: null,
   sidebarOpen: true,
   page: 'form-editor',
@@ -113,7 +113,7 @@
     // Set loading state
     if (!this.loadingStates) this.loadingStates = {};
     this.loadingStates[field.key] = true;
-    
+
     // Clear previous errors
     if (this.errors && this.errors[field.key]) {
       delete this.errors[field.key];
@@ -152,7 +152,7 @@
       }
 
       const result = await response.json();
-      
+
       // Store the response
       if (!this.responses) this.responses = {};
       this.responses[field.key] = result.response || result.content || result.text || JSON.stringify(result);
