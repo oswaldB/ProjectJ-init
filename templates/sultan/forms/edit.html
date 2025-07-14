@@ -103,6 +103,29 @@
       }
     });
   },
+  processFieldReferences(text) {
+    if (!text) return text;
+    let processedText = text;
+    this.form.fields.forEach(formField => {
+      if (formField.key && this.previewValues[formField.key]) {
+        let fieldValue = this.previewValues[formField.key];
+
+        // Handle different field types
+        if (Array.isArray(fieldValue)) {
+          fieldValue = fieldValue.join(', ');
+        } else if (typeof fieldValue === 'object') {
+          fieldValue = JSON.stringify(fieldValue);
+        } else if (fieldValue && typeof fieldValue === 'string' && fieldValue.includes('<')) {
+          // Strip HTML tags for clean text
+          fieldValue = fieldValue.replace(/<[^>]*>/g, '');
+        }
+
+        const regex = new RegExp(`&&${formField.key}&&`, 'g');
+        processedText = processedText.replace(regex, fieldValue || '');
+      }
+    });
+    return processedText;
+  },
   async askScheherazade(field) {
     if (!field.apiUrl || !field.model || !field.prompt) {
       if (!this.errors) this.errors = {};
@@ -333,7 +356,7 @@
                     </svg>
                   </button>
                   <div class="flex flex-col">
-                    <span class="text-white font-medium" x-text="field.label || 'Nouvelle question'"></span>
+                    <span class="text-white font-medium" x-text="processFieldReferences(field.label) || 'Nouvelle question'"></span>
                     <span class="text-gray-400 text-xs" x-text="field.key || ''"></span>
                   </div>
                 </div>
@@ -376,7 +399,7 @@
                     class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
                   <div class="mt-1 text-gray-400 text-sm border-l-4 border-blue-700 pl-2" x-show="field.description">
                     <span class="font-semibold text-blue-300">Preview:</span>
-                    <div x-html="field.description"></div>
+                    <div x-html="processFieldReferences(field.description)"></div>
                   </div>
                 </div>
 
@@ -473,7 +496,7 @@
                 <span class="text-xl font-medium text-white" x-text="field.label"></span>
                 <span x-show="field.required" class="text-red-500">*</span>
               </label>
-              <p class="text-gray-400 text-sm" x-show="field.description" x-html="field.description"></p>
+              <p class="text-gray-400 text-sm" x-show="field.description" x-html="processFieldReferences(field.description)"></p>
 
               {% include "sultan/forms/partials/preview/ask_scheherazade.html" %}
               {% include "sultan/forms/partials/preview/single_select.html" %}
