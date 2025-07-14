@@ -1,18 +1,219 @@
 
-<div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
-  <h3 class="text-white font-semibold mb-3">Chat Configuration</h3>
-  <div class="space-y-3">
-    <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">Chat Title</label>
-      <input type="text" x-model="card.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Chat title">
+<div class="space-y-4">
+  <!-- Basic Configuration -->
+  <div>
+    <label class="block text-sm font-medium text-gray-300 mb-2">Card Title</label>
+    <input type="text" 
+           x-model="card.config.title" 
+           class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+           placeholder="AI Chat">
+  </div>
+
+  <!-- Chat Configuration Type -->
+  <div>
+    <label class="block text-sm font-medium text-gray-300 mb-2">Chat Configuration</label>
+    <select x-model="card.config.chatType" 
+            class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500">
+      <option value="agent">Use Predefined Agent</option>
+      <option value="data">Chat with Data Source</option>
+      <option value="general">General AI Chat</option>
+    </select>
+  </div>
+
+  <!-- Agent Selection -->
+  <div x-show="card.config.chatType === 'agent'" x-data="{
+    agents: [],
+    loadingAgents: false,
+    
+    async loadAgents() {
+      this.loadingAgents = true;
+      try {
+        const response = await fetch('/pc-analytics-jaffar/sultan/api/agents/list');
+        if (response.ok) {
+          this.agents = await response.json();
+        }
+      } catch (error) {
+        console.error('Failed to load agents:', error);
+        this.agents = [];
+      }
+      this.loadingAgents = false;
+    }
+  }" x-init="loadAgents()">
+    <label class="block text-sm font-medium text-gray-300 mb-2">Select Agent</label>
+    
+    <div x-show="loadingAgents" class="text-gray-400 text-sm">Loading agents...</div>
+    
+    <div x-show="!loadingAgents && agents.length === 0" class="text-gray-400 text-sm">
+      No agents found. Create agents in the Sultan > Agents section.
     </div>
-    <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">WebSocket URL</label>
-      <input type="text" x-model="card.config.wsUrl" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="ws://localhost:5000/chat">
+    
+    <select x-show="!loadingAgents && agents.length > 0"
+            x-model="card.config.selectedAgentId" 
+            @change="card.config.selectedAgent = agents.find(a => a.id === card.config.selectedAgentId)"
+            class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500">
+      <option value="">Choose an agent...</option>
+      <template x-for="agent in agents" :key="agent.id">
+        <option :value="agent.id" x-text="agent.name + (agent.description ? ' - ' + agent.description.substring(0, 50) + '...' : '')"></option>
+      </template>
+    </select>
+    
+    <!-- Selected Agent Info -->
+    <div x-show="card.config.selectedAgent" class="mt-2 p-3 bg-gray-600 rounded">
+      <div class="text-sm text-white font-medium" x-text="card.config.selectedAgent?.name"></div>
+      <div class="text-xs text-gray-300 mt-1" x-text="card.config.selectedAgent?.description"></div>
+      <div class="text-xs text-gray-400 mt-1">
+        Model: <span x-text="card.config.selectedAgent?.model || 'Default'"></span>
+      </div>
     </div>
-    <div>
-      <label class="block text-sm font-medium text-gray-300 mb-1">Default User</label>
-      <input type="text" x-model="card.config.defaultUser" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Anonymous">
+  </div>
+
+  <!-- Data Source Configuration -->
+  <div x-show="card.config.chatType === 'data'">
+    <div class="space-y-3">
+      <!-- Data Source Selection -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Data Source</label>
+        <select x-model="card.config.dataSource" 
+                class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500">
+          <option value="">Select data source...</option>
+          <template x-for="form in availableForms" :key="form.id">
+            <option :value="form.id" x-text="form.name || form.id"></option>
+          </template>
+        </select>
+      </div>
+
+      <!-- System Prompt -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">System Prompt</label>
+        <textarea x-model="card.config.systemPrompt" 
+                  rows="4"
+                  class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+                  placeholder="You are an AI assistant that helps users analyze data from the selected source. Be helpful and provide insights based on the available data."></textarea>
+        <div class="text-xs text-gray-400 mt-1">
+          Define how the AI should behave when answering questions about this data source.
+        </div>
+      </div>
+
+      <!-- Data Context -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Data Context</label>
+        <textarea x-model="card.config.dataContext" 
+                  rows="3"
+                  class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+                  placeholder="Describe what this data represents and any important context the AI should know about it."></textarea>
+        <div class="text-xs text-gray-400 mt-1">
+          Provide context about the data structure and meaning.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- General Chat Configuration -->
+  <div x-show="card.config.chatType === 'general'">
+    <div class="space-y-3">
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">AI Personality</label>
+        <select x-model="card.config.personality" 
+                class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500">
+          <option value="helpful">Helpful Assistant</option>
+          <option value="professional">Professional Advisor</option>
+          <option value="creative">Creative Partner</option>
+          <option value="analytical">Analytical Expert</option>
+          <option value="friendly">Friendly Companion</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Custom Instructions</label>
+        <textarea x-model="card.config.customInstructions" 
+                  rows="3"
+                  class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+                  placeholder="Any specific instructions for how the AI should behave in this chat..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Settings -->
+  <div x-data="{ showAdvanced: false }">
+    <button @click="showAdvanced = !showAdvanced" 
+            class="flex items-center gap-2 text-sm text-gray-300 hover:text-white">
+      <svg class="w-4 h-4 transform transition-transform" :class="{ 'rotate-90': showAdvanced }" 
+           fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+      Advanced Settings
+    </button>
+
+    <div x-show="showAdvanced" class="mt-3 space-y-3 p-3 bg-gray-600 rounded">
+      <!-- Chat Memory -->
+      <div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" 
+                 x-model="card.config.enableMemory" 
+                 class="rounded bg-gray-700 border-gray-600">
+          <span class="text-sm text-gray-300">Enable chat memory across sessions</span>
+        </label>
+      </div>
+
+      <!-- Max Messages to Remember -->
+      <div x-show="card.config.enableMemory">
+        <label class="block text-sm font-medium text-gray-300 mb-2">Max Messages to Remember</label>
+        <input type="number" 
+               x-model="card.config.maxMemoryMessages" 
+               min="10" 
+               max="100" 
+               class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+               placeholder="50">
+      </div>
+
+      <!-- Response Length -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Response Length</label>
+        <select x-model="card.config.responseLength" 
+                class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500">
+          <option value="short">Short (1-2 sentences)</option>
+          <option value="medium">Medium (1-2 paragraphs)</option>
+          <option value="long">Long (Detailed explanations)</option>
+        </select>
+      </div>
+
+      <!-- Temperature/Creativity -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">
+          Creativity Level: <span x-text="card.config.temperature || 0.7"></span>
+        </label>
+        <input type="range" 
+               x-model="card.config.temperature" 
+               min="0" 
+               max="1" 
+               step="0.1" 
+               class="w-full">
+        <div class="flex justify-between text-xs text-gray-400 mt-1">
+          <span>Focused</span>
+          <span>Creative</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Section -->
+  <div class="border-t border-gray-600 pt-4">
+    <label class="block text-sm font-medium text-gray-300 mb-2">Preview</label>
+    <div class="bg-gray-600 p-3 rounded text-sm text-gray-300">
+      <div x-show="card.config.chatType === 'agent' && card.config.selectedAgent">
+        <strong>Agent Chat:</strong> <span x-text="card.config.selectedAgent.name"></span>
+        <br><span x-text="card.config.selectedAgent.description"></span>
+      </div>
+      <div x-show="card.config.chatType === 'data' && card.config.dataSource">
+        <strong>Data Chat:</strong> <span x-text="card.config.dataSource"></span>
+        <br><span x-text="card.config.systemPrompt || 'No system prompt defined'"></span>
+      </div>
+      <div x-show="card.config.chatType === 'general'">
+        <strong>General Chat:</strong> <span x-text="card.config.personality || 'Helpful Assistant'"></span>
+      </div>
+      <div x-show="!card.config.chatType || card.config.chatType === ''">
+        <span class="text-gray-400">Please select a chat configuration type</span>
+      </div>
     </div>
   </div>
 </div>

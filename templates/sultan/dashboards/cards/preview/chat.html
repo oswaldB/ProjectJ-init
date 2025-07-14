@@ -1,14 +1,270 @@
 
-<div class="bg-gray-800 p-4 rounded-lg h-full flex flex-col">
-  <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Chat'"></h3>
-  <div class="bg-gray-700 rounded flex-1 p-3 mb-3">
-    <div class="space-y-2 h-20 overflow-y-auto">
-      <div class="bg-red-500 text-white p-2 rounded text-xs">Hello! How can I help?</div>
-      <div class="bg-gray-600 text-white p-2 rounded text-xs ml-4">I need assistance...</div>
+<div class="bg-gray-800 p-4 rounded-lg h-full flex flex-col" x-data="{
+  messages: [],
+  newMessage: '',
+  isLoading: false,
+  chatHistory: [],
+  currentChatId: null,
+  
+  // Initialize chat
+  init() {
+    this.loadChatHistory();
+    if (this.chatHistory.length > 0) {
+      this.loadChat(this.chatHistory[0].id);
+    } else {
+      this.startNewChat();
+    }
+  },
+  
+  // Start a new chat session
+  startNewChat() {
+    const chatId = 'chat-' + Date.now();
+    this.currentChatId = chatId;
+    this.messages = [];
+    
+    // Add welcome message based on configuration
+    let welcomeMessage = 'Hello! How can I help you today?';
+    if (card.config.selectedAgent) {
+      welcomeMessage = `Hi! I'm ${card.config.selectedAgent.name}. ${card.config.selectedAgent.description || 'How can I assist you?'}`;
+    } else if (card.config.dataSource && card.config.systemPrompt) {
+      welcomeMessage = `Hello! I'm ready to help you with data from ${card.config.dataSource}. Ask me anything!`;
+    }
+    
+    this.messages.push({
+      id: Date.now(),
+      text: welcomeMessage,
+      sender: 'ai',
+      timestamp: new Date().toISOString()
+    });
+    
+    // Add to history
+    this.chatHistory.unshift({
+      id: chatId,
+      title: 'New Chat',
+      lastMessage: welcomeMessage,
+      timestamp: new Date().toISOString(),
+      messageCount: 1
+    });
+    
+    this.saveChatHistory();
+  },
+  
+  // Load chat history from localStorage
+  loadChatHistory() {
+    const saved = localStorage.getItem('chat-history-' + card.id);
+    this.chatHistory = saved ? JSON.parse(saved) : [];
+  },
+  
+  // Save chat history to localStorage
+  saveChatHistory() {
+    localStorage.setItem('chat-history-' + card.id, JSON.stringify(this.chatHistory));
+  },
+  
+  // Load specific chat
+  loadChat(chatId) {
+    const saved = localStorage.getItem('chat-messages-' + chatId);
+    if (saved) {
+      this.currentChatId = chatId;
+      this.messages = JSON.parse(saved);
+    }
+  },
+  
+  // Save current chat messages
+  saveChatMessages() {
+    if (this.currentChatId) {
+      localStorage.setItem('chat-messages-' + this.currentChatId, JSON.stringify(this.messages));
+    }
+  },
+  
+  // Send message
+  async sendMessage() {
+    if (!this.newMessage.trim() || this.isLoading) return;
+    
+    const userMessage = {
+      id: Date.now(),
+      text: this.newMessage,
+      sender: 'user',
+      timestamp: new Date().toISOString()
+    };
+    
+    this.messages.push(userMessage);
+    const messageText = this.newMessage;
+    this.newMessage = '';
+    this.isLoading = true;
+    
+    try {
+      // Simulate AI response (replace with actual API call)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      let aiResponse = 'I understand your question. Let me help you with that.';
+      
+      // Customize response based on configuration
+      if (card.config.selectedAgent) {
+        aiResponse = `As ${card.config.selectedAgent.name}, I would say: ${this.generateAgentResponse(messageText)}`;
+      } else if (card.config.dataSource && card.config.systemPrompt) {
+        aiResponse = this.generateDataResponse(messageText);
+      }
+      
+      const aiMessage = {
+        id: Date.now() + 1,
+        text: aiResponse,
+        sender: 'ai',
+        timestamp: new Date().toISOString()
+      };
+      
+      this.messages.push(aiMessage);
+      
+      // Update chat history
+      const chatIndex = this.chatHistory.findIndex(c => c.id === this.currentChatId);
+      if (chatIndex >= 0) {
+        this.chatHistory[chatIndex].lastMessage = aiResponse;
+        this.chatHistory[chatIndex].timestamp = new Date().toISOString();
+        this.chatHistory[chatIndex].messageCount = this.messages.length;
+        
+        // Update title if it's still 'New Chat'
+        if (this.chatHistory[chatIndex].title === 'New Chat') {
+          this.chatHistory[chatIndex].title = messageText.substring(0, 30) + '...';
+        }
+      }
+      
+    } catch (error) {
+      this.messages.push({
+        id: Date.now() + 1,
+        text: 'Sorry, I encountered an error. Please try again.',
+        sender: 'ai',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    this.isLoading = false;
+    this.saveChatMessages();
+    this.saveChatHistory();
+    
+    // Scroll to bottom
+    this.$nextTick(() => {
+      const container = this.$refs.messagesContainer;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    });
+  },
+  
+  // Generate agent-specific response
+  generateAgentResponse(message) {
+    const responses = [
+      'Based on my expertise, I would recommend...',
+      'From my perspective as ' + (card.config.selectedAgent?.name || 'an AI assistant') + ', here\'s what I think...',
+      'Let me analyze this for you...',
+      'That\'s an interesting question. Here\'s my take...'
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
+  },
+  
+  // Generate data-specific response
+  generateDataResponse(message) {
+    return `Based on the data from ${card.config.dataSource} and using the prompt: '${card.config.systemPrompt}', I can tell you that...`;
+  },
+  
+  // Delete a chat
+  deleteChat(chatId) {
+    this.chatHistory = this.chatHistory.filter(c => c.id !== chatId);
+    localStorage.removeItem('chat-messages-' + chatId);
+    this.saveChatHistory();
+    
+    if (this.currentChatId === chatId) {
+      if (this.chatHistory.length > 0) {
+        this.loadChat(this.chatHistory[0].id);
+      } else {
+        this.startNewChat();
+      }
+    }
+  }
+}">
+  
+  <!-- Header with title and new chat button -->
+  <div class="flex justify-between items-center mb-3">
+    <h3 class="text-white font-semibold" x-text="card.config.title || 'AI Chat'"></h3>
+    <button @click="startNewChat()" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">
+      New Chat
+    </button>
+  </div>
+
+  <!-- Configuration info -->
+  <div class="mb-2 text-xs text-gray-400">
+    <div x-show="card.config.selectedAgent" class="flex items-center gap-1">
+      <span class="text-green-400">●</span>
+      <span x-text="'Agent: ' + (card.config.selectedAgent?.name || 'None')"></span>
+    </div>
+    <div x-show="!card.config.selectedAgent && card.config.dataSource" class="flex items-center gap-1">
+      <span class="text-blue-400">●</span>
+      <span x-text="'Data: ' + card.config.dataSource"></span>
     </div>
   </div>
-  <div class="flex">
-    <input type="text" class="bg-gray-700 text-white p-2 rounded-l flex-1 text-sm" placeholder="Type a message...">
-    <button class="bg-red-500 text-white px-3 py-2 rounded-r text-sm">Send</button>
+
+  <!-- Chat history sidebar (for larger cards) -->
+  <div x-show="card.size.width >= 2" class="mb-3 max-h-20 overflow-y-auto bg-gray-700 rounded p-2">
+    <div class="text-xs text-gray-300 mb-1">Recent Chats:</div>
+    <template x-for="chat in chatHistory.slice(0, 3)" :key="chat.id">
+      <div class="flex justify-between items-center py-1 px-2 hover:bg-gray-600 rounded cursor-pointer text-xs"
+           @click="loadChat(chat.id)"
+           :class="{ 'bg-gray-600': currentChatId === chat.id }">
+        <div class="flex-1 truncate">
+          <div class="text-white" x-text="chat.title"></div>
+          <div class="text-gray-400 text-xs" x-text="chat.messageCount + ' messages'"></div>
+        </div>
+        <button @click.stop="deleteChat(chat.id)" class="text-red-400 hover:text-red-300 ml-1">×</button>
+      </div>
+    </template>
+  </div>
+
+  <!-- Messages container -->
+  <div x-ref="messagesContainer" 
+       class="flex-1 overflow-y-auto mb-3 space-y-2 bg-gray-700 rounded p-2"
+       :class="{
+         'max-h-24': card.size.height === 1,
+         'max-h-32': card.size.height === 2,
+         'max-h-48': card.size.height === 3,
+         'max-h-64': card.size.height >= 4
+       }">
+    <template x-for="message in messages" :key="message.id">
+      <div class="flex" :class="{ 'justify-end': message.sender === 'user' }">
+        <div class="max-w-xs lg:max-w-md px-3 py-2 rounded-lg text-sm"
+             :class="{
+               'bg-blue-600 text-white': message.sender === 'user',
+               'bg-gray-600 text-gray-100': message.sender === 'ai'
+             }">
+          <div x-text="message.text"></div>
+          <div class="text-xs opacity-75 mt-1" 
+               x-text="new Date(message.timestamp).toLocaleTimeString()"></div>
+        </div>
+      </div>
+    </template>
+    
+    <!-- Loading indicator -->
+    <div x-show="isLoading" class="flex justify-start">
+      <div class="bg-gray-600 text-gray-100 px-3 py-2 rounded-lg text-sm">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+          <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+          <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message input -->
+  <div class="flex gap-2">
+    <input type="text" 
+           x-model="newMessage"
+           @keyup.enter="sendMessage()"
+           class="flex-1 bg-gray-700 text-white p-2 rounded text-sm border border-gray-600 focus:outline-none focus:border-blue-500" 
+           placeholder="Type your message..."
+           :disabled="isLoading">
+    <button @click="sendMessage()" 
+            :disabled="!newMessage.trim() || isLoading"
+            class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-3 py-2 rounded text-sm">
+      <span x-show="!isLoading">Send</span>
+      <span x-show="isLoading">...</span>
+    </button>
   </div>
 </div>

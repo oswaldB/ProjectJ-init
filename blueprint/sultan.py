@@ -95,6 +95,14 @@ def workflows_list():
 def workflow_edit(workflow_id):
     return render_template('sultan/workflows/edit.html')
 
+@sultan_bp.route('/agents')
+def agents_list():
+    return render_template('sultan/agents/index.html')
+
+@sultan_bp.route('/agents/edit/<agent_id>')
+def agent_edit(agent_id):
+    return render_template('sultan/agents/edit.html')
+
 # API Routes
 @sultan_bp.route('/api/dashboard/<dashboard_id>', methods=['GET'])
 def api_dashboard_get(dashboard_id):
@@ -313,6 +321,54 @@ def api_template_delete(template_id):
             return jsonify({"error": "Template not found"}), 404
     except Exception as e:
         logger.error(f"Failed to move template {template_id} to delete folder: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@sultan_bp.route('/api/agents/list')
+def api_agents_list():
+    """List all AI agents"""
+    try:
+        agents = list_sultan_objects('agents')
+        return jsonify(agents)
+    except Exception as e:
+        logger.error(f"Failed to list agents: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@sultan_bp.route('/api/agents/<agent_id>', methods=['GET'])
+def api_agent_get(agent_id):
+    """Get a specific agent"""
+    try:
+        agent = get_sultan_object('agents', agent_id)
+        if agent:
+            return jsonify(agent)
+        else:
+            return jsonify({"error": "Agent not found"}), 404
+    except Exception as e:
+        logger.error(f"Failed to get agent {agent_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@sultan_bp.route('/api/agents/save', methods=['POST'])
+def api_agent_save():
+    """Save an agent"""
+    try:
+        data = request.json
+        agent = data.get('agent')
+        if not agent or not agent.get('id'):
+            return jsonify({"error": "Invalid agent data"}), 400
+        
+        save_sultan_object('agents', agent['id'], agent)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to save agent: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@sultan_bp.route('/api/agents/delete/<agent_id>', methods=['DELETE'])
+def api_agent_delete(agent_id):
+    """Delete an agent"""
+    try:
+        delete_sultan_object('agents', agent_id)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Failed to delete agent: {e}")
         return jsonify({"error": str(e)}), 500
 
 @sultan_bp.route('/api/templates', methods=['GET'])

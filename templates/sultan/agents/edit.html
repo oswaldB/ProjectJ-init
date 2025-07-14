@@ -1,0 +1,328 @@
+
+<!DOCTYPE html>
+<html lang="en" x-data="agentEditor()">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit AI Agent</title>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-white" x-text="agent.id ? 'Edit Agent' : 'Create Agent'"></h1>
+                <p class="text-gray-400 mt-2">Configure your AI agent's personality and capabilities</p>
+            </div>
+            <div class="flex gap-3">
+                <button @click="goBack()" 
+                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">
+                    Cancel
+                </button>
+                <button @click="saveAgent()" 
+                        :disabled="saving"
+                        class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-6 py-2 rounded-lg flex items-center gap-2">
+                    <span x-show="!saving">Save Agent</span>
+                    <span x-show="saving">Saving...</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-gray-800 rounded-lg p-6 space-y-6">
+                <!-- Basic Information -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Agent Name *</label>
+                        <input type="text" 
+                               x-model="agent.name" 
+                               class="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
+                               placeholder="Enter agent name">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Role</label>
+                        <select x-model="agent.role" 
+                                class="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
+                            <option value="Assistant">Assistant</option>
+                            <option value="Analyst">Data Analyst</option>
+                            <option value="Advisor">Business Advisor</option>
+                            <option value="Specialist">Technical Specialist</option>
+                            <option value="Coach">Coach/Mentor</option>
+                            <option value="Researcher">Researcher</option>
+                            <option value="Creative">Creative Partner</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                    <textarea x-model="agent.description" 
+                              rows="3"
+                              class="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
+                              placeholder="Describe what this agent specializes in and how it can help users..."></textarea>
+                </div>
+
+                <!-- System Prompt -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">System Prompt *</label>
+                    <textarea x-model="agent.systemPrompt" 
+                              rows="6"
+                              class="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
+                              placeholder="You are a helpful AI assistant. You should..."></textarea>
+                    <div class="text-xs text-gray-400 mt-1">
+                        This defines how the agent will behave and respond to users.
+                    </div>
+                </div>
+
+                <!-- Model Configuration -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">AI Model</label>
+                        <select x-model="agent.model" 
+                                class="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
+                            <option value="gpt-4">GPT-4</option>
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            <option value="claude-3">Claude 3</option>
+                            <option value="gemini-pro">Gemini Pro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                            Temperature: <span x-text="agent.temperature"></span>
+                        </label>
+                        <input type="range" 
+                               x-model="agent.temperature" 
+                               min="0" 
+                               max="1" 
+                               step="0.1" 
+                               class="w-full">
+                        <div class="flex justify-between text-xs text-gray-400 mt-1">
+                            <span>Focused</span>
+                            <span>Creative</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Max Tokens</label>
+                        <input type="number" 
+                               x-model="agent.maxTokens" 
+                               min="100" 
+                               max="4000" 
+                               class="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
+                               placeholder="2000">
+                    </div>
+                </div>
+
+                <!-- Specializations -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Specializations</label>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <template x-for="(spec, index) in agent.specializations" :key="index">
+                            <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm flex items-center gap-2">
+                                <span x-text="spec"></span>
+                                <button @click="agent.specializations.splice(index, 1)" 
+                                        class="text-blue-200 hover:text-white">×</button>
+                            </span>
+                        </template>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" 
+                               x-model="newSpecialization" 
+                               @keyup.enter="addSpecialization()"
+                               class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
+                               placeholder="Add specialization (e.g., Data Analysis, Customer Support)">
+                        <button @click="addSpecialization()" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                            Add
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Knowledge Base -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Knowledge Base</label>
+                    <textarea x-model="agent.knowledgeBase" 
+                              rows="4"
+                              class="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
+                              placeholder="Specific knowledge, facts, or context this agent should always know about..."></textarea>
+                    <div class="text-xs text-gray-400 mt-1">
+                        Include any domain-specific knowledge or context this agent should have.
+                    </div>
+                </div>
+
+                <!-- Conversation Settings -->
+                <div class="border-t border-gray-600 pt-6">
+                    <h3 class="text-lg font-medium text-white mb-4">Conversation Settings</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Response Style</label>
+                            <select x-model="agent.responseStyle" 
+                                    class="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
+                                <option value="concise">Concise & Direct</option>
+                                <option value="detailed">Detailed & Thorough</option>
+                                <option value="casual">Casual & Friendly</option>
+                                <option value="professional">Professional & Formal</option>
+                                <option value="educational">Educational & Explanatory</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Conversation Tone</label>
+                            <select x-model="agent.tone" 
+                                    class="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
+                                <option value="helpful">Helpful</option>
+                                <option value="encouraging">Encouraging</option>
+                                <option value="analytical">Analytical</option>
+                                <option value="empathetic">Empathetic</option>
+                                <option value="enthusiastic">Enthusiastic</option>
+                                <option value="neutral">Neutral</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Settings -->
+                <div x-data="{ showAdvanced: false }" class="border-t border-gray-600 pt-6">
+                    <button @click="showAdvanced = !showAdvanced" 
+                            class="flex items-center gap-2 text-sm text-gray-300 hover:text-white mb-4">
+                        <svg class="w-4 h-4 transform transition-transform" :class="{ 'rotate-90': showAdvanced }" 
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                        Advanced Settings
+                    </button>
+
+                    <div x-show="showAdvanced" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="flex items-center gap-2">
+                                    <input type="checkbox" 
+                                           x-model="agent.enableMemory" 
+                                           class="rounded bg-gray-700 border-gray-600">
+                                    <span class="text-sm text-gray-300">Enable conversation memory</span>
+                                </label>
+                            </div>
+                            <div>
+                                <label class="flex items-center gap-2">
+                                    <input type="checkbox" 
+                                           x-model="agent.enableWebSearch" 
+                                           class="rounded bg-gray-700 border-gray-600">
+                                    <span class="text-sm text-gray-300">Enable web search capabilities</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Stop Sequences</label>
+                            <input type="text" 
+                                   x-model="agent.stopSequences" 
+                                   class="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
+                                   placeholder="Enter stop sequences separated by commas">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function agentEditor() {
+            return {
+                agent: {
+                    name: '',
+                    role: 'Assistant',
+                    description: '',
+                    systemPrompt: '',
+                    model: 'gpt-4',
+                    temperature: 0.7,
+                    maxTokens: 2000,
+                    specializations: [],
+                    knowledgeBase: '',
+                    responseStyle: 'helpful',
+                    tone: 'helpful',
+                    enableMemory: true,
+                    enableWebSearch: false,
+                    stopSequences: ''
+                },
+                newSpecialization: '',
+                saving: false,
+                agentId: null,
+
+                async init() {
+                    this.agentId = window.location.pathname.split('/').pop();
+                    
+                    // If editing existing agent, load it
+                    if (this.agentId && this.agentId !== 'new') {
+                        await this.loadAgent();
+                    } else {
+                        // New agent - set default values
+                        this.agent.id = 'agent-' + Date.now();
+                        this.agent.createdAt = new Date().toISOString();
+                    }
+                },
+
+                async loadAgent() {
+                    try {
+                        const response = await fetch(`/pc-analytics-jaffar/sultan/api/agents/${this.agentId}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.agent = { ...this.agent, ...data };
+                        }
+                    } catch (error) {
+                        console.error('Error loading agent:', error);
+                    }
+                },
+
+                addSpecialization() {
+                    if (this.newSpecialization.trim() && !this.agent.specializations.includes(this.newSpecialization.trim())) {
+                        this.agent.specializations.push(this.newSpecialization.trim());
+                        this.newSpecialization = '';
+                    }
+                },
+
+                async saveAgent() {
+                    if (!this.agent.name.trim() || !this.agent.systemPrompt.trim()) {
+                        alert('Please fill in the required fields (Name and System Prompt)');
+                        return;
+                    }
+
+                    this.saving = true;
+                    
+                    try {
+                        // Set metadata
+                        if (!this.agent.createdAt) {
+                            this.agent.createdAt = new Date().toISOString();
+                        }
+                        this.agent.updatedAt = new Date().toISOString();
+
+                        const response = await fetch('/pc-analytics-jaffar/sultan/api/agents/save', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ agent: this.agent })
+                        });
+
+                        if (response.ok) {
+                            window.location.href = '/pc-analytics-jaffar/sultan/agents';
+                        } else {
+                            alert('Failed to save agent');
+                        }
+                    } catch (error) {
+                        console.error('Error saving agent:', error);
+                        alert('Error saving agent');
+                    }
+                    
+                    this.saving = false;
+                },
+
+                goBack() {
+                    window.location.href = '/pc-analytics-jaffar/sultan/agents';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
