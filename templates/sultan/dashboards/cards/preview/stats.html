@@ -40,48 +40,51 @@
       const prefilters = card.config.prefilters || [];
       const valueField = card.config.valueField;
       
-      const mapReduceFun = {
-        map: function (doc) {
-          // Apply prefilters
-          const filters = ${JSON.stringify(prefilters)};
-          for (const filter of filters) {
-            if (!filter.enabled || !filter.field) continue;
-            
-            const docValue = doc[filter.field];
-            const filterValue = filter.value;
-            const operator = filter.operator || 'equals';
-            
-            switch (operator) {
-              case 'equals':
-                if (docValue != filterValue) return;
-                break;
-              case 'not_equals':
-                if (docValue == filterValue) return;
-                break;
-              case 'contains':
-                if (!String(docValue || '').toLowerCase().includes(String(filterValue || '').toLowerCase())) return;
-                break;
-              case 'greater_than':
-                if (parseFloat(docValue) <= parseFloat(filterValue)) return;
-                break;
-              case 'less_than':
-                if (parseFloat(docValue) >= parseFloat(filterValue)) return;
-                break;
-              case 'exists':
-                if (docValue === null || docValue === undefined) return;
-                break;
-              case 'not_exists':
-                if (docValue !== null && docValue !== undefined) return;
-                break;
-            }
-          }
+      // Create map function string with proper escaping
+      const mapFunctionString = `function (doc) {
+        // Apply prefilters
+        const filters = ${JSON.stringify(prefilters).replace(/\\/g, '\\\\').replace(/"/g, '\\"')};
+        for (const filter of filters) {
+          if (!filter.enabled || !filter.field) continue;
           
-          // Emit the numeric value for stats calculation
-          const value = doc['${valueField}'];
-          if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
-            emit(doc._id, parseFloat(value));
+          const docValue = doc[filter.field];
+          const filterValue = filter.value;
+          const operator = filter.operator || 'equals';
+          
+          switch (operator) {
+            case 'equals':
+              if (docValue != filterValue) return;
+              break;
+            case 'not_equals':
+              if (docValue == filterValue) return;
+              break;
+            case 'contains':
+              if (!String(docValue || '').toLowerCase().includes(String(filterValue || '').toLowerCase())) return;
+              break;
+            case 'greater_than':
+              if (parseFloat(docValue) <= parseFloat(filterValue)) return;
+              break;
+            case 'less_than':
+              if (parseFloat(docValue) >= parseFloat(filterValue)) return;
+              break;
+            case 'exists':
+              if (docValue === null || docValue === undefined) return;
+              break;
+            case 'not_exists':
+              if (docValue !== null && docValue !== undefined) return;
+              break;
           }
-        }.toString(),
+        }
+        
+        // Emit the numeric value for stats calculation
+        const value = doc["${valueField}"];
+        if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
+          emit(doc._id, parseFloat(value));
+        }
+      }`;
+      
+      const mapReduceFun = {
+        map: mapFunctionString,
         reduce: '_stats'
       };
       
