@@ -75,7 +75,7 @@
     }
   },
 
-  // Send message
+  // Send message to API or agent
   async sendMessage() {
     if (!this.newMessage.trim() || this.isLoading) return;
 
@@ -92,16 +92,16 @@
     this.isLoading = true;
 
     try {
-      // Simulate AI response (replace with actual API call)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let aiResponse;
 
-      let aiResponse = 'I understand your question. Let me help you with that.';
-
-      // Customize response based on configuration
-      if (card.config.selectedAgent) {
+      if (card.config.apiUrl && card.config.apiToken) {
+        aiResponse = await this.sendToCustomAPI(messageText);
+      } else if (card.config.selectedAgent) {
         aiResponse = `As ${card.config.selectedAgent.name}, I would say: ${this.generateAgentResponse(messageText)}`;
       } else if (card.config.dataSource && card.config.systemPrompt) {
         aiResponse = this.generateDataResponse(messageText);
+      } else {
+        aiResponse = 'I understand your question. Let me help you with that.';
       }
 
       const aiMessage = {
@@ -146,6 +146,47 @@
         container.scrollTop = container.scrollHeight;
       }
     });
+  },
+
+  // Send to custom API
+  async sendToCustomAPI(message) {
+    const model = card.config.customModel || card.config.model || 'gpt-3.5-turbo';
+
+    const requestBody = {
+      model: model,
+      messages: [
+        {
+          role: 'system',
+          content: card.config.systemPrompt || 'You are a helpful assistant.'
+        },
+        ...this.messages.slice(-10).map(msg => ({
+          role: msg.sender === 'user' ? 'user' : 'assistant',
+          content: msg.text
+        })),
+        {
+          role: 'user',
+          content: message
+        }
+      ],
+      temperature: card.config.temperature || 0.7,
+      max_tokens: card.config.maxTokens || 1000
+    };
+
+    const response = await fetch(card.config.apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${card.config.apiToken}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
   },
 
   // Generate agent-specific response
@@ -197,6 +238,10 @@
     <div x-show="!card.config.selectedAgent && card.config.dataSource" class="flex items-center gap-1">
       <span class="text-blue-400">●</span>
       <span x-text="'Data: ' + card.config.dataSource"></span>
+    </div>
+    <div x-show="card.config.apiUrl" class="flex items-center gap-1">
+      <span class="text-purple-400">●</span>
+      <span x-text="'API: ' + (card.config.model || 'Custom')"></span>
     </div>
   </div>
 
@@ -251,189 +296,7 @@
     </div>
   </div>
 
-  // Send message to API or agent
-  async sendMessage() {
-    if (!this.newMessage.trim() || this.isLoading) return;
-
-    const userMessage = {
-      id: Date.now(),
-      text: this.newMessage,
-      sender: 'user',
-      timestamp: new Date().toISOString()
-    };
-
-    this.messages.push(userMessage);
-    const messageText = this.newMessage;
-    this.newMessage = '';
-    this.isLoading = true;
-
-    try {
-      // Simulate AI response (replace with actual API call)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      let aiResponse = 'I understand your question. Let me help you with that.';
-
-      // Customize response based on configuration
-      if (card.config.selectedAgent) {
-        aiResponse = `As ${card.config.selectedAgent.name}, I would say: ${this.generateAgentResponse(messageText)}`;
-      } else if (card.config.dataSource && card.config.systemPrompt) {
-        aiResponse = this.generateDataResponse(messageText);
-      }
-
-      const aiMessage = {
-        id: Date.now() + 1,
-        text: aiResponse,
-        sender: 'ai',
-        timestamp: new Date().toISOString()
-      };
-
-      this.messages.push(aiMessage);
-
-      // Update chat history
-      const chatIndex = this.chatHistory.findIndex(c => c.id === this.currentChatId);
-      if (chatIndex >= 0) {
-        this.chatHistory[chatIndex].lastMessage = aiResponse;
-        this.chatHistory[chatIndex].timestamp = new Date().toISOString();
-        this.chatHistory[chatIndex].messageCount = this.messages.length;
-
-        // Update title if it's still 'New Chat'
-        if (this.chatHistory[chatIndex].title === 'New Chat') {
-          this.chatHistory[chatIndex].title = messageText.substring(0, 30) + '...';
-        }
-      }
-
-    } catch (error) {
-      this.messages.push({
-        id: Date.now() + 1,
-        text: 'Sorry, I encountered an error. Please try again.',
-        sender: 'ai',
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    this.isLoading = false;
-    this.saveChatMessages();
-    this.saveChatHistory();
-
-    // Scroll to bottom
-    this.$nextTick(() => {
-      const container = this.$refs.messagesContainer;
-      if (container) {
-        container.scrollTop = container.scrollHeight;
-      }
-    });
-  },
-
-  // Generate agent-specific response
-  generateAgentResponse(message) {
-    const responses = [
-      'Based on my expertise, I would recommend...',
-      'From my perspective as ' + (card.config.selectedAgent?.name || 'an AI assistant') + ', here\'s what I think...',
-      'Let me analyze this for you...',
-      'That\'s an interesting question. Here\'s my take...'
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  },
-
-  // Generate data-specific response
-  generateDataResponse(message) {
-    return `Based on the data from ${card.config.dataSource} and using the prompt: '${card.config.systemPrompt}', I can tell you that...`;
-  },
-
-  // Send message to API or agent
-  async sendMessage() {
-    if (!this.currentMessage.trim()) return;
-
-    const userMessage = {
-      id: Date.now(),
-      role: 'user',
-      content: this.currentMessage,
-      timestamp: new Date().toISOString()
-    };
-
-    this.messages.push(userMessage);
-    this.saveMessages();
-
-    const messageContent = this.currentMessage;
-    this.currentMessage = '';
-    this.isTyping = true;
-
-    try {
-      let response;
-
-      if (card.config.apiUrl && card.config.apiToken) {
-        response = await this.sendToCustomAPI(messageContent);
-      } else if (card.config.selectedAgent) {
-        response = await this.sendToAgent(messageContent, card.config.selectedAgent.id);
-      } else {
-        response = await this.sendToGeneral(messageContent);
-      }
-
-      const aiMessage = {
-        id: Date.now() + 1,
-        role: 'assistant',
-        content: response,
-        timestamp: new Date().toISOString()
-      };
-
-      this.messages.push(aiMessage);
-      this.saveMessages();
-
-    } catch (error) {
-      console.error('Error sending message:', error);
-      const errorMessage = {
-        id: Date.now() + 1,
-        role: 'assistant',
-        content: 'Désolé, une erreur s\'est produite lors de l\'envoi du message.',
-        timestamp: new Date().toISOString()
-      };
-      this.messages.push(errorMessage);
-      this.saveMessages();
-    } finally {
-      this.isTyping = false;
-      this.scrollToBottom();
-    }
-  },
-
-  // Send to custom API
-  async sendToCustomAPI(message) {
-    const model = card.config.customModel || card.config.model || 'gpt-3.5-turbo';
-
-    const requestBody = {
-      model: model,
-      messages: [
-        {
-          role: 'system',
-          content: card.config.systemPrompt || 'You are a helpful assistant.'
-        },
-        ...this.messages.slice(-10), // Include last 10 messages for context
-        {
-          role: 'user',
-          content: message
-        }
-      ],
-      temperature: card.config.temperature || 0.7,
-      max_tokens: card.config.maxTokens || 1000
-    };
-
-    const response = await fetch(card.config.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${card.config.apiToken}`
-      },
-      body: JSON.stringify(requestBody)
-    });
-
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.choices[0].message.content;
-  },
-
-  // Message input
+  <!-- Message input -->
   <div class="flex gap-2">
     <input type="text" 
            x-model="newMessage"
