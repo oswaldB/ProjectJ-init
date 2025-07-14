@@ -17,7 +17,7 @@ import uuid
 from blueprint.sultan import sultan_bp
 from blueprint.jaffar import jaffar_blueprint
 from blueprint.forms import forms_blueprint
-from blueprint.jaffar_api import jaffar_api_bp
+from blueprint.jaffar_api import jaffar_api_blueprint
 from blueprint.dashboard import dashboard_bp
 from blueprint.workflow import workflow_bp
 from blueprint.agents import agents_bp
@@ -32,7 +32,7 @@ app = Flask(__name__)
 app.register_blueprint(sultan_bp)
 app.register_blueprint(jaffar_blueprint)
 app.register_blueprint(forms_blueprint)
-app.register_blueprint(jaffar_api_bp)
+app.register_blueprint(jaffar_api_blueprint)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(workflow_bp)
 app.register_blueprint(agents_bp)
