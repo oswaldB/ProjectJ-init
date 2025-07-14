@@ -17,14 +17,26 @@
   renderMarkdownIfNeeded(text) {
     if (!text) return '';
     
+    console.log('🔍 Checking text for markdown:', text);
+    
     // Check if text contains markdown code blocks or other markdown syntax
     const hasCodeBlocks = text.includes('```');
     const hasMarkdownSyntax = /(\*\*|__|\*|_|`|#|>|\[.*\]\(.*\)|\n-|\n\*|\n\d+\.)/.test(text);
     
+    console.log('📝 Markdown detection results:', {
+      text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+      hasCodeBlocks,
+      hasMarkdownSyntax,
+      willRenderAsMarkdown: hasCodeBlocks || hasMarkdownSyntax,
+      markedAvailable: !!window.marked
+    });
+    
     if (hasCodeBlocks || hasMarkdownSyntax) {
+      console.log('✅ Rendering as markdown');
       return window.marked ? marked(text) : text;
     }
     
+    console.log('❌ Rendering as plain text');
     // If no markdown syntax detected, return as plain text
     return text;
   },
