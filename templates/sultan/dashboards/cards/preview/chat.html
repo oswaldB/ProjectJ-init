@@ -224,7 +224,7 @@
   <!-- Header with title and new chat button -->
   <div class="flex justify-between items-center mb-3">
     <h3 class="text-white font-semibold" x-text="card.config.title || 'AI Chat'"></h3>
-    <button @click="startNewChat()" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">
+    <button @click="startNewChat()" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs">
       New Chat
     </button>
   </div>
@@ -236,7 +236,7 @@
       <span x-text="'Agent: ' + (card.config.selectedAgent?.name || 'None')"></span>
     </div>
     <div x-show="!card.config.selectedAgent && card.config.dataSource" class="flex items-center gap-1">
-      <span class="text-blue-400">●</span>
+      <span class="text-red-500">●</span>
       <span x-text="'Data: ' + card.config.dataSource"></span>
     </div>
     <div x-show="card.config.apiUrl" class="flex items-center gap-1">
@@ -274,7 +274,7 @@
       <div class="flex" :class="{ 'justify-end': message.sender === 'user' }">
         <div class="max-w-xs lg:max-w-md px-3 py-2 rounded-lg text-sm"
              :class="{
-               'bg-blue-600 text-white': message.sender === 'user',
+               'bg-red-500 text-white': message.sender === 'user',
                'bg-gray-600 text-gray-100': message.sender === 'ai'
              }">
           <div x-text="message.text"></div>
@@ -301,12 +301,12 @@
     <input type="text" 
            x-model="newMessage"
            @keyup.enter="sendMessage()"
-           class="flex-1 bg-gray-700 text-white p-2 rounded text-sm border border-gray-600 focus:outline-none focus:border-blue-500" 
+           class="flex-1 bg-gray-700 text-white p-2 rounded text-sm border border-gray-600 focus:outline-none focus:border-red-500" 
            placeholder="Type your message..."
            :disabled="isLoading">
     <button @click="sendMessage()" 
             :disabled="!newMessage.trim() || isLoading"
-            class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-3 py-2 rounded text-sm">
+            class="bg-red-500 hover:bg-red-600 disabled:bg-gray-600 text-white px-3 py-2 rounded text-sm">
       <span x-show="!isLoading">Send</span>
       <span x-show="isLoading">...</span>
     </button>
