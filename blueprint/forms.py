@@ -580,4 +580,3 @@ def ask_scheherazade():
     except Exception as e:
         logger.error(f"Error in ask_scheherazade: {e}")
         return jsonify({"error": str(e)}), 500
-</replit_final_file>
