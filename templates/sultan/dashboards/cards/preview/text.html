@@ -1,5 +1,4 @@
 
-
 <style>
   .text-content ul {
     list-style-type: disc !important;
@@ -34,22 +33,6 @@
     margin-top: 0.25rem !important;
     margin-left: 1.5rem !important;
   }
-  
-  /* Hide Quill toolbar in preview mode */
-  .text-preview-quill .ql-toolbar {
-    display: none !important;
-  }
-  
-  /* Make Quill editor look like regular content */
-  .text-preview-quill .ql-container {
-    border: none !important;
-    background: transparent !important;
-  }
-  
-  .text-preview-quill .ql-editor {
-    padding: 0 !important;
-    background: transparent !important;
-  }
 </style>
 
 <div class="p-4 rounded-lg h-full"
@@ -66,44 +49,10 @@
 
   <!-- Content Display -->
   <div class="text-white">
-    <div x-show="card.config.content" class="text-content">
-      <!-- Quill Preview Editor -->
-      <div 
-        x-ref="textPreviewQuill"
-        x-init="
-          setTimeout(() => {
-            if (!$refs.textPreviewQuill._quill) {
-              const previewQuill = new Quill($refs.textPreviewQuill, {
-                theme: 'snow',
-                readOnly: true,
-                modules: {
-                  toolbar: false
-                }
-              });
-              $refs.textPreviewQuill._quill = previewQuill;
-              
-              // Set initial content
-              if (card.config.content) {
-                previewQuill.root.innerHTML = card.config.content;
-              }
-              
-              // Watch for content changes
-              Alpine.effect(() => {
-                if (previewQuill.root.innerHTML !== (card.config.content || '')) {
-                  previewQuill.root.innerHTML = card.config.content || '';
-                }
-              });
-            }
-          }, 100);
-        "
-        class="text-preview-quill min-h-[100px]">
-      </div>
-    </div>
-    
+    <div x-show="card.config.content" x-html="card.config.content" class="prose prose-invert max-w-none text-content"></div>
     <div x-show="!card.config.content" class="text-gray-400 text-center py-8">
       <p>No content configured</p>
       <p class="text-sm mt-2">Configure the text content in the editor</p>
     </div>
   </div>
 </div>
-
