@@ -1,5 +1,12 @@
 
-<div class="bg-gray-800 p-4 rounded-lg h-full" x-data="{
+<div class="bg-gray-800 p-4 rounded-lg h-full"
+     :style="{
+       minHeight: card.size.height === 1 ? '200px' : 
+                 card.size.height === 2 ? '300px' : 
+                 card.size.height === 3 ? '400px' : 
+                 card.size.height === 4 ? '500px' : '600px'
+     }"
+     x-data="{
   kanbanData: [],
   loading: false,
   
