@@ -294,7 +294,7 @@
     try {
       // Extract form ID from data source (remove _drafts suffix if present)
       let formId = dataSource.replace('_drafts', '');
-      
+
       console.log('Loading form config for form ID:', formId);
 
       const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${formId}`);
