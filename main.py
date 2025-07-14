@@ -15,7 +15,6 @@ import uuid
 
 # Import blueprints
 from blueprint.dashboard import dashboard_bp
-from blueprint.dashboards_preview import dashboards_preview_bp
 from blueprint.forms import forms_blueprint
 from blueprint.jaffar import jaffar_blueprint
 from blueprint.jaffar_api import jaffar_api_blueprint
@@ -35,7 +34,6 @@ app.register_blueprint(jaffar_blueprint)
 app.register_blueprint(forms_blueprint)
 app.register_blueprint(jaffar_api_blueprint)
 app.register_blueprint(dashboard_bp)
-app.register_blueprint(dashboards_preview_bp)
 app.register_blueprint(workflow_bp)
 app.register_blueprint(agents_bp)
 

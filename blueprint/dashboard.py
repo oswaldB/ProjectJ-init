@@ -45,6 +45,11 @@ def view_dashboard(dashboard_id):
 def preview_dashboard(dashboard_id):
     return render_template('dashboards/index.html')
 
+# Routes from dashboards_preview.py
+@dashboard_bp.route('/dashboards/<dashboard_id>')
+def view_dashboard_preview(dashboard_id):
+    return render_template('dashboards/index.html')
+
 @dashboard_bp.route('/api/list')
 def api_list():
     print(f"DEBUG: api_list route called")
