@@ -1,0 +1,113 @@
+
+<div class="bg-gray-700 rounded-lg p-4 mb-4">
+  <div class="flex items-center justify-between mb-4">
+    <h4 class="text-white font-semibold">Ask Scheherazade</h4>
+    <button @click="removeField(fieldIndex)" class="text-red-400 hover:text-red-300">
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M6 2l2-2h4l2 2h4v2H2V2h4zM3 6v11a3 3 0 003 3h8a3 3 0 003-3V6H3z"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="space-y-4">
+    <!-- Field Key -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">Field Key</label>
+      <input type="text" 
+             x-model="field.key"
+             @input="field.key = field.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
+             class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+             placeholder="field-key">
+    </div>
+
+    <!-- Field Label -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">Field Label</label>
+      <input type="text" 
+             x-model="field.label"
+             class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+             placeholder="Question label">
+    </div>
+
+    <!-- Button Label -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">Button Label</label>
+      <input type="text" 
+             x-model="field.buttonLabel"
+             class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+             placeholder="Ask Scheherazade">
+    </div>
+
+    <!-- API URL -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">API URL</label>
+      <input type="url" 
+             x-model="field.apiUrl"
+             class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+             placeholder="https://api.example.com/v1/chat/completions">
+    </div>
+
+    <!-- Model -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">Model</label>
+      <select x-model="field.model" 
+              class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500">
+        <option value="">Select Model</option>
+        <option value="gpt-4">GPT-4</option>
+        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+        <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+        <option value="gemini-pro">Gemini Pro</option>
+      </select>
+    </div>
+
+    <!-- API Key -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">API Key</label>
+      <input type="password" 
+             x-model="field.apiKey"
+             class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+             placeholder="sk-...">
+    </div>
+
+    <!-- Prompt -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">Prompt</label>
+      <textarea x-model="field.prompt" 
+                rows="4"
+                class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+                placeholder="Enter your prompt here..."></textarea>
+      <div class="text-xs text-gray-400 mt-1">
+        Use {{field_key}} to reference other form fields in your prompt.
+      </div>
+    </div>
+
+    <!-- Expected Response Format -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">Expected Response Format</label>
+      <textarea x-model="field.responseFormat" 
+                rows="6"
+                class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+                placeholder='{"field1": "value1", "field2": "value2"}'></textarea>
+      <div class="text-xs text-gray-400 mt-1">
+        Define the expected JSON structure for the AI response.
+      </div>
+    </div>
+
+    <!-- Required Field -->
+    <div class="flex items-center space-x-2">
+      <input type="checkbox" 
+             x-model="field.required" 
+             class="form-checkbox h-4 w-4 text-red-500 bg-gray-800 border-gray-600 rounded focus:ring-red-500">
+      <label class="text-sm text-gray-300">Required</label>
+    </div>
+
+    <!-- Field Description -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
+      <textarea x-model="field.description" 
+                rows="2"
+                class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+                placeholder="Optional description for this field"></textarea>
+    </div>
+  </div>
+</div>

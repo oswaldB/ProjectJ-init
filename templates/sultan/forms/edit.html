@@ -228,8 +228,8 @@
                     <option value="list">List</option>
                     <option value="conditional">Conditional</option>
                     <option value="file_upload">File Upload</option>
-                    <option value="actions">Actions</option>
-<option value="submit_issue">Submit the Issue</option>
+                    <option value="ask_scheherazade">Ask Scheherazade</option>
+                    <option value="submit_issue">Submit the Issue</option>
                   </select>
                 </div>
 
@@ -274,6 +274,7 @@
                   </div>
                 </div>
 
+                {% include "sultan/forms/partials/editor/ask_scheherazade.html" %}
                 {% include "sultan/forms/partials/editor/actions.html" %}
                 {% include "sultan/forms/partials/editor/submit.html" %}
                 {% include "sultan/forms/partials/editor/single_select.html" %}
@@ -347,6 +348,7 @@
               </label>
               <p class="text-gray-400 text-sm" x-show="field.description" x-html="field.description"></p>
 
+              {% include "sultan/forms/partials/preview/ask_scheherazade.html" %}
               {% include "sultan/forms/partials/preview/single_select.html" %}
               {% include "sultan/forms/partials/preview/multiple_checkbox.html" %}
               {% include "sultan/forms/partials/preview/date.html" %}
