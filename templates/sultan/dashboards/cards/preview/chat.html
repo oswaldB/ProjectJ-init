@@ -1,11 +1,10 @@
-
 <div class="bg-gray-800 p-4 rounded-lg h-full flex flex-col" x-data="{
   messages: [],
   newMessage: '',
   isLoading: false,
   chatHistory: [],
   currentChatId: null,
-  
+
   // Initialize chat
   init() {
     this.loadChatHistory();
@@ -15,13 +14,13 @@
       this.startNewChat();
     }
   },
-  
+
   // Start a new chat session
   startNewChat() {
     const chatId = 'chat-' + Date.now();
     this.currentChatId = chatId;
     this.messages = [];
-    
+
     // Add welcome message based on configuration
     let welcomeMessage = 'Hello! How can I help you today?';
     if (card.config.selectedAgent) {
@@ -29,14 +28,14 @@
     } else if (card.config.dataSource && card.config.systemPrompt) {
       welcomeMessage = `Hello! I'm ready to help you with data from ${card.config.dataSource}. Ask me anything!`;
     }
-    
+
     this.messages.push({
       id: Date.now(),
       text: welcomeMessage,
       sender: 'ai',
       timestamp: new Date().toISOString()
     });
-    
+
     // Add to history
     this.chatHistory.unshift({
       id: chatId,
@@ -45,21 +44,21 @@
       timestamp: new Date().toISOString(),
       messageCount: 1
     });
-    
+
     this.saveChatHistory();
   },
-  
+
   // Load chat history from localStorage
   loadChatHistory() {
     const saved = localStorage.getItem('chat-history-' + card.id);
     this.chatHistory = saved ? JSON.parse(saved) : [];
   },
-  
+
   // Save chat history to localStorage
   saveChatHistory() {
     localStorage.setItem('chat-history-' + card.id, JSON.stringify(this.chatHistory));
   },
-  
+
   // Load specific chat
   loadChat(chatId) {
     const saved = localStorage.getItem('chat-messages-' + chatId);
@@ -68,109 +67,214 @@
       this.messages = JSON.parse(saved);
     }
   },
-  
+
   // Save current chat messages
   saveChatMessages() {
     if (this.currentChatId) {
       localStorage.setItem('chat-messages-' + this.currentChatId, JSON.stringify(this.messages));
     }
   },
-  
-  // Send message
+
+  // Send message to AI
   async sendMessage() {
-    if (!this.newMessage.trim() || this.isLoading) return;
-    
+    if (!this.newMessage.trim()) return;
+
+    // Add user message
     const userMessage = {
       id: Date.now(),
       text: this.newMessage,
       sender: 'user',
       timestamp: new Date().toISOString()
     };
-    
+
     this.messages.push(userMessage);
     const messageText = this.newMessage;
     this.newMessage = '';
     this.isLoading = true;
-    
+
     try {
-      // Simulate AI response (replace with actual API call)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      let aiResponse = 'I understand your question. Let me help you with that.';
-      
-      // Customize response based on configuration
-      if (card.config.selectedAgent) {
-        aiResponse = `As ${card.config.selectedAgent.name}, I would say: ${this.generateAgentResponse(messageText)}`;
-      } else if (card.config.dataSource && card.config.systemPrompt) {
-        aiResponse = this.generateDataResponse(messageText);
+      let aiResponse;
+
+      // Check if custom API configuration is provided
+      if (card.config.apiUrl && card.config.apiToken) {
+        aiResponse = await this.callCustomAPI(messageText);
+      } else if (card.config.selectedAgent) {
+        aiResponse = await this.callAgentAPI(messageText);
+      } else {
+        // Fallback to default behavior
+        aiResponse = `I received your message: "${messageText}". Please configure an API URL and token in the card settings.`;
       }
-      
+
       const aiMessage = {
         id: Date.now() + 1,
         text: aiResponse,
         sender: 'ai',
         timestamp: new Date().toISOString()
       };
-      
+
       this.messages.push(aiMessage);
-      
-      // Update chat history
-      const chatIndex = this.chatHistory.findIndex(c => c.id === this.currentChatId);
-      if (chatIndex >= 0) {
-        this.chatHistory[chatIndex].lastMessage = aiResponse;
-        this.chatHistory[chatIndex].timestamp = new Date().toISOString();
-        this.chatHistory[chatIndex].messageCount = this.messages.length;
-        
-        // Update title if it's still 'New Chat'
-        if (this.chatHistory[chatIndex].title === 'New Chat') {
-          this.chatHistory[chatIndex].title = messageText.substring(0, 30) + '...';
-        }
-      }
-      
+      this.updateChatInHistory(aiMessage.text);
+      this.saveChatToStorage();
+
     } catch (error) {
-      this.messages.push({
+      console.error('Error sending message:', error);
+      const errorMessage = {
         id: Date.now() + 1,
-        text: 'Sorry, I encountered an error. Please try again.',
+        text: `Erreur: ${error.message}`,
         sender: 'ai',
         timestamp: new Date().toISOString()
-      });
+      };
+      this.messages.push(errorMessage);
+    } finally {
+      this.isLoading = false;
+      this.$nextTick(() => this.scrollToBottom());
     }
-    
-    this.isLoading = false;
+  },
+
+  // Call custom API with user configuration
+  async callCustomAPI(message) {
+    const apiUrl = card.config.apiUrl;
+    const apiToken = card.config.apiToken;
+    const model = card.config.model || 'gpt-3.5-turbo';
+
+    // Prepare headers
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiToken}`
+    };
+
+    // Add additional headers if configured
+    if (card.config.additionalHeaders) {
+      try {
+        const additionalHeaders = JSON.parse(card.config.additionalHeaders);
+        Object.assign(headers, additionalHeaders);
+      } catch (e) {
+        console.warn('Invalid additional headers JSON:', e);
+      }
+    }
+
+    // Prepare system message based on configuration
+    let systemMessage = 'You are a helpful assistant.';
+    if (card.config.chatType === 'data' && card.config.systemPrompt) {
+      systemMessage = card.config.systemPrompt;
+    } else if (card.config.customInstructions) {
+      systemMessage = card.config.customInstructions;
+    }
+
+    // Prepare messages array for the API
+    const messages = [
+      { role: 'system', content: systemMessage }
+    ];
+
+    // Add recent conversation history if memory is enabled
+    if (card.config.enableMemory) {
+      const maxMessages = card.config.maxMemoryMessages || 10;
+      const recentMessages = this.messages.slice(-maxMessages);
+      for (const msg of recentMessages) {
+        messages.push({
+          role: msg.sender === 'user' ? 'user' : 'assistant',
+          content: msg.text
+        });
+      }
+    }
+
+    // Add current message
+    messages.push({ role: 'user', content: message });
+
+    // Prepare request body
+    const requestBody = {
+      model: model,
+      messages: messages,
+      temperature: parseFloat(card.config.temperature) || 0.7
+    };
+
+    // Add max_tokens if configured
+    if (card.config.maxTokens) {
+      requestBody.max_tokens = parseInt(card.config.maxTokens);
+    }
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API Error (${response.status}): ${errorText}`);
+    }
+
+    const data = await response.json();
+
+    // Extract response based on common API formats
+    if (data.choices && data.choices[0] && data.choices[0].message) {
+      return data.choices[0].message.content;
+    } else if (data.content) {
+      return data.content;
+    } else if (data.response) {
+      return data.response;
+    } else {
+      throw new Error('Unexpected API response format');
+    }
+  },
+
+  // Call agent API (existing functionality)
+  async callAgentAPI(message) {
+    const response = await fetch('/pc-analytics-jaffar/sultan/agents/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        agent_id: card.config.selectedAgentId,
+        message: message,
+        chat_history: this.messages.slice(-10) // Last 10 messages
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get response from agent');
+    }
+
+    const data = await response.json();
+    return data.message || 'No response from agent';
+  },
+
+  // Update chat in history
+  updateChatInHistory(lastMessage) {
+    const chatIndex = this.chatHistory.findIndex(c => c.id === this.currentChatId);
+    if (chatIndex >= 0) {
+      this.chatHistory[chatIndex].lastMessage = lastMessage;
+      this.chatHistory[chatIndex].timestamp = new Date().toISOString();
+      this.chatHistory[chatIndex].messageCount = this.messages.length;
+
+      // Update title if it's still 'New Chat'
+      if (this.chatHistory[chatIndex].title === 'New Chat') {
+        this.chatHistory[chatIndex].title = this.messages[0].text.substring(0, 30) + '...';
+      }
+    }
+  },
+
+  // Save chat to local storage
+  saveChatToStorage() {
     this.saveChatMessages();
     this.saveChatHistory();
-    
-    // Scroll to bottom
-    this.$nextTick(() => {
-      const container = this.$refs.messagesContainer;
-      if (container) {
-        container.scrollTop = container.scrollHeight;
-      }
-    });
   },
-  
-  // Generate agent-specific response
-  generateAgentResponse(message) {
-    const responses = [
-      'Based on my expertise, I would recommend...',
-      'From my perspective as ' + (card.config.selectedAgent?.name || 'an AI assistant') + ', here\'s what I think...',
-      'Let me analyze this for you...',
-      'That\'s an interesting question. Here\'s my take...'
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
+
+  // Scroll to bottom of messages
+  scrollToBottom() {
+    const container = this.$refs.messagesContainer;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   },
-  
-  // Generate data-specific response
-  generateDataResponse(message) {
-    return `Based on the data from ${card.config.dataSource} and using the prompt: '${card.config.systemPrompt}', I can tell you that...`;
-  },
-  
+
   // Delete a chat
   deleteChat(chatId) {
     this.chatHistory = this.chatHistory.filter(c => c.id !== chatId);
     localStorage.removeItem('chat-messages-' + chatId);
     this.saveChatHistory();
-    
+
     if (this.currentChatId === chatId) {
       if (this.chatHistory.length > 0) {
         this.loadChat(this.chatHistory[0].id);
@@ -180,7 +284,7 @@
     }
   }
 }">
-  
+
   <!-- Header with title and new chat button -->
   <div class="flex justify-between items-center mb-3">
     <h3 class="text-white font-semibold" x-text="card.config.title || 'AI Chat'"></h3>
@@ -239,7 +343,7 @@
         </div>
       </div>
     </template>
-    
+
     <!-- Loading indicator -->
     <div x-show="isLoading" class="flex justify-start">
       <div class="bg-gray-600 text-gray-100 px-3 py-2 rounded-lg text-sm">

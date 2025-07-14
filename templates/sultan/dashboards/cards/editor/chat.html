@@ -131,6 +131,68 @@
     </div>
   </div>
 
+  <!-- API Configuration -->
+  <div x-data="{ showApiConfig: false }" class="border-t border-gray-600 pt-4">
+    <button @click="showApiConfig = !showApiConfig" 
+            class="flex items-center gap-2 text-sm text-gray-300 hover:text-white">
+      <svg class="w-4 h-4 transform transition-transform" :class="{ 'rotate-90': showApiConfig }" 
+           fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+      API Configuration
+    </button>
+
+    <div x-show="showApiConfig" class="mt-3 space-y-3 p-3 bg-gray-600 rounded">
+      <!-- API URL -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">API URL</label>
+        <input type="url" 
+               x-model="selectedCard.config.apiUrl" 
+               class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+               placeholder="https://api.openai.com/v1/chat/completions">
+        <div class="text-xs text-gray-400 mt-1">
+          URL de l'API de chat (ex: OpenAI, Anthropic, etc.)
+        </div>
+      </div>
+
+      <!-- API Token -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">API Token</label>
+        <input type="password" 
+               x-model="selectedCard.config.apiToken" 
+               class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+               placeholder="sk-...">
+        <div class="text-xs text-gray-400 mt-1">
+          Token d'authentification pour l'API
+        </div>
+      </div>
+
+      <!-- Model -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Model</label>
+        <input type="text" 
+               x-model="selectedCard.config.model" 
+               class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+               placeholder="gpt-3.5-turbo">
+        <div class="text-xs text-gray-400 mt-1">
+          Nom du modèle à utiliser (ex: gpt-3.5-turbo, claude-3-sonnet, etc.)
+        </div>
+      </div>
+
+      <!-- Headers (optionnel) -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Headers additionnels (JSON)</label>
+        <textarea x-model="selectedCard.config.additionalHeaders" 
+                  rows="2"
+                  class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+                  placeholder='{"Organization": "org-xxx", "Content-Type": "application/json"}'></textarea>
+        <div class="text-xs text-gray-400 mt-1">
+          Headers HTTP additionnels au format JSON (optionnel)
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Advanced Settings -->
   <div x-data="{ showAdvanced: false }">
     <button @click="showAdvanced = !showAdvanced" 
@@ -211,6 +273,14 @@
       </div>
       <div x-show="!selectedCard.config.chatType || selectedCard.config.chatType === ''">
         <span class="text-gray-400">Please select a chat configuration type</span>
+      </div>
+      
+      <!-- API Configuration Preview -->
+      <div x-show="selectedCard.config.apiUrl" class="mt-2 pt-2 border-t border-gray-500">
+        <strong>API Configuration:</strong>
+        <br><span class="text-xs">URL: <span x-text="selectedCard.config.apiUrl"></span></span>
+        <br><span class="text-xs">Model: <span x-text="selectedCard.config.model || 'Default'"></span></span>
+        <br><span class="text-xs">Token: <span x-text="selectedCard.config.apiToken ? '●●●●●●●●' : 'Not configured'"></span></span>
       </div>
     </div>
   </div>
