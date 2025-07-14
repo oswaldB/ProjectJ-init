@@ -6,32 +6,7 @@
       <label class="block text-sm font-medium text-gray-300 mb-2">Content</label>
       <div 
         x-ref="textQuillEditor"
-        x-init="
-          setTimeout(() => {
-            if (!$refs.textQuillEditor._quill) {
-              var quill = new Quill($refs.textQuillEditor, {
-                theme: 'snow',
-                modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
-              });
-              $refs.textQuillEditor._quill = quill;
-              
-              // Set initial value
-              quill.root.innerHTML = selectedCard.config.content || '';
-              
-              // Update Alpine model on change using HTML content
-              quill.on('text-change', function() {
-                selectedCard.config.content = quill.root.innerHTML;
-              });
-              
-              // Update Quill if model changes externally
-              $refs.textQuillEditor.__watcher = Alpine.effect(() => {
-                if (quill.root.innerHTML !== (selectedCard.config.content || '')) {
-                  quill.root.innerHTML = selectedCard.config.content || '';
-                }
-              });
-            }
-          }, 0);
-        "
+        x-init="window.initQuill($refs.textQuillEditor, val => selectedCard.config.content = (val !== undefined ? val : selectedCard.config.content))"
         class="bg-white text-black rounded border border-gray-600 min-h-[200px]"></div>
       <div class="mt-1 text-gray-400 text-sm border-l-4 border-blue-700 pl-2" x-show="selectedCard.config.content">
         <span class="font-semibold text-blue-300">Preview:</span>
