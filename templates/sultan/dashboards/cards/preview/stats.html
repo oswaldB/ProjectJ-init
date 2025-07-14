@@ -88,7 +88,7 @@
       // Convert to string and replace placeholders
       const mapFunctionString = mapFunction.toString()
         .replace('FILTERS_PLACEHOLDER', JSON.stringify(prefilters))
-        .replace('FIELD_PLACEHOLDER', JSON.stringify(valueField));
+        .replace('FIELD_PLACEHOLDER', `'${valueField}'`);
       
       const mapReduceFun = {
         map: mapFunctionString,
