@@ -23,10 +23,19 @@
 
     // Add welcome message based on configuration
     let welcomeMessage = 'Hello! How can I help you today?';
-    if (card.config.selectedAgent) {
+    if (card.config.chatType === 'agent' && card.config.selectedAgent) {
       welcomeMessage = `Hi! I'm ${card.config.selectedAgent.name}. ${card.config.selectedAgent.description || 'How can I assist you?'}`;
-    } else if (card.config.dataSource && card.config.systemPrompt) {
+    } else if (card.config.chatType === 'data' && card.config.dataSource) {
       welcomeMessage = `Hello! I'm ready to help you with data from ${card.config.dataSource}. Ask me anything!`;
+    } else if (card.config.chatType === 'general') {
+      const personalityGreetings = {
+        'helpful': 'Hello! I\'m here to help you with anything you need.',
+        'professional': 'Good day! I\'m ready to provide professional assistance.',
+        'creative': 'Hey there! Let\'s explore some creative ideas together.',
+        'analytical': 'Hello! I\'m here to provide detailed analysis and insights.',
+        'friendly': 'Hi there! I\'m excited to chat with you today!'
+      };
+      welcomeMessage = personalityGreetings[card.config.personality] || personalityGreetings['helpful'];
     }
 
     this.messages.push({
@@ -152,14 +161,50 @@
   async sendToCustomAPI(message) {
     const model = card.config.customModel || card.config.model || 'gpt-3.5-turbo';
 
+    // Build system prompt based on chat type
+    let systemPrompt = 'You are a helpful assistant.';
+    
+    if (card.config.chatType === 'general') {
+      // Use personality and custom instructions for general chat
+      const personalityPrompts = {
+        'helpful': 'You are a helpful assistant who provides clear and useful responses.',
+        'professional': 'You are a professional advisor who provides formal, well-structured advice.',
+        'creative': 'You are a creative partner who thinks outside the box and provides innovative solutions.',
+        'analytical': 'You are an analytical expert who provides detailed, data-driven insights.',
+        'friendly': 'You are a friendly companion who provides warm, conversational responses.'
+      };
+      
+      systemPrompt = personalityPrompts[card.config.personality] || personalityPrompts['helpful'];
+      
+      if (card.config.customInstructions) {
+        systemPrompt += '\n\nAdditional instructions: ' + card.config.customInstructions;
+      }
+    } else if (card.config.systemPrompt) {
+      // Use configured system prompt for data/agent chat
+      systemPrompt = card.config.systemPrompt;
+    }
+
+    // Handle response length
+    if (card.config.responseLength) {
+      const lengthInstructions = {
+        'short': 'Keep responses brief, 1-2 sentences maximum.',
+        'medium': 'Provide moderate length responses, 1-2 paragraphs.',
+        'long': 'Provide detailed, comprehensive explanations.'
+      };
+      systemPrompt += '\n\nResponse length: ' + lengthInstructions[card.config.responseLength];
+    }
+
+    // Get max messages to remember
+    const maxMessages = card.config.enableMemory ? (card.config.maxMemoryMessages || 50) : 10;
+
     const requestBody = {
       model: model,
       messages: [
         {
           role: 'system',
-          content: card.config.systemPrompt || 'You are a helpful assistant.'
+          content: systemPrompt
         },
-        ...this.messages.slice(-10).map(msg => ({
+        ...this.messages.slice(-maxMessages).map(msg => ({
           role: msg.sender === 'user' ? 'user' : 'assistant',
           content: msg.text
         })),
@@ -168,7 +213,7 @@
           content: message
         }
       ],
-      temperature: card.config.temperature || 0.7,
+      temperature: parseFloat(card.config.temperature) || 0.7,
       max_tokens: card.config.maxTokens || 1000
     };
 
@@ -191,18 +236,24 @@
 
   // Generate agent-specific response
   generateAgentResponse(message) {
+    const agent = card.config.selectedAgent;
+    if (!agent) {
+      return 'I understand your question. Let me help you with that.';
+    }
+    
     const responses = [
-      'Based on my expertise, I would recommend...',
-      'From my perspective as ' + (card.config.selectedAgent?.name || 'an AI assistant') + ', here\'s what I think...',
-      'Let me analyze this for you...',
-      'That\'s an interesting question. Here\'s my take...'
+      `Based on my expertise as ${agent.name}, I would recommend...`,
+      `From my perspective as ${agent.name}, here's what I think...`,
+      `Let me analyze this for you using my knowledge as ${agent.name}...`,
+      `That's an interesting question. As ${agent.name}, here's my take...`
     ];
     return responses[Math.floor(Math.random() * responses.length)];
   },
 
   // Generate data-specific response
   generateDataResponse(message) {
-    return `Based on the data from ${card.config.dataSource} and using the prompt: '${card.config.systemPrompt}', I can tell you that...`;
+    const context = card.config.dataContext ? ` Context: ${card.config.dataContext}` : '';
+    return `Based on the data from ${card.config.dataSource}.${context} I can tell you that...`;
   },
 
   // Delete a chat
@@ -231,17 +282,21 @@
 
   <!-- Configuration info -->
   <div class="mb-2 text-xs text-gray-400">
-    <div x-show="card.config.selectedAgent" class="flex items-center gap-1">
+    <div x-show="card.config.chatType === 'agent' && card.config.selectedAgent" class="flex items-center gap-1">
       <span class="text-green-400">●</span>
       <span x-text="'Agent: ' + (card.config.selectedAgent?.name || 'None')"></span>
     </div>
-    <div x-show="!card.config.selectedAgent && card.config.dataSource" class="flex items-center gap-1">
+    <div x-show="card.config.chatType === 'data' && card.config.dataSource" class="flex items-center gap-1">
       <span class="text-red-500">●</span>
       <span x-text="'Data: ' + card.config.dataSource"></span>
     </div>
+    <div x-show="card.config.chatType === 'general'" class="flex items-center gap-1">
+      <span class="text-blue-400">●</span>
+      <span x-text="'General: ' + (card.config.personality || 'Helpful')"></span>
+    </div>
     <div x-show="card.config.apiUrl" class="flex items-center gap-1">
       <span class="text-purple-400">●</span>
-      <span x-text="'API: ' + (card.config.model || 'Custom')"></span>
+      <span x-text="'Model: ' + (card.config.customModel || card.config.model || 'Default')"></span>
     </div>
   </div>
 
