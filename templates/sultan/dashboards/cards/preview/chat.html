@@ -159,7 +159,13 @@
 
   // Send to custom API
   async sendToCustomAPI(message) {
-    const model = card.config.customModel || card.config.model || 'gpt-3.5-turbo';
+    // Use customModel if defined, otherwise fall back to model, otherwise use default
+    let model = 'gpt-3.5-turbo';
+    if (card.config.customModel && card.config.customModel.trim()) {
+      model = card.config.customModel.trim();
+    } else if (card.config.model && card.config.model.trim()) {
+      model = card.config.model.trim();
+    }
 
     // Build system prompt based on chat type
     let systemPrompt = 'You are a helpful assistant.';
