@@ -1,0 +1,88 @@
+
+<div x-data="{ 
+  dashboards: [], 
+  userEmail: '',
+  loading: true,
+  
+  async init() {
+    // Get current user email from localStorage
+    const author2 = localStorage.getItem('author2') || '';
+    this.userEmail = author2.split('-').pop().trim().toLowerCase();
+    
+    await this.loadDashboards();
+  },
+  
+  async loadDashboards() {
+    try {
+      this.loading = true;
+      const response = await fetch('/pc-analytics-jaffar/dashboards/api/list');
+      if (!response.ok) throw new Error('Failed to load dashboards');
+      
+      const allDashboards = await response.json();
+      
+      // Filter dashboards based on user authorization
+      this.dashboards = allDashboards.filter(dashboard => {
+        if (dashboard.isPrivate) {
+          const authorizedUsers = dashboard.authorizedUsers || [];
+          return authorizedUsers.includes(this.userEmail);
+        }
+        return true; // Public dashboards are visible to all
+      });
+      
+      // Sort dashboards by order field, then by name
+      this.dashboards.sort((a, b) => {
+        const orderA = a.order || 0;
+        const orderB = b.order || 0;
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+        return (a.name || '').localeCompare(b.name || '');
+      });
+      
+    } catch (error) {
+      console.error('Failed to load dashboards:', error);
+      this.dashboards = [];
+    } finally {
+      this.loading = false;
+    }
+  }
+}" x-init="init()">
+
+  <!-- Loading State -->
+  <div x-show="loading" class="flex items-center justify-center py-4">
+    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-red-500"></div>
+  </div>
+
+  <!-- Dashboard Menu -->
+  <div x-show="!loading" class="space-y-1">
+    <template x-for="dashboard in dashboards" :key="dashboard.id">
+      <div class="relative">
+        <a :href="`/pc-analytics-jaffar/dashboards/${dashboard.id}`" 
+           class="flex items-center p-2 rounded-lg text-white hover:bg-gray-700 group transition-colors">
+          
+          <!-- Dashboard Icon -->
+          <svg class="w-5 h-5 mr-3 text-gray-400 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z"/>
+          </svg>
+          
+          <!-- Dashboard Name -->
+          <span class="flex-1 text-sm font-medium" x-text="dashboard.name || 'Untitled Dashboard'"></span>
+          
+          <!-- Private Badge -->
+          <span x-show="dashboard.isPrivate" 
+                class="ml-2 px-2 py-1 text-xs bg-yellow-500 text-black rounded">
+            Private
+          </span>
+          
+          <!-- Card Count -->
+          <span class="ml-2 text-xs text-gray-500" x-text="`${dashboard.cards?.length || 0} cards`"></span>
+        </a>
+      </div>
+    </template>
+    
+    <!-- Empty State -->
+    <div x-show="dashboards.length === 0" class="text-center py-4 text-gray-500">
+      <p class="text-sm">No dashboards available</p>
+    </div>
+  </div>
+</div>
