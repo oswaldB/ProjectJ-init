@@ -111,6 +111,9 @@
     
     if (shouldSelect) {
       this.formData[field.key] = field.autoSelectOption;
+    } else {
+      // Réinitialiser le select si la condition n'est plus valide
+      this.formData[field.key] = '';
     }
   },
   applyAutoSelects() {
