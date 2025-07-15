@@ -170,19 +170,18 @@
       const fieldReferences = text.match(/\[\[([^\]]+)\]\]/g);
       if (!fieldReferences) return processedText;
       
-      // Access formData and previewValues directly
+      // Access formData directly
       const currentFormData = this.formData;
-      const currentPreviewValues = this.previewValues;
       
       fieldReferences.forEach(reference => {
         const fieldKey = reference.replace(/\[\[|\]\]/g, '');
         let replacement = '';
         
-        // Check previewValues first, then formData
+        // Use formData directly
         let fieldValue = null;
-        if (currentPreviewValues && currentPreviewValues.hasOwnProperty(fieldKey)) {
-          fieldValue = currentPreviewValues[fieldKey];
-        } else if (currentFormData && currentFormData.hasOwnProperty(fieldKey)) {
+        if (currentFormData && currentFormData.hasOwnProperty(fieldKey)) {
+          fieldValue = currentFormData[fieldKey];
+        }ntFormData.hasOwnProperty(fieldKey)) {
           fieldValue = currentFormData[fieldKey];
         }
         

@@ -19,3 +19,539 @@
     </div>
   </div>
 </template>
+```
+
+```html
+<!-- Text input -->
+<template x-if="field.type === 'text'">
+  <div>
+    <label class="block text-sm font-medium text-white" x-text="field.label"></label>
+    <input type="text" 
+           class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+           x-model="formData[field.key]">
+  </div>
+</template>
+```
+
+```html
+<!-- Textarea input -->
+<template x-if="field.type === 'textarea'">
+  <div>
+    <label class="block text-sm font-medium text-white" x-text="field.label"></label>
+    <textarea 
+      class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+      x-model="formData[field.key]"
+    ></textarea>
+  </div>
+</template>
+```
+
+```html
+<!-- Number input -->
+<template x-if="field.type === 'number'">
+  <div>
+    <label class="block text-sm font-medium text-white" x-text="field.label"></label>
+    <input type="number" 
+           class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+           x-model="formData[field.key]">
+  </div>
+</template>
+```
+
+```html
+<!-- Checkbox input -->
+<template x-if="field.type === 'checkbox'">
+  <div class="flex items-center">
+    <input type="checkbox" 
+           class="mr-2 h-5 w-5 text-red-600 focus:ring-red-500 border-gray-600 rounded"
+           x-model="formData[field.key]">
+    <label class="block text-sm font-medium text-white" x-text="field.label"></label>
+  </div>
+</template>
+```
+
+```html
+<!-- Select input -->
+<template x-if="field.type === 'select'">
+  <div>
+    <label class="block text-sm font-medium text-white" x-text="field.label"></label>
+    <select class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+            x-model="formData[field.key]">
+      <template x-for="option in field.options" :key="option.value">
+        <option :value="option.value" x-text="option.label"></option>
+      </template>
+    </select>
+  </div>
+</template>
+```
+
+```html
+<!-- Radio input -->
+<template x-if="field.type === 'radio'">
+  <div>
+    <label class="block text-sm font-medium text-white" x-text="field.label"></label>
+    <div class="mt-2 space-y-2">
+      <template x-for="option in field.options" :key="option.value">
+        <div class="flex items-center">
+          <input type="radio" 
+                 class="mr-2 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-600 rounded"
+                 :value="option.value"
+                 x-model="formData[field.key]">
+          <label class="block text-sm font-medium text-white" x-text="option.label"></label>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>
+```
+
+```html
+<!-- Color input -->
+<template x-if="field.type === 'color'">
+  <div>
+    <label class="block text-sm font-medium text-white" x-text="field.label"></label>
+    <input type="color" 
+           class="mt-1 w-full h-10 rounded border border-gray-600"
+           x-model="formData[field.key]">
+  </div>
+</template>
+```
+
+```html
+<!-- Date input -->
+<template x-if="field.type === 'date'">
+  <div>
+    <label class="block text-sm font-medium text-white" x-text="field.label"></label>
+    <input type="date" 
+           class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+           x-model="formData[field.key]">
+  </div>
+</template>
+```
+
+```html
+<!-- File input -->
+<template x-if="field.type === 'file'">
+  <div>
+    <label class="block text-sm font-medium text-white" x-text="field.label"></label>
+    <input type="file" 
+           class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+           @change="(event) => formData[field.key] = event.target.files[0]">
+  </div>
+</template>
+```
+
+```html
+<!-- Hidden input -->
+<template x-if="field.type === 'hidden'">
+  <input type="hidden" x-model="formData[field.key]">
+</template>
+```
+
+```html
+<!-- Conditional field -->
+<template x-if="field.type === 'conditional'">
+    <div x-data="{ conditionMet: false }"
+         x-init="conditionMet = evaluateCondition(field.condition, formData)"
+         x-show="conditionMet">
+        <template x-if="field.fields">
+            <template x-for="subField in field.fields" :key="subField.key">
+                <div :class="{ 
+                            'mb-4': subField.type !== 'hidden',
+                            'hidden': subField.type === 'hidden' 
+                         }">
+                    <template x-if="subField.type === 'text'">
+                        <div>
+                            <label class="block text-sm font-medium text-white" x-text="subField.label"></label>
+                            <input type="text"
+                                   class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                   x-model="formData[subField.key]">
+                        </div>
+                    </template>
+                    <template x-if="subField.type === 'textarea'">
+                        <div>
+                            <label class="block text-sm font-medium text-white" x-text="subField.label"></label>
+                            <textarea class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                      x-model="formData[subField.key]"></textarea>
+                        </div>
+                    </template>
+                    <template x-if="subField.type === 'number'">
+                        <div>
+                            <label class="block text-sm font-medium text-white" x-text="subField.label"></label>
+                            <input type="number"
+                                   class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                   x-model="formData[subField.key]">
+                        </div>
+                    </template>
+                    <template x-if="subField.type === 'checkbox'">
+                        <div class="flex items-center">
+                            <input type="checkbox"
+                                   class="mr-2 h-5 w-5 text-red-600 focus:ring-red-500 border-gray-600 rounded"
+                                   x-model="formData[subField.key]">
+                            <label class="block text-sm font-medium text-white" x-text="subField.label"></label>
+                        </div>
+                    </template>
+                    <template x-if="subField.type === 'select'">
+                        <div>
+                            <label class="block text-sm font-medium text-white" x-text="subField.label"></label>
+                            <select class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                    x-model="formData[subField.key]">
+                                <template x-for="option in subField.options" :key="option.value">
+                                    <option :value="option.value" x-text="option.label"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </template>
+                    <template x-if="subField.type === 'radio'">
+                        <div>
+                            <label class="block text-sm font-medium text-white" x-text="subField.label"></label>
+                            <div class="mt-2 space-y-2">
+                                <template x-for="option in subField.options" :key="option.value">
+                                    <div class="flex items-center">
+                                        <input type="radio"
+                                               class="mr-2 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-600 rounded"
+                                               :value="option.value"
+                                               x-model="formData[subField.key]">
+                                        <label class="block text-sm font-medium text-white"
+                                               x-text="option.label"></label>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="subField.type === 'color'">
+                        <div>
+                            <label class="block text-sm font-medium text-white" x-text="subField.label"></label>
+                            <input type="color"
+                                   class="mt-1 w-full h-10 rounded border border-gray-600"
+                                   x-model="formData[subField.key]">
+                        </div>
+                    </template>
+                    <template x-if="subField.type === 'date'">
+                        <div>
+                            <label class="block text-sm font-medium text-white" x-text="subField.label"></label>
+                            <input type="date"
+                                   class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                   x-model="formData[subField.key]">
+                        </div>
+                    </template>
+                    <template x-if="subField.type === 'file'">
+                        <div>
+                            <label class="block text-sm font-medium text-white" x-text="subField.label"></label>
+                            <input type="file"
+                                   class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                   @change="(event) => formData[subField.key] = event.target.files[0]">
+                        </div>
+                    </template>
+                    <template x-if="subField.type === 'hidden'">
+                        <input type="hidden" x-model="formData[subField.key]">
+                    </template>
+                    <!-- Nested conditional -->
+                    <template x-if="subField.type === 'conditional'">
+                        <div x-data="{ conditionMet: false }"
+                             x-init="conditionMet = evaluateCondition(subField.condition, formData)"
+                             x-show="conditionMet">
+                            <template x-if="subField.fields">
+                                <template x-for="nestedSubField in subField.fields" :key="nestedSubField.key">
+                                    <div :class="{
+                                                'mb-4': nestedSubField.type !== 'hidden',
+                                                'hidden': nestedSubField.type === 'hidden'
+                                             }">
+                                        <template x-if="nestedSubField.type === 'text'">
+                                            <div>
+                                                <label class="block text-sm font-medium text-white"
+                                                       x-text="nestedSubField.label"></label>
+                                                <input type="text"
+                                                       class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                                       x-model="formData[nestedSubField.key]">
+                                            </div>
+                                        </template>
+                                        <template x-if="nestedSubField.type === 'textarea'">
+                                            <div>
+                                                <label class="block text-sm font-medium text-white"
+                                                       x-text="nestedSubField.label"></label>
+                                                <textarea
+                                                        class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                                        x-model="formData[nestedSubField.key]"></textarea>
+                                            </div>
+                                        </template>
+                                        <template x-if="nestedSubField.type === 'number'">
+                                            <div>
+                                                <label class="block text-sm font-medium text-white"
+                                                       x-text="nestedSubField.label"></label>
+                                                <input type="number"
+                                                       class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                                       x-model="formData[nestedSubField.key]">
+                                            </div>
+                                        </template>
+                                        <template x-if="nestedSubField.type === 'checkbox'">
+                                            <div class="flex items-center">
+                                                <input type="checkbox"
+                                                       class="mr-2 h-5 w-5 text-red-600 focus:ring-red-500 border-gray-600 rounded"
+                                                       x-model="formData[nestedSubField.key]">
+                                                <label class="block text-sm font-medium text-white"
+                                                       x-text="nestedSubField.label"></label>
+                                            </div>
+                                        </template>
+                                        <template x-if="nestedSubField.type === 'select'">
+                                            <div>
+                                                <label class="block text-sm font-medium text-white"
+                                                       x-text="nestedSubField.label"></label>
+                                                <select
+                                                        class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                                        x-model="formData[nestedSubField.key]">
+                                                    <template x-for="option in nestedSubField.options"
+                                                              :key="option.value">
+                                                        <option :value="option.value" x-text="option.label"></option>
+                                                    </template>
+                                                </select>
+                                            </div>
+                                        </template>
+                                        <template x-if="nestedSubField.type === 'radio'">
+                                            <div>
+                                                <label class="block text-sm font-medium text-white"
+                                                       x-text="nestedSubField.label"></label>
+                                                <div class="mt-2 space-y-2">
+                                                    <template x-for="option in nestedSubField.options"
+                                                              :key="option.value">
+                                                        <div class="flex items-center">
+                                                            <input type="radio"
+                                                                   class="mr-2 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-600 rounded"
+                                                                   :value="option.value"
+                                                                   x-model="formData[nestedSubField.key]">
+                                                            <label class="block text-sm font-medium text-white"
+                                                                   x-text="option.label"></label>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template x-if="nestedSubField.type === 'color'">
+                                            <div>
+                                                <label class="block text-sm font-medium text-white"
+                                                       x-text="nestedSubField.label"></label>
+                                                <input type="color"
+                                                       class="mt-1 w-full h-10 rounded border border-gray-600"
+                                                       x-model="formData[nestedSubField.key]">
+                                            </div>
+                                        </template>
+                                        <template x-if="nestedSubField.type === 'date'">
+                                            <div>
+                                                <label class="block text-sm font-medium text-white"
+                                                       x-text="nestedSubField.label"></label>
+                                                <input type="date"
+                                                       class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                                       x-model="formData[nestedSubField.key]">
+                                            </div>
+                                        </template>
+                                        <template x-if="nestedSubField.type === 'file'">
+                                            <div>
+                                                <label class="block text-sm font-medium text-white"
+                                                       x-text="nestedSubField.label"></label>
+                                                <input type="file"
+                                                       class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                                       @change="(event) => formData[nestedSubField.key] = event.target.files[0]">
+                                            </div>
+                                        </template>
+                                        <template x-if="nestedSubField.type === 'hidden'">
+                                            <input type="hidden" x-model="formData[nestedSubField.key]">
+                                        </template>
+                                        <!-- Deeper nested conditional -->
+                                        <template x-if="nestedSubField.type === 'conditional'">
+                                            <div x-data="{ conditionMet: false }"
+                                                 x-init="conditionMet = evaluateCondition(nestedSubField.condition, formData)"
+                                                 x-show="conditionMet">
+                                                <template x-if="nestedSubField.fields">
+                                                    <template x-for="deepNestedSubField in nestedSubField.fields"
+                                                              :key="deepNestedSubField.key">
+                                                        <div :class="{
+                                                                    'mb-4': deepNestedSubField.type !== 'hidden',
+                                                                    'hidden': deepNestedSubField.type === 'hidden'
+                                                                 }">
+                                                            <template x-if="deepNestedSubField.type === 'text'">
+                                                                <div>
+                                                                    <label class="block text-sm font-medium text-white"
+                                                                           x-text="deepNestedSubField.label"></label>
+                                                                    <input type="text"
+                                                                           class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                                                           x-model="formData[deepNestedSubField.key]">
+                                                                </div>
+                                                            </template>
+                                                            <template x-if="deepNestedSubField.type === 'textarea'">
+                                                                <div>
+                                                                    <label class="block text-sm font-medium text-white"
+                                                                           x-text="deepNestedSubField.label"></label>
+                                                                    <textarea
+                                                                            class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                                                            x-model="formData[deepNestedSubField.key]"></textarea>
+                                                                </div>
+                                                            </template>
+                                                            <template x-if="deepNestedSubField.type === 'number'">
+                                                                <div>
+                                                                    <label class="block text-sm font-medium text-white"
+                                                                           x-text="deepNestedSubField.label"></label>
+                                                                    <input type="number"
+                                                                           class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                                                           x-model="formData[deepNestedSubField.key]">
+                                                                </div>
+                                                            </template>
+                                                            <template x-if="deepNestedSubField.type === 'checkbox'">
+                                                                <div class="flex items-center">
+                                                                    <input type="checkbox"
+                                                                           class="mr-2 h-5 w-5 text-red-600 focus:ring-red-500 border-gray-600 rounded"
+                                                                           x-model="formData[deepNestedSubField.key]">
+                                                                    <label class="block text-sm font-medium text-white"
+                                                                           x-text="deepNestedSubField.label"></label>
+                                                                </div>
+                                                            </template>
+                                                            <template x-if="deepNestedSubField.type === 'select'">
+                                                                <div>
+                                                                    <label class="block text-sm font-medium text-white"
+                                                                           x-text="deepNestedSubField.label"></label>
+                                                                    <select
+                                                                            class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                                                            x-model="formData[deepNestedSubField.key]">
+                                                                        <template
+                                                                                x-for="option in deepNestedSubField.options"
+                                                                                :key="option.value">
+                                                                            <option :value="option.value"
+                                                                                    x-text="option.label"></option>
+                                                                        </template>
+                                                                    </select>
+                                                                </div>
+                                                            </template>
+                                                            <template x-if="deepNestedSubField.type === 'radio'">
+                                                                <div>
+                                                                    <label class="block text-sm font-medium text-white"
+                                                                           x-text="deepNestedSubField.label"></label>
+                                                                    <div class="mt-2 space-y-2">
+                                                                        <template
+                                                                                x-for="option in deepNestedSubField.options"
+                                                                                :key="option.value">
+                                                                            <div class="flex items-center">
+                                                                                <input type="radio"
+                                                                                       class="mr-2 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-600 rounded"
+                                                                                       :value="option.value"
+                                                                                       x-model="formData[deepNestedSubField.key]">
+                                                                                <label class="block text-sm font-medium text-white"
+                                                                                       x-text="option.label"></label>
+                                                                            </div>
+                                                                        </template>
+                                                                    </div>
+                                                                </div>
+                                                            </template>
+                                                            <template x-if="deepNestedSubField.type === 'color'">
+                                                                <div>
+                                                                    <label class="block text-sm font-medium text-white"
+                                                                           x-text="deepNestedSubField.label"></label>
+                                                                    <input type="color"
+                                                                           class="mt-1 w-full h-10 rounded border border-gray-600"
+                                                                           x-model="formData[deepNestedSubField.key]">
+                                                                </div>
+                                                            </template>
+                                                            <template x-if="deepNestedSubField.type === 'date'">
+                                                                <div>
+                                                                    <label class="block text-sm font-medium text-white"
+                                                                           x-text="deepNestedSubField.label"></label>
+                                                                    <input type="date"
+                                                                           class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                                                           x-model="formData[deepNestedSubField.key]">
+                                                                </div>
+                                                            </template>
+                                                            <template x-if="deepNestedSubField.type === 'file'">
+                                                                <div>
+                                                                    <label class="block text-sm font-medium text-white"
+                                                                           x-text="deepNestedSubField.label"></label>
+                                                                    <input type="file"
+                                                                           class="mt-1 p-2 w-full bg-gray-700 text-white rounded border border-gray-600"
+                                                                           @change="(event) => formData[deepNestedSubField.key] = event.target.files[0]">
+                                                                </div>
+                                                            </template>
+                                                            <template x-if="deepNestedSubField.type === 'hidden'">
+                                                                <input type="hidden"
+                                                                       x-model="formData[deepNestedSubField.key]">
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </template>
+    </div>
+</template>
+```
+
+```python
+def evaluateCondition(condition, formData):
+    try:
+        return eval(condition, {}, formData)
+    except Exception as e:
+        console.log('Error evaluating condition:', condition, e)
+        return false
+```
+
+```html
+<template x-if="field.type === 'code'">
+  <div>
+    <label class="block text-sm font-medium text-white" x-text="field.label"></label>
+    <textarea
+      x-data="{ editor: null, content: formData[field.key] || '' }"
+      x-init="
+        editor = CodeMirror.fromTextArea($el, {
+          mode: field.mode || 'javascript',
+          theme: 'material-darker',
+          lineNumbers: true,
+          lineWrapping: true,
+          scrollbarStyle: 'overlay',
+          tabSize: 2,
+          indentUnit: 2,
+          indentWithTabs: false,
+          extraKeys: { 'Ctrl-Space': 'autocomplete' },
+          hintOptions: { completeSingle: false },
+        });
+
+        editor.setValue(content);
+
+        editor.on('change', () => {
+          content = editor.getValue();
+          formData[field.key] = content;
+        });
+      "
+      @input="content = $event.target.value; editor.setValue(content);"
+      class="mt-1 w-full bg-gray-700 text-white rounded border border-gray-600 hidden"
+    ></textarea>
+  </div>
+</template>
+```
+
+Now the final code:
+
+```html
+<!-- List input -->
+<template x-if="field.type === 'list'">
+  <div x-data="{ newItem: '', items: formData[field.key] || [] }" @input="formData[field.key] = items">
+    <div class="flex gap-2 mb-2">
+      <input type="text" 
+             x-model="newItem" 
+             class="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600"
+             @keyup.enter="if(newItem.trim()) { items.push(newItem.trim()); newItem = ''; }">
+      <div @click="if(newItem.trim()) { items.push(newItem.trim()); newItem = ''; }"
+              class="bg-red-500 px-4 py-2 rounded hover:bg-red-700">Add</div>
+    </div>
+    <div class="space-y-2">
+      <template x-for="(item, index) in items" :key="index">
+        <div class="flex items-center gap-2 bg-gray-700 p-2 rounded">
+          <span x-text="item" class="flex-1"></span>
+          <button @click="items.splice(index, 1)" class="text-red-400 hover:text-red-300">×</button>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>
