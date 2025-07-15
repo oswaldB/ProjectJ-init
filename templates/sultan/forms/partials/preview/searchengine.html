@@ -87,9 +87,28 @@
       try {
         console.log('Database info before search:', await this.db.info());
         
+        // Définir les champs de recherche
+        let searchFields = ['_search_text']; // Valeur par défaut pour chercher dans tous les champs
+        
+        // Si des champs spécifiques sont configurés et activés, les utiliser
+        if (field.searchFields && Array.isArray(field.searchFields)) {
+          const enabledFields = field.searchFields
+            .filter(f => f.enabled && f.key)
+            .map(f => f.key);
+          
+          if (enabledFields.length > 0) {
+            searchFields = enabledFields;
+            console.log('Using specific search fields:', searchFields);
+          } else {
+            console.log('No enabled search fields found, using default _search_text');
+          }
+        } else {
+          console.log('No search fields configured, using default _search_text');
+        }
+        
         const searchOptions = {
           query: this.searchQuery,
-          fields: ['_search_text'],
+          fields: searchFields,
           include_docs: true,
           limit: 100
         };
@@ -169,15 +188,25 @@
   }" x-init="init()">
     
     <!-- Search Controls -->
-    <div class="flex gap-2 items-center">
-      <div class="flex-1">
-        <input 
-          type="text" 
-          x-model="searchQuery"
-          @input.debounce.300ms="performSearch()"
-          placeholder="Search..."
-          class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
+    <div class="space-y-2">
+      <!-- Search Fields Indicator -->
+      <div x-show="field.searchFields && field.searchFields.length > 0" class="text-xs text-gray-400">
+        <span>Searching in: </span>
+        <template x-for="searchField in field.searchFields.filter(f => f.enabled)" :key="searchField.key">
+          <span class="bg-blue-600 text-white px-2 py-1 rounded mr-1" x-text="searchField.label || searchField.key"></span>
+        </template>
+        <span x-show="!field.searchFields.some(f => f.enabled)" class="text-gray-500">all fields</span>
       </div>
+      
+      <div class="flex gap-2 items-center">
+        <div class="flex-1">
+          <input 
+            type="text" 
+            x-model="searchQuery"
+            @input.debounce.300ms="performSearch()"
+            placeholder="Search..."
+            class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
+        </div>
       <button 
         @click="syncData()"
         :disabled="isIndexing"
@@ -188,6 +217,7 @@
         <div x-show="isIndexing" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
         <span x-text="isIndexing ? 'Syncing...' : 'Sync'"></span>
       </button>
+      </div>
     </div>
 
     <!-- Loading State -->
