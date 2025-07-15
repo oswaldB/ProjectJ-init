@@ -425,17 +425,8 @@
   <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
     <div class="flex flex-col">
       <h1 class="text-2xl font-bold text-white">Form Editor</h1>
-      <!-- Import HTML button for empty forms -->
-      <div x-show="form.fields.length === 0" class="mt-2 p-2 bg-blue-600 bg-opacity-20 border border-blue-500 rounded flex items-center space-x-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-        </svg>
-        <span class="text-blue-300 text-sm">This form is empty. You can </span>
-        <a href="/pc-analytics-jaffar/sultan/forms/import" class="text-blue-400 hover:text-blue-300 underline">import from HTML</a>
-        <span class="text-blue-300 text-sm"> or add fields manually.</span>
-      </div>
       <!-- Warning for missing submit button -->
-      <div x-show="form.fields.length > 0 && !form.fields.some(field => field.type === 'submit_issue')" class="mt-2 p-2 bg-yellow-600 bg-opacity-20 border border-yellow-500 rounded flex items-center space-x-2">
+      <div x-show="!form.fields.some(field => field.type === 'submit_issue')" class="mt-2 p-2 bg-yellow-600 bg-opacity-20 border border-yellow-500 rounded flex items-center space-x-2">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.732 15.5c-.77.833.192 2.5 1.732 2.5z" />
         </svg>

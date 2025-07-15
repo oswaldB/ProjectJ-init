@@ -34,10 +34,6 @@ def forms_list():
 def form_edit(form_id):
     return render_template('sultan/forms/edit.html')
 
-@sultan_bp.route('/forms/import')
-def form_import():
-    return render_template('sultan/forms/import.html')
-
 @sultan_bp.route('/escalation')
 def escalation_list():
     return render_template('/sultan/escalation/index.html')
