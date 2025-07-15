@@ -12,13 +12,10 @@
     async init() {
       if (!field.dataSource) return;
       this.initDatabase();
-      // Initialiser la recherche avec la valeur du champ si elle existe
+      // Initialiser la requête de recherche si une valeur existe, mais ne pas lancer la recherche automatiquement
       if (field.searchValue) {
         this.searchQuery = this.processFieldReferences(field.searchValue);
         console.log('Search engine initialized with query:', this.searchQuery);
-        if (this.searchQuery.trim()) {
-          await this.performSearch();
-        }
       }
     },
 
