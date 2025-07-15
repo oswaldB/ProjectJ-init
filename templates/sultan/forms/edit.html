@@ -22,7 +22,7 @@
     this.$watch('form', () => {
       this.saveForm();
     }, { deep: true });
-    
+
     // Load available forms for searchengine fields
     try {
       const formsResponse = await fetch('/pc-analytics-jaffar/forms/api/list');
@@ -33,7 +33,7 @@
       console.error('Failed to load forms:', error);
       this.availableForms = [];
     }
-    
+
     const formId = window.location.pathname.split('/').pop();
     if (formId !== 'new') {
       try {
@@ -140,7 +140,7 @@
     });
     return processedText;
   },
-  
+
   async askScheherazade(field) {
     if (!field.apiUrl || !field.model || !field.prompt) {
       if (!this.errors) this.errors = {};
@@ -286,7 +286,56 @@
   },
   toggleField(index) {
     this.form.fields[index].open = !this.form.fields[index].open;
-  }
+  },
+
+  async loadSearchFields(field) {
+    if (!field.dataSource) {
+      field.searchFields = [];
+      return;
+    }
+
+    try {
+      let formId = field.dataSource;
+
+      // Extraire le formId du dataSource
+      if (formId.includes('/')) {
+        const parts = formId.split('/');
+        formId = parts[parts.length - 1];
+      }
+
+      console.log('Loading search fields for form:', formId);
+
+      const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${formId}`);
+      if (response.ok) {
+        const formConfig = await response.json();
+        console.log('Form config loaded:', formConfig);
+
+        if (formConfig && formConfig.fields && Array.isArray(formConfig.fields)) {
+          const searchFields = formConfig.fields
+            .filter(formField => formField.key) // Only include fields with keys
+            .map(formField => ({
+              key: formField.key,
+              label: formField.label || formField.key.charAt(0).toUpperCase() + formField.key.slice(1).replace(/_/g, ' '),
+              type: formField.type || 'text',
+              enabled: true // Enable all fields by default
+            }));
+
+          // Initialize search fields
+          field.searchFields = searchFields;
+          console.log('Search fields loaded:', searchFields);
+        } else {
+          console.log('No fields found in form config');
+          field.searchFields = [];
+        }
+      } else {
+        console.error('Failed to fetch form config:', response.status);
+        field.searchFields = [];
+      }
+    } catch (error) {
+      console.error('Failed to load search fields:', error);
+      field.searchFields = [];
+    }
+  },
 }" x-init="init()">
   <!-- Top Bar -->
   <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">

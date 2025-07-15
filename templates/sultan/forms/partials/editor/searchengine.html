@@ -65,6 +65,49 @@
       </div>
     </div>
 
+    <!-- Search Fields Configuration -->
+    <div x-show="field.dataSource">
+      <label class="block text-sm font-medium text-gray-300 mb-2">Search Fields</label>
+      <div class="space-y-2 max-h-48 overflow-y-auto">
+        <template x-for="(searchField, index) in field.searchFields || []" :key="index">
+          <div class="flex items-center gap-2 bg-gray-700 p-2 rounded">
+            <input 
+              type="checkbox" 
+              x-model="searchField.enabled"
+              class="rounded border-gray-600"
+            >
+            <input 
+              type="text" 
+              x-model="searchField.key"
+              class="flex-1 bg-gray-800 text-white px-2 py-1 rounded border border-gray-600 focus:outline-none focus:border-red-500 text-sm"
+              placeholder="Field key"
+              readonly
+            >
+            <span class="text-xs text-gray-400" x-text="searchField.label"></span>
+            <button 
+              @click="field.searchFields.splice(index, 1)"
+              class="text-red-400 hover:text-red-300"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </template>
+        
+        <button 
+          @click="loadSearchFields(field)"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm"
+        >
+          Load Available Fields
+        </button>
+      </div>
+      
+      <div class="mt-2 text-xs text-gray-400">
+        <p>Configure which fields should be searchable. Leave empty to search all fields.</p>
+      </div>
+    </div>
+
     <!-- Search Configuration -->
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-2">Search Configuration</label>
