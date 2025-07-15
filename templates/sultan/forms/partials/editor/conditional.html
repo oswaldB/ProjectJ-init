@@ -726,7 +726,7 @@
                                                                                                 </div>
                                                                                               </template>
                                                                                               <template x-if="sixthQuestion.type === 'conditional'">
-                                                                                                <div class="space-y-4" x-data="{ seventhLevelSelected: formData[sixthQuestion.key] || '' }" x-effect="formData[sixthQuestion.key] = seventhLevelSelected">
+                                                                                                <div class="space-y-4" x-data="{ seventhLevelSelected: previewValues[sixthQuestion.key] || '' }" x-effect="previewValues[sixthQuestion.key] = seventhLevelSelected">
                                                                                                   <select class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" x-model="seventhLevelSelected">
                                                                                                     <option value="">Select an option</option>
                                                                                                     <template x-for="seventhOption in sixthQuestion.options">

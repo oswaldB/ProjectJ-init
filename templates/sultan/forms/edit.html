@@ -7,6 +7,7 @@
 <!-- comment -->
 <div class="h-screen bg-gray-900 text-white" x-data="{
   formData: [],
+  previewValues: {},
   errors: {},
   responses: {},
   loadingStates: {},
@@ -52,7 +53,7 @@
         window.location.href = '/pc-analytics-jaffar/sultan/forms';
       }
     }
-    this.$watch('formData', () => {
+    this.$watch('previewValues', () => {
       this.applyAutoSelects();
     }, { deep: true });
   },
@@ -80,7 +81,7 @@
   applyAutoSelects() {
     this.form.fields.forEach((field, idx) => {
       if (field.type === 'single_select' && field.autoSelect && field.autoSelectKey && field.autoSelectOption) {
-        const prevValue = this.formData[field.autoSelectKey];
+        const prevValue = this.previewValues[field.autoSelectKey];
         let shouldSelect = false;
         switch (field.autoSelectComparator) {
           case 'equals':
@@ -111,7 +112,7 @@
             shouldSelect = false;
         }
         if (shouldSelect) {
-          this.formData[field.key] = field.autoSelectOption;
+          this.previewValues[field.key] = field.autoSelectOption;
         }
       }
     });

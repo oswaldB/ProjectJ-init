@@ -2,7 +2,7 @@
 <div class="mb-4" x-data="{
   loadingStates: {},
   errors: {},
-
+  
   async askScheherazade(field) {
     if (!field.apiUrl || !field.model || !field.prompt) {
       if (!this.errors) this.errors = {};
@@ -13,14 +13,14 @@
     try {
       if (!this.loadingStates) this.loadingStates = {};
       this.loadingStates[field.key] = true;
-
+      
       if (this.errors && this.errors[field.key]) {
         delete this.errors[field.key];
       }
 
       const systemPrompt = this.processFieldReferences(field.systemPrompt || '');
       const userPrompt = this.processFieldReferences(field.prompt || '');
-
+      
       const messages = [];
       if (systemPrompt) {
         messages.push({ role: 'system', content: systemPrompt });
@@ -46,7 +46,7 @@
       }
 
       const result = await response.json();
-
+      
       let responseContent = '';
       if (result.choices && result.choices[0] && result.choices[0].message) {
         responseContent = result.choices[0].message.content;
@@ -79,33 +79,34 @@
       }
     }
   },
-
+  
   processFieldReferences(text) {
     if (!text) return text;
     let processedText = text;
-
+    
     const fieldReferences = text.match(/\[\[([^\]]+)\]\]/g);
     if (!fieldReferences) return processedText;
-
-    // Access formData directly
+    
     const currentFormData = this.formData;
-
+    const currentPreviewValues = this.previewValues;
+    
     fieldReferences.forEach(reference => {
       const fieldKey = reference.replace(/\[\[|\]\]/g, '');
+      
       let fieldValue = null;
-
-      // Use formData directly
-      if (currentFormData && currentFormData.hasOwnProperty(fieldKey)) {
+      if (currentPreviewValues && currentPreviewValues.hasOwnProperty(fieldKey)) {
+        fieldValue = currentPreviewValues[fieldKey];
+      } else if (currentFormData && currentFormData.hasOwnProperty(fieldKey)) {
         fieldValue = currentFormData[fieldKey];
       }
-
+      
       if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
         processedText = processedText.replace(reference, fieldValue);
       } else {
         processedText = processedText.replace(reference, `[[${fieldKey}]] is empty`);
       }
     });
-
+    
     return processedText;
   }
 }">
@@ -135,16 +136,16 @@
                        ]
                      }
                    });
-
+                   
                    if (formData && formData[field.key]) {
                      quill.root.innerHTML = formData[field.key];
                    }
-
+                   
                    quill.on('text-change', function() {
                      if (!formData) formData = {};
                      formData[field.key] = quill.root.innerHTML;
                    });
-
+                   
                    window.quillInstances[`response_${field.key}`] = quill;
                  }
                });
