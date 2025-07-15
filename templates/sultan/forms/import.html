@@ -10,8 +10,13 @@
   extractedFields: [],
   isExtracting: false,
   
+  init() {
+    // Ensure component is properly initialized
+    console.log('Import form component initialized');
+  },
+  
   async extractFields() {
-    if (!this.htmlContent.trim()) {
+    if (!this.htmlContent || !this.htmlContent.trim()) {
       alert('Please enter HTML content first');
       return;
     }
@@ -22,7 +27,7 @@
     try {
       // Create a temporary DOM element to parse HTML
       const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = this.htmlContent;
+      tempDiv.innerHTML = this.htmlContent || '';
       
       // Find all form elements
       const inputs = tempDiv.querySelectorAll('input, select, textarea');
