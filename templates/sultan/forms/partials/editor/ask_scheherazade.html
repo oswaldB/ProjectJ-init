@@ -57,13 +57,13 @@
             <div x-show="formField.key && formField.key !== field.key" class="flex items-center justify-between py-1">
               <span class="text-gray-400 text-xs" x-text="(formField.label || formField.key) + ' (' + formField.type + ')'"></span>
               <code class="text-green-400 bg-gray-900 px-2 py-1 rounded text-xs cursor-pointer hover:bg-gray-600"
-                    @click="navigator.clipboard.writeText('{{' + formField.key + '}}'); $event.target.textContent = 'Copied!'; setTimeout(() => $event.target.textContent = '{{' + formField.key + '}}', 1000)"
-                    x-text="'{{'+ formField.key + '}}'"></code>
+                    @click="navigator.clipboard.writeText('[[' + formField.key + ']]'); $event.target.textContent = 'Copied!'; setTimeout(() => $event.target.textContent = '[[' + formField.key + ']]', 1000)"
+                    x-text="'[['+ formField.key + ']]'"></code>
             </div>
           </template>
         </div>
         <div class="mt-2 text-gray-500 text-xs">
-          💡 Copy any {{field_key}} above and paste it into your prompts below, or type {{ to open autocomplete
+          💡 Copy any [[field_key]] above and paste it into your prompts below, or type [[ to open autocomplete
         </div>
       </div>
     </template>
@@ -79,7 +79,7 @@
               class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
               placeholder="System instructions for the AI..."></textarea>
     <div class="text-xs text-gray-400 mt-1">
-      Use {{field_key}} to reference other form fields in your system prompt. Type {{ to open autocomplete menu.
+      Use [[field_key]] to reference other form fields in your system prompt. Type [[ to open autocomplete menu.
     </div>
   </div>
 
@@ -93,7 +93,7 @@
               class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
               placeholder="Enter your prompt here..."></textarea>
     <div class="text-xs text-gray-400 mt-1">
-      Use {{field_key}} to reference other form fields in your user prompt. Type {{ to open autocomplete menu.
+      Use [[field_key]] to reference other form fields in your user prompt. Type [[ to open autocomplete menu.
     </div>
   </div>
 
@@ -107,7 +107,7 @@
               class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
               placeholder='{"field1": "value1", "field2": "value2"}'></textarea>
     <div class="text-xs text-gray-400 mt-1">
-      Define the expected JSON structure for the AI response. You can also use {{field_key}} here. Type {{ to open autocomplete menu.
+      Define the expected JSON structure for the AI response. You can also use [[field_key]] here. Type [[ to open autocomplete menu.
     </div>
   </div>
 
