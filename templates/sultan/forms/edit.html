@@ -195,9 +195,10 @@
 
     const insertFieldReference = (fieldKey, cursorPos) => {
       const value = textarea.value;
-      const beforeCursor = value.substring(0, cursorPos - 2); // Remove {{
+      const beforeCursor = value.substring(0, cursorPos - 2); // Remove opening brackets
       const afterCursor = value.substring(cursorPos);
-      const newValue = beforeCursor + `[[${fieldKey}]]` + afterCursor;
+      const fieldRef = '[[' + fieldKey + ']]';
+      const newValue = beforeCursor + fieldRef + afterCursor;
 
       textarea.value = newValue;
       textarea.dispatchEvent(new Event('input'));
@@ -214,7 +215,7 @@
       const value = textarea.value;
       const beforeCursor = value.substring(0, cursorPos);
 
-      // Check if user typed {{
+      // Check if user typed opening brackets
       if (beforeCursor.endsWith('{{')) {
         showAutocomplete(cursorPos);
       } else {
