@@ -1,11 +1,121 @@
 <template x-if="field.type === 'ask_scheherazade'">
-<div class="mb-4">
+<div class="mb-4" x-data="{
+  loadingStates: {},
+  errors: {},
+  
+  async askScheherazade(field) {
+    if (!field.apiUrl || !field.model || !field.prompt) {
+      if (!this.errors) this.errors = {};
+      this.errors[field.key] = 'Missing required configuration (API URL, model, or prompt)';
+      return;
+    }
+
+    try {
+      if (!this.loadingStates) this.loadingStates = {};
+      this.loadingStates[field.key] = true;
+      
+      if (this.errors && this.errors[field.key]) {
+        delete this.errors[field.key];
+      }
+
+      const systemPrompt = this.processFieldReferences(field.systemPrompt || '');
+      const userPrompt = this.processFieldReferences(field.prompt || '');
+      
+      const messages = [];
+      if (systemPrompt) {
+        messages.push({ role: 'system', content: systemPrompt });
+      }
+      messages.push({ role: 'user', content: userPrompt });
+
+      const response = await fetch(field.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${field.apiKey}`
+        },
+        body: JSON.stringify({
+          model: field.model,
+          messages: messages,
+          max_tokens: field.maxTokens || 1000,
+          temperature: field.temperature || 0.7
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      let responseContent = '';
+      if (result.choices && result.choices[0] && result.choices[0].message) {
+        responseContent = result.choices[0].message.content;
+      } else if (result.response) {
+        responseContent = result.response;
+      } else if (result.content) {
+        responseContent = result.content;
+      } else if (result.text) {
+        responseContent = result.text;
+      } else {
+        responseContent = JSON.stringify(result);
+      }
+
+      // Sauvegarder dans formData au lieu de responses
+      if (!this.formData) this.formData = {};
+      this.formData[field.key] = responseContent;
+
+      // Update Quill editor if it exists
+      if (window.quillInstances && window.quillInstances[`response_${field.key}`]) {
+        window.quillInstances[`response_${field.key}`].root.innerHTML = responseContent;
+      }
+
+    } catch (error) {
+      console.error('Error calling Scheherazade:', error);
+      if (!this.errors) this.errors = {};
+      this.errors[field.key] = `Error: ${error.message}`;
+    } finally {
+      if (this.loadingStates) {
+        this.loadingStates[field.key] = false;
+      }
+    }
+  },
+  
+  processFieldReferences(text) {
+    if (!text) return text;
+    let processedText = text;
+    
+    const fieldReferences = text.match(/\[\[([^\]]+)\]\]/g);
+    if (!fieldReferences) return processedText;
+    
+    const currentFormData = this.formData;
+    const currentPreviewValues = this.previewValues;
+    
+    fieldReferences.forEach(reference => {
+      const fieldKey = reference.replace(/\[\[|\]\]/g, '');
+      
+      let fieldValue = null;
+      if (currentPreviewValues && currentPreviewValues.hasOwnProperty(fieldKey)) {
+        fieldValue = currentPreviewValues[fieldKey];
+      } else if (currentFormData && currentFormData.hasOwnProperty(fieldKey)) {
+        fieldValue = currentFormData[fieldKey];
+      }
+      
+      if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+        processedText = processedText.replace(reference, fieldValue);
+      } else {
+        processedText = processedText.replace(reference, `[[${fieldKey}]] is empty`);
+      }
+    });
+    
+    return processedText;
+  }
+}">
 
   <div x-show="field.description" class="text-sm text-gray-400 mb-2" x-text="field.description"></div>
 
   <div class="space-y-3">
     <!-- AI Response Display with Quill Editor -->
-    <div x-show="responses && responses[field.key]" class="bg-gray-700 rounded p-3 border border-gray-600">
+    <div x-show="formData && formData[field.key]" class="bg-gray-700 rounded p-3 border border-gray-600">
       <div class="flex items-center justify-between mb-2">
         <span class="text-xs text-gray-400">AI Response:</span>
       </div>
@@ -27,13 +137,13 @@
                      }
                    });
                    
-                   if (responses && responses[field.key]) {
-                     quill.root.innerHTML = responses[field.key];
+                   if (formData && formData[field.key]) {
+                     quill.root.innerHTML = formData[field.key];
                    }
                    
                    quill.on('text-change', function() {
-                     if (!responses) responses = {};
-                     responses[field.key] = quill.root.innerHTML;
+                     if (!formData) formData = {};
+                     formData[field.key] = quill.root.innerHTML;
                    });
                    
                    window.quillInstances[`response_${field.key}`] = quill;
