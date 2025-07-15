@@ -126,10 +126,7 @@
     });
     return processedText;
   },
-  setupAutocomplete(textarea, fieldIndex) {
-    // L'autocomplétion est maintenant gérée par les templates Alpine.js dans le HTML
-    // Cette fonction peut être simplifiée ou supprimée
-  },
+  
   async askScheherazade(field) {
     if (!field.apiUrl || !field.model || !field.prompt) {
       if (!this.errors) this.errors = {};
@@ -397,183 +394,12 @@
                 <div class="mt-4 space-y-2">
                   <label class="block text-sm font-medium text-gray-300">Question Description</label>
                   <p class="text-xs text-gray-400">Add additional context or instructions for this question</p>
-                  <div x-data="{
-                    isAutocompleteOpen: false,
-                    selectedIndex: -1,
-                    filteredFields: [],
-                    dropdownPosition: { top: 0, left: 0 },
-                    
-                    init() {
-                      this.$nextTick(() => {
-                        const quillContainer = this.$refs.descQuillField;
-                        if (quillContainer && quillContainer._quill) {
-                          this.setupQuillAutocomplete(quillContainer._quill);
-                        } else {
-                          // Retry after Quill is initialized
-                          setTimeout(() => {
-                            if (quillContainer && quillContainer._quill) {
-                              this.setupQuillAutocomplete(quillContainer._quill);
-                            }
-                          }, 100);
-                        }
-                      });
-                    },
-                    
-                    setupQuillAutocomplete(quill) {
-                      quill.on('text-change', (delta, oldDelta, source) => {
-                        if (source === 'user') {
-                          this.handleTextChange(quill);
-                        }
-                      });
-                      
-                      quill.on('selection-change', (range, oldRange, source) => {
-                        if (range && source === 'user') {
-                          this.handleSelectionChange(quill, range);
-                        }
-                      });
-                      
-                      // Handle keyboard navigation
-                      const editorElement = quill.root;
-                      editorElement.addEventListener('keydown', (e) => {
-                        if (this.isAutocompleteOpen) {
-                          this.handleKeydown(e, quill);
-                        }
-                      });
-                    },
-                    
-                    handleTextChange(quill) {
-                      const range = quill.getSelection();
-                      if (!range) return;
-                      
-                      const text = quill.getText(0, range.index);
-                      const lastTwoChars = text.slice(-2);
-                      
-                      if (lastTwoChars === '[[') {
-                        this.showAutocomplete(quill, range.index);
-                      } else if (this.isAutocompleteOpen) {
-                        // Check if we're still typing a field reference
-                        const matches = text.match(/\[\[([^\]]*?)$/);
-                        if (matches) {
-                          const searchTerm = matches[1];
-                          this.filterFields(searchTerm);
-                        } else {
-                          this.hideAutocomplete();
-                        }
-                      }
-                    },
-                    
-                    handleSelectionChange(quill, range) {
-                      if (this.isAutocompleteOpen && range) {
-                        const text = quill.getText(0, range.index);
-                        const matches = text.match(/\[\[([^\]]*?)$/);
-                        if (!matches) {
-                          this.hideAutocomplete();
-                        }
-                      }
-                    },
-                    
-                    handleKeydown(e, quill) {
-                      if (!this.isAutocompleteOpen) return;
-                      
-                      switch(e.key) {
-                        case 'ArrowDown':
-                          e.preventDefault();
-                          this.selectedIndex = Math.min(this.selectedIndex + 1, this.filteredFields.length - 1);
-                          break;
-                        case 'ArrowUp':
-                          e.preventDefault();
-                          this.selectedIndex = Math.max(this.selectedIndex - 1, 0);
-                          break;
-                        case 'Enter':
-                          e.preventDefault();
-                          if (this.selectedIndex >= 0 && this.selectedIndex < this.filteredFields.length) {
-                            this.insertFieldReference(this.filteredFields[this.selectedIndex].key, quill);
-                          }
-                          break;
-                        case 'Escape':
-                          e.preventDefault();
-                          this.hideAutocomplete();
-                          break;
-                      }
-                    },
-                    
-                    showAutocomplete(quill, cursorPos) {
-                      const availableFields = $root.form.fields.slice(0, index).filter(f => f.key);
-                      this.filteredFields = availableFields;
-                      
-                      if (this.filteredFields.length === 0) {
-                        this.isAutocompleteOpen = false;
-                        return;
-                      }
-                      
-                      // Calculate dropdown position
-                      const bounds = quill.getBounds(cursorPos);
-                      const containerRect = quill.container.getBoundingClientRect();
-                      
-                      this.dropdownPosition = {
-                        top: bounds.bottom + 5,
-                        left: bounds.left
-                      };
-                      
-                      this.isAutocompleteOpen = true;
-                      this.selectedIndex = 0;
-                    },
-                    
-                    filterFields(searchTerm) {
-                      const availableFields = $root.form.fields.slice(0, index).filter(f => f.key);
-                      this.filteredFields = availableFields.filter(field => 
-                        field.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        (field.label && field.label.toLowerCase().includes(searchTerm.toLowerCase()))
-                      );
-                      this.selectedIndex = 0;
-                    },
-                    
-                    hideAutocomplete() {
-                      this.isAutocompleteOpen = false;
-                      this.selectedIndex = -1;
-                    },
-                    
-                    insertFieldReference(fieldKey, quill) {
-                      const range = quill.getSelection();
-                      if (!range) return;
-                      
-                      const text = quill.getText(0, range.index);
-                      const matches = text.match(/\[\[([^\]]*?)$/);
-                      
-                      if (matches) {
-                        const startPos = range.index - matches[0].length;
-                        const fieldRef = '[[' + fieldKey + ']]';
-                        
-                        quill.deleteText(startPos, matches[0].length);
-                        quill.insertText(startPos, fieldRef);
-                        quill.setSelection(startPos + fieldRef.length);
-                      }
-                      
-                      this.hideAutocomplete();
-                    }
-                  }" class="relative">
+                  <div 
+                    x-init="window.initQuill($refs.descQuillField, val => field.description = (val !== undefined ? val : field.description))"
+                    class="relative">
                     <div 
                       x-ref="descQuillField"
-                      x-init="window.initQuill($refs.descQuillField, val => field.description = (val !== undefined ? val : field.description)); init()"
                       class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
-                    
-                    <!-- Autocomplete dropdown template -->
-                    <div x-show="isAutocompleteOpen" 
-                         x-on:click.outside="hideAutocomplete()"
-                         class="absolute z-50 bg-gray-800 border border-gray-600 rounded shadow-lg max-h-48 overflow-y-auto"
-                         :style="`min-width: 200px; top: ${dropdownPosition.top}px; left: ${dropdownPosition.left}px;`">
-                      <template x-for="(field, fieldIdx) in filteredFields" :key="field.key">
-                        <div class="px-3 py-2 hover:bg-gray-700 cursor-pointer text-sm"
-                             :class="{ 'bg-gray-700': fieldIdx === selectedIndex }"
-                             x-on:click="insertFieldReference(field.key, $refs.descQuillField._quill)">
-                          <div class="text-white" x-text="field.label || field.key"></div>
-                          <div class="text-gray-400 text-xs" x-text="'[[' + field.key + ']]'"></div>
-                        </div>
-                      </template>
-                      <div x-show="filteredFields.length === 0" class="px-3 py-2 text-gray-400 text-sm">
-                        Aucun champ disponible
-                      </div>
-                    </div>
                   </div>
                   <div class="mt-1 text-gray-400 text-sm border-l-4 border-blue-700 pl-2" x-show="field.description">
                     <span class="font-semibold text-blue-300">Preview:</span>
