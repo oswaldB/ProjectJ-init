@@ -94,7 +94,9 @@
       const fieldKey = reference.replace(/\[\[|\]\]/g, '');
       
       let fieldValue = null;
-      if (currentFormData && currentFormData.hasOwnProperty(fieldKey)) {
+      if (currentPreviewValues && currentPreviewValues.hasOwnProperty(fieldKey)) {
+        fieldValue = currentPreviewValues[fieldKey];
+      } else if (currentFormData && currentFormData.hasOwnProperty(fieldKey)) {
         fieldValue = currentFormData[fieldKey];
       }
       
