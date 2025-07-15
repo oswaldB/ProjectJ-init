@@ -33,21 +33,13 @@
         return;
       }
 
-      const searchFields = (card.config.searchFields || [])
-        .filter(f => f && f.enabled && f.key)
-        .map(f => f.key);
-
-      // Si aucun champ de recherche n'est configuré, rechercher dans tous les champs
+      // Rechercher dans tous les champs - ne pas limiter aux champs configurés
       const searchOptions = {
         query: this.searchQuery,
         include_docs: true,
         highlighting: true
+        // Ne pas spécifier de champs pour chercher dans tous les champs
       };
-
-      // Ajouter les champs seulement s'ils sont configurés et valides
-      if (searchFields.length > 0) {
-        searchOptions.fields = searchFields;
-      }
 
       // S'assurer que les options sont valides
       if (!searchOptions.query || searchOptions.query.trim() === '') {
