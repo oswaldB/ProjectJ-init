@@ -279,7 +279,7 @@
       <div x-show="!selectedCard.config.chatType || selectedCard.config.chatType === ''">
         <span class="text-gray-400">Please select a chat configuration type</span>
       </div>
-      
+
       <!-- API Configuration Preview -->
       <div x-show="selectedCard.config.apiUrl" class="mt-2 pt-2 border-t border-gray-500">
         <strong>API Configuration:</strong>
@@ -290,3 +290,11 @@
     </div>
   </div>
 </div>
+```
+
+```html
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
+      <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Chat card title">
+    </div>
+```

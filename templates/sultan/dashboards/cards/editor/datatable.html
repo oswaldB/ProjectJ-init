@@ -1,6 +1,10 @@
 <div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
   <h3 class="text-white font-semibold mb-3">Data Table Configuration</h3>
   <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Title</label>
+          <input type="text" x-model="selectedCard.config.title" class="w-full bg-gray-700 text-white p-2 rounded" placeholder="Data table title">
+        </div>
 
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
@@ -74,10 +78,10 @@
               </svg>
             </button>
           </div>
-          
+
           <div class="bg-gray-700 p-4 rounded border border-gray-600">
             <div class="text-sm text-gray-300 mb-4">You can use these variables in your predefined filter values:</div>
-        
+
         <!-- User Variables -->
         <div class="mb-4">
           <h5 class="text-xs font-semibold text-blue-300 mb-2">User Variables</h5>
@@ -252,7 +256,7 @@
                 </div>
               </div>
 
-              
+
 
               <!-- Predefined Filter Section -->
               <div class="border-t border-gray-600 pt-3">
