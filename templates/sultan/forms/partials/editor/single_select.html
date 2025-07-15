@@ -1,6 +1,22 @@
 <template x-if="field.type === 'single_select'">
-  <div class="mt-4 space-y-2">
-    <button @click="field.options = field.options || []; field.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+  <div class="mt-4 space-y-2" x-data="{ showBulkEdit: false }">
+    <div class="flex space-x-2">
+      <button @click="field.options = field.options || []; field.options.push({name: ''})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+      <button @click="showBulkEdit = !showBulkEdit" class="text-green-400 hover:text-green-300 text-sm">
+        <span x-text="showBulkEdit ? 'Normal View' : 'Bulk Edit'"></span>
+      </button>
+    </div>
+    
+    <!-- Bulk Edit Mode -->
+    <div x-show="showBulkEdit" class="space-y-2">
+      <label class="block text-sm text-gray-300">One option per line:</label>
+      <textarea 
+        x-model="field.bulkOptions" 
+        @input="field.options = $event.target.value.split('\n').filter(line => line.trim()).map(line => ({name: line.trim()}))"
+        x-init="field.bulkOptions = field.options ? field.options.map(opt => opt.name).join('\n') : ''"
+        class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 h-32" 
+        placeholder="Option 1&#10;Option 2&#10;Option 3"></textarea>
+    </div>
     <template x-for="(option, optIndex) in field.options">
       <div class="space-y-2 p-2 border border-gray-600 rounded">
         <div class="flex space-x-2 items-center">
