@@ -8,6 +8,7 @@
     isIndexing: false,
     db: null,
     resultsPerPage: field.resultsPerPage || 3,
+    hasSearched: false,
 
     async init() {
       if (!field.dataSource) return;
@@ -76,10 +77,12 @@
       if (!this.db || !this.searchQuery.trim()) {
         console.log('No database or empty query, clearing results');
         this.searchResults = [];
+        this.hasSearched = false;
         return;
       }
 
       this.isLoading = true;
+      this.hasSearched = true;
       try {
         console.log('Database info before search:', await this.db.info());
 
@@ -305,13 +308,13 @@
       </div>
     </div>
 
-    <!-- No Results -->
-    <div x-show="!isLoading && searchQuery && searchResults.length === 0" class="text-center py-8 text-gray-400">
+    <!-- No Results - Only show if a search was actually performed -->
+    <div x-show="!isLoading && searchQuery && searchResults.length === 0 && hasSearched" class="text-center py-8 text-gray-400">
       No results found for "<span x-text="searchQuery"></span>"
     </div>
 
     <!-- Initial State -->
-    <div x-show="!isLoading && !searchQuery" class="text-center py-8 text-gray-400">
+    <div x-show="!isLoading && (!searchQuery || !hasSearched)" class="text-center py-8 text-gray-400">
       Enter a search query to find results
     </div>
   </div>
