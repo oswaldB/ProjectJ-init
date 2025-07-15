@@ -151,8 +151,10 @@
     });
   }
 }" x-init="loadKanbanData()">
+  <!-- Card Title -->
+  <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Kanban'"></h3>
 
-  <!-- Sync Button -->
+  <!-- Data Source Info -->
   <div x-show="card.config.dataSource" class="flex justify-end items-center gap-2 mb-3">
     <span class="text-xs text-gray-400">
       <span x-text="kanbanData.length"></span> items

@@ -1,4 +1,3 @@
-
 <div class="bg-gray-800 p-4 rounded-lg h-full" x-data="{
   loading: false,
   statsData: {
@@ -11,23 +10,23 @@
   showSyncButton: false,
   isSyncing: false,
   syncCompleted: false,
-  
+
   async loadStatsData() {
     if (!card.config.dataSource || !card.config.valueField) {
       return;
     }
-    
+
     this.loading = true;
     this.showSyncButton = false;
     this.syncCompleted = false;
-    
+
     try {
       console.log('Loading stats for:', card.config.dataSource, 'field:', card.config.valueField);
-      
+
       // Initialize PouchDB
       await initializePouchDB(card.config.dataSource);
       const pouchDB = new PouchDB(card.config.dataSource);
-      
+
       // Check if database has data
       const info = await pouchDB.info();
       if (info.doc_count === 0) {
@@ -35,24 +34,24 @@
         this.showSyncButton = true;
         return;
       }
-      
+
       // Build map-reduce function for stats
       const prefilters = card.config.prefilters || [];
       const valueField = card.config.valueField;
-      
+
       // Create map function as actual function, then convert to string
       const mapFunction = function (doc) {
         // This will be replaced with actual filters data
         const filters = 'FILTERS_PLACEHOLDER';
         const targetField = 'FIELD_PLACEHOLDER';
-        
+
         for (const filter of filters) {
           if (!filter.enabled || !filter.field) continue;
-          
+
           const docValue = doc[filter.field];
           const filterValue = filter.value;
           const operator = filter.operator || 'equals';
-          
+
           switch (operator) {
             case 'equals':
               if (docValue != filterValue) return;
@@ -77,10 +76,10 @@
               break;
           }
         }
-        
+
         // Emit the value for stats calculation
         const value = doc[targetField];
-        
+
         // Debug logs (remove in production)
         if (typeof console !== 'undefined') {
           console.log('Doc keys:', Object.keys(doc));
@@ -88,7 +87,7 @@
           console.log('Field value:', value);
           console.log('Is numeric:', !isNaN(parseFloat(value)));
         }
-        
+
         // For count, we just need the field to exist
         // For numeric stats (sum, min, max), we need numeric values
         if (value !== null && value !== undefined) {
@@ -101,23 +100,23 @@
           }
         }
       };
-      
+
       // Convert to string and replace placeholders
       const mapFunctionString = mapFunction.toString()
         .replace(`'FILTERS_PLACEHOLDER'`, JSON.stringify(prefilters))
         .replace(`'FIELD_PLACEHOLDER'`, `'${valueField}'`);
-      
+
       const mapReduceFun = {
         map: mapFunctionString,
         reduce: '_stats'
       };
-      
+
       console.log('Running stats query with map-reduce:', mapReduceFun);
-      
+
       try {
         const result = await pouchDB.query(mapReduceFun, { reduce: true });
         console.log('Stats result:', result);
-        
+
         if (result.rows && result.rows.length > 0) {
           this.statsData = result.rows[0].value || {
             sum: 0,
@@ -136,13 +135,13 @@
             sumsqr: 0
           };
         }
-        
+
       } catch (queryError) {
         console.error('Stats query failed:', queryError);
         // Fallback: calculate stats manually
         await this.calculateStatsManually(pouchDB);
       }
-      
+
     } catch (error) {
       console.error('Error loading stats:', error);
       this.showSyncButton = true;
@@ -150,27 +149,27 @@
       this.loading = false;
     }
   },
-  
+
   async calculateStatsManually(pouchDB) {
     try {
       const result = await pouchDB.allDocs({ include_docs: true });
       const docs = result.rows.map(row => row.doc).filter(doc => !doc._id.startsWith('_design/'));
-      
+
       const values = [];
-      
+
       // Apply filters and collect values
       for (const doc of docs) {
         // Apply prefilters
         const filters = card.config.prefilters || [];
         let passesFilters = true;
-        
+
         for (const filter of filters) {
           if (!filter.enabled || !filter.field) continue;
-          
+
           const docValue = doc[filter.field];
           const filterValue = filter.value;
           const operator = filter.operator || 'equals';
-          
+
           switch (operator) {
             case 'equals':
               if (docValue != filterValue) passesFilters = false;
@@ -194,10 +193,10 @@
               if (docValue !== null && docValue !== undefined) passesFilters = false;
               break;
           }
-          
+
           if (!passesFilters) break;
         }
-        
+
         if (passesFilters) {
           const value = doc[card.config.valueField];
           if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
@@ -205,14 +204,14 @@
           }
         }
       }
-      
+
       // Calculate stats manually
       if (values.length > 0) {
         const sum = values.reduce((a, b) => a + b, 0);
         const min = Math.min(...values);
         const max = Math.max(...values);
         const sumsqr = values.reduce((a, b) => a + (b * b), 0);
-        
+
         this.statsData = {
           sum: sum,
           count: values.length,
@@ -229,38 +228,38 @@
           sumsqr: 0
         };
       }
-      
+
     } catch (error) {
       console.error('Manual stats calculation failed:', error);
     }
   },
-  
+
   async syncAndReload() {
     if (!card.config.dataSource) {
       return;
     }
-    
+
     this.isSyncing = true;
     this.showSyncButton = false;
     this.syncCompleted = false;
-    
+
     try {
       console.log('Starting sync for:', card.config.dataSource);
-      
+
       // Re-initialize PouchDB to sync data
       await initializePouchDB(card.config.dataSource);
-      
+
       // Wait for indexation
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       this.syncCompleted = true;
-      
+
       // Wait 2 seconds to show success message
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Reload stats
       await this.loadStatsData();
-      
+
     } catch (error) {
       console.error('Sync error:', error);
       this.showSyncButton = true;
@@ -269,11 +268,11 @@
       this.syncCompleted = false;
     }
   },
-  
+
   getDisplayValue() {
     const statType = card.config.statType || 'count';
     const value = this.statsData[statType] || 0;
-    
+
     // Format large numbers
     if (value >= 1000000) {
       return (value / 1000000).toFixed(1) + 'M';
@@ -285,7 +284,7 @@
       return Math.round(value);
     }
   },
-  
+
   getStatLabel() {
     const statType = card.config.statType || 'count';
     const labels = {
@@ -299,6 +298,8 @@
   },
   showDetails: false
 }" x-init="loadStatsData()">
+  <!-- Card Title -->
+  <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Stats'"></h3>
 
   <!-- Info Icon and Sync Button -->
   <div x-show="card.config.dataSource" class="mb-3 flex justify-between items-center">
@@ -309,7 +310,7 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
       </svg>
     </button>
-    
+
     <button @click="syncAndReload()" 
             class="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded text-xs flex items-center gap-1"
             title="Synchronize data"
@@ -341,19 +342,19 @@
       </span>
     </div>
   </div>
-  
+
   <!-- No Data Source -->
   <div x-show="!card.config.dataSource" class="mt-3 bg-gray-700 p-3 rounded text-center">
     <div class="text-gray-400 text-sm">No data source selected</div>
     <div class="text-gray-500 text-xs mt-1">Configure a data source to enable statistics</div>
   </div>
-  
+
   <!-- No Value Field -->
   <div x-show="card.config.dataSource && !card.config.valueField" class="mt-3 bg-gray-700 p-3 rounded text-center">
     <div class="text-gray-400 text-sm">No value field selected</div>
     <div class="text-gray-500 text-xs mt-1">Configure a numeric field for calculations</div>
   </div>
-  
+
   <!-- Sync Button -->
   <div x-show="showSyncButton && !isSyncing && !syncCompleted" class="mb-3">
     <button 
@@ -364,7 +365,7 @@
     </button>
     <p class="text-xs text-gray-400 mt-1 text-center">No data found. Click to sync data.</p>
   </div>
-  
+
   <!-- Syncing Indicator -->
   <div x-show="isSyncing" class="mb-3 text-center">
     <div class="inline-flex items-center gap-2 text-blue-400">
@@ -372,7 +373,7 @@
       <span class="text-sm">Syncing data...</span>
     </div>
   </div>
-  
+
   <!-- Sync Completed Message -->
   <div x-show="syncCompleted" class="mb-3 text-center">
     <div class="inline-flex items-center gap-2 text-green-400">
@@ -382,16 +383,16 @@
       <span class="text-sm">Sync completed!</span>
     </div>
   </div>
-  
+
   <!-- Loading Indicator -->
   <div x-show="loading" class="flex items-center justify-center py-8">
     <div class="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
   </div>
-  
+
   <!-- Stats Display -->
   <div x-show="!loading && card.config.dataSource && card.config.valueField">
     <div class="text-2xl font-bold text-white" x-text="getDisplayValue()"></div>
     <div class="text-sm text-gray-400" x-text="getStatLabel()"></div>
   </div>
-  
+
 </div>

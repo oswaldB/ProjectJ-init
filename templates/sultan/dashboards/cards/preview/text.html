@@ -10,6 +10,9 @@
        card.config.showBorder ? (card.config.borderColor || 'border-gray-600') + ' border' : ''
      ]">
 
+  <!-- Card Title -->
+  <h3 class="text-white font-semibold mb-3" x-text="card.config.title || 'Text'"></h3>
+
   <!-- Content Display -->
   <div class="text-white">
     <div x-show="card.config.content" x-html="card.config.content" class="prose prose-invert max-w-none"></div>
