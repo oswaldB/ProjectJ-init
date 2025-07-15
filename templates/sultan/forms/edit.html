@@ -129,129 +129,100 @@
   setupAutocomplete(textarea, fieldIndex) {
     if (!textarea) return;
 
-    // Create autocomplete dropdown
-    const dropdown = document.createElement('div');
-    dropdown.className = 'absolute z-50 bg-gray-800 border border-gray-600 rounded shadow-lg max-h-48 overflow-y-auto hidden';
-    dropdown.style.minWidth = '200px';
-    textarea.parentNode.style.position = 'relative';
-    textarea.parentNode.appendChild(dropdown);
-
-    let isAutocompleteOpen = false;
-    let selectedIndex = -1;
-    let filteredFields = [];
-
-    const showAutocomplete = (cursorPos) => {
-      // Get available fields (previous fields only)
-      const availableFields = this.form.fields.slice(0, fieldIndex).filter(f => f.key);
-      filteredFields = availableFields;
-
-      if (filteredFields.length === 0) {
-        dropdown.classList.add('hidden');
-        return;
-      }
-
-      // Position dropdown
-      const rect = textarea.getBoundingClientRect();
-      dropdown.style.top = (rect.height + 5) + 'px';
-      dropdown.style.left = '0px';
-
-      // Populate dropdown
-      dropdown.innerHTML = '';
-      filteredFields.forEach((field, index) => {
-        const item = document.createElement('div');
-        item.className = 'px-3 py-2 hover:bg-gray-700 cursor-pointer text-sm';
-        item.innerHTML = `
-          <div class="text-white">${field.label || field.key}</div>
-          <div class="text-gray-400 text-xs">[[${field.key}]]</div>
-        `;
-        item.addEventListener('click', () => {
-          insertFieldReference(field.key, cursorPos);
-        });
-        dropdown.appendChild(item);
-      });
-
-      dropdown.classList.remove('hidden');
-      isAutocompleteOpen = true;
-      selectedIndex = 0;
-      updateSelectedItem();
-    };
-
-    const hideAutocomplete = () => {
-      dropdown.classList.add('hidden');
-      isAutocompleteOpen = false;
-      selectedIndex = -1;
-    };
-
-    const updateSelectedItem = () => {
-      const items = dropdown.querySelectorAll('div');
-      items.forEach((item, index) => {
-        if (index === selectedIndex) {
-          item.classList.add('bg-gray-700');
-        } else {
-          item.classList.remove('bg-gray-700');
+    // Add Alpine.js data attributes for autocomplete
+    textarea.setAttribute('x-data', `{
+      isAutocompleteOpen: false,
+      selectedIndex: -1,
+      filteredFields: [],
+      showAutocomplete(cursorPos) {
+        const availableFields = this.form.fields.slice(0, ${fieldIndex}).filter(f => f.key);
+        this.filteredFields = availableFields;
+        
+        if (this.filteredFields.length === 0) {
+          this.isAutocompleteOpen = false;
+          return;
         }
-      });
-    };
+        
+        this.isAutocompleteOpen = true;
+        this.selectedIndex = 0;
+      },
+      hideAutocomplete() {
+        this.isAutocompleteOpen = false;
+        this.selectedIndex = -1;
+      },
+      insertFieldReference(fieldKey, cursorPos) {
+        const value = $el.value;
+        const beforeCursor = value.substring(0, cursorPos - 2);
+        const afterCursor = value.substring(cursorPos);
+        const fieldRef = '[[' + fieldKey + ']]';
+        const newValue = beforeCursor + fieldRef + afterCursor;
+        
+        $el.value = newValue;
+        $el.dispatchEvent(new Event('input'));
+        this.hideAutocomplete();
+        
+        const newCursorPos = beforeCursor.length + fieldKey.length + 4;
+        $el.setSelectionRange(newCursorPos, newCursorPos);
+        $el.focus();
+      }
+    }`);
 
-    const insertFieldReference = (fieldKey, cursorPos) => {
-      const value = textarea.value;
-      const beforeCursor = value.substring(0, cursorPos - 2); // Remove opening brackets
-      const afterCursor = value.substring(cursorPos);
-      const fieldRef = '[[' + fieldKey + ']]';
-      const newValue = beforeCursor + fieldRef + afterCursor;
-
-      textarea.value = newValue;
-      textarea.dispatchEvent(new Event('input'));
-      hideAutocomplete();
-
-      // Set cursor position after insertion
-      const newCursorPos = beforeCursor.length + fieldKey.length + 4;
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
-      textarea.focus();
-    };
-
-    textarea.addEventListener('input', function(e) {
-      const cursorPos = textarea.selectionStart;
-      const value = textarea.value;
+    // Add Alpine.js event handlers
+    textarea.setAttribute('x-on:input', `
+      const cursorPos = $event.target.selectionStart;
+      const value = $event.target.value;
       const beforeCursor = value.substring(0, cursorPos);
-
-      // Check if user typed opening brackets
+      
       if (beforeCursor.endsWith('{{')) {
         showAutocomplete(cursorPos);
       } else {
         hideAutocomplete();
       }
-    });
+    `);
 
-    textarea.addEventListener('keydown', function(e) {
+    textarea.setAttribute('x-on:keydown', `
       if (!isAutocompleteOpen) return;
-
-      const key = e.key;
-      if (key === 'ArrowDown') {
-        e.preventDefault();
+      
+      if ($event.key === 'ArrowDown') {
+        $event.preventDefault();
         selectedIndex = Math.min(selectedIndex + 1, filteredFields.length - 1);
-        updateSelectedItem();
-      } else if (key === 'ArrowUp') {
-        e.preventDefault();
+      } else if ($event.key === 'ArrowUp') {
+        $event.preventDefault();
         selectedIndex = Math.max(selectedIndex - 1, 0);
-        updateSelectedItem();
-      } else if (key === 'Enter') {
-        e.preventDefault();
+      } else if ($event.key === 'Enter') {
+        $event.preventDefault();
         if (selectedIndex >= 0 && selectedIndex < filteredFields.length) {
-          insertFieldReference(filteredFields[selectedIndex].key, textarea.selectionStart);
+          insertFieldReference(filteredFields[selectedIndex].key, $event.target.selectionStart);
         }
-      } else if (key === 'Escape') {
-        e.preventDefault();
+      } else if ($event.key === 'Escape') {
+        $event.preventDefault();
         hideAutocomplete();
       }
-    });
+    `);
 
-    // Hide dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-      if (!textarea.contains(e.target) && !dropdown.contains(e.target)) {
-        hideAutocomplete();
-      }
-    });
+    // Create autocomplete dropdown with Alpine.js
+    const dropdown = document.createElement('div');
+    dropdown.className = 'absolute z-50 bg-gray-800 border border-gray-600 rounded shadow-lg max-h-48 overflow-y-auto';
+    dropdown.style.minWidth = '200px';
+    dropdown.style.top = '100%';
+    dropdown.style.left = '0px';
+    
+    dropdown.setAttribute('x-show', 'isAutocompleteOpen');
+    dropdown.setAttribute('x-on:click.outside', 'hideAutocomplete()');
+    
+    dropdown.innerHTML = `
+      <template x-for="(field, index) in filteredFields" :key="field.key">
+        <div class="px-3 py-2 hover:bg-gray-700 cursor-pointer text-sm"
+             :class="{ 'bg-gray-700': index === selectedIndex }"
+             x-on:click="insertFieldReference(field.key, $refs.textarea.selectionStart)">
+          <div class="text-white" x-text="field.label || field.key"></div>
+          <div class="text-gray-400 text-xs" x-text="'[[' + field.key + ']]'"></div>
+        </div>
+      </template>
+    `;
+
+    textarea.parentNode.style.position = 'relative';
+    textarea.parentNode.appendChild(dropdown);
   },
   async askScheherazade(field) {
     if (!field.apiUrl || !field.model || !field.prompt) {
