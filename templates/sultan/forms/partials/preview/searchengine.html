@@ -20,13 +20,13 @@
       }
       
       // Watch for changes in form data to update search query reactively
-      this.$watch('$parent.formData', () => {
+      this.$watch('formData', () => {
         if (field.searchValue) {
           this.searchQuery = this.processFieldReferences(field.searchValue);
         }
       }, { deep: true });
       
-      this.$watch('$parent.previewValues', () => {
+      this.$watch('previewValues', () => {
         if (field.searchValue) {
           this.searchQuery = this.processFieldReferences(field.searchValue);
         }
@@ -170,9 +170,9 @@
       const fieldReferences = text.match(/\[\[([^\]]+)\]\]/g);
       if (!fieldReferences) return processedText;
       
-      // Access parent scope formData and previewValues
-      const parentFormData = this.$parent && this.$parent.formData;
-      const parentPreviewValues = this.$parent && this.$parent.previewValues;
+      // Access formData and previewValues directly
+      const currentFormData = this.formData;
+      const currentPreviewValues = this.previewValues;
       
       fieldReferences.forEach(reference => {
         const fieldKey = reference.replace(/\[\[|\]\]/g, '');
@@ -180,10 +180,10 @@
         
         // Check previewValues first, then formData
         let fieldValue = null;
-        if (parentPreviewValues && parentPreviewValues.hasOwnProperty(fieldKey)) {
-          fieldValue = parentPreviewValues[fieldKey];
-        } else if (parentFormData && parentFormData.hasOwnProperty(fieldKey)) {
-          fieldValue = parentFormData[fieldKey];
+        if (currentPreviewValues && currentPreviewValues.hasOwnProperty(fieldKey)) {
+          fieldValue = currentPreviewValues[fieldKey];
+        } else if (currentFormData && currentFormData.hasOwnProperty(fieldKey)) {
+          fieldValue = currentFormData[fieldKey];
         }
         
         if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
