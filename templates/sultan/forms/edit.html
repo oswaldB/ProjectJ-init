@@ -336,6 +336,55 @@
       field.searchFields = [];
     }
   },
+  
+  async loadDisplayFields(field) {
+    if (!field.dataSource) {
+      console.log('No data source selected');
+      return;
+    }
+
+    try {
+      let formId = field.dataSource;
+
+      // Extraire le formId du dataSource
+      if (formId.includes('/')) {
+        const parts = formId.split('/');
+        formId = parts[parts.length - 1];
+      }
+
+      console.log('Loading display fields for form:', formId);
+
+      const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${formId}`);
+      if (response.ok) {
+        const formConfig = await response.json();
+        console.log('Form config loaded for display fields:', formConfig);
+
+        if (formConfig && formConfig.fields && Array.isArray(formConfig.fields)) {
+          const displayFields = formConfig.fields
+            .filter(formField => formField.key) // Only include fields with keys
+            .map(formField => ({
+              key: formField.key,
+              label: formField.label || formField.key.charAt(0).toUpperCase() + formField.key.slice(1).replace(/_/g, ' '),
+              type: formField.type || 'text',
+              enabled: true // Enable all fields by default
+            }));
+
+          // Initialize display fields
+          field.displayFields = displayFields;
+          console.log('Display fields loaded:', displayFields);
+        } else {
+          console.log('No fields found in form config for display fields');
+          field.displayFields = [];
+        }
+      } else {
+        console.error('Failed to fetch form config for display fields:', response.status);
+        field.displayFields = [];
+      }
+    } catch (error) {
+      console.error('Failed to load display fields:', error);
+      field.displayFields = [];
+    }
+  },
 }" x-init="init()">
   <!-- Top Bar -->
   <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">

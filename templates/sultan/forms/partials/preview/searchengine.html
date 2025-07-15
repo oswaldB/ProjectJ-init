@@ -190,12 +190,21 @@
     <!-- Search Controls -->
     <div class="space-y-2">
       <!-- Search Fields Indicator -->
-      <div x-show="field.searchFields && field.searchFields.length > 0" class="text-xs text-gray-400">
+      <div x-show="field.searchFields && field.searchFields.length > 0" class="text-xs text-gray-400 mb-1">
         <span>Searching in: </span>
         <template x-for="searchField in field.searchFields.filter(f => f.enabled)" :key="searchField.key">
           <span class="bg-blue-600 text-white px-2 py-1 rounded mr-1" x-text="searchField.label || searchField.key"></span>
         </template>
         <span x-show="!field.searchFields.some(f => f.enabled)" class="text-gray-500">all fields</span>
+      </div>
+      
+      <!-- Display Fields Indicator -->
+      <div x-show="field.displayFields && field.displayFields.length > 0" class="text-xs text-gray-400">
+        <span>Displaying: </span>
+        <template x-for="displayField in field.displayFields.filter(f => f.enabled)" :key="displayField.key">
+          <span class="bg-purple-600 text-white px-2 py-1 rounded mr-1" x-text="displayField.label || displayField.key"></span>
+        </template>
+        <span x-show="!field.displayFields.some(f => f.enabled)" class="text-gray-500">all fields</span>
       </div>
       
       <div class="flex gap-2 items-center">
@@ -231,10 +240,27 @@
         <div class="bg-gray-700 rounded-lg p-4 border border-gray-600">
           <!-- Display result fields -->
           <div class="grid grid-cols-1 gap-2 mb-3">
-            <template x-for="(value, key) in result" :key="key">
-              <div x-show="!key.startsWith('_') && value && key !== 'id'" class="text-sm">
-                <span class="text-gray-400 capitalize" x-text="key.replace(/_/g, ' ') + ':'"></span>
-                <span class="text-white ml-2" x-text="Array.isArray(value) ? value.join(', ') : value"></span>
+            <!-- Si des champs d'affichage sont configurés, les utiliser -->
+            <template x-if="field.displayFields && field.displayFields.length > 0 && field.displayFields.some(f => f.enabled)">
+              <div>
+                <template x-for="displayField in field.displayFields.filter(f => f.enabled)" :key="displayField.key">
+                  <div x-show="result[displayField.key]" class="text-sm">
+                    <span class="text-gray-400" x-text="displayField.label + ':'"></span>
+                    <span class="text-white ml-2" x-text="Array.isArray(result[displayField.key]) ? result[displayField.key].join(', ') : result[displayField.key]"></span>
+                  </div>
+                </template>
+              </div>
+            </template>
+            
+            <!-- Sinon, afficher tous les champs (comportement par défaut) -->
+            <template x-if="!field.displayFields || field.displayFields.length === 0 || !field.displayFields.some(f => f.enabled)">
+              <div>
+                <template x-for="(value, key) in result" :key="key">
+                  <div x-show="!key.startsWith('_') && value && key !== 'id'" class="text-sm">
+                    <span class="text-gray-400 capitalize" x-text="key.replace(/_/g, ' ') + ':'"></span>
+                    <span class="text-white ml-2" x-text="Array.isArray(value) ? value.join(', ') : value"></span>
+                  </div>
+                </template>
               </div>
             </template>
           </div>
