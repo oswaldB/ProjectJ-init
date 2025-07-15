@@ -13,28 +13,55 @@
     async init() {
       if (!field.dataSource) return;
       this.initDatabase();
+      // Initialiser la recherche avec la valeur du champ si elle existe
+      if (field.searchValue) {
+        this.searchQuery = this.processFieldReferences(field.searchValue);
+        console.log('Search engine initialized with query:', this.searchQuery);
+        if (this.searchQuery.trim()) {
+          await this.performSearch();
+        }
+      }
     },
 
     initDatabase() {
-      const dbName = 'searchengine_' + field.dataSource;
+      // Extraire le formId du dataSource
+      let formId = field.dataSource;
+      if (formId.includes('/')) {
+        const parts = formId.split('/');
+        formId = parts[parts.length - 1];
+      }
+      console.log('Initializing PouchDB with formId:', formId);
+      const dbName = 'searchengine_' + formId;
       this.db = new PouchDB(dbName);
     },
 
     async syncData() {
       if (!this.db || !field.dataSource) return;
       
+      // Extraire le formId du dataSource
+      let formId = field.dataSource;
+      if (formId.includes('/')) {
+        const parts = formId.split('/');
+        formId = parts[parts.length - 1];
+      }
+      
+      console.log('Syncing data for formId:', formId);
       this.isIndexing = true;
       try {
         // Clear existing data
         const allDocs = await this.db.allDocs({include_docs: true});
+        console.log('Clearing existing documents:', allDocs.rows.length);
         for (let row of allDocs.rows) {
           await this.db.remove(row.doc);
         }
 
         // Fetch new data from the form responses
-        const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${field.dataSource}/responses`);
+        const apiUrl = `/pc-analytics-jaffar/sultan/api/forms/${formId}/responses`;
+        console.log('Fetching data from:', apiUrl);
+        const response = await fetch(apiUrl);
         if (response.ok) {
           const data = await response.json();
+          console.log('Received data:', data.length, 'items');
           
           // Index each response
           for (let item of data) {
@@ -44,6 +71,9 @@
               _search_text: this.createSearchText(item)
             });
           }
+          console.log('Successfully indexed', data.length, 'items');
+        } else {
+          console.error('Failed to fetch data:', response.status, response.statusText);
         }
       } catch (error) {
         console.error('Sync failed:', error);
@@ -66,23 +96,34 @@
     },
 
     async performSearch() {
+      console.log('Performing search with query:', this.searchQuery);
+      
       if (!this.db || !this.searchQuery.trim()) {
+        console.log('No database or empty query, clearing results');
         this.searchResults = [];
         return;
       }
 
       this.isLoading = true;
       try {
-        const results = await this.db.search({
+        console.log('Database info before search:', await this.db.info());
+        
+        const searchOptions = {
           query: this.searchQuery,
           fields: ['_search_text'],
           include_docs: true,
           limit: 100
-        });
+        };
+        console.log('Search options:', searchOptions);
+        
+        const results = await this.db.search(searchOptions);
+        console.log('Search results:', results);
+        console.log('Number of results found:', results.rows ? results.rows.length : 0);
 
         this.searchResults = results.rows.map(row => row.doc);
         this.currentPage = 1;
         this.updatePagination();
+        console.log('Final search results processed:', this.searchResults.length, 'items');
       } catch (error) {
         console.error('Search failed:', error);
         this.searchResults = [];
@@ -155,7 +196,7 @@
           type="text" 
           x-model="searchQuery"
           @input.debounce.300ms="performSearch()"
-          :placeholder="processFieldReferences(field.searchPlaceholder) || 'Search...'"
+          placeholder="Search..."
           class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
       </div>
       <button 
