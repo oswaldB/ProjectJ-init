@@ -152,24 +152,39 @@
     processFieldReferences(text) {
       if (!text) return text;
       let processedText = text;
+      
+      // Trouver toutes les références de champs [[field]]
+      const fieldReferences = text.match(/\[\[([^\]]+)\]\]/g);
+      if (!fieldReferences) return processedText;
+      
       // Access parent scope formData
-      if (window.Alpine && window.Alpine.store) {
-        const parentData = this.$parent && this.$parent.formData;
-        if (parentData) {
-          Object.keys(parentData).forEach(key => {
-            if (parentData[key]) {
-              let fieldValue = parentData[key];
-              if (Array.isArray(fieldValue)) {
-                fieldValue = fieldValue.join(', ');
-              } else if (typeof fieldValue === 'object') {
-                fieldValue = JSON.stringify(fieldValue);
-              }
-              const regex = new RegExp(`\\[\\[${key}\\]\\]`, 'g');
-              processedText = processedText.replace(regex, fieldValue || '');
+      const parentData = this.$parent && this.$parent.formData;
+      
+      fieldReferences.forEach(reference => {
+        const fieldKey = reference.replace(/\[\[|\]\]/g, '');
+        let replacement = '';
+        
+        if (parentData && parentData.hasOwnProperty(fieldKey)) {
+          const fieldValue = parentData[fieldKey];
+          if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+            if (Array.isArray(fieldValue)) {
+              replacement = fieldValue.join(', ');
+            } else if (typeof fieldValue === 'object') {
+              replacement = JSON.stringify(fieldValue);
+            } else {
+              replacement = fieldValue.toString();
             }
-          });
+          } else {
+            replacement = `[[${fieldKey}]] est vide`;
+          }
+        } else {
+          replacement = `[[${fieldKey}]] est vide`;
         }
-      }
+        
+        const regex = new RegExp(`\\[\\[${fieldKey}\\]\\]`, 'g');
+        processedText = processedText.replace(regex, replacement);
+      });
+      
       return processedText;
     },
 
