@@ -11,7 +11,7 @@
     saving: false,
     responseId: null,
     userName: localStorage.getItem('author2') || 'Anonymous',
-    formId: window.location.pathname.split('/').pop(),
+    formId: window.location.pathname.split('/').filter(part => part).pop(),
 
     async loadConfig() {
       if (!this.formId) {
