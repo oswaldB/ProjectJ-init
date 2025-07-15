@@ -31,8 +31,7 @@
         formId = parts[parts.length - 1];
       }
       console.log('Initializing PouchDB with formId:', formId);
-      const dbName = 'searchengine_' + formId;
-      this.db = new PouchDB(dbName);
+      this.db = new PouchDB(formId);
     },
 
     async syncData() {
