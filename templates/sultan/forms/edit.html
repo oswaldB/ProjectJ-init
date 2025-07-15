@@ -74,6 +74,45 @@
       }
     }, 1000);
   },
+  applyAutoSelect(field) {
+    if (!field.autoSelect || !field.autoSelectKey || !field.autoSelectOption) {
+      return;
+    }
+    
+    const prevValue = this.formData[field.autoSelectKey];
+    let shouldSelect = false;
+    
+    switch (field.autoSelectComparator) {
+      case 'equals':
+        shouldSelect = prevValue == field.autoSelectValue;
+        break;
+      case 'not_equals':
+        shouldSelect = prevValue != field.autoSelectValue;
+        break;
+      case 'greater':
+        shouldSelect = Number(prevValue) > Number(field.autoSelectValue);
+        break;
+      case 'less':
+        shouldSelect = Number(prevValue) < Number(field.autoSelectValue);
+        break;
+      case 'contains':
+        shouldSelect = (prevValue || '').toString().includes(field.autoSelectValue);
+        break;
+      case 'not_contains':
+        shouldSelect = !(prevValue || '').toString().includes(field.autoSelectValue);
+        break;
+      case 'is_empty':
+        shouldSelect = !prevValue || prevValue === '';
+        break;
+      case 'not_empty':
+        shouldSelect = prevValue && prevValue !== '';
+        break;
+    }
+    
+    if (shouldSelect) {
+      this.formData[field.key] = field.autoSelectOption;
+    }
+  },
   applyAutoSelects() {
     this.form.fields.forEach((field, idx) => {
       if (field.type === 'single_select' && field.autoSelect && field.autoSelectKey && field.autoSelectOption) {

@@ -1,12 +1,24 @@
 <template x-if="field.type === 'single_select'">
-    <select
-      :required="field.required"
-      class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
-      x-model.debounce.500ms="formData[field.key]"
-          >
-      <option value="">Select an option</option>
-      <template x-for="option in field.options">
-        <option x-text="option.name" :value="option.name"></option>
+    <div class="space-y-2">
+      <select
+        :required="field.required"
+        class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+        x-model.debounce.500ms="formData[field.key]"
+            >
+        <option value="">Select an option</option>
+        <template x-for="option in field.options">
+          <option x-text="option.name" :value="option.name"></option>
+        </template>
+      </select>
+      
+      <!-- Ask Jaffar button for autoSelect fields -->
+      <template x-if="field.autoSelect && field.autoSelectKey && field.autoSelectOption">
+        <button 
+          @click="applyAutoSelect(field)"
+          class="text-blue-400 hover:text-blue-300 underline text-sm"
+          type="button">
+          Ask Jaffar
+        </button>
       </template>
-    </select>
+    </div>
   </template>
