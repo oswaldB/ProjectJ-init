@@ -128,7 +128,7 @@
     // Try to find label by for attribute
     const id = element.id;
     if (id) {
-      const label = container.querySelector(`label[for=\${id}]`);
+      const label = container.querySelector(`label[for="${id}"]`);
       if (label) {
         return label.textContent.trim();
       }
