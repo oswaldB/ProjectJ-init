@@ -24,7 +24,7 @@
     
     // Load available forms for searchengine fields
     try {
-      const formsResponse = await fetch('/pc-analytics-jaffar/sultan/api/forms/list');
+      const formsResponse = await fetch('/pc-analytics-jaffar/forms/api/list');
       if (formsResponse.ok) {
         this.availableForms = await formsResponse.json();
       }
