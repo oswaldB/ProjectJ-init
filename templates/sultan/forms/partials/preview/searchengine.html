@@ -26,11 +26,7 @@
         }
       }, { deep: true });
       
-      this.$watch('previewValues', () => {
-        if (field.searchValue) {
-          this.searchQuery = this.processFieldReferences(field.searchValue);
-        }
-      }, { deep: true });
+     
     },
 
     initDatabase() {

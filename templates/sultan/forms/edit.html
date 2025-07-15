@@ -7,7 +7,6 @@
 <!-- comment -->
 <div class="h-screen bg-gray-900 text-white" x-data="{
   formData: [],
-  previewValues: {},
   errors: {},
   responses: {},
   loadingStates: {},
@@ -53,9 +52,6 @@
         window.location.href = '/pc-analytics-jaffar/sultan/forms';
       }
     }
-    this.$watch('previewValues', () => {
-      this.applyAutoSelects();
-    }, { deep: true });
   },
   async saveForm() {
     if (this.saveFormDebounced) {
@@ -110,9 +106,6 @@
             break;
           default:
             shouldSelect = false;
-        }
-        if (shouldSelect) {
-          this.previewValues[field.key] = field.autoSelectOption;
         }
       }
     });
