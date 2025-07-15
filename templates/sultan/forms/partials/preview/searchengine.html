@@ -35,7 +35,7 @@
     },
 
     async syncData() {
-      if (!this.db || !field.dataSource) return;
+      if (!field.dataSource) return;
       
       // Extraire le formId du dataSource
       let formId = field.dataSource;
@@ -44,36 +44,16 @@
         formId = parts[parts.length - 1];
       }
       
-      console.log('Syncing data for formId:', formId);
+      console.log('Syncing data for formId using initializePouchDB():', formId);
       this.isIndexing = true;
       try {
-        // Clear existing data
-        const allDocs = await this.db.allDocs({include_docs: true});
-        console.log('Clearing existing documents:', allDocs.rows.length);
-        for (let row of allDocs.rows) {
-          await this.db.remove(row.doc);
-        }
-
-        // Fetch new data from the form responses
-        const apiUrl = `/pc-analytics-jaffar/sultan/api/forms/${formId}/responses`;
-        console.log('Fetching data from:', apiUrl);
-        const response = await fetch(apiUrl);
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Received data:', data.length, 'items');
-          
-          // Index each response
-          for (let item of data) {
-            await this.db.put({
-              _id: item.id || Date.now().toString() + Math.random(),
-              ...item,
-              _search_text: this.createSearchText(item)
-            });
-          }
-          console.log('Successfully indexed', data.length, 'items');
-        } else {
-          console.error('Failed to fetch data:', response.status, response.statusText);
-        }
+        // Utiliser la fonction initializePouchDB du service pouchdb
+        await initializePouchDB(formId);
+        
+        // Réinitialiser la connexion à la base de données
+        this.initDatabase();
+        
+        console.log('Successfully synced data using initializePouchDB()');
       } catch (error) {
         console.error('Sync failed:', error);
       } finally {
