@@ -21,7 +21,7 @@
         <label class="block text-sm font-medium text-gray-300">Action Buttons</label>
         <button 
           @click="field.actionButtons = field.actionButtons || []; field.actionButtons.push({label: '', url: '', target: '_blank'})"
-          class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">
+          class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">
           Add Button
         </button>
       </div>
@@ -97,7 +97,7 @@
         
         <button 
           @click="loadSearchFields(field)"
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm"
+          class="w-full bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm"
         >
           Load Available Fields
         </button>
@@ -114,7 +114,7 @@
         <label class="block text-sm font-medium text-gray-300">Result Display Fields</label>
         <button 
           @click="loadDisplayFields(field)"
-          class="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded text-xs">
+          class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs">
           Load Fields
         </button>
       </div>

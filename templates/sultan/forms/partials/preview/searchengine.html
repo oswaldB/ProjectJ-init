@@ -193,7 +193,7 @@
       <div x-show="field.searchFields && field.searchFields.length > 0" class="text-xs text-gray-400 mb-1">
         <span>Searching in: </span>
         <template x-for="searchField in field.searchFields.filter(f => f.enabled)" :key="searchField.key">
-          <span class="bg-blue-600 text-white px-2 py-1 rounded mr-1" x-text="searchField.label || searchField.key"></span>
+          <span class="bg-red-500 text-white px-2 py-1 rounded mr-1" x-text="searchField.label || searchField.key"></span>
         </template>
         <span x-show="!field.searchFields.some(f => f.enabled)" class="text-gray-500">all fields</span>
       </div>
@@ -202,7 +202,7 @@
       <div x-show="field.displayFields && field.displayFields.length > 0" class="text-xs text-gray-400">
         <span>Displaying: </span>
         <template x-for="displayField in field.displayFields.filter(f => f.enabled)" :key="displayField.key">
-          <span class="bg-purple-600 text-white px-2 py-1 rounded mr-1" x-text="displayField.label || displayField.key"></span>
+          <span class="bg-red-500 text-white px-2 py-1 rounded mr-1" x-text="displayField.label || displayField.key"></span>
         </template>
         <span x-show="!field.displayFields.some(f => f.enabled)" class="text-gray-500">all fields</span>
       </div>
@@ -214,7 +214,7 @@
             x-model="searchQuery"
             @input.debounce.300ms="performSearch()"
             placeholder="Search..."
-            class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
+            class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-red-500">
         </div>
       <button 
         @click="syncData()"
@@ -231,7 +231,7 @@
 
     <!-- Loading State -->
     <div x-show="isLoading" class="text-center py-4">
-      <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+      <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-red-500 mx-auto"></div>
     </div>
 
     <!-- Search Results -->
@@ -271,7 +271,7 @@
               <a 
                 :href="processUrl(button.url, result)"
                 :target="button.target || '_blank'"
-                class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">
                 <span x-text="button.label"></span>
               </a>
             </template>
