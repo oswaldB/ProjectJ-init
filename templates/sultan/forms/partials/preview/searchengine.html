@@ -233,11 +233,11 @@
           <span x-text="isIndexing ? 'Syncing...' : 'Sync'"></span>
         </button>
       </div>
-    </div>
 
     <!-- Loading State -->
     <div x-show="isLoading" class="text-center py-4">
       <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-red-500 mx-auto"></div>
+      <p class="text-gray-400 text-sm mt-2">Searching...</p>
     </div>
 
     <!-- Search Results -->
