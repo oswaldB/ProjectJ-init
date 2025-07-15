@@ -1,0 +1,215 @@
+
+<template x-if="field.type === 'searchengine'">
+  <div class="space-y-4" x-data="{
+    searchQuery: '',
+    searchResults: [],
+    currentPage: 1,
+    totalPages: 1,
+    isLoading: false,
+    isIndexing: false,
+    db: null,
+    resultsPerPage: field.resultsPerPage || 3,
+
+    async init() {
+      if (!field.dataSource) return;
+      this.initDatabase();
+    },
+
+    initDatabase() {
+      const dbName = 'searchengine_' + field.dataSource;
+      this.db = new PouchDB(dbName);
+    },
+
+    async syncData() {
+      if (!this.db || !field.dataSource) return;
+      
+      this.isIndexing = true;
+      try {
+        // Clear existing data
+        const allDocs = await this.db.allDocs({include_docs: true});
+        for (let row of allDocs.rows) {
+          await this.db.remove(row.doc);
+        }
+
+        // Fetch new data from the form responses
+        const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${field.dataSource}/responses`);
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Index each response
+          for (let item of data) {
+            await this.db.put({
+              _id: item.id || Date.now().toString() + Math.random(),
+              ...item,
+              _search_text: this.createSearchText(item)
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Sync failed:', error);
+      } finally {
+        this.isIndexing = false;
+      }
+    },
+
+    createSearchText(item) {
+      // Create searchable text from all field values
+      let searchText = '';
+      Object.values(item).forEach(value => {
+        if (typeof value === 'string') {
+          searchText += ' ' + value;
+        } else if (Array.isArray(value)) {
+          searchText += ' ' + value.join(' ');
+        }
+      });
+      return searchText.toLowerCase();
+    },
+
+    async performSearch() {
+      if (!this.db || !this.searchQuery.trim()) {
+        this.searchResults = [];
+        return;
+      }
+
+      this.isLoading = true;
+      try {
+        const results = await this.db.search({
+          query: this.searchQuery,
+          fields: ['_search_text'],
+          include_docs: true,
+          limit: 100
+        });
+
+        this.searchResults = results.rows.map(row => row.doc);
+        this.currentPage = 1;
+        this.updatePagination();
+      } catch (error) {
+        console.error('Search failed:', error);
+        this.searchResults = [];
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    updatePagination() {
+      this.totalPages = Math.ceil(this.searchResults.length / this.resultsPerPage);
+    },
+
+    getPaginatedResults() {
+      const start = (this.currentPage - 1) * this.resultsPerPage;
+      const end = start + this.resultsPerPage;
+      return this.searchResults.slice(start, end);
+    },
+
+    processUrl(url, item) {
+      if (!url) return '';
+      let processedUrl = url;
+      Object.keys(item).forEach(key => {
+        const regex = new RegExp(`\\[\\[${key}\\]\\]`, 'g');
+        processedUrl = processedUrl.replace(regex, item[key] || '');
+      });
+      return processedUrl;
+    },
+
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    },
+
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
+    }
+  }" x-init="init()">
+    
+    <!-- Search Controls -->
+    <div class="flex gap-2 items-center">
+      <div class="flex-1">
+        <input 
+          type="text" 
+          x-model="searchQuery"
+          @input.debounce.300ms="performSearch()"
+          :placeholder="field.searchPlaceholder || 'Search...'"
+          class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
+      </div>
+      <button 
+        @click="syncData()"
+        :disabled="isIndexing"
+        class="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+        <svg x-show="!isIndexing" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        <div x-show="isIndexing" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+        <span x-text="isIndexing ? 'Syncing...' : 'Sync'"></span>
+      </button>
+    </div>
+
+    <!-- Loading State -->
+    <div x-show="isLoading" class="text-center py-4">
+      <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+    </div>
+
+    <!-- Search Results -->
+    <div x-show="!isLoading && searchResults.length > 0" class="space-y-3">
+      <template x-for="result in getPaginatedResults()" :key="result._id">
+        <div class="bg-gray-700 rounded-lg p-4 border border-gray-600">
+          <!-- Display result fields -->
+          <div class="grid grid-cols-1 gap-2 mb-3">
+            <template x-for="(value, key) in result" :key="key">
+              <div x-show="!key.startsWith('_') && value && key !== 'id'" class="text-sm">
+                <span class="text-gray-400 capitalize" x-text="key.replace(/_/g, ' ') + ':'"></span>
+                <span class="text-white ml-2" x-text="Array.isArray(value) ? value.join(', ') : value"></span>
+              </div>
+            </template>
+          </div>
+          
+          <!-- Action Buttons -->
+          <div x-show="field.actionButtons && field.actionButtons.length > 0" class="flex gap-2 flex-wrap">
+            <template x-for="button in field.actionButtons || []" :key="button.label">
+              <a 
+                :href="processUrl(button.url, result)"
+                :target="button.target || '_blank'"
+                class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                <span x-text="button.label"></span>
+              </a>
+            </template>
+          </div>
+        </div>
+      </template>
+
+      <!-- Pagination -->
+      <div x-show="totalPages > 1" class="flex justify-between items-center">
+        <button 
+          @click="prevPage()"
+          :disabled="currentPage === 1"
+          class="bg-gray-600 text-white px-3 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+          Previous
+        </button>
+        
+        <span class="text-gray-400 text-sm">
+          Page <span x-text="currentPage"></span> of <span x-text="totalPages"></span>
+          (<span x-text="searchResults.length"></span> results)
+        </span>
+        
+        <button 
+          @click="nextPage()"
+          :disabled="currentPage === totalPages"
+          class="bg-gray-600 text-white px-3 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+          Next
+        </button>
+      </div>
+    </div>
+
+    <!-- No Results -->
+    <div x-show="!isLoading && searchQuery && searchResults.length === 0" class="text-center py-8 text-gray-400">
+      No results found for "<span x-text="searchQuery"></span>"
+    </div>
+
+    <!-- Initial State -->
+    <div x-show="!isLoading && !searchQuery" class="text-center py-8 text-gray-400">
+      Enter a search query to find results
+    </div>
+  </div>
+</template>

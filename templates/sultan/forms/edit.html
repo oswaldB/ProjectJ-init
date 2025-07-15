@@ -16,10 +16,23 @@
   form: { id: '', name: '', fields: [], status: 'Draft' },
   preview: true,
   saveFormDebounced: null,
+  availableForms: [],
   async init() {
     this.$watch('form', () => {
       this.saveForm();
     }, { deep: true });
+    
+    // Load available forms for searchengine fields
+    try {
+      const formsResponse = await fetch('/pc-analytics-jaffar/sultan/api/forms/list');
+      if (formsResponse.ok) {
+        this.availableForms = await formsResponse.json();
+      }
+    } catch (error) {
+      console.error('Failed to load forms:', error);
+      this.availableForms = [];
+    }
+    
     const formId = window.location.pathname.split('/').pop();
     if (formId !== 'new') {
       try {
@@ -263,7 +276,11 @@
       autoSelectKey: '',
       autoSelectComparator: 'equals',
       autoSelectValue: '',
-      autoSelectOption: ''
+      autoSelectOption: '',
+      dataSource: '',
+      actionButtons: [],
+      resultsPerPage: 3,
+      searchPlaceholder: 'Search...'
     });
   },
   toggleField(index) {
@@ -380,6 +397,7 @@
                     <option value="conditional">Conditional</option>
                     <option value="file_upload">File Upload</option>
                     <option value="ask_scheherazade">Ask Scheherazade</option>
+                    <option value="searchengine">Search Engine</option>
                     <option value="submit_issue">Submit the Issue</option>
                   </select>
                 </div>
@@ -429,6 +447,7 @@
                 </div>
 
                 {% include "sultan/forms/partials/editor/ask_scheherazade.html" %}
+                {% include "sultan/forms/partials/editor/searchengine.html" %}
                 {% include "sultan/forms/partials/editor/actions.html" %}
                 {% include "sultan/forms/partials/editor/submit.html" %}
                 {% include "sultan/forms/partials/editor/single_select.html" %}
@@ -503,6 +522,7 @@
               <p class="text-gray-400 text-sm" x-show="field.description" x-html="processFieldReferences(field.description)"></p>
 
               {% include "sultan/forms/partials/preview/ask_scheherazade.html" %}
+              {% include "sultan/forms/partials/preview/searchengine.html" %}
               {% include "sultan/forms/partials/preview/single_select.html" %}
               {% include "sultan/forms/partials/preview/multiple_checkbox.html" %}
               {% include "sultan/forms/partials/preview/date.html" %}

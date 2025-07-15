@@ -1,0 +1,93 @@
+
+<template x-if="field.type === 'searchengine'">
+  <div class="mt-4 space-y-4 border-t border-gray-600 pt-4">
+    <h4 class="text-lg font-medium text-white">Search Engine Configuration</h4>
+    
+    <!-- Data Source Selection -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">Data Source</label>
+      <select x-model="field.dataSource" class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600">
+        <option value="">Select a data source</option>
+        <option :value="form.id" x-text="form.name + ' (Current Form)'"></option>
+        <template x-for="availableForm in availableForms || []" :key="availableForm.id">
+          <option :value="availableForm.id" x-text="availableForm.name"></option>
+        </template>
+      </select>
+    </div>
+
+    <!-- Action Buttons Configuration -->
+    <div>
+      <div class="flex justify-between items-center mb-2">
+        <label class="block text-sm font-medium text-gray-300">Action Buttons</label>
+        <button 
+          @click="field.actionButtons = field.actionButtons || []; field.actionButtons.push({label: '', url: '', target: '_blank'})"
+          class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">
+          Add Button
+        </button>
+      </div>
+      
+      <div class="space-y-2">
+        <template x-for="(button, buttonIndex) in field.actionButtons || []" :key="buttonIndex">
+          <div class="bg-gray-700 p-3 rounded border border-gray-600">
+            <div class="grid grid-cols-2 gap-2 mb-2">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Button Label</label>
+                <input 
+                  type="text" 
+                  x-model="button.label" 
+                  class="w-full bg-gray-800 text-white px-2 py-1 rounded border border-gray-600 text-sm"
+                  placeholder="View Details">
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Target</label>
+                <select x-model="button.target" class="w-full bg-gray-800 text-white px-2 py-1 rounded border border-gray-600 text-sm">
+                  <option value="_blank">New Tab</option>
+                  <option value="_self">Same Tab</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="block text-xs text-gray-400 mb-1">URL Template</label>
+              <input 
+                type="text" 
+                x-model="button.url" 
+                class="w-full bg-gray-800 text-white px-2 py-1 rounded border border-gray-600 text-sm"
+                placeholder="https://example.com/view/[[id]]">
+              <p class="text-xs text-gray-500 mt-1">Use [[fieldname]] to insert field values</p>
+            </div>
+            <button 
+              @click="field.actionButtons.splice(buttonIndex, 1)"
+              class="text-red-400 hover:text-red-300 text-xs">
+              Remove Button
+            </button>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Search Configuration -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">Search Configuration</label>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">Results Per Page</label>
+          <input 
+            type="number" 
+            x-model="field.resultsPerPage" 
+            class="w-full bg-gray-700 text-white px-2 py-1 rounded border border-gray-600 text-sm"
+            placeholder="3"
+            min="1"
+            max="10">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">Search Placeholder</label>
+          <input 
+            type="text" 
+            x-model="field.searchPlaceholder" 
+            class="w-full bg-gray-700 text-white px-2 py-1 rounded border border-gray-600 text-sm"
+            placeholder="Search...">
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
