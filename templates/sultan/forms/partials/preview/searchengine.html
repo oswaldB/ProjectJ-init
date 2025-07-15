@@ -12,13 +12,27 @@
     async init() {
       if (!field.dataSource) return;
       this.initDatabase();
+      
       // Initialiser la recherche avec la valeur du champ si elle existe
-      if (field.searchValue) {
-        this.searchQuery = this.processFieldReferences(field.searchValue);
+      let initialSearchValue = field.searchValue || field.value || '';
+      
+      if (initialSearchValue) {
+        this.searchQuery = this.processFieldReferences(initialSearchValue);
         console.log('Search engine initialized with query:', this.searchQuery);
         if (this.searchQuery.trim()) {
           await this.performSearch();
         }
+      }
+      
+      // Si aucune valeur initiale mais qu'il y a des références de champs, essayer quand même
+      else if (field.searchValue && field.searchValue.includes('[[')) {
+        setTimeout(async () => {
+          this.searchQuery = this.processFieldReferences(field.searchValue);
+          console.log('Search engine delayed initialization with query:', this.searchQuery);
+          if (this.searchQuery.trim()) {
+            await this.performSearch();
+          }
+        }, 500); // Attendre que les données du formulaire parent soient disponibles
       }
     },
 
