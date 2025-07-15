@@ -210,7 +210,7 @@
       textarea.focus();
     };
 
-    textarea.addEventListener('input', (e) => {
+    textarea.addEventListener('input', function(e) {
       const cursorPos = textarea.selectionStart;
       const value = textarea.value;
       const beforeCursor = value.substring(0, cursorPos);
@@ -223,35 +223,31 @@
       }
     });
 
-    textarea.addEventListener('keydown', (e) => {
+    textarea.addEventListener('keydown', function(e) {
       if (!isAutocompleteOpen) return;
 
-      switch(e.key) {
-        case 'ArrowDown':
-          e.preventDefault();
-          selectedIndex = Math.min(selectedIndex + 1, filteredFields.length - 1);
-          updateSelectedItem();
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          selectedIndex = Math.max(selectedIndex - 1, 0);
-          updateSelectedItem();
-          break;
-        case 'Enter':
-          e.preventDefault();
-          if (selectedIndex >= 0 && selectedIndex < filteredFields.length) {
-            insertFieldReference(filteredFields[selectedIndex].key, textarea.selectionStart);
-          }
-          break;
-        case 'Escape':
-          e.preventDefault();
-          hideAutocomplete();
-          break;
+      const key = e.key;
+      if (key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, filteredFields.length - 1);
+        updateSelectedItem();
+      } else if (key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, 0);
+        updateSelectedItem();
+      } else if (key === 'Enter') {
+        e.preventDefault();
+        if (selectedIndex >= 0 && selectedIndex < filteredFields.length) {
+          insertFieldReference(filteredFields[selectedIndex].key, textarea.selectionStart);
+        }
+      } else if (key === 'Escape') {
+        e.preventDefault();
+        hideAutocomplete();
       }
     });
 
     // Hide dropdown when clicking outside
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', function(e) {
       if (!textarea.contains(e.target) && !dropdown.contains(e.target)) {
         hideAutocomplete();
       }
