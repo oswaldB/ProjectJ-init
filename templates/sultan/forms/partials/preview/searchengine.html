@@ -111,6 +111,30 @@
       return processedUrl;
     },
 
+    processFieldReferences(text) {
+      if (!text) return text;
+      let processedText = text;
+      // Access parent scope formData
+      if (window.Alpine && window.Alpine.store) {
+        const parentData = this.$parent && this.$parent.formData;
+        if (parentData) {
+          Object.keys(parentData).forEach(key => {
+            if (parentData[key]) {
+              let fieldValue = parentData[key];
+              if (Array.isArray(fieldValue)) {
+                fieldValue = fieldValue.join(', ');
+              } else if (typeof fieldValue === 'object') {
+                fieldValue = JSON.stringify(fieldValue);
+              }
+              const regex = new RegExp(`\\[\\[${key}\\]\\]`, 'g');
+              processedText = processedText.replace(regex, fieldValue || '');
+            }
+          });
+        }
+      }
+      return processedText;
+    },
+
     nextPage() {
       if (this.currentPage < this.totalPages) {
         this.currentPage++;
@@ -131,7 +155,7 @@
           type="text" 
           x-model="searchQuery"
           @input.debounce.300ms="performSearch()"
-          :placeholder="field.searchPlaceholder || 'Search...'"
+          :placeholder="processFieldReferences(field.searchPlaceholder) || 'Search...'"
           class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
       </div>
       <button 
