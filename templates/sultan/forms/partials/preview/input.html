@@ -1,3 +1,15 @@
 <template x-if="field.type === 'text_input' || field.type === 'text'">
   <input x-model.debounce.500ms="formData[field.key]" type="text" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
 </template>
+
+<template x-if="field.type === 'text'">
+  <div>
+    <input
+      type="text"
+      x-model="formData[field.key]"
+      class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+      :placeholder="field.placeholder || ''"
+      :required="field.required"
+    />
+  </div>
+</template>

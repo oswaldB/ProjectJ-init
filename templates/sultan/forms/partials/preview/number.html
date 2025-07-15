@@ -1,4 +1,11 @@
-<template x-if="field.type=== 'number'">
-    <input x-model.debounce.500ms="formData[field.key]" type="number" :required="field.required" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">
-  </template>
-
+<template x-if="field.type === 'number'">
+  <div>
+    <input
+      type="number"
+      x-model="formData[field.key]"
+      class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+      :placeholder="field.placeholder || ''"
+      :required="field.required"
+    />
+  </div>
+</template>

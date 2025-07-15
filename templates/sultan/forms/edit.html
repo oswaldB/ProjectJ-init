@@ -77,7 +77,7 @@
   applyAutoSelects() {
     this.form.fields.forEach((field, idx) => {
       if (field.type === 'single_select' && field.autoSelect && field.autoSelectKey && field.autoSelectOption) {
-        const prevValue = this.previewValues[field.autoSelectKey];
+        const prevValue = this.formData[field.autoSelectKey];
         let shouldSelect = false;
         switch (field.autoSelectComparator) {
           case 'equals':

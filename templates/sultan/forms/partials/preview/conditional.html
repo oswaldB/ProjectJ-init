@@ -3,8 +3,8 @@
 <template x-for="field in {{ questions }}">
   <div
     class="space-y-2"
-    x-data="{ selectedLevel: formData[field.key] || '' }"
-    x-effect="formData[field.key] = selectedLevel"
+    x-data="{ selectedValue: formData[field.key] || '' }"
+    x-effect="formData[field.key] = selectedValue"
   >
     <label class="block">
       <span
