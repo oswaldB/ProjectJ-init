@@ -70,7 +70,7 @@
     <!-- Dashboard Grid -->
     <div class="grid grid-cols-4 gap-6 auto-rows-min">
       <template x-for="(card, index) in dashboard.cards" :key="card.id">
-        <div :class="`col-span-${card.size?.width || 1} row-span-${card.size?.height || 1}`"></div>
+        <div :class="`col-span-${card.size?.width || 1} row-span-${card.size?.height || 1}`">
           
           <!-- Data Table Card -->
           <template x-if="card && card.type === 'datatable'">
