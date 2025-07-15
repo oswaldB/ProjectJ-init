@@ -120,11 +120,141 @@
           fieldValue = fieldValue.replace(/<[^>]*>/g, '');
         }
 
-        const regex = new RegExp(`&&${formField.key}&&`, 'g');
+        const regex = new RegExp(`{{${formField.key}}}`, 'g');
         processedText = processedText.replace(regex, fieldValue || '');
       }
     });
     return processedText;
+  },
+  setupAutocomplete(textarea, fieldIndex) {
+    if (!textarea) return;
+    
+    // Create autocomplete dropdown
+    const dropdown = document.createElement('div');
+    dropdown.className = 'absolute z-50 bg-gray-800 border border-gray-600 rounded shadow-lg max-h-48 overflow-y-auto hidden';
+    dropdown.style.minWidth = '200px';
+    textarea.parentNode.style.position = 'relative';
+    textarea.parentNode.appendChild(dropdown);
+
+    let isAutocompleteOpen = false;
+    let selectedIndex = -1;
+    let filteredFields = [];
+    
+    const showAutocomplete = (cursorPos) => {
+      // Get available fields (previous fields only)
+      const availableFields = this.form.fields.slice(0, fieldIndex).filter(f => f.key);
+      filteredFields = availableFields;
+      
+      if (filteredFields.length === 0) {
+        dropdown.classList.add('hidden');
+        return;
+      }
+      
+      // Position dropdown
+      const rect = textarea.getBoundingClientRect();
+      dropdown.style.top = (rect.height + 5) + 'px';
+      dropdown.style.left = '0px';
+      
+      // Populate dropdown
+      dropdown.innerHTML = '';
+      filteredFields.forEach((field, index) => {
+        const item = document.createElement('div');
+        item.className = 'px-3 py-2 hover:bg-gray-700 cursor-pointer text-sm';
+        item.innerHTML = `
+          <div class="text-white">${field.label || field.key}</div>
+          <div class="text-gray-400 text-xs">{{${field.key}}}</div>
+        `;
+        item.addEventListener('click', () => {
+          insertFieldReference(field.key, cursorPos);
+        });
+        dropdown.appendChild(item);
+      });
+      
+      dropdown.classList.remove('hidden');
+      isAutocompleteOpen = true;
+      selectedIndex = 0;
+      updateSelectedItem();
+    };
+    
+    const hideAutocomplete = () => {
+      dropdown.classList.add('hidden');
+      isAutocompleteOpen = false;
+      selectedIndex = -1;
+    };
+    
+    const updateSelectedItem = () => {
+      const items = dropdown.querySelectorAll('div');
+      items.forEach((item, index) => {
+        if (index === selectedIndex) {
+          item.classList.add('bg-gray-700');
+        } else {
+          item.classList.remove('bg-gray-700');
+        }
+      });
+    };
+    
+    const insertFieldReference = (fieldKey, cursorPos) => {
+      const value = textarea.value;
+      const beforeCursor = value.substring(0, cursorPos - 2); // Remove {{
+      const afterCursor = value.substring(cursorPos);
+      const newValue = beforeCursor + `{{${fieldKey}}}` + afterCursor;
+      
+      textarea.value = newValue;
+      textarea.dispatchEvent(new Event('input'));
+      hideAutocomplete();
+      
+      // Set cursor position after insertion
+      const newCursorPos = beforeCursor.length + fieldKey.length + 4;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+      textarea.focus();
+    };
+    
+    textarea.addEventListener('input', (e) => {
+      const cursorPos = textarea.selectionStart;
+      const value = textarea.value;
+      const beforeCursor = value.substring(0, cursorPos);
+      
+      // Check if user typed {{
+      if (beforeCursor.endsWith('{{')) {
+        showAutocomplete(cursorPos);
+      } else {
+        hideAutocomplete();
+      }
+    });
+    
+    textarea.addEventListener('keydown', (e) => {
+      if (!isAutocompleteOpen) return;
+      
+      switch(e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          selectedIndex = Math.min(selectedIndex + 1, filteredFields.length - 1);
+          updateSelectedItem();
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          selectedIndex = Math.max(selectedIndex - 1, 0);
+          updateSelectedItem();
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (selectedIndex >= 0 && selectedIndex < filteredFields.length) {
+            insertFieldReference(filteredFields[selectedIndex].key, textarea.selectionStart);
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          hideAutocomplete();
+          break;
+      }
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!textarea.contains(e.target) && !dropdown.contains(e.target)) {
+        hideAutocomplete();
+      }
+    });
   },
   async askScheherazade(field) {
     if (!field.apiUrl || !field.model || !field.prompt) {
@@ -162,7 +292,7 @@
               fieldValue = fieldValue.replace(/<[^>]*>/g, '');
             }
 
-            const regex = new RegExp(`&&${formField.key}&&`, 'g');
+            const regex = new RegExp(`{{${formField.key}}}`, 'g');
             processedText = processedText.replace(regex, fieldValue || '');
           }
         });
