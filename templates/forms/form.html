@@ -4,7 +4,7 @@
 
 {% block content %}
 <script>
-  window.responseId="{{ response_id }}";
+  window.responseId="{{ response_id if response_id else '' }}";
   window.formId="{{ form_id }}";
 </script>
 <div class="flex justify-center items-center min-h-screen bg-gray-900">
