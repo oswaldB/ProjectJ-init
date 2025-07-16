@@ -139,12 +139,48 @@ def api_auto_save(form_id):
     response_id = data.get('responseId')
     answers = data.get('answers')
     author = data.get('author', 'Anonymous')  # Default to 'Anonymous' if no author is provided
+    changes = data.get('changes', [])
+    
     if not response_id or not answers:
         return jsonify({"error": "Invalid data provided"}), 400
+    
     key = f'forms/{form_id}/{response_id}.json'
     try:
-        json_data = {"responseId": response_id, "answers": answers, "author": author}  # Removed ensure_ascii
+        # Get existing data to compare changes
+        existing_data = get_one_file(key)
+        
+        json_data = {
+            "responseId": response_id, 
+            "answers": answers, 
+            "author": author,
+            "updatedAt": datetime.datetime.now().isoformat()
+        }
+        
+        # Add creation timestamp if this is new
+        if not existing_data:
+            json_data["createdAt"] = datetime.datetime.now().isoformat()
+        else:
+            json_data["createdAt"] = existing_data.get("createdAt", datetime.datetime.now().isoformat())
+        
         save_in_global_db(key, json_data)
+        
+        # Log modification events if there are changes
+        if changes and len(changes) > 0:
+            modification_events = []
+            for change in changes:
+                modification_event = {
+                    "type": "field_change",
+                    "changes": change,
+                    "timestamp": datetime.datetime.now().isoformat(),
+                    "author": author
+                }
+                modification_events.append(modification_event)
+            
+            # Get existing changes and append new ones
+            existing_changes = get_form_changes(form_id, response_id)
+            existing_changes.extend(modification_events)
+            save_form_changes(form_id, response_id, existing_changes)
+        
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"Failed to auto-save answers for form {form_id}: {e}")
@@ -166,9 +202,25 @@ def api_submit_form(form_id):
         response_data = get_one_file(source_key)
         if not response_data:
             return jsonify({"error": "Response file not found"}), 404
+        
+        # Update response data with submission info
+        response_data['status'] = 'submitted'
+        response_data['submittedAt'] = datetime.datetime.now().isoformat()
+        response_data['updatedAt'] = datetime.datetime.now().isoformat()
+        
         # Save the file to the new location in JSON format
         json_data = response_data  # Removed ensure_ascii
         save_in_global_db(destination_key, json_data)
+        
+        # Log submission event
+        submission_event = {
+            "type": "system",
+            "content": "Form response submitted",
+            "timestamp": datetime.datetime.now().isoformat(),
+            "author": response_data.get('author', 'system')
+        }
+        save_form_changes(form_id, response_id, [submission_event])
+        
         # Delete the original file
         delete(source_key)
         # Retrieve the form configuration
@@ -305,6 +357,7 @@ def api_create_response():
     """
     data = request.json
     form_id = data.get('formId')
+    author = data.get('author', 'Anonymous')
 
     if not form_id:
         return jsonify({"error": "Form ID is missing"}), 400
@@ -313,14 +366,26 @@ def api_create_response():
         response_id = f'response-{int(datetime.datetime.now().timestamp() * 1000)}'
         response_data = {
             "id": response_id,
+            "responseId": response_id,
             "formId": form_id,
             "status": "new",
             "createdAt": datetime.datetime.now().isoformat(),
             "updatedAt": datetime.datetime.now().isoformat(),
+            "author": author,
             "answers": {}
         }
         key = f'forms/{form_id}/{response_id}.json'
         save_in_global_db(key, response_data)
+        
+        # Log creation event
+        creation_event = {
+            "type": "system",
+            "content": "Form response created",
+            "timestamp": datetime.datetime.now().isoformat(),
+            "author": author
+        }
+        save_form_changes(form_id, response_id, [creation_event])
+        
         return jsonify({"status": "success", "responseId": response_id})
     except Exception as e:
         logger.error(f"Failed to create response for form {form_id}: {e}")
