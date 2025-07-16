@@ -89,3 +89,8 @@
     </template>
   </div>
 </template>
+<template x-if="field.type === 'conditional'">
+  <div class="space-y-4">
+    <div x-html="$watch('formData', () => {}), processFieldReferences(field.content || '', formData)"></div>
+  </div>
+</template>
