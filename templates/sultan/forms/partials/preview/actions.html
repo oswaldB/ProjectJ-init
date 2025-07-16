@@ -1,12 +1,12 @@
 <template x-if="field.type === 'actions'">
   <div class="p-4 border border-red-500 rounded bg-gray-900 space-y-4">
-    <div x-html="$watch('formData', () => {}), processFieldReferences(field.markdown || '', formData)"></div>
+    <div x-html="processFieldReferences(field.markdown || '', formData)"></div>
     <div class="flex flex-wrap gap-2">
       <template x-for="btn in field.buttons || []">
-        <a x-bind:href="$watch('formData', () => {}), processFieldReferences(btn.url || '', formData)" 
+        <a x-bind:href="processFieldReferences(btn.url || '', formData)" 
            target="_blank" 
            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition" 
-           x-text="$watch('formData', () => {}), processFieldReferences(btn.label || '', formData)"></a>
+           x-text="processFieldReferences(btn.label || '', formData)"></a>
       </template>
     </div>
   </div>
