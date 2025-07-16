@@ -16,7 +16,7 @@
              formDataFile.append('formId', formId); // Assuming formId is available in the field object
              formDataFile.append('answerId', responseId); 
              try {
-               const response = await fetch('/forms/api/upload', {
+               const response = await fetch('/pc-analytics-jaffar/forms/api/upload', {
                  method: 'POST',
                  body: formDataFile
                });
@@ -41,7 +41,7 @@
            const fileEntry = this.files[idx];
            if (fileEntry && fileEntry.s3Key) {
              try {
-               const response = await fetch('/forms/api/delete-file', {
+               const response = await fetch('/pc-analytics-jaffar/forms/api/delete-file', {
                  method: 'DELETE',
                  headers: { 'Content-Type': 'application/json' },
                  body: JSON.stringify({ fileKey: fileEntry.s3Key })
