@@ -476,8 +476,8 @@
                 <select x-model="form.status" 
                         @change="checkStatusChange()"
                         class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600">
-                  <option value="Open">Open</option>
                   <option value="Close">Close</option>
+                  <option value="Open">Open</option>
                 </select>
               </div>
 
@@ -536,12 +536,6 @@
         <h1 class="text-2xl font-bold text-white">Form Editor</h1>
         <div class="flex items-center space-x-4">
           <span class="text-gray-400 text-sm">Changes are saved automatically</span>
-          <select x-model="form.status" 
-                  class="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600">
-            <option value="Draft">Draft</option>
-            <option value="Prod">Prod</option>
-            <option value="Old version">Old version</option>
-          </select>
         </div>
       </div>
 
