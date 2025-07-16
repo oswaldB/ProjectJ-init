@@ -100,6 +100,170 @@
             const loginUrl = `/pc-analytics-jaffar/login?redirect=${encodeURIComponent(currentUrl)}`;
             window.location.href = loginUrl;
         }
+
+        // Setup autocomplete function for variable interpolation
+        window.setupAutocomplete = function(inputElement, fieldIndex) {
+            if (!inputElement) return;
+
+            let autocompleteDiv = null;
+            let currentSuggestions = [];
+            let selectedIndex = -1;
+
+            // Get available field keys
+            function getAvailableKeys() {
+                const formData = window.Alpine ? Alpine.raw(Alpine.store('formData') || {}) : {};
+                const configFields = window.formConfig ? window.formConfig.fields : [];
+                
+                const keys = [];
+                
+                // Add keys from form config
+                if (configFields) {
+                    configFields.forEach(field => {
+                        if (field.key && field.key.trim()) {
+                            keys.push(field.key);
+                        }
+                    });
+                }
+                
+                // Add keys from current form data
+                Object.keys(formData).forEach(key => {
+                    if (!keys.includes(key)) {
+                        keys.push(key);
+                    }
+                });
+                
+                return keys;
+            }
+
+            // Show autocomplete suggestions
+            function showAutocomplete(suggestions, cursorPos) {
+                hideAutocomplete();
+                
+                if (suggestions.length === 0) return;
+                
+                autocompleteDiv = document.createElement('div');
+                autocompleteDiv.className = 'absolute z-50 bg-gray-700 border border-gray-600 rounded shadow-lg max-h-32 overflow-y-auto';
+                autocompleteDiv.style.left = '0px';
+                autocompleteDiv.style.top = (inputElement.offsetHeight + 2) + 'px';
+                autocompleteDiv.style.minWidth = '200px';
+                
+                suggestions.forEach((suggestion, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'px-3 py-1 cursor-pointer text-white hover:bg-gray-600';
+                    item.textContent = suggestion;
+                    item.addEventListener('click', () => selectSuggestion(suggestion));
+                    autocompleteDiv.appendChild(item);
+                });
+                
+                inputElement.parentElement.style.position = 'relative';
+                inputElement.parentElement.appendChild(autocompleteDiv);
+                currentSuggestions = suggestions;
+                selectedIndex = -1;
+            }
+
+            // Hide autocomplete
+            function hideAutocomplete() {
+                if (autocompleteDiv) {
+                    autocompleteDiv.remove();
+                    autocompleteDiv = null;
+                }
+                currentSuggestions = [];
+                selectedIndex = -1;
+            }
+
+            // Select a suggestion
+            function selectSuggestion(suggestion) {
+                const value = inputElement.value;
+                const cursorPos = inputElement.selectionStart;
+                
+                // Find the start of [[
+                let startPos = cursorPos;
+                while (startPos > 1 && value.substring(startPos - 2, startPos) !== '[[') {
+                    startPos--;
+                }
+                
+                if (startPos > 1) {
+                    startPos -= 2; // Include [[
+                    const newValue = value.substring(0, startPos) + '[[' + suggestion + ']]' + value.substring(cursorPos);
+                    inputElement.value = newValue;
+                    inputElement.dispatchEvent(new Event('input'));
+                    inputElement.focus();
+                    inputElement.setSelectionRange(startPos + suggestion.length + 4, startPos + suggestion.length + 4);
+                }
+                
+                hideAutocomplete();
+            }
+
+            // Handle input events
+            inputElement.addEventListener('input', function(e) {
+                const value = e.target.value;
+                const cursorPos = e.target.selectionStart;
+                
+                // Check if we're typing after [[
+                if (cursorPos >= 2) {
+                    const beforeCursor = value.substring(0, cursorPos);
+                    const match = beforeCursor.match(/\[\[([^\]]*?)$/);
+                    
+                    if (match) {
+                        const query = match[1].toLowerCase();
+                        const availableKeys = getAvailableKeys();
+                        const suggestions = availableKeys.filter(key => 
+                            key.toLowerCase().includes(query)
+                        );
+                        
+                        if (suggestions.length > 0) {
+                            showAutocomplete(suggestions, cursorPos);
+                        } else {
+                            hideAutocomplete();
+                        }
+                    } else {
+                        hideAutocomplete();
+                    }
+                } else {
+                    hideAutocomplete();
+                }
+            });
+
+            // Handle keyboard navigation
+            inputElement.addEventListener('keydown', function(e) {
+                if (!autocompleteDiv) return;
+                
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = Math.min(selectedIndex + 1, currentSuggestions.length - 1);
+                    updateSelection();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = Math.max(selectedIndex - 1, -1);
+                    updateSelection();
+                } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                    e.preventDefault();
+                    selectSuggestion(currentSuggestions[selectedIndex]);
+                } else if (e.key === 'Escape') {
+                    hideAutocomplete();
+                }
+            });
+
+            // Update visual selection
+            function updateSelection() {
+                if (!autocompleteDiv) return;
+                
+                Array.from(autocompleteDiv.children).forEach((item, index) => {
+                    if (index === selectedIndex) {
+                        item.className = 'px-3 py-1 cursor-pointer text-white bg-gray-600';
+                    } else {
+                        item.className = 'px-3 py-1 cursor-pointer text-white hover:bg-gray-600';
+                    }
+                });
+            }
+
+            // Hide autocomplete when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!inputElement.contains(e.target) && (!autocompleteDiv || !autocompleteDiv.contains(e.target))) {
+                    hideAutocomplete();
+                }
+            });
+        };
     </script>
     {% block head %}{% endblock %}
 </head>
