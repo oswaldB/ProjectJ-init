@@ -12,6 +12,7 @@
     responseId: null,
     userName: localStorage.getItem('author2') || 'Anonymous',
     formId: window.location.pathname.split('/').filter(part => part).pop(),
+    isValidationMode: new URLSearchParams(window.location.search).get('validation') === 'true',
 
     async loadConfig() {
       if (!this.formId) {
@@ -221,8 +222,16 @@
       </div>
     </template>
 
-    <!-- Closed form warning -->
-    <template x-if="!loading && config && config.status === 'Close'">
+    <!-- Validation mode warning -->
+    <template x-if="!loading && config && isValidationMode">
+      <div class="bg-yellow-600 text-white p-4 rounded-lg mb-4">
+        <h2 class="text-lg font-bold mb-2">Validation Display Only</h2>
+        <p>This form is being displayed for validation purposes only. Submission is disabled.</p>
+      </div>
+    </template>
+
+    <!-- Closed form warning (only show if not in validation mode) -->
+    <template x-if="!loading && config && config.status === 'Close' && !isValidationMode">
       <div class="text-center p-6">
         <div class="bg-red-600 text-white p-4 rounded-lg mb-4">
           <h2 class="text-xl font-bold mb-2">Form Closed</h2>
@@ -231,7 +240,7 @@
       </div>
     </template>
 
-    <template x-if="!loading && config && config.status !== 'Close'">
+    <template x-if="!loading && config && (config.status !== 'Close' || isValidationMode)">
       <div>
         <h1 class="text-2xl font-bold mb-4 text-white" x-text="config.name || 'Form'"></h1>
         <div class="space-y-6">
