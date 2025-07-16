@@ -176,16 +176,16 @@ function responseDetailData() {
       <!-- Response Answers -->
       <div class="bg-gray-800 p-4 rounded-lg mb-6">
         <h2 class="text-xl font-bold text-white mb-4">Response Data</h2>
-        <template x-if="response.answers && Object.keys(response.answers).length > 0">
+        <template x-if="response.answers && config.fields && config.fields.length > 0">
           <div class="grid grid-cols-1 gap-4">
-            <template x-for="[fieldKey, value] in Object.entries(response.answers)" :key="fieldKey">
+            <template x-for="field in config.fields.filter(f => f.key && response.answers[f.key] !== undefined)" :key="field.key">
               <div class="border-b border-gray-700 pb-4">
-                <label class="block text-sm font-medium text-gray-400 mb-2" x-text="getFieldLabel(fieldKey)"></label>
+                <label class="block text-sm font-medium text-gray-400 mb-2" x-text="field.label || field.key"></label>
 
                 <!-- File field handling -->
-                <template x-if="isFileField(fieldKey) && Array.isArray(value)">
+                <template x-if="field.type === 'file_upload' && Array.isArray(response.answers[field.key])">
                   <div class="space-y-2">
-                    <template x-for="filePath in value" :key="filePath">
+                    <template x-for="filePath in response.answers[field.key]" :key="filePath">
                       <div class="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
                         <span class="text-white" x-text="getFileName(filePath)"></span>
                         <button @click="downloadFile(filePath)" class="text-blue-400 hover:text-blue-300 text-sm">
@@ -197,13 +197,13 @@ function responseDetailData() {
                 </template>
 
                 <!-- Regular field handling -->
-                <template x-if="!isFileField(fieldKey)">
+                <template x-if="field.type !== 'file_upload'">
                   <div>
-                    <template x-if="typeof value === 'string' && value.includes('<p>')">
-                      <div x-html="value" class="prose prose-invert text-white"></div>
+                    <template x-if="typeof response.answers[field.key] === 'string' && response.answers[field.key].includes('<p>')">
+                      <div x-html="response.answers[field.key]" class="prose prose-invert text-white"></div>
                     </template>
-                    <template x-if="!(typeof value === 'string' && value.includes('<p>'))">
-                      <div class="text-white" x-text="getFormattedValue(value)"></div>
+                    <template x-if="!(typeof response.answers[field.key] === 'string' && response.answers[field.key].includes('<p>'))">
+                      <div class="text-white" x-text="getFormattedValue(response.answers[field.key])"></div>
                     </template>
                   </div>
                 </template>
