@@ -17,6 +17,7 @@
     userName: localStorage.getItem('author2') || 'Anonymous',
     formId: window.formId,
     isValidationMode: {{ 'true' if validation else 'false' }},
+    isSubmittedResponse: false,
 
     async loadConfig() {
       if (!this.formId) {
@@ -106,6 +107,10 @@
         if (response.ok) {
           const responseData = await response.json();
           console.log('Loaded existing response data:', responseData);
+          
+          // Check if response is from submitted folder
+          const submittedResponse = await fetch(`/pc-analytics-jaffar/forms/api/get-response/${this.formId}/submitted/${this.responseId}`);
+          this.isSubmittedResponse = submittedResponse.ok;
           
           // Populate form with existing answers
           if (responseData.answers) {
@@ -319,6 +324,14 @@
       <div class="bg-yellow-600 text-white p-4 rounded-lg mb-4">
         <h2 class="text-lg font-bold mb-2">Validation Display Only</h2>
         <p>This form is being displayed for validation purposes only. Submission is disabled.</p>
+      </div>
+    </template>
+
+    <!-- Submitted response warning -->
+    <template x-if="!loading && config && isSubmittedResponse && !isValidationMode">
+      <div class="bg-blue-600 text-white p-4 rounded-lg mb-4">
+        <h2 class="text-lg font-bold mb-2">Form Already Submitted</h2>
+        <p>This form has already been submitted. You can modify the values and submit again to overwrite the previous submission.</p>
       </div>
     </template>
 
