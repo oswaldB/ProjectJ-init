@@ -2,8 +2,6 @@
   <div class="p-4 border border-red-500 rounded bg-gray-900 space-y-4">
     <div x-html="processFieldReferences(field.markdown || '', formData)"
          @field-changed.window="$el.innerHTML = processFieldReferences(field.markdown || '', formData)"></div>
-    <p class="text-gray-400 text-sm mb-2" x-html="processFieldReferences(field.description || '', formData)"
-                 @field-changed.window="$el.innerHTML = processFieldReferences(field.description || '', formData)"></p>
     <div class="flex flex-wrap gap-2">
       <template x-for="btn in field.buttons || []">
         <a x-bind:href="processFieldReferences(btn.url || '', formData)" 
