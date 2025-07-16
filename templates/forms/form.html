@@ -58,6 +58,11 @@
       if (this.isValidationMode) {
         return;
       }
+
+      // Skip response ID creation if form is closed
+      if (this.config && this.config.status === 'Close') {
+        return;
+      }
       
       const urlParts = window.location.pathname.split('/');
       const lastPart = urlParts[urlParts.length - 1];
