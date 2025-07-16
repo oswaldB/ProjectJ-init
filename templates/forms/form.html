@@ -109,12 +109,54 @@
       await this.fetchOrCreateResponseId();
       await this.loadConfig();
       
-      // Seulement configurer le watcher après que la config soit chargée
+      // Pre-fill form fields from URL parameters
       if (this.config) {
+        this.prefillFromUrlParams();
+        
         this.$watch('formData', () => {
           this.autoSave();
         });
       }
+    },
+
+    prefillFromUrlParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      if (!this.config || !this.config.fields) {
+        return;
+      }
+      
+      this.config.fields.forEach(field => {
+        if (field.key && urlParams.has(field.key)) {
+          const paramValue = urlParams.get(field.key);
+          
+          // Handle different field types
+          if (field.type === 'multiple_checkbox' || field.type === 'multi_select') {
+            // For multiselect fields, try to parse as array
+            try {
+              const arrayValue = JSON.parse(paramValue);
+              if (Array.isArray(arrayValue)) {
+                this.formData[field.key] = arrayValue;
+              } else {
+                // If not an array, split by comma
+                this.formData[field.key] = paramValue.split(',').map(v => v.trim());
+              }
+            } catch (e) {
+              // If JSON parsing fails, split by comma
+              this.formData[field.key] = paramValue.split(',').map(v => v.trim());
+            }
+          } else if (field.type === 'number') {
+            // For number fields, convert to number
+            const numValue = Number(paramValue);
+            if (!isNaN(numValue)) {
+              this.formData[field.key] = numValue;
+            }
+          } else {
+            // For text, single_select, date, etc., use as string
+            this.formData[field.key] = paramValue;
+          }
+        }
+      });
     },
 
     applyAutoSelect(field) {
