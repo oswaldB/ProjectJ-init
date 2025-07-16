@@ -1,6 +1,5 @@
 <template x-if="field.type === 'iframe'">
   <div class="p-4 border border-blue-500 rounded bg-gray-900 space-y-4">
     <div x-html="field.markdown || ''"></div>
-    <iframe :src="field.iframeUrl" class="w-full h-96 border border-gray-600 rounded"></iframe>
   </div>
 </template>
