@@ -68,6 +68,8 @@
       const lastPart = urlParts[urlParts.length - 1];
       if (lastPart && !lastPart.startsWith('forms-')) {
         this.responseId = lastPart;
+        // Try to load existing response data
+        await this.loadExistingResponse();
       } else {
         try {
           const response = await fetch('/pc-analytics-jaffar/forms/api/create-response', {
@@ -87,6 +89,38 @@
           console.error('Error creating response ID:', error);
           alert('Error creating response ID.');
         }
+      }
+    },
+
+    async loadExistingResponse() {
+      if (!this.formId || !this.responseId) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/pc-analytics-jaffar/forms/api/get-response/${this.formId}/${this.responseId}`);
+        if (response.ok) {
+          const responseData = await response.json();
+          console.log('Loaded existing response data:', responseData);
+          
+          // Populate form with existing answers
+          if (responseData.answers) {
+            this.formData = { ...responseData.answers };
+            console.log('Form data populated with existing answers:', this.formData);
+          }
+          
+          // Update userName if available
+          if (responseData.author) {
+            this.userName = responseData.author;
+          }
+        } else if (response.status === 404) {
+          console.log('Response not found, will create new one');
+          // This is normal for new responses
+        } else {
+          console.error('Error loading existing response:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Error loading existing response:', error);
       }
     },
 
@@ -124,19 +158,19 @@
     },
 
     async init() {
-      await this.fetchOrCreateResponseId();
       await this.loadConfig();
+      await this.fetchOrCreateResponseId();
 
-      // Pre-fill form fields from URL parameters
-      if (this.config) {
+      // Pre-fill form fields from URL parameters (only if no existing data)
+      if (this.config && Object.keys(this.formData).length === 0) {
         this.prefillFromUrlParams();
+      }
 
-        // Only watch formData changes if not in validation mode
-        if (!this.isValidationMode) {
-          this.$watch('formData', () => {
-            this.autoSave();
-          });
-        }
+      // Only watch formData changes if not in validation mode
+      if (!this.isValidationMode) {
+        this.$watch('formData', () => {
+          this.autoSave();
+        });
       }
     },
 

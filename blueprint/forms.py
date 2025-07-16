@@ -562,6 +562,36 @@ def api_draft_responses(form_id):
         logger.error(f"Error in api_draft_responses: {e}")
         return jsonify({"error": str(e)}), 500
 
+@forms_blueprint.route('/api/get-response/<form_id>/<response_id>', methods=['GET'])
+def api_get_response(form_id, response_id):
+    """
+    Get a specific response from S3, checking both draft and submitted folders.
+    """
+    try:
+        # First try to get from draft folder
+        draft_key = f'forms/{form_id}/{response_id}.json'
+        response_data = get_one_file(draft_key)
+        
+        if response_data:
+            logger.info(f"Found draft response {response_id} for form {form_id}")
+            return jsonify(response_data)
+        
+        # If not found in draft, try submitted folder
+        submitted_key = f'forms/{form_id}/submitted/{response_id}.json'
+        response_data = get_one_file(submitted_key)
+        
+        if response_data:
+            logger.info(f"Found submitted response {response_id} for form {form_id}")
+            return jsonify(response_data)
+        
+        # If not found anywhere, return 404
+        logger.info(f"Response {response_id} not found for form {form_id}")
+        return jsonify({"error": "Response not found"}), 404
+        
+    except Exception as e:
+        logger.error(f"Failed to get response {response_id} for form {form_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
 @forms_blueprint.route('/api/ask-scheherazade', methods=['POST'])
 def ask_scheherazade():
     try:
