@@ -107,6 +107,22 @@
                   <p>User: <span x-text="form.user_email"></span></p>
                   <p>Last modified: <span x-text="new Date(form.last_modified || Date.now()).toLocaleString()"></span></p>
                   <p class="text-xs text-gray-500 mt-1">File: <span x-text="form.id + '.json'"></span></p>
+                  
+                  <!-- Form Link -->
+                  <div class="mt-2">
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Form Link</label>
+                    <div class="flex">
+                      <input type="text" 
+                             :value="`https://stratpy.uk.hsbc:1337/pc-analytics-jaffar/forms/edit/${form.id}`"
+                             readonly
+                             class="flex-1 bg-gray-700 text-white px-2 py-1 rounded-l border border-gray-600 text-xs">
+                      <button @click="navigator.clipboard.writeText(`https://stratpy.uk.hsbc:1337/pc-analytics-jaffar/forms/edit/${form.id}`)" 
+                              class="bg-red-600 text-white px-2 py-1 rounded-r hover:bg-red-700 text-xs">
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+
                   <div class="mt-2">
                     <span class="text-xs font-medium px-2 py-1 rounded-full border"
                           :class="{
