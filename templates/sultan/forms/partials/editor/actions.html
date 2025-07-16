@@ -21,14 +21,13 @@
     <!-- Content -->
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-2">Content</label>
-      <textarea x-model="field.content" 
-                x-ref="contentTextarea"
-                x-init="$nextTick(() => setupAutocomplete($refs.contentTextarea, index))"
-                rows="4"
-                class="w-full bg-gray-800 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
-                placeholder="Enter content text"></textarea>
+      <div class="w-full bg-gray-800 text-white rounded border border-gray-600">
+        <div x-ref="`actionsContentQuillField_${index}`" 
+             x-init="window.initQuill($refs[`actionsContentQuillField_${index}`], (val) => field.content = (val !== undefined ? val : field.content))"
+             class="bg-white text-black rounded border border-gray-600 min-h-[100px]"></div>
+      </div>
       <div class="text-xs text-gray-400 mt-1">
-        Use [[field_key]] to reference other form fields. Type [[ to open autocomplete menu.
+        Use [[field_key]] to reference other form fields in the rich text editor.
       </div>
     </div>
 
