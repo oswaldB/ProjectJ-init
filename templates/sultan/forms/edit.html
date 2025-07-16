@@ -153,28 +153,8 @@
     });
   },
   processFieldReferences(text) {
-    if (!text) return text;
-    let processedText = text;
-    this.form.fields.forEach(formField => {
-      if (formField.key && this.formData[formField.key]) {
-        let fieldValue = this.formData[formField.key];
-
-        // Handle different field types
-        if (Array.isArray(fieldValue)) {
-          fieldValue = fieldValue.join(', ');
-        } else if (typeof fieldValue === 'object') {
-          fieldValue = JSON.stringify(fieldValue);
-        } else if (fieldValue && typeof fieldValue === 'string' && fieldValue.includes('<')) {
-          // Strip HTML tags for clean text
-          fieldValue = fieldValue.replace(/<[^>]*>/g, '');
-        }
-
-        const regex = new RegExp(`\\[\\[${formField.key}\\]\\]`, 'g');
-        processedText = processedText.replace(regex, fieldValue || '');
-      }
-    });
-    return processedText;
-  },
+        return window.processFieldReferences(text, {}, this.previewValues);
+      },
 
   async askScheherazade(field) {
     if (!field.apiUrl || !field.model || !field.prompt) {
@@ -682,7 +662,7 @@
                 </div>
 
                 {% include "sultan/forms/partials/editor/file_upload.html" %}
-                {% include "sultan/forms/partials/editor/multiple_checkbox.html" %}
+                {% include "sultan/forms/forms/partials/editor/multiple_checkbox.html" %}
 
                 <div class="space-y-2">
                   <label class="block text-sm font-medium text-gray-300">Question Title</label>
@@ -729,7 +709,7 @@
                 {% include "sultan/forms/partials/editor/actions.html" %}
                 {% include "sultan/forms/partials/editor/ask_scheherazade.html" %}
                 {% include "sultan/forms/partials/editor/searchengine.html" %}
-                
+
                 {% include "sultan/forms/partials/editor/submit.html" %}
                 {% include "sultan/forms/partials/editor/single_select.html" %}
 

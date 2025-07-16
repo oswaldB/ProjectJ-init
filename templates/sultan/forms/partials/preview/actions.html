@@ -1,9 +1,12 @@
 <template x-if="field.type === 'actions'">
   <div class="p-4 border border-red-500 rounded bg-gray-900 space-y-4">
-    <div x-html="field.markdown || ''"></div>
+    <div x-html="window.processFieldReferences(field.content || '', formData, previewValues)"></div>
     <div class="flex flex-wrap gap-2">
       <template x-for="btn in field.buttons || []">
-        <a :href="btn.url" target="_blank" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition" x-text="btn.label"></a>
+        <a :href="window.processFieldReferences(btn.url || '', formData, previewValues)" 
+           target="_blank" 
+           class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition" 
+           x-text="window.processFieldReferences(btn.label || '', formData, previewValues)"></a>
       </template>
     </div>
   </div>

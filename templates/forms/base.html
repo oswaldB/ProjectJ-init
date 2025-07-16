@@ -92,6 +92,46 @@
                 isPrivate: false, // default value
                 initialized: false // flag to know if config is loaded
             });
+
+            // Global function to process field references [[field_key]]
+            window.processFieldReferences = function(text, formData = {}, previewValues = {}) {
+                if (!text) return text;
+                let processedText = text;
+                
+                // Find all field references [[field]]
+                const fieldReferences = text.match(/\[\[([^\]]+)\]\]/g);
+                if (!fieldReferences) return processedText;
+                
+                fieldReferences.forEach(reference => {
+                    const fieldKey = reference.replace(/\[\[|\]\]/g, '');
+                    let replacement = '';
+                    
+                    // Check previewValues first, then formData
+                    let fieldValue = null;
+                    if (previewValues && previewValues.hasOwnProperty(fieldKey)) {
+                        fieldValue = previewValues[fieldKey];
+                    } else if (formData && formData.hasOwnProperty(fieldKey)) {
+                        fieldValue = formData[fieldKey];
+                    }
+                    
+                    if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+                        if (Array.isArray(fieldValue)) {
+                            replacement = fieldValue.join(', ');
+                        } else if (typeof fieldValue === 'object') {
+                            replacement = JSON.stringify(fieldValue);
+                        } else {
+                            replacement = fieldValue.toString();
+                        }
+                    } else {
+                        replacement = `[[${fieldKey}]] is empty`;
+                    }
+                    
+                    const regex = new RegExp(`\\[\\[${fieldKey}\\]\\]`, 'g');
+                    processedText = processedText.replace(regex, replacement);
+                });
+                
+                return processedText;
+            };
         });
 
         const currentPath = window.location.pathname;

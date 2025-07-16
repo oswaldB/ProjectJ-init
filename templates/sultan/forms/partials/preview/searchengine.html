@@ -18,15 +18,15 @@
         this.searchQuery = this.processFieldReferences(field.searchValue);
         console.log('Search engine initialized with query:', this.searchQuery);
       }
-      
+
       // Watch for changes in form data to update search query reactively
       this.$watch('formData', () => {
         if (field.searchValue) {
           this.searchQuery = this.processFieldReferences(field.searchValue);
         }
       }, { deep: true });
-      
-     
+
+
     },
 
     initDatabase() {
@@ -159,46 +159,7 @@
     },
 
     processFieldReferences(text) {
-      if (!text) return text;
-      let processedText = text;
-      
-      // Find all field references [[field]]
-      const fieldReferences = text.match(/\[\[([^\]]+)\]\]/g);
-      if (!fieldReferences) return processedText;
-      
-      // Access formData and previewValues directly
-      const currentFormData = this.formData;
-      const currentPreviewValues = this.previewValues;
-      
-      fieldReferences.forEach(reference => {
-        const fieldKey = reference.replace(/\[\[|\]\]/g, '');
-        let replacement = '';
-        
-        // Check previewValues first, then formData
-        let fieldValue = null;
-        if (currentPreviewValues && currentPreviewValues.hasOwnProperty(fieldKey)) {
-          fieldValue = currentPreviewValues[fieldKey];
-        } else if (currentFormData && currentFormData.hasOwnProperty(fieldKey)) {
-          fieldValue = currentFormData[fieldKey];
-        }
-        
-        if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
-          if (Array.isArray(fieldValue)) {
-            replacement = fieldValue.join(', ');
-          } else if (typeof fieldValue === 'object') {
-            replacement = JSON.stringify(fieldValue);
-          } else {
-            replacement = fieldValue.toString();
-          }
-        } else {
-          replacement = `[[${fieldKey}]] is empty`;
-        }
-        
-        const regex = new RegExp(`\\[\\[${fieldKey}\\]\\]`, 'g');
-        processedText = processedText.replace(regex, replacement);
-      });
-      
-      return processedText;
+      return window.processFieldReferences(text, this.formData, this.previewValues);
     },
 
     nextPage() {
