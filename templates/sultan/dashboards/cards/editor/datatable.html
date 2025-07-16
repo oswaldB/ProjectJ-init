@@ -8,7 +8,7 @@
 
     <div>
       <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
-      <select x-model="selectedCard.config.dataSource" @change="loadDataSourceColumns" class="w-full bg-gray-700 text-white p-2 rounded">
+      <select x-model="selectedCard.config.dataSource" @change="loadDataTableConfig" class="w-full bg-gray-700 text-white p-2 rounded">
         <option value="">Select a data source</option>
         <template x-for="source in availableDataSources">
           <option :value="source.id" x-text="`${source.name}`"></option>

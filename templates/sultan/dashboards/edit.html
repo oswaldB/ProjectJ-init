@@ -380,6 +380,104 @@
     }
   },
 
+  async loadDataTableConfig() {
+    if (!this.selectedCard || !this.selectedCard.config || !this.selectedCard.config.dataSource) {
+      this.selectedCard.config.columns = [];
+      return;
+    }
+
+    const dataSource = this.selectedCard.config.dataSource;
+    console.log('Loading datatable config for data source:', dataSource);
+
+    try {
+      // Extract form ID from data source
+      let formId = null;
+      
+      // Handle different data source formats
+      if (dataSource.includes('_drafts')) {
+        formId = dataSource.replace('_drafts', '');
+      } else {
+        formId = dataSource;
+      }
+
+      console.log('Extracted form ID:', formId);
+
+      // Fetch form configuration
+      const response = await fetch(`/pc-analytics-jaffar/forms/api/config/${formId}`);
+      if (response.ok) {
+        const formConfig = await response.json();
+        console.log('Form config loaded for datatable:', formConfig);
+
+        // Update columns based on form fields
+        const columns = [];
+        if (formConfig.fields && Array.isArray(formConfig.fields)) {
+          formConfig.fields.forEach(field => {
+            columns.push({
+              key: field.key,
+              label: field.label || field.key,
+              type: this.inferFieldType(field.type),
+              visible: true,
+              sortable: true,
+              filterable: true,
+              isHtml: false,
+              enablePredefinedFilter: false,
+              filterOperator: 'equals',
+              filterValue: '',
+              filterValues: [],
+              options: field.options || []
+            });
+          });
+        }
+
+        // Always add responseId column at the beginning
+        columns.unshift({
+          key: 'responseId',
+          label: 'Response ID',
+          type: 'text',
+          visible: true,
+          sortable: true,
+          filterable: true,
+          isHtml: false,
+          enablePredefinedFilter: false,
+          filterOperator: 'equals',
+          filterValue: '',
+          filterValues: [],
+          options: []
+        });
+
+        this.selectedCard.config.columns = columns;
+        console.log('Datatable columns updated:', columns);
+
+        // Update the sync button configuration to use the correct API endpoint
+        if (dataSource.includes('_drafts')) {
+          this.selectedCard.config.syncEndpoint = `/pc-analytics-jaffar/forms/api/pouchdb/init/${formId}`;
+          this.selectedCard.config.syncPayload = { isDrafts: true };
+        } else {
+          this.selectedCard.config.syncEndpoint = `/pc-analytics-jaffar/forms/api/pouchdb/init/${formId}`;
+          this.selectedCard.config.syncPayload = { isDrafts: false };
+        }
+
+        console.log('Sync configuration updated:', {
+          endpoint: this.selectedCard.config.syncEndpoint,
+          payload: this.selectedCard.config.syncPayload
+        });
+
+      } else {
+        console.error('Failed to fetch form config:', response.status);
+        this.selectedCard.config.columns = [];
+        this.selectedCard.config.syncEndpoint = '';
+        this.selectedCard.config.syncPayload = {};
+      }
+    } catch (error) {
+      console.error('Failed to load datatable config:', error);
+      if (this.selectedCard && this.selectedCard.config) {
+        this.selectedCard.config.columns = [];
+        this.selectedCard.config.syncEndpoint = '';
+        this.selectedCard.config.syncPayload = {};
+      }
+    }
+  },
+
   async loadKanbanDataSourceColumns() {
     if (!this.selectedCard || !this.selectedCard.config || !this.selectedCard.config.dataSource) {
       console.log('No data source selected for kanban');
