@@ -12,7 +12,7 @@
     responseId: null,
     userName: localStorage.getItem('author2') || 'Anonymous',
     formId: window.location.pathname.split('/').filter(part => part).pop(),
-    isValidationMode: {{ 'true' if validation else 'false' }},
+    isValidationMode: new URLSearchParams(window.location.search).get('validation') === 'true',
 
     async loadConfig() {
       if (!this.formId) {
@@ -54,16 +54,6 @@
     },
 
     async fetchOrCreateResponseId() {
-      // Skip response ID creation in validation mode
-      if (this.isValidationMode) {
-        return;
-      }
-
-      // Skip response ID creation if form is closed
-      if (this.config && this.config.status === 'Close') {
-        return;
-      }
-      
       const urlParts = window.location.pathname.split('/');
       const lastPart = urlParts[urlParts.length - 1];
       if (lastPart && !lastPart.startsWith('forms-')) {
@@ -91,11 +81,6 @@
     },
 
     async autoSave() {
-      // Skip auto-save in validation mode
-      if (this.isValidationMode) {
-        return;
-      }
-      
       if (!this.formId) {
         console.error('Form ID is missing for auto-save.');
         return;
@@ -131,12 +116,9 @@
       if (this.config) {
         this.prefillFromUrlParams();
 
-        // Only watch formData changes if not in validation mode
-        if (!this.isValidationMode) {
-          this.$watch('formData', () => {
-            this.autoSave();
-          });
-        }
+        this.$watch('formData', () => {
+          this.autoSave();
+        });
       }
     },
 
@@ -304,8 +286,7 @@
                 <span class="text-lg font-medium text-white" x-text="field.label"></span>
                 <span x-show="field.required" class="text-red-500">*</span>
               </label>
-              <p class="text-gray-400 text-sm mb-2" x-html="processFieldReferences(field.description || '', formData)"
-                 @field-changed.window="$el.innerHTML = processFieldReferences(field.description || '', formData)"></p>
+              <p class="text-gray-400 text-sm mb-2" x-html="field.description"></p>
 
               {% include "sultan/forms/partials/preview/input.html" %}
               {% include "sultan/forms/partials/preview/number.html" %}

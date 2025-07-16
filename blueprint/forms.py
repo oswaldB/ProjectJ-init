@@ -38,14 +38,6 @@ def redirect_to_form_edit(form_id, response_id):
     """
     return redirect(f"/pc-analytics-jaffar/forms/edit/{form_id}/")
 
-@forms_blueprint.route('/validation/<form_id>')
-@forms_blueprint.route('/validation/<form_id>/')
-def forms_validation(form_id):
-    """
-    Display form in validation mode.
-    """
-    return render_template('forms/form.html', form_id=form_id, validation=True)
-
 @forms_blueprint.route('/api/list', methods=['GET'])
 def api_forms_list():
     """
