@@ -449,7 +449,46 @@
       </div>
     </div>
     <div class="flex space-x-4">
-        <button @click="shareForm()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Share</button>
+        <div class="relative" x-data="{ shareDropdownOpen: false }">
+          <button @click="shareDropdownOpen = !shareDropdownOpen" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Share</button>
+          <div x-show="shareDropdownOpen" 
+               x-transition
+               @click.outside="shareDropdownOpen = false"
+               class="absolute right-0 mt-2 w-80 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50">
+            <div class="p-4">
+              <h3 class="text-white font-semibold mb-3">Share Form</h3>
+              
+              <!-- Form Status -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                <select x-model="form.status" 
+                        class="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600">
+                  <option value="Open">Open</option>
+                  <option value="Close">Close</option>
+                </select>
+              </div>
+              
+              <!-- Share Link -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Form Link</label>
+                <div class="flex">
+                  <input type="text" 
+                         :value="`https://stratpy.uk.hsbc:1337/pc-analytics-jaffar/forms/edit/${form.id}`"
+                         readonly
+                         class="flex-1 bg-gray-700 text-white px-3 py-2 rounded-l border border-gray-600 text-sm">
+                  <button @click="shareForm()" 
+                          class="bg-blue-600 text-white px-3 py-2 rounded-r hover:bg-blue-700 text-sm">
+                    Copy
+                  </button>
+                </div>
+              </div>
+              
+              <div class="text-xs text-gray-400">
+                Share this link to allow others to access your form.
+              </div>
+            </div>
+          </div>
+        </div>
         <a href="/pc-analytics-jaffar/sultan/forms" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Back</a>
       </div>
   </div>
