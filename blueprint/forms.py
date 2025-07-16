@@ -31,12 +31,12 @@ def forms_index():
 def forms_edit(form_id):
     return render_template('forms/form.html', form_id=form_id)
 
-@forms_blueprint.route('/edit/<form_id>/response-<response_id>')
-def redirect_to_form_edit(form_id, response_id):
+@forms_blueprint.route('/edit/<form_id>/<response_id>')
+def forms_edit_response(form_id, response_id):
     """
-    Redirects to the form edit page based on the form_id.
+    Display form edit page with existing response data.
     """
-    return redirect(f"/pc-analytics-jaffar/forms/edit/{form_id}/")
+    return render_template('forms/form.html', form_id=form_id, response_id=response_id)
 
 @forms_blueprint.route('/validation/<form_id>')
 @forms_blueprint.route('/validation/<form_id>/')
