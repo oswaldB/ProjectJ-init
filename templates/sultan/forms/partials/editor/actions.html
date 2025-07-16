@@ -1,36 +1,106 @@
-<!-- Bloc spécifique pouar le type Actions -->
-<template x-if="field.type === 'actions'">
-  <div class="mt-4 space-y-2 p-2 border border-yellow-600 rounded bg-gray-900">
-    <label class="block text-sm font-medium text-yellow-300">Content</label>
-    <div 
-      x-ref="actionsQuillField"
-      x-init="window.initQuill($refs.actionsQuillField, val => field.markdown = (val !== undefined ? val : field.markdown))"
-      class="bg-white text-black rounded border border-gray-600 min-h-[80px]"></div>
-    <div class="mt-1 text-gray-400 text-sm border-l-4 border-yellow-700 pl-2" x-show="field.markdown">
-      <span class="font-semibold text-yellow-300">Preview:</span>
-      <div x-html="field.markdown"></div>
-    </div>
-    <div class="mt-2">
-      <h4 class="text-yellow-300 font-semibold mb-1">Buttons</h4>
-      <button @click="field.buttons = field.buttons || []; field.buttons.push({label: '', url: ''})" class="text-blue-400 hover:text-blue-300 mb-2">Add Button</button>
-      <template x-for="(btn, btnIdx) in field.buttons">
-        <div class="flex space-x-2 items-center mb-2">
-          <input type="text" x-model="btn.label" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button Label">
-          <input type="text" x-model="btn.url" class="bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Button URL">
-          <button @click="field.buttons.splice(btnIdx, 1)" class="text-red-400 hover:text-red-300">×</button>
-        </div>
-      </template>
-    </div>
-  </div>
-</template>
 
-<template x-if="question.type === 'actions'">
-  <div class="p-4 border border-yellow-600 rounded bg-gray-900">
-    <div x-html="question.markdown"></div>
-    <div class="flex flex-wrap gap-2">
-      <template x-for="button in question.buttons">
-        <a :href="button.url" target="_blank" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded" x-text="button.label"></a>
-      </template>
+<!-- Bloc spécifique pour le type Actions -->
+<template x-if="field.type === 'actions'">
+  <div class="mt-4 space-y-4 border-t border-gray-600 pt-4">
+    <h4 class="text-lg font-medium text-white">Actions Configuration</h4>
+
+    <!-- Title -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">Title</label>
+      <input type="text" 
+             x-model="field.title" 
+             x-ref="titleInput"
+             x-init="$nextTick(() => setupAutocomplete($refs.titleInput, index))"
+             class="w-full bg-gray-800 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-red-500" 
+             placeholder="Enter title">
+      <div class="text-xs text-gray-400 mt-1">
+        Use [[field_key]] to reference other form fields. Type [[ to open autocomplete menu.
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">Content</label>
+      <textarea x-model="field.content" 
+                x-ref="contentTextarea"
+                x-init="$nextTick(() => setupAutocomplete($refs.contentTextarea, index))"
+                rows="4"
+                class="w-full bg-gray-800 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+                placeholder="Enter content text"></textarea>
+      <div class="text-xs text-gray-400 mt-1">
+        Use [[field_key]] to reference other form fields. Type [[ to open autocomplete menu.
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div>
+      <div class="flex justify-between items-center mb-2">
+        <label class="block text-sm font-medium text-gray-300">Buttons</label>
+        <button 
+          @click="field.buttons = field.buttons || []; field.buttons.push({label: '', url: '', target: '_blank'})"
+          class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">
+          Add Button
+        </button>
+      </div>
+
+      <div class="space-y-2">
+        <template x-for="(btn, btnIndex) in field.buttons || []" :key="btnIndex">
+          <div class="bg-gray-700 p-3 rounded border border-gray-600">
+            <div class="grid grid-cols-1 gap-2">
+              <div>
+                <label class="block text-xs font-medium text-gray-300 mb-1">Button Label</label>
+                <input type="text" 
+                       x-model="btn.label" 
+                       x-ref="`buttonLabel_${index}_${btnIndex}`"
+                       x-init="$nextTick(() => setupAutocomplete($refs[`buttonLabel_${index}_${btnIndex}`], index))"
+                       class="w-full bg-gray-600 text-white px-2 py-1 rounded text-sm border border-gray-500" 
+                       placeholder="Button text">
+                <div class="text-xs text-gray-400 mt-1">
+                  Use [[field_key]] to reference other form fields.
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-gray-300 mb-1">URL</label>
+                <input type="text" 
+                       x-model="btn.url" 
+                       x-ref="`buttonUrl_${index}_${btnIndex}`"
+                       x-init="$nextTick(() => setupAutocomplete($refs[`buttonUrl_${index}_${btnIndex}`], index))"
+                       class="w-full bg-gray-600 text-white px-2 py-1 rounded text-sm border border-gray-500" 
+                       placeholder="https://example.com">
+                <div class="text-xs text-gray-400 mt-1">
+                  Use [[field_key]] to reference other form fields.
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" 
+                         x-model="btn.target" 
+                         x-init="if (!btn.target) btn.target = '_blank'"
+                         true-value="_blank"
+                         false-value="_self"
+                         class="rounded">
+                  <span class="text-xs text-gray-300">Open in new window</span>
+                </label>
+
+                <button @click="field.buttons.splice(btnIndex, 1)" 
+                        class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Required Field -->
+    <div class="flex items-center space-x-2">
+      <input type="checkbox" 
+             x-model="field.required" 
+             class="form-checkbox h-4 w-4 text-red-500 bg-gray-800 border-gray-600 rounded focus:ring-red-500">
+      <label class="text-sm text-gray-300">Required</label>
     </div>
   </div>
 </template>
