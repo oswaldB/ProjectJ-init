@@ -382,10 +382,7 @@
 
   async loadDataTableConfig() {
     if (!this.selectedCard || !this.selectedCard.config || !this.selectedCard.config.dataSource) {
-      console.log('No selectedCard, config, or dataSource found');
-      if (this.selectedCard && this.selectedCard.config) {
-        this.selectedCard.config.columns = [];
-      }
+      this.selectedCard.config.columns = [];
       return;
     }
 
@@ -406,7 +403,7 @@
       console.log('Extracted form ID:', formId);
 
       // Fetch form configuration
-      const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${formId}`);
+      const response = await fetch(`/pc-analytics-jaffar/forms/api/config/${formId}`);
       if (response.ok) {
         const formConfig = await response.json();
         console.log('Form config loaded for datatable:', formConfig);
@@ -448,18 +445,8 @@
           options: []
         });
 
-        // Ensure selectedCard.config exists
-        if (!this.selectedCard.config) {
-          this.selectedCard.config = this.getDefaultConfig(this.selectedCard.type);
-        }
-        
         this.selectedCard.config.columns = columns;
         console.log('Datatable columns updated:', columns);
-        
-        // Force UI update
-        this.$nextTick(() => {
-          console.log('UI should be updated with new columns');
-        });
 
         // Update the sync button configuration to use the correct API endpoint
         if (dataSource.includes('_drafts')) {
