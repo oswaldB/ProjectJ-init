@@ -54,6 +54,11 @@
     },
 
     async fetchOrCreateResponseId() {
+      // Skip response ID creation in validation mode
+      if (this.isValidationMode) {
+        return;
+      }
+      
       const urlParts = window.location.pathname.split('/');
       const lastPart = urlParts[urlParts.length - 1];
       if (lastPart && !lastPart.startsWith('forms-')) {
@@ -81,6 +86,11 @@
     },
 
     async autoSave() {
+      // Skip auto-save in validation mode
+      if (this.isValidationMode) {
+        return;
+      }
+      
       if (!this.formId) {
         console.error('Form ID is missing for auto-save.');
         return;
@@ -116,9 +126,12 @@
       if (this.config) {
         this.prefillFromUrlParams();
 
-        this.$watch('formData', () => {
-          this.autoSave();
-        });
+        // Only watch formData changes if not in validation mode
+        if (!this.isValidationMode) {
+          this.$watch('formData', () => {
+            this.autoSave();
+          });
+        }
       }
     },
 
