@@ -18,6 +18,7 @@
     formId: window.formId,
     isValidationMode: {{ 'true' if validation else 'false' }},
     isSubmittedResponse: false,
+    previousFormData: {},
 
     async loadConfig() {
       if (!this.formId) {
@@ -68,7 +69,7 @@
       if (this.config && this.config.status === 'Close') {
         return;
       }
-      
+
       const urlParts = window.location.pathname.split('/');
       const lastPart = urlParts[urlParts.length - 1];
       if (lastPart && !lastPart.startsWith('forms-')) {
@@ -107,17 +108,18 @@
         if (response.ok) {
           const responseData = await response.json();
           console.log('Loaded existing response data:', responseData);
-          
+
           // Check if response is from submitted folder
           const submittedResponse = await fetch(`/pc-analytics-jaffar/forms/api/get-response/${this.formId}/submitted/${this.responseId}`);
           this.isSubmittedResponse = submittedResponse.ok;
-          
+
           // Populate form with existing answers
           if (responseData.answers) {
             this.formData = { ...responseData.answers };
+            this.previousFormData = JSON.parse(JSON.stringify(this.formData));
             console.log('Form data populated with existing answers:', this.formData);
           }
-          
+
           // Update userName if available
           if (responseData.author) {
             this.userName = responseData.author;
@@ -138,7 +140,7 @@
       if (this.isValidationMode) {
         return;
       }
-      
+
       if (!this.formId) {
         console.error('Form ID is missing for auto-save.');
         return;
@@ -166,6 +168,103 @@
       }
     },
 
+    async trackChanges() {
+      if (!this.formId || !this.responseId || Object.keys(this.previousFormData).length === 0) {
+        return;
+      }
+
+      const changes = {};
+
+      // Compare current form data with previous
+      for (const [key, value] of Object.entries(this.formData)) {
+        if (JSON.stringify(this.previousFormData[key]) !== JSON.stringify(value)) {
+          changes[key] = {
+            previous: this.previousFormData[key],
+            new: value
+          };
+        }
+      }
+
+      // Check for removed fields
+      for (const [key, value] of Object.entries(this.previousFormData)) {
+        if (!(key in this.formData)) {
+          changes[key] = {
+            previous: value,
+            new: null
+          };
+        }
+      }
+
+      // Save changes if any
+      if (Object.keys(changes).length > 0) {
+        try {
+          await fetch(`/pc-analytics-jaffar/forms/api/save-changes/${this.formId}/${this.responseId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              changes: [changes],
+              author: this.userName
+            })
+          });
+        } catch (error) {
+          console.error('Error saving changes:', error);
+        }
+      }
+
+      // Update previous form data
+      this.previousFormData = JSON.parse(JSON.stringify(this.formData));
+    },
+
+    async submitForm() {
+      if (!this.formId || !this.responseId) {
+        alert('Form ID or Response ID is missing.');
+        return;
+      }
+
+      try {
+        // Track changes before submission
+        await this.trackChanges();
+
+        // Add system event for submission
+        await fetch(`/pc-analytics-jaffar/forms/api/save-changes/${this.formId}/${this.responseId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            changes: [{
+              type: 'system',
+              content: 'Form submitted',
+              timestamp: new Date().toISOString(),
+              author: this.userName
+            }],
+            author: this.userName
+          })
+        });
+
+        // Log form data for debugging
+        console.log('Form data being submitted:', this.formData);
+
+        const response = await fetch(`/pc-analytics-jaffar/forms/api/submit/${this.formId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ responseId: this.responseId })
+        });
+
+        if (response.ok) {
+          alert('Form submitted successfully!');
+          // Clear form data after successful submission
+          this.formData = {};
+          // Optionally redirect to a thank you page or form list
+          window.location.href = '/pc-analytics-jaffar/forms/';
+        } else {
+          const error = await response.json();
+          alert(`Error: ${error.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        alert('Error submitting form.');
+      }
+    },
+
     async init() {
       await this.loadConfig();
       await this.fetchOrCreateResponseId();
@@ -179,8 +278,15 @@
       if (!this.isValidationMode) {
         this.$watch('formData', () => {
           this.autoSave();
+          this.trackChanges();
         });
       }
+
+      // Set up auto-save with debouncing
+        this.autoSaveInterval = setInterval(() => {
+          this.autoSave();
+          this.trackChanges();
+        }, 30000); // Auto-save every 30 seconds
     },
 
     prefillFromUrlParams() {

@@ -248,3 +248,36 @@ def delete_sultan_object(object_type, object_id):
     except Exception as e:
         logger.error(f"Failed to delete {object_type} {object_id}: {e}")
         raise
+
+
+def save_form_changes(form_id, response_id, changes_data):
+    """Save form changes to the changes folder"""
+    try:
+        key = f'forms/{form_id}/changes/{response_id}-changes.json'
+        content = json.dumps(changes_data, ensure_ascii=False)
+        
+        s3.put_object(Bucket=BUCKET_NAME,
+                      Key=key,
+                      Body=content,
+                      ContentType='application/json')
+        logger.info(f"Successfully saved form changes for {form_id}/{response_id}")
+        
+        # Save local backup if enabled
+        save_to_local_backup(key, content)
+        
+        return True
+    except Exception as e:
+        logger.error(f"Failed to save form changes for {form_id}/{response_id}: {e}")
+        return False
+
+
+def get_form_changes(form_id, response_id):
+    """Get form changes from the changes folder"""
+    try:
+        key = f'forms/{form_id}/changes/{response_id}-changes.json'
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+        content = response['Body'].read().decode('utf-8')
+        return json.loads(content)
+    except Exception as e:
+        logger.error(f"Error getting form changes for {form_id}/{response_id}: {e}")
+        return []

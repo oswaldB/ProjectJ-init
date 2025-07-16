@@ -11,7 +11,9 @@ from services.s3_service import (
     get_max_from_global_db,
     get_one_file,
     list_folder_with_filter,
-    upload_file_to_s3
+    upload_file_to_s3,
+    save_form_changes,
+    get_form_changes
 )
 import boto3
 import os
@@ -616,6 +618,88 @@ def api_get_submitted_response(form_id, response_id):
         
     except Exception as e:
         logger.error(f"Failed to get submitted response {response_id} for form {form_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@forms_blueprint.route('/api/save-changes/<form_id>/<response_id>', methods=['POST'])
+def api_save_form_changes(form_id, response_id):
+    """
+    Save form changes to the changes folder.
+    """
+    try:
+        data = request.json
+        changes = data.get('changes', [])
+        author = data.get('author', 'Anonymous')
+        timestamp = datetime.datetime.now().isoformat()
+        
+        # Get existing changes
+        existing_changes = get_form_changes(form_id, response_id)
+        
+        # Add new changes
+        for change in changes:
+            change_entry = {
+                'timestamp': timestamp,
+                'author': author,
+                'type': 'field_change',
+                'changes': change
+            }
+            existing_changes.append(change_entry)
+        
+        # Save updated changes
+        if save_form_changes(form_id, response_id, existing_changes):
+            return jsonify({"status": "success"})
+        else:
+            return jsonify({"error": "Failed to save changes"}), 500
+            
+    except Exception as e:
+        logger.error(f"Failed to save form changes: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@forms_blueprint.route('/api/get-changes/<form_id>/<response_id>', methods=['GET'])
+def api_get_form_changes(form_id, response_id):
+    """
+    Get form changes from the changes folder.
+    """
+    try:
+        changes = get_form_changes(form_id, response_id)
+        return jsonify(changes)
+    except Exception as e:
+        logger.error(f"Failed to get form changes: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@forms_blueprint.route('/api/add-comment/<form_id>/<response_id>', methods=['POST'])
+def api_add_form_comment(form_id, response_id):
+    """
+    Add a comment to the form changes timeline.
+    """
+    try:
+        data = request.json
+        comment = data.get('comment', '')
+        author = data.get('author', 'Anonymous')
+        timestamp = datetime.datetime.now().isoformat()
+        
+        if not comment:
+            return jsonify({"error": "Comment is required"}), 400
+        
+        # Get existing changes
+        existing_changes = get_form_changes(form_id, response_id)
+        
+        # Add comment
+        comment_entry = {
+            'timestamp': timestamp,
+            'author': author,
+            'type': 'comment',
+            'content': comment
+        }
+        existing_changes.append(comment_entry)
+        
+        # Save updated changes
+        if save_form_changes(form_id, response_id, existing_changes):
+            return jsonify({"status": "success"})
+        else:
+            return jsonify({"error": "Failed to save comment"}), 500
+            
+    except Exception as e:
+        logger.error(f"Failed to add form comment: {e}")
         return jsonify({"error": str(e)}), 500
 
 @forms_blueprint.route('/api/ask-scheherazade', methods=['POST'])
