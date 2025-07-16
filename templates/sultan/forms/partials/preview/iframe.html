@@ -1,9 +1,0 @@
-<template x-if="field.type === 'iframe'">
-  <div class="border border-gray-600 rounded">
-    <iframe 
-      x-bind:src="$watch('formData', () => {}), processFieldReferences(field.url || '', formData)"
-      class="w-full h-96"
-      frameborder="0">
-    </iframe>
-  </div>
-</template>
