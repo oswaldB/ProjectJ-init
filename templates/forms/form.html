@@ -26,18 +26,18 @@
           throw new Error('Failed to load form configuration.');
         }
         this.config = await response.json();
-        
+
         // Update Alpine.js store with form settings
         if (this.$store && this.$store.formSettings) {
           this.$store.formSettings.showMenu = this.config.showMenu !== false;
           this.$store.formSettings.isPrivate = this.config.isPrivate || false;
           this.$store.formSettings.initialized = true;
-          
+
           // Check privacy settings
           if (this.config.isPrivate) {
             const userEmail = (localStorage.getItem('author2') || '').split('-').pop().trim().toLowerCase();
             const authorizedUsers = this.config.authorizedUsers || [];
-            
+
             if (!authorizedUsers.includes(userEmail)) {
               alert('You are not authorized to access this form.');
               window.location.href = '/pc-analytics-jaffar/';
@@ -45,7 +45,7 @@
             }
           }
         }
-        
+
         this.loading = false;
       } catch (error) {
         console.error('Error loading form configuration:', error);
@@ -111,11 +111,11 @@
     async init() {
       await this.fetchOrCreateResponseId();
       await this.loadConfig();
-      
+
       // Pre-fill form fields from URL parameters
       if (this.config) {
         this.prefillFromUrlParams();
-        
+
         this.$watch('formData', () => {
           this.autoSave();
         });
@@ -124,15 +124,15 @@
 
     prefillFromUrlParams() {
       const urlParams = new URLSearchParams(window.location.search);
-      
+
       if (!this.config || !this.config.fields) {
         return;
       }
-      
+
       this.config.fields.forEach(field => {
         if (field.key && urlParams.has(field.key)) {
           const paramValue = urlParams.get(field.key);
-          
+
           // Handle different field types
           if (field.type === 'multiple_checkbox' || field.type === 'multi_select') {
             // For multiselect fields, try to parse as array
@@ -167,14 +167,14 @@
       if (!this.config || this.loading) {
         return;
       }
-      
+
       if (!field.autoSelect || !field.autoSelectKey || !field.autoSelectOption) {
         return;
       }
-      
+
       const prevValue = this.formData[field.autoSelectKey];
       let shouldSelect = false;
-      
+
       switch (field.autoSelectComparator) {
         case 'equals':
           shouldSelect = prevValue == field.autoSelectValue;
@@ -201,13 +201,49 @@
           shouldSelect = prevValue && prevValue !== '';
           break;
       }
-      
+
       if (shouldSelect) {
         this.formData[field.key] = field.autoSelectOption;
       } else {
         // Réinitialiser le select si la condition n'est plus valide
         this.formData[field.key] = '';
       }
+    },
+
+    processFieldReferences(text, formData = null) {
+      if (!text) return text;
+      let processedText = text;
+
+      // Use provided formData or fall back to this.formData
+      const dataSource = formData || this.formData || {};
+
+      // Find all field references [[field]]
+      const fieldReferences = text.match(/\[\[([^\]]+)\]\]/g);
+      if (!fieldReferences) return processedText;
+
+      fieldReferences.forEach(reference => {
+        const fieldKey = reference.replace(/\[\[|\]\]/g, '');
+        let replacement = '';
+
+        let fieldValue = dataSource[fieldKey];
+
+        if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+          if (Array.isArray(fieldValue)) {
+            replacement = fieldValue.join(', ');
+          } else if (typeof fieldValue === 'object') {
+            replacement = JSON.stringify(fieldValue);
+          } else {
+            replacement = fieldValue.toString();
+          }
+        } else {
+          replacement = `[[${fieldKey}]] is empty`;
+        }
+
+        const regex = new RegExp(`\\[\\[${fieldKey}\\]\\]`, 'g');
+        processedText = processedText.replace(regex, replacement);
+      });
+
+      return processedText;
     },
 
     destroy() {
