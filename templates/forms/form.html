@@ -25,6 +25,26 @@
           throw new Error('Failed to load form configuration.');
         }
         this.config = await response.json();
+        
+        // Update Alpine.js store with form settings
+        if (this.$store && this.$store.formSettings) {
+          this.$store.formSettings.showMenu = this.config.showMenu !== false;
+          this.$store.formSettings.isPrivate = this.config.isPrivate || false;
+          this.$store.formSettings.initialized = true;
+          
+          // Check privacy settings
+          if (this.config.isPrivate) {
+            const userEmail = (localStorage.getItem('author2') || '').split('-').pop().trim().toLowerCase();
+            const authorizedUsers = this.config.authorizedUsers || [];
+            
+            if (!authorizedUsers.includes(userEmail)) {
+              alert('You are not authorized to access this form.');
+              window.location.href = '/pc-analytics-jaffar/';
+              return;
+            }
+          }
+        }
+        
         this.loading = false;
       } catch (error) {
         console.error('Error loading form configuration:', error);

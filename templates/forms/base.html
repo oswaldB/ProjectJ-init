@@ -88,7 +88,9 @@
         // Initialize Alpine.js store
         document.addEventListener('alpine:init', () => {
             Alpine.store('formSettings', {
-                showMenu: true // default value
+                showMenu: true, // default value
+                isPrivate: false, // default value
+                initialized: false // flag to know if config is loaded
             });
         });
 
@@ -98,54 +100,6 @@
             const loginUrl = `/pc-analytics-jaffar/login?redirect=${encodeURIComponent(currentUrl)}`;
             window.location.href = loginUrl;
         }
-
-        // Check form privacy and menu settings
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Extract form ID from URL
-            const pathParts = currentPath.split('/');
-            const formId = pathParts[pathParts.length - 1];
-            
-            if (formId && formId !== 'login') {
-                try {
-                    // Load form configuration
-                    const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${formId}`);
-                    if (response.ok) {
-                        const formConfig = await response.json();
-                        
-                        // Check privacy settings
-                        if (formConfig.isPrivate) {
-                            const userEmail = (localStorage.getItem('author2') || '').split('-').pop().trim().toLowerCase();
-                            const authorizedUsers = formConfig.authorizedUsers || [];
-                            
-                            if (!authorizedUsers.includes(userEmail)) {
-                                alert('You are not authorized to access this form.');
-                                window.location.href = '/pc-analytics-jaffar/';
-                                return;
-                            }
-                        }
-                        
-                        // Set menu visibility
-                        window.showFormMenu = formConfig.showMenu !== false;
-                        
-                        // Apply menu visibility after Alpine.js initialization
-                        if (window.Alpine) {
-                            window.Alpine.store('formSettings', {
-                                showMenu: window.showFormMenu
-                            });
-                        } else {
-                            // If Alpine is not ready yet, wait for it
-                            document.addEventListener('alpine:init', () => {
-                                window.Alpine.store('formSettings', {
-                                    showMenu: window.showFormMenu
-                                });
-                            });
-                        }
-                    }
-                } catch (error) {
-                    console.error('Failed to load form configuration:', error);
-                }
-            }
-        });
     </script>
     {% block head %}{% endblock %}
 </head>
