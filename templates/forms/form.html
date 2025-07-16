@@ -12,7 +12,7 @@
     responseId: null,
     userName: localStorage.getItem('author2') || 'Anonymous',
     formId: window.location.pathname.split('/').filter(part => part).pop(),
-    isValidationMode: new URLSearchParams(window.location.search).get('validation') === 'true',
+    isValidationMode: {{ 'true' if validation else 'false' }},
 
     async loadConfig() {
       if (!this.formId) {
