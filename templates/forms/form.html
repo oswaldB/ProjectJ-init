@@ -286,7 +286,8 @@
                 <span class="text-lg font-medium text-white" x-text="field.label"></span>
                 <span x-show="field.required" class="text-red-500">*</span>
               </label>
-              <p class="text-gray-400 text-sm mb-2" x-html="field.description"></p>
+              <p class="text-gray-400 text-sm mb-2" x-html="processFieldReferences(field.description || '', formData)"
+                 @field-changed.window="$el.innerHTML = processFieldReferences(field.description || '', formData)"></p>
 
               {% include "sultan/forms/partials/preview/input.html" %}
               {% include "sultan/forms/partials/preview/number.html" %}
