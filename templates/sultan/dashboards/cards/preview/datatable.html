@@ -702,7 +702,7 @@
                 <template x-if="column.type === 'files'">
                   <div class="flex flex-wrap gap-1">
                     <template x-for="(file, fileIndex) in (Array.isArray(row[column.key]) ? row[column.key] : (row[column.key] ? [row[column.key]] : []))" :key="fileIndex">
-                      <a :href="`/pc-analytics-jaffar/dashboard/attachment/?file=${encodeURIComponent(file)}`" 
+                      <a :href="`/pc-analytics-jaffar/dashboards/attachment/?file=${encodeURIComponent(file)}`" 
                          target="_blank"
                          class="text-blue-400 hover:text-blue-600 transition-colors"
                          title="Open file">

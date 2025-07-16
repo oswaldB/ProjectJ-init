@@ -32,7 +32,7 @@
             this.isPdf = this.fileExtension === 'pdf';
             
             try {
-                const response = await fetch(`/pc-analytics-jaffar/dashboard/api/file?key=${encodeURIComponent(this.fileKey)}`);
+                const response = await fetch(`/pc-analytics-jaffar/dashboards/api/file?key=${encodeURIComponent(this.fileKey)}`);
                 if (response.ok) {
                     this.fileUrl = response.url;
                 } else {
