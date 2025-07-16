@@ -22,20 +22,7 @@
       this.saveForm();
     }, { deep: true });
 
-    // Watch for formData changes to dispatch field change events
-    this.$watch('formData', (newData, oldData) => {
-      if (oldData) {
-        Object.keys(newData).forEach(fieldKey => {
-          if (newData[fieldKey] !== oldData[fieldKey]) {
-            this.$dispatch('field-changed', { 
-              fieldKey: fieldKey, 
-              newValue: newData[fieldKey], 
-              oldValue: oldData[fieldKey] 
-            });
-          }
-        });
-      }
-    }, { deep: true });
+    
 
     // Load available forms for searchengine fields
     try {
@@ -731,8 +718,7 @@
                   </div>
                   <div class="mt-1 text-gray-400 text-sm border-l-4 border-blue-700 pl-2" x-show="field.description">
                     <span class="font-semibold text-blue-300">Preview:</span>
-                    <div x-html="processFieldReferences(field.description)" 
-                         @field-changed.window="$el.innerHTML = processFieldReferences(field.description)"></div>
+                    <div x-html="processFieldReferences(field.description)"></div>
                   </div>
                 </div>
 
@@ -832,8 +818,7 @@
                 <span x-show="field.required" class="text-red-500">*</span>
               </label>
               <p class="text-gray-400 text-sm" x-show="field.description" 
-                 x-html="processFieldReferences(field.description)" 
-                 @field-changed.window="$el.innerHTML = processFieldReferences(field.description)"></p>
+                 x-html="processFieldReferences(field.description)"></p>
 
               {% include "sultan/forms/partials/preview/ask_scheherazade.html" %}
               {% include "sultan/forms/partials/preview/searchengine.html" %}
