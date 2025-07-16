@@ -319,9 +319,9 @@ function responseDetailData() {
                     </div>
                   </template>
 
-                  <template x-if="change.type === 'system'">
+                  <template x-if="change.type === 'system' || change.type === 'creation' || change.type === 'submission'">
                     <div>
-                      <div class="text-gray-400 font-semibold">System</div>
+                      <div class="text-blue-400 font-semibold" x-text="change.author"></div>
                       <div class="text-gray-300 mt-1" x-text="change.content"></div>
                     </div>
                   </template>

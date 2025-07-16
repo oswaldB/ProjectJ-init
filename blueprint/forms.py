@@ -214,10 +214,10 @@ def api_submit_form(form_id):
         
         # Log submission event
         submission_event = {
-            "type": "system",
+            "type": "submission",
             "content": "Form response submitted",
             "timestamp": datetime.datetime.now().isoformat(),
-            "author": response_data.get('author', 'system')
+            "author": response_data.get('author', 'Anonymous')
         }
         save_form_changes(form_id, response_id, [submission_event])
         
@@ -379,7 +379,7 @@ def api_create_response():
         
         # Log creation event
         creation_event = {
-            "type": "system",
+            "type": "creation",
             "content": "Form response created",
             "timestamp": datetime.datetime.now().isoformat(),
             "author": author
