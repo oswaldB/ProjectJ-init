@@ -469,7 +469,7 @@
                class="absolute right-0 mt-2 w-80 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50">
             <div class="p-4">
               <h3 class="text-white font-semibold mb-3">Share Form</h3>
-              
+
               <!-- Form Status -->
               <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
@@ -489,20 +489,20 @@
                   </svg>
                   At least 2 people must validate the form publication, including 1 GCB3.
                 </div>
-                
+
                 <div class="space-y-2">
                   <button @click="window.location.href = '/pc-analytics-jaffar/forms/edit/forms-auth-publication-form'" 
                           class="w-full bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 text-sm">
                     Validate publication
                   </button>
-                  
+
                   <button @click="window.location.href = `mailto:?subject=[new sultan form] ask approval&body=Hello,%0A%0APlease go to https://stratpy.uk.hsbc:1337/pc-analytics-jaffar/forms/edit/forms-auth-publication-form to validate the form.%0A%0AThank you`" 
                           class="w-full bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 text-sm">
                     Send validation request by email
                   </button>
                 </div>
               </div>
-              
+
               <!-- Share Link -->
               <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-300 mb-2">Form Link</label>
@@ -517,7 +517,7 @@
                   </button>
                 </div>
               </div>
-              
+
               <div class="text-xs text-gray-400">
                 Share this link to allow others to access your form.
               </div>
@@ -678,6 +678,7 @@
                     <option value="ask_scheherazade">Ask Scheherazade</option>
                     <option value="searchengine">Search Engine</option>
                     <option value="submit_issue">Submit the Issue</option>
+                    <option value="iframe">Iframe</option>
                   </select>
                 </div>
 
@@ -726,9 +727,11 @@
                   </div>
                 </div>
 
+                {% include "sultan/forms/partials/editor/actions.html" %}
+                {% include "sultan/forms/partials/editor/iframe.html" %}
                 {% include "sultan/forms/partials/editor/ask_scheherazade.html" %}
                 {% include "sultan/forms/partials/editor/searchengine.html" %}
-                {% include "sultan/forms/partials/editor/actions.html" %}
+                
                 {% include "sultan/forms/partials/editor/submit.html" %}
                 {% include "sultan/forms/partials/editor/single_select.html" %}
 
@@ -745,7 +748,7 @@
                       <div class="space-y-2">
                         <button @click="field.options = field.options || []; field.options.push({name: '', show: '', questions: []})" class="text-blue-400 hover:text-blue-300">Add Option</button>
                         <template x-for="(option, optIndex) in field.options">
-                          
+
                             <div class="flex space-x-2 items-center">
                               <div class="flex flex-col space-y-1">
                                 <button @click="if(optIndex > 0) { const items = [...field.options]; const item = items[optIndex]; items.splice(optIndex, 1); items.splice(optIndex - 1, 0, item); field.options = items; }"
@@ -766,7 +769,7 @@
                               <input type="text" x-model.debounce.500ms="option.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
                               <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
                             </div>
-                          
+
                         </template>
                       </div>
                     </div>
@@ -814,6 +817,7 @@
               {% include "sultan/forms/partials/preview/number.html" %}
               {% include "sultan/forms/partials/preview/input.html" %}
               {% include "sultan/forms/partials/preview/conditional.html" %}
+              {% include "sultan/forms/partials/preview/iframe.html" %}
 
             </div>
           </template>

@@ -1,0 +1,35 @@
+
+<template x-if="field.type === 'iframe'">
+    <div class="space-y-2">
+        <template x-if="field.url">
+            <iframe :src="field.url"
+                    :width="field.width || '100%'"
+                    :height="field.height || '400px'"
+                    :allowfullscreen="field.allowFullscreen"
+                    :sandbox="field.sandbox ? getSandboxValue(field) : null"
+                    class="border border-gray-600 rounded"
+                    frameborder="0">
+            </iframe>
+        </template>
+        
+        <template x-if="!field.url">
+            <div class="bg-gray-700 border border-gray-600 rounded p-4 text-center text-gray-400"
+                 :style="`width: ${field.width || '100%'}; height: ${field.height || '400px'}`">
+                <p>No URL specified for iframe</p>
+            </div>
+        </template>
+    </div>
+</template>
+
+<script>
+function getSandboxValue(field) {
+    if (!field.sandbox) return null;
+    
+    let sandboxValue = '';
+    if (field.sandboxAllowScripts) sandboxValue += 'allow-scripts ';
+    if (field.sandboxAllowForms) sandboxValue += 'allow-forms ';
+    if (field.sandboxAllowSameOrigin) sandboxValue += 'allow-same-origin ';
+    
+    return sandboxValue.trim() || 'allow-scripts allow-forms allow-same-origin';
+}
+</script>
