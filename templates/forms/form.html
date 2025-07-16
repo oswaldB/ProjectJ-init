@@ -88,12 +88,21 @@
     async init() {
       await this.fetchOrCreateResponseId();
       await this.loadConfig();
-      this.$watch('formData', () => {
-        this.autoSave();
-      });
+      
+      // Seulement configurer le watcher après que la config soit chargée
+      if (this.config) {
+        this.$watch('formData', () => {
+          this.autoSave();
+        });
+      }
     },
 
     applyAutoSelect(field) {
+      // Ne pas exécuter si la config n'est pas encore chargée
+      if (!this.config || this.loading) {
+        return;
+      }
+      
       if (!field.autoSelect || !field.autoSelectKey || !field.autoSelectOption) {
         return;
       }
