@@ -7,8 +7,7 @@
     page: 'forms-list',
     forms: [],
     searchQuery: '',
-    statuses: ['Draft', 'Prod', 'Old version'],
-    statuses: ['DRAFT', 'PROD', 'OLD VERSION'],
+    statuses: ['Open', 'Close'],
     filteredForms() {
       return this.forms.filter(form => 
         (form.name || '').toLowerCase().includes((this.searchQuery || '').toLowerCase()) ||
@@ -19,7 +18,7 @@
     },
     async init() {
       try {
-        const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms?status=${this.form?.status || 'Draft'}`);
+        const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms?status=${this.form?.status || 'Open'}`);
         this.forms = await response.json();
       } catch (error) {
         console.error('Failed to load forms:', error);
@@ -113,10 +112,9 @@
                             @change="saveForm(form)"
                             class="bg-transparent text-xs font-medium px-2 py-1 rounded-full border"
                             :class="{
-                              'border-blue-600 text-blue-100': form.status === 'Dev',
-                              'border-green-600 text-green-100': form.status === 'Prod',
-                              'border-yellow-600 text-yellow-100': form.status === 'Old version',
-                              'border-gray-600 text-gray-100': form.status === 'Draft'
+                              'border-green-600 text-green-100': form.status === 'Open',
+                              'border-red-600 text-red-100': form.status === 'Close',
+                              'border-gray-600 text-gray-100': !form.status
                             }">
                       <template x-for="status in statuses">
                         <option :value="status" :selected="form.status == status" x-text="status"></option>
