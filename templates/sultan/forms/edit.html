@@ -153,8 +153,43 @@
     });
   },
   processFieldReferences(text) {
-        return window.processFieldReferences(text, {}, this.previewValues);
-      },
+    if (!text) return text;
+    let processedText = text;
+    
+    // Find all field references [[field]]
+    const fieldReferences = text.match(/\[\[([^\]]+)\]\]/g);
+    if (!fieldReferences) return processedText;
+    
+    fieldReferences.forEach(reference => {
+      const fieldKey = reference.replace(/\[\[|\]\]/g, '');
+      let replacement = '';
+      
+      // Check previewValues first, then formData
+      let fieldValue = null;
+      if (this.previewValues && this.previewValues.hasOwnProperty(fieldKey)) {
+        fieldValue = this.previewValues[fieldKey];
+      } else if (this.formData && this.formData.hasOwnProperty(fieldKey)) {
+        fieldValue = this.formData[fieldKey];
+      }
+      
+      if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+        if (Array.isArray(fieldValue)) {
+          replacement = fieldValue.join(', ');
+        } else if (typeof fieldValue === 'object') {
+          replacement = JSON.stringify(fieldValue);
+        } else {
+          replacement = fieldValue.toString();
+        }
+      } else {
+        replacement = `[[${fieldKey}]] is empty`;
+      }
+      
+      const regex = new RegExp(`\\[\\[${fieldKey}\\]\\]`, 'g');
+      processedText = processedText.replace(regex, replacement);
+    });
+    
+    return processedText;
+  },
 
   async askScheherazade(field) {
     if (!field.apiUrl || !field.model || !field.prompt) {
