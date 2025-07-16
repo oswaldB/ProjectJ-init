@@ -271,7 +271,7 @@ function responseDetailData() {
             <button
               @click="submitComment()"
               :disabled="!newComment.trim()"
-              class="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 text-white px-4 py-2 rounded"
+              class="bg-red-500 hover:bg-red-600 disabled:bg-gray-600 text-white px-4 py-2 rounded"
             >
               Add Comment
             </button>
@@ -281,19 +281,19 @@ function responseDetailData() {
         <!-- Timeline -->
         <div class="space-y-4">
           <template x-for="change in changes.slice().reverse()">
-            <div class="border-l-4 border-blue-500 pl-4 py-2">
+            <div class="border-l-4 border-red-500 pl-4 py-2">
               <div class="flex justify-between items-start">
                 <div class="flex-1">
                   <template x-if="change.type === 'comment'">
                     <div>
-                      <div class="text-blue-400 font-semibold" x-text="change.author"></div>
+                      <div class="text-red-400 font-semibold" x-text="change.author"></div>
                       <div class="text-gray-300 mt-1" x-text="change.content"></div>
                     </div>
                   </template>
 
                   <template x-if="change.type === 'field_change'">
                     <div>
-                      <div class="text-yellow-400 font-semibold" x-text="change.author"></div>
+                      <div class="text-red-400 font-semibold" x-text="change.author"></div>
                       <div class="text-gray-300 mt-1">
                         <template x-for="(fieldChange, fieldKey) in change.changes">
                           <div class="mb-2">
