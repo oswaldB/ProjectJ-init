@@ -107,19 +107,15 @@
                   <p>User: <span x-text="form.user_email"></span></p>
                   <p>Last modified: <span x-text="new Date(form.last_modified || Date.now()).toLocaleString()"></span></p>
                   <p class="text-xs text-gray-500 mt-1">File: <span x-text="form.id + '.json'"></span></p>
-                  <div class="mt-2 flex items-center space-x-2">
-                    <select x-model="form.status" 
-                            @change="saveForm(form)"
-                            class="bg-transparent text-xs font-medium px-2 py-1 rounded-full border"
-                            :class="{
-                              'border-green-600 text-green-100': form.status === 'Open',
-                              'border-red-600 text-red-100': form.status === 'Close',
-                              'border-gray-600 text-gray-100': !form.status
-                            }">
-                      <template x-for="status in statuses">
-                        <option :value="status" :selected="form.status == status" x-text="status"></option>
-                      </template>
-                    </select>
+                  <div class="mt-2">
+                    <span class="text-xs font-medium px-2 py-1 rounded-full border"
+                          :class="{
+                            'border-green-600 text-green-100': form.status === 'Open',
+                            'border-red-600 text-red-100': form.status === 'Close',
+                            'border-gray-600 text-gray-100': !form.status
+                          }"
+                          x-text="form.status || 'No Status'">
+                    </span>
                   </div>
                 </div>
               </div>
