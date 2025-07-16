@@ -91,6 +91,47 @@
             const loginUrl = `/pc-analytics-jaffar/login?redirect=${encodeURIComponent(currentUrl)}`;
             window.location.href = loginUrl;
         }
+
+        // Check form privacy and menu settings
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Extract form ID from URL
+            const pathParts = currentPath.split('/');
+            const formId = pathParts[pathParts.length - 1];
+            
+            if (formId && formId !== 'login') {
+                try {
+                    // Load form configuration
+                    const response = await fetch(`/pc-analytics-jaffar/sultan/api/forms/${formId}`);
+                    if (response.ok) {
+                        const formConfig = await response.json();
+                        
+                        // Check privacy settings
+                        if (formConfig.isPrivate) {
+                            const userEmail = (localStorage.getItem('author2') || '').split('-').pop().trim().toLowerCase();
+                            const authorizedUsers = formConfig.authorizedUsers || [];
+                            
+                            if (!authorizedUsers.includes(userEmail)) {
+                                alert('You are not authorized to access this form.');
+                                window.location.href = '/pc-analytics-jaffar/';
+                                return;
+                            }
+                        }
+                        
+                        // Set menu visibility
+                        window.showFormMenu = formConfig.showMenu !== false;
+                        
+                        // Apply menu visibility after Alpine.js initialization
+                        if (window.Alpine) {
+                            window.Alpine.store('formSettings', {
+                                showMenu: window.showFormMenu
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to load form configuration:', error);
+                }
+            }
+        });
     </script>
     {% block head %}{% endblock %}
 </head>
@@ -122,9 +163,25 @@
         <span>Saving...</span>
     </div>
     <div class="min-h-screen flex">
+        <!-- Sidebar Menu -->
+        <template x-if="window.showFormMenu !== false">
+          <aside class="fixed inset-y-0 left-0 w-64 bg-gray-800 border-r border-gray-700 z-40">
+            <div class="flex flex-col h-full">
+              <!-- Header -->
+              <div class="p-4 border-b border-gray-700">
+                <h1 class="text-xl font-bold text-white">Jaffar</h1>
+              </div>
+              
+              <!-- Menu Content -->
+              <div class="flex-1 overflow-y-auto p-4">
+                {% include "dashboards/menu.html" %}
+              </div>
+            </div>
+          </aside>
+        </template>
 
         <!-- Main Content -->
-        <div class="flex-1 ml-64">
+        <div class="flex-1" :class="window.showFormMenu !== false ? 'ml-64' : ''">
 
             <!-- Main Content Area -->
             <main class="p-6 mt-4">
