@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Attachment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto p-6" x-data="{
+        fileKey: new URLSearchParams(window.location.search).get('file'),
+        fileUrl: '',
+        fileName: '',
+        fileExtension: '',
+        isImage: false,
+        isPdf: false,
+        loading: true,
+        error: null,
+        
+        async init() {
+            if (!this.fileKey) {
+                this.error = 'No file specified';
+                this.loading = false;
+                return;
+            }
+            
+            this.fileName = this.fileKey.split('/').pop() || this.fileKey;
+            this.fileExtension = this.fileName.split('.').pop()?.toLowerCase() || '';
+            this.isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(this.fileExtension);
+            this.isPdf = this.fileExtension === 'pdf';
+            
+            try {
+                const response = await fetch(`/pc-analytics-jaffar/dashboard/api/file?key=${encodeURIComponent(this.fileKey)}`);
+                if (response.ok) {
+                    this.fileUrl = response.url;
+                } else {
+                    this.error = 'File not found';
+                }
+            } catch (err) {
+                this.error = 'Error loading file: ' + err.message;
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        downloadFile() {
+            if (this.fileUrl) {
+                const link = document.createElement('a');
+                link.href = this.fileUrl;
+                link.download = this.fileName;
+                link.click();
+            }
+        }
+    }">
+        <!-- Header -->
+        <div class="bg-gray-800 p-4 rounded-lg mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold">File Attachment</h1>
+                    <p class="text-gray-400" x-text="fileName"></p>
+                </div>
+                <div class="flex space-x-2">
+                    <button @click="downloadFile()" 
+                            x-show="!loading && !error"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition">
+                        Download
+                    </button>
+                    <button @click="window.close()" 
+                            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div x-show="loading" class="text-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+            <p class="mt-4 text-gray-400">Loading file...</p>
+        </div>
+
+        <!-- Error State -->
+        <div x-show="error" class="text-center py-12">
+            <div class="text-red-500 text-6xl mb-4">⚠️</div>
+            <p class="text-red-400 text-lg" x-text="error"></p>
+        </div>
+
+        <!-- File Content -->
+        <div x-show="!loading && !error" class="bg-gray-800 p-6 rounded-lg">
+            <!-- Image Preview -->
+            <template x-if="isImage">
+                <div class="text-center">
+                    <img :src="fileUrl" 
+                         :alt="fileName"
+                         class="max-w-full max-h-96 mx-auto rounded-lg shadow-lg">
+                </div>
+            </template>
+
+            <!-- PDF Preview -->
+            <template x-if="isPdf">
+                <div class="w-full h-96">
+                    <iframe :src="fileUrl" 
+                            class="w-full h-full border-0 rounded-lg"
+                            type="application/pdf">
+                        <p class="text-center text-gray-400">
+                            Your browser doesn't support PDF preview. 
+                            <a :href="fileUrl" class="text-blue-400 hover:text-blue-600">Click here to download</a>
+                        </p>
+                    </iframe>
+                </div>
+            </template>
+
+            <!-- Other File Types -->
+            <template x-if="!isImage && !isPdf">
+                <div class="text-center py-12">
+                    <div class="text-6xl mb-4">📄</div>
+                    <p class="text-gray-400 mb-4">Preview not available for this file type</p>
+                    <p class="text-sm text-gray-500" x-text="`File: ${fileName}`"></p>
+                    <button @click="downloadFile()" 
+                            class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded transition">
+                        Download File
+                    </button>
+                </div>
+            </template>
+        </div>
+    </div>
+</body>
+</html>

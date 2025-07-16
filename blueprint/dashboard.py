@@ -1,5 +1,7 @@
-from flask import Blueprint, render_template, request, jsonify, redirect
+from flask import Blueprint, render_template, request, jsonify, redirect, Response
 from services.s3_service import list_sultan_objects, get_sultan_object, save_sultan_object, delete_sultan_object
+import boto3
+from config import BUCKET_NAME, s3
 
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/pc-analytics-jaffar/dashboards')
 
@@ -87,3 +89,43 @@ def api_delete(dashboard_id):
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@dashboard_bp.route('/attachment/')
+def view_attachment():
+    return render_template('dashboards/attachment.html')
+
+@dashboard_bp.route('/api/file')
+def get_file():
+    try:
+        file_key = request.args.get('key')
+        if not file_key:
+            return jsonify({"error": "File key is required"}), 400
+        
+        # Get the file from S3
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=file_key)
+        file_content = response['Body'].read()
+        
+        # Determine content type based on file extension
+        content_type = 'application/octet-stream'
+        if file_key.lower().endswith('.pdf'):
+            content_type = 'application/pdf'
+        elif file_key.lower().endswith(('.jpg', '.jpeg')):
+            content_type = 'image/jpeg'
+        elif file_key.lower().endswith('.png'):
+            content_type = 'image/png'
+        elif file_key.lower().endswith('.gif'):
+            content_type = 'image/gif'
+        elif file_key.lower().endswith('.svg'):
+            content_type = 'image/svg+xml'
+        elif file_key.lower().endswith('.webp'):
+            content_type = 'image/webp'
+        
+        return Response(
+            file_content,
+            content_type=content_type,
+            headers={
+                'Content-Disposition': f'inline; filename="{file_key.split("/")[-1]}"'
+            }
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 404
