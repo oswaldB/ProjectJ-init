@@ -1,0 +1,198 @@
+
+<div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
+  <h3 class="text-white font-semibold mb-3">Excel Grid Configuration</h3>
+  <div class="space-y-4">
+    
+    <!-- Basic Configuration -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Grid Title</label>
+      <input type="text" 
+             x-model="selectedCard.config.title" 
+             class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-red-500"
+             placeholder="Excel Grid">
+    </div>
+
+    <!-- Data Source -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
+      <select x-model="selectedCard.config.dataSource" @change="loadExcelDataSourceColumns" class="w-full bg-gray-700 text-white p-2 rounded">
+        <option value="">Select a data source</option>
+        <template x-for="source in availableDataSources">
+          <option :value="source.id" x-text="source.name"></option>
+        </template>
+      </select>
+    </div>
+
+    <!-- Grid Settings -->
+    <div class="space-y-3">
+      <h4 class="text-sm font-medium text-gray-300">Grid Settings</h4>
+      
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">Rows to Display</label>
+          <select x-model="selectedCard.config.rowsToDisplay" class="w-full bg-gray-700 text-white p-2 rounded text-sm">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="all">All</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">Default Cell Width</label>
+          <input type="number" 
+                 x-model="selectedCard.config.defaultCellWidth" 
+                 class="w-full bg-gray-700 text-white p-2 rounded text-sm"
+                 placeholder="120"
+                 min="50"
+                 max="500">
+        </div>
+      </div>
+
+      <!-- Grid Features -->
+      <div class="space-y-2">
+        <label class="flex items-center space-x-2">
+          <input type="checkbox" x-model="selectedCard.config.allowEdit" class="rounded">
+          <span class="text-sm text-gray-300">Allow Cell Editing</span>
+        </label>
+        
+        <label class="flex items-center space-x-2">
+          <input type="checkbox" x-model="selectedCard.config.allowSort" class="rounded">
+          <span class="text-sm text-gray-300">Allow Column Sorting</span>
+        </label>
+        
+        <label class="flex items-center space-x-2">
+          <input type="checkbox" x-model="selectedCard.config.allowFilter" class="rounded">
+          <span class="text-sm text-gray-300">Allow Column Filtering</span>
+        </label>
+        
+        <label class="flex items-center space-x-2">
+          <input type="checkbox" x-model="selectedCard.config.showRowNumbers" class="rounded">
+          <span class="text-sm text-gray-300">Show Row Numbers</span>
+        </label>
+        
+        <label class="flex items-center space-x-2">
+          <input type="checkbox" x-model="selectedCard.config.allowResize" class="rounded">
+          <span class="text-sm text-gray-300">Allow Column Resize</span>
+        </label>
+        
+        <label class="flex items-center space-x-2">
+          <input type="checkbox" x-model="selectedCard.config.freezeFirstRow" class="rounded">
+          <span class="text-sm text-gray-300">Freeze Header Row</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Column Configuration -->
+    <div x-show="selectedCard.config.columns && selectedCard.config.columns.length > 0" class="mt-4">
+      <h4 class="text-sm font-medium text-gray-300 mb-2">Columns Configuration</h4>
+      
+      <div class="space-y-2 max-h-64 overflow-y-auto">
+        <template x-for="(column, index) in selectedCard.config.columns || []" :key="column.key">
+          <div class="p-3 bg-gray-700 rounded border border-gray-600">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2">
+                <input type="checkbox" 
+                       x-model="column.visible" 
+                       class="rounded">
+                <div>
+                  <div class="font-medium text-white text-sm" x-text="column.label"></div>
+                  <div class="text-xs text-gray-400" x-text="column.key"></div>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="text-xs text-gray-400" x-text="column.type"></span>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Width (px)</label>
+                <input type="number" 
+                       x-model="column.width" 
+                       class="w-full bg-gray-600 text-white p-1 rounded text-xs"
+                       placeholder="120"
+                       min="50"
+                       max="500">
+              </div>
+              
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Data Type</label>
+                <select x-model="column.dataType" class="w-full bg-gray-600 text-white p-1 rounded text-xs">
+                  <option value="text">Text</option>
+                  <option value="number">Number</option>
+                  <option value="date">Date</option>
+                  <option value="boolean">Boolean</option>
+                  <option value="currency">Currency</option>
+                  <option value="percentage">Percentage</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="mt-2 space-y-1">
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" x-model="column.editable" class="rounded">
+                <span class="text-xs text-gray-300">Editable</span>
+              </label>
+              
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" x-model="column.required" class="rounded">
+                <span class="text-xs text-gray-300">Required</span>
+              </label>
+            </div>
+            
+            <!-- Conditional formatting -->
+            <div class="mt-2 border-t border-gray-600 pt-2">
+              <label class="flex items-center space-x-2 mb-1">
+                <input type="checkbox" x-model="column.conditionalFormatting" class="rounded">
+                <span class="text-xs text-gray-300">Conditional Formatting</span>
+              </label>
+              
+              <div x-show="column.conditionalFormatting" class="space-y-1">
+                <select x-model="column.formatCondition" class="w-full bg-gray-600 text-white p-1 rounded text-xs">
+                  <option value="greater">Greater than</option>
+                  <option value="less">Less than</option>
+                  <option value="equal">Equal to</option>
+                  <option value="contains">Contains</option>
+                </select>
+                
+                <input type="text" 
+                       x-model="column.formatValue" 
+                       class="w-full bg-gray-600 text-white p-1 rounded text-xs"
+                       placeholder="Condition value">
+                
+                <div class="grid grid-cols-2 gap-1">
+                  <input type="color" 
+                         x-model="column.formatBgColor" 
+                         class="w-full bg-gray-600 rounded text-xs h-6"
+                         title="Background color">
+                  <input type="color" 
+                         x-model="column.formatTextColor" 
+                         class="w-full bg-gray-600 rounded text-xs h-6"
+                         title="Text color">
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Export Options -->
+    <div class="space-y-2">
+      <h4 class="text-sm font-medium text-gray-300">Export Options</h4>
+      
+      <label class="flex items-center space-x-2">
+        <input type="checkbox" x-model="selectedCard.config.allowExportExcel" class="rounded">
+        <span class="text-sm text-gray-300">Allow Excel Export</span>
+      </label>
+      
+      <label class="flex items-center space-x-2">
+        <input type="checkbox" x-model="selectedCard.config.allowExportCSV" class="rounded">
+        <span class="text-sm text-gray-300">Allow CSV Export</span>
+      </label>
+    </div>
+
+  </div>
+</div>

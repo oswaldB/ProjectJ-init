@@ -20,7 +20,8 @@
     { type: 'chat', name: 'Chat', icon: '' },
     { type: 'search', name: 'Search Bar', icon: '' },
     { type: 'stats', name: 'Stats Card', icon: '' },
-    { type: 'text', name: 'Text Card', icon: '' }
+    { type: 'text', name: 'Text Card', icon: '' },
+    { type: 'excel_grid', name: 'Excel Grid', icon: '' }
   ],
   selectedCard: null,
   gridColumns: Array.from({length: 12}, (_, i) => i + 1),
@@ -132,6 +133,11 @@
         backgroundColor: 'bg-gray-800',
         showBorder: false,
         borderColor: 'border-gray-600'
+      },
+      excel_grid: {
+        title: '',
+        dataSource: '',
+        columns: []
       }
     };
 
@@ -199,50 +205,48 @@
   },
 
   async loadDataSources() {
-    try {
-      console.log('=== loadDataSources() called ===');
-      console.log('Stack trace:', new Error().stack);
+    console.log('=== loadDataSources() called ===');
+    console.log('Stack trace:', new Error().stack);
 
-      // Prevent multiple simultaneous calls
-      if (this.dataSourcesLoaded) {
-        console.log('Data sources already loaded, skipping...');
-        return;
-      }
+    // Prevent multiple simultaneous calls
+    if (this.dataSourcesLoaded) {
+      console.log('Data sources already loaded, skipping...');
+      return;
+    }
 
-      this.dataSourcesLoaded = true;
+    this.dataSourcesLoaded = true;
 
-      // Initialize availableDataSources
-      this.availableDataSources = [];
+    // Initialize availableDataSources
+    this.availableDataSources = [];
 
-      // Charger toutes les datasources disponibles depuis les formulaires soumis
-      console.log('About to fetch /pc-analytics-jaffar/forms/api/list');
-      const formsResponse = await fetch('/pc-analytics-jaffar/forms/api/list');
-      console.log('Fetch completed with status:', formsResponse.status);
+    // Charger toutes les datasources disponibles depuis les formulaires soumis
+    console.log('About to fetch /pc-analytics-jaffar/forms/api/list');
+    const formsResponse = await fetch('/pc-analytics-jaffar/forms/api/list');
+    console.log('Fetch completed with status:', formsResponse.status);
 
-      if (formsResponse.ok) {
-        const forms = await formsResponse.json();
-        console.log('Forms loaded:', forms);
+    if (formsResponse.ok) {
+      const forms = await formsResponse.json();
+      console.log('Forms loaded:', forms);
 
-        if (forms && Array.isArray(forms)) {
-          for (const form of forms) {
-            // Add submitted responses
-            this.availableDataSources.push({
-              id: form.id,
-              name: form.name || `Form ${form.id}`,
-              type: 'form',
-              path: `/forms/${form.id}/submitted/`,
-              // Record count is no longer checked
-            });
+      if (forms && Array.isArray(forms)) {
+        for (const form of forms) {
+          // Add submitted responses
+          this.availableDataSources.push({
+            id: form.id,
+            name: form.name || `Form ${form.id}`,
+            type: 'form',
+            path: `/forms/${form.id}/submitted/`,
+            // Record count is no longer checked
+          });
 
-            // Add drafts
-            this.availableDataSources.push({
-              id: `${form.id}_drafts`,
-              name: `${form.name || `Form ${form.id}`} (Drafts)`,
-              type: 'form_drafts',
-              path: `/forms/${form.id}/`,
-              formId: form.id
-            });
-          }
+          // Add drafts
+          this.availableDataSources.push({
+            id: `${form.id}_drafts`,
+            name: `${form.name || `Form ${form.id}`} (Drafts)`,
+            type: 'form_drafts',
+            path: `/forms/${form.id}/`,
+            formId: form.id
+          });
         }
         console.log('Available data sources:', this.availableDataSources);
       } else {
@@ -588,6 +592,69 @@
         this.selectedCard.config.searchFields = [];
       }
     }
+  },
+  async loadExcelDataSourceColumns() {
+    if (!this.selectedCard?.config?.dataSource) return;
+
+    try {
+      const response = await fetch(`/pc-analytics-jaffar/forms/api/config/${this.selectedCard.config.dataSource}`);
+      if (response.ok) {
+        const formConfig = await response.json();
+        const columns = [];
+
+        if (formConfig.fields) {
+          formConfig.fields.forEach(field => {
+            if (field.key && field.type !== 'submit' && field.type !== 'actions') {
+              columns.push({
+                key: field.key,
+                label: field.label || field.key,
+                type: field.type,
+                visible: true,
+                editable: false,
+                required: field.required || false,
+                width: 120,
+                dataType: this.mapFieldTypeToDataType(field.type),
+                conditionalFormatting: false,
+                formatCondition: 'greater',
+                formatValue: '',
+                formatBgColor: '#ffffff',
+                formatTextColor: '#000000'
+              });
+            }
+          });
+        }
+
+        // Add common fields
+        columns.unshift({
+          key: '_id',
+          label: 'ID',
+          type: 'text',
+          visible: false,
+          editable: false,
+          required: false,
+          width: 200,
+          dataType: 'text',
+          conditionalFormatting: false
+        });
+
+        this.selectedCard.config.columns = columns;
+      }
+    } catch (error) {
+      console.error('Failed to load data source columns:', error);
+    }
+  },
+
+  mapFieldTypeToDataType(fieldType) {
+    const mapping = {
+      'number': 'number',
+      'date': 'date',
+      'single_select': 'text',
+      'multiple_checkbox': 'text',
+      'longtext': 'text',
+      'text': 'text',
+      'text_input': 'text'
+    };
+    return mapping[fieldType] || 'text';
   }
 }" x-init="init()">
 
@@ -681,6 +748,11 @@
             <template x-if="card && card.type === 'datatable'">
               <div>
                 {% include "sultan/dashboards/cards/preview/datatable.html" %}
+              </div>
+            </template>
+            <template x-if="card && card.type === 'excel_grid'">
+              <div>
+                {% include "sultan/dashboards/cards/preview/excel_grid.html" %}
               </div>
             </template>
             <template x-if="card && card.type === 'kanban'">
@@ -800,31 +872,43 @@
               {% include "sultan/dashboards/cards/editor/datatable.html" %}
             </div>
           </template>
+
+          <template x-if="selectedCard && selectedCard.type === 'excel_grid'">
+            <div>
+              {% include "sultan/dashboards/cards/editor/excel_grid.html" %}
+            </div>
+          </template>
+
           <template x-if="selectedCard && selectedCard.type === 'kanban'">
             <div>
               {% include "sultan/dashboards/cards/editor/kanban.html" %}
             </div>
           </template>
+
           <template x-if="selectedCard && selectedCard.type === 'actions'">
             <div>
               {% include "sultan/dashboards/cards/editor/actions.html" %}
             </div>
           </template>
+
           <template x-if="selectedCard && selectedCard.type === 'chat'">
             <div>
               {% include "sultan/dashboards/cards/editor/chat.html" %}
             </div>
           </template>
+
           <template x-if="selectedCard && selectedCard.type === 'search'">
             <div>
               {% include "sultan/dashboards/cards/editor/search.html" %}
             </div>
           </template>
+
           <template x-if="selectedCard && selectedCard.type === 'stats'">
             <div>
               {% include "sultan/dashboards/cards/editor/stats.html" %}
             </div>
           </template>
+
           <template x-if="selectedCard && selectedCard.type === 'text'">
             <div>
               {% include "sultan/dashboards/cards/editor/text.html" %}
