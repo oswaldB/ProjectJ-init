@@ -8,8 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-    <div class="container mx-auto p-6" x-data="{
+<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <div class="container mx-auto p-6 flex-1 flex flex-col" x-data="{
         fileKey: new URLSearchParams(window.location.search).get('file'),
         fileUrl: '',
         fileName: '',
@@ -64,11 +64,11 @@
                 <div class="flex space-x-2">
                     <button @click="downloadFile()" 
                             x-show="!loading && !error"
-                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition">
+                            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition">
                         Download
                     </button>
                     <button @click="window.close()" 
-                            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition">
+                            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition">
                         Close
                     </button>
                 </div>
@@ -76,37 +76,41 @@
         </div>
 
         <!-- Loading State -->
-        <div x-show="loading" class="text-center py-12">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p class="mt-4 text-gray-400">Loading file...</p>
+        <div x-show="loading" class="flex-1 flex items-center justify-center">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto"></div>
+                <p class="mt-4 text-gray-400">Loading file...</p>
+            </div>
         </div>
 
         <!-- Error State -->
-        <div x-show="error" class="text-center py-12">
-            <div class="text-red-500 text-6xl mb-4">⚠️</div>
-            <p class="text-red-400 text-lg" x-text="error"></p>
+        <div x-show="error" class="flex-1 flex items-center justify-center">
+            <div class="text-center">
+                <div class="text-red-500 text-6xl mb-4">⚠️</div>
+                <p class="text-red-400 text-lg" x-text="error"></p>
+            </div>
         </div>
 
         <!-- File Content -->
-        <div x-show="!loading && !error" class="bg-gray-800 p-6 rounded-lg">
+        <div x-show="!loading && !error" class="bg-gray-800 p-6 rounded-lg flex-1 flex flex-col">
             <!-- Image Preview -->
             <template x-if="isImage">
-                <div class="text-center">
+                <div class="flex-1 flex items-center justify-center">
                     <img :src="fileUrl" 
                          :alt="fileName"
-                         class="max-w-full max-h-96 mx-auto rounded-lg shadow-lg">
+                         class="max-w-full max-h-full object-contain rounded-lg shadow-lg">
                 </div>
             </template>
 
             <!-- PDF Preview -->
             <template x-if="isPdf">
-                <div class="w-full h-96">
+                <div class="flex-1">
                     <iframe :src="fileUrl" 
                             class="w-full h-full border-0 rounded-lg"
                             type="application/pdf">
                         <p class="text-center text-gray-400">
                             Your browser doesn't support PDF preview. 
-                            <a :href="fileUrl" class="text-blue-400 hover:text-blue-600">Click here to download</a>
+                            <a :href="fileUrl" class="text-red-400 hover:text-red-600">Click here to download</a>
                         </p>
                     </iframe>
                 </div>
@@ -114,14 +118,16 @@
 
             <!-- Other File Types -->
             <template x-if="!isImage && !isPdf">
-                <div class="text-center py-12">
-                    <div class="text-6xl mb-4">📄</div>
-                    <p class="text-gray-400 mb-4">Preview not available for this file type</p>
-                    <p class="text-sm text-gray-500" x-text="`File: ${fileName}`"></p>
-                    <button @click="downloadFile()" 
-                            class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded transition">
-                        Download File
-                    </button>
+                <div class="flex-1 flex items-center justify-center">
+                    <div class="text-center">
+                        <div class="text-6xl mb-4">📄</div>
+                        <p class="text-gray-400 mb-4">Preview not available for this file type</p>
+                        <p class="text-sm text-gray-500 mb-4" x-text="`File: ${fileName}`"></p>
+                        <button @click="downloadFile()" 
+                                class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded transition">
+                            Download File
+                        </button>
+                    </div>
                 </div>
             </template>
         </div>
