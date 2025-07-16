@@ -85,12 +85,15 @@ function responseDetailData() {
       };
 
       try {
-        const response = await fetch(`/pc-analytics-jaffar/forms/api/add-change/${formId}/${responseId}`, {
+        const response = await fetch(`/pc-analytics-jaffar/forms/api/add-comment/${formId}/${responseId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(comment)
+          body: JSON.stringify({
+            comment: this.newComment,
+            author: this.currentUser
+          })
         });
 
         if (response.ok) {
@@ -130,7 +133,7 @@ function responseDetailData() {
           </div>
           <div class="flex gap-2">
             <template x-if="canEditResponse() && !isSubmittedResponse">
-              <a :href="`/pc-analytics-jaffar/forms/edit/${response.responseId?.replace('response-', '')}/${response.responseId}`" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600 text-white">
+              <a :href="`/pc-analytics-jaffar/forms/edit/${config.id}/${response.responseId}`" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600 text-white">
                 Edit Response
               </a>
             </template>
@@ -252,97 +255,95 @@ function responseDetailData() {
           </template>
         </div>
       </div>
-    </div>
-
     <!-- Changes Timeline -->
-    <div class="bg-gray-800 p-6 rounded-lg">
-      <h2 class="text-xl font-bold text-white mb-4">Activity Timeline</h2>
+      <div class="bg-gray-800 p-6 rounded-lg mt-6">
+        <h2 class="text-xl font-bold text-white mb-4">Activity Timeline</h2>
 
-      <!-- Add Comment Section -->
-      <div class="mb-6">
-        <textarea
-          x-model="newComment"
-          placeholder="Add a comment..."
-          class="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
-          rows="3"
-        ></textarea>
-        <div class="flex justify-end mt-2">
-          <button
-            @click="submitComment()"
-            :disabled="!newComment.trim()"
-            class="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 text-white px-4 py-2 rounded"
-          >
-            Add Comment
-          </button>
+        <!-- Add Comment Section -->
+        <div class="mb-6">
+          <textarea
+            x-model="newComment"
+            placeholder="Add a comment..."
+            class="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+            rows="3"
+          ></textarea>
+          <div class="flex justify-end mt-2">
+            <button
+              @click="submitComment()"
+              :disabled="!newComment.trim()"
+              class="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 text-white px-4 py-2 rounded"
+            >
+              Add Comment
+            </button>
+          </div>
         </div>
-      </div>
 
-      <!-- Timeline -->
-      <div class="space-y-4">
-        <template x-for="change in changes.slice().reverse()">
-          <div class="border-l-4 border-blue-500 pl-4 py-2">
-            <div class="flex justify-between items-start">
-              <div class="flex-1">
-                <template x-if="change.type === 'comment'">
-                  <div>
-                    <div class="text-blue-400 font-semibold" x-text="change.author"></div>
-                    <div class="text-gray-300 mt-1" x-text="change.content"></div>
-                  </div>
-                </template>
-
-                <template x-if="change.type === 'field_change'">
-                  <div>
-                    <div class="text-yellow-400 font-semibold" x-text="change.author"></div>
-                    <div class="text-gray-300 mt-1">
-                      <template x-for="(fieldChange, fieldKey) in change.changes">
-                        <div class="mb-2">
-                          <span class="font-medium" x-text="getFieldLabel(fieldKey)"></span>: 
-                          <span class="text-red-400">
-                            <template x-if="Array.isArray(fieldChange.previous)">
-                              <span x-text="fieldChange.previous.join(', ') || '--'"></span>
-                            </template>
-                            <template x-if="!Array.isArray(fieldChange.previous)">
-                              <span x-text="fieldChange.previous || '--'"></span>
-                            </template>
-                          </span>
-                          → 
-                          <span class="text-green-400">
-                            <template x-if="Array.isArray(fieldChange.new)">
-                              <span x-text="fieldChange.new.join(', ') || '--'"></span>
-                            </template>
-                            <template x-if="!Array.isArray(fieldChange.new)">
-                              <span x-text="fieldChange.new || '--'"></span>
-                            </template>
-                          </span>
-                        </div>
-                      </template>
+        <!-- Timeline -->
+        <div class="space-y-4">
+          <template x-for="change in changes.slice().reverse()">
+            <div class="border-l-4 border-blue-500 pl-4 py-2">
+              <div class="flex justify-between items-start">
+                <div class="flex-1">
+                  <template x-if="change.type === 'comment'">
+                    <div>
+                      <div class="text-blue-400 font-semibold" x-text="change.author"></div>
+                      <div class="text-gray-300 mt-1" x-text="change.content"></div>
                     </div>
-                  </div>
-                </template>
+                  </template>
 
-                <template x-if="change.type === 'system'">
-                  <div>
-                    <div class="text-gray-400 font-semibold">System</div>
-                    <div class="text-gray-300 mt-1" x-text="change.content"></div>
-                  </div>
-                </template>
-              </div>
+                  <template x-if="change.type === 'field_change'">
+                    <div>
+                      <div class="text-yellow-400 font-semibold" x-text="change.author"></div>
+                      <div class="text-gray-300 mt-1">
+                        <template x-for="(fieldChange, fieldKey) in change.changes">
+                          <div class="mb-2">
+                            <span class="font-medium" x-text="getFieldLabel(fieldKey)"></span>: 
+                            <span class="text-red-400">
+                              <template x-if="Array.isArray(fieldChange.previous)">
+                                <span x-text="fieldChange.previous.join(', ') || '--'"></span>
+                              </template>
+                              <template x-if="!Array.isArray(fieldChange.previous)">
+                                <span x-text="fieldChange.previous || '--'"></span>
+                              </template>
+                            </span>
+                            → 
+                            <span class="text-green-400">
+                              <template x-if="Array.isArray(fieldChange.new)">
+                                <span x-text="fieldChange.new.join(', ') || '--'"></span>
+                              </template>
+                              <template x-if="!Array.isArray(fieldChange.new)">
+                                <span x-text="fieldChange.new || '--'"></span>
+                              </template>
+                            </span>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
 
-              <div class="text-xs text-gray-400 ml-4">
-                <span x-text="new Date(change.timestamp).toLocaleString()"></span>
+                  <template x-if="change.type === 'system'">
+                    <div>
+                      <div class="text-gray-400 font-semibold">System</div>
+                      <div class="text-gray-300 mt-1" x-text="change.content"></div>
+                    </div>
+                  </template>
+                </div>
+
+                <div class="text-xs text-gray-400 ml-4">
+                  <span x-text="new Date(change.timestamp).toLocaleString()"></span>
+                </div>
               </div>
             </div>
-          </div>
-        </template>
+          </template>
 
-        <template x-if="changes.length === 0">
-          <div class="text-gray-400 text-center py-8">
-            No activity yet
-          </div>
-        </template>
+          <template x-if="changes.length === 0">
+            <div class="text-gray-400 text-center py-8">
+              No activity yet
+            </div>
+          </template>
+        </div>
       </div>
     </div>
-  </div>
 </div>
 
 <script>
