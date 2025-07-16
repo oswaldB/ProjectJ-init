@@ -46,6 +46,13 @@ def forms_validation(form_id):
     """
     return render_template('forms/form.html', form_id=form_id, validation=True)
 
+@forms_blueprint.route('/detail/<form_id>/<response_id>')
+def forms_response_detail(form_id, response_id):
+    """
+    Display response detail page.
+    """
+    return render_template('forms/detail.html', form_id=form_id, response_id=response_id)
+
 @forms_blueprint.route('/api/list', methods=['GET'])
 def api_forms_list():
     """

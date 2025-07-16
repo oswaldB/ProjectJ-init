@@ -1,0 +1,235 @@
+
+{% extends "forms/base.html" %}
+
+{% block title %}Response Detail{% endblock %}
+
+{% block content %}
+
+<script>
+function responseDetailData() {
+  return {
+    response: null,
+    config: null,
+    newComment: '',
+    activityFilter: 'all',
+    currentUser: '',
+    isSubmittedResponse: false,
+
+    async init() {
+      this.currentUser = await localStorage.getItem('author2');
+      const pathParts = window.location.pathname.split('/');
+      const formId = pathParts[pathParts.length - 2];
+      const responseId = pathParts[pathParts.length - 1];
+      
+      const [configResponse, responseResponse] = await Promise.all([
+        fetch(`/pc-analytics-jaffar/forms/api/config/${formId}`),
+        fetch(`/pc-analytics-jaffar/forms/api/get-response/${formId}/${responseId}`)
+      ]);
+
+      this.config = await configResponse.json();
+      this.response = await responseResponse.json();
+
+      // Check if response is from submitted folder
+      const submittedResponse = await fetch(`/pc-analytics-jaffar/forms/api/get-response/${formId}/submitted/${responseId}`);
+      this.isSubmittedResponse = submittedResponse.ok;
+    },
+
+    canEditResponse() {
+      return this.response && this.currentUser === this.response.author?.split(' - ')[0];
+    },
+
+    getFormattedValue(value) {
+      if (!value || value === '') return '--';
+      if (Array.isArray(value)) {
+        if (value.length === 0) return '--';
+        return value.join(', ');
+      }
+      return value;
+    },
+
+    getFieldLabel(fieldKey) {
+      if (!this.config?.fields) return fieldKey;
+      const field = this.config.fields.find(f => f.key === fieldKey);
+      return field ? field.label : fieldKey;
+    },
+
+    isFileField(fieldKey) {
+      if (!this.config?.fields) return false;
+      const field = this.config.fields.find(f => f.key === fieldKey);
+      return field?.type === 'file_upload';
+    },
+
+    getFileName(filePath) {
+      return filePath.split('/').pop();
+    },
+
+    downloadFile(filePath) {
+      // Implementation for file download would go here
+      console.log('Download file:', filePath);
+    }
+  };
+}
+</script>
+
+<div class="p-6"
+  x-data="responseDetailData()"
+  x-init="init()"
+>
+  <template x-if="response && config">
+    <div>
+      <!-- Response Header -->
+      <div class="mb-6">
+        <div class="flex justify-between items-start">
+          <div>
+            <h1 class="text-2xl font-bold text-white" x-text="`Response: ${response.responseId}`"></h1>
+            <div class="mt-2 space-x-2">
+              <!-- Status indicators -->
+              <template x-if="isSubmittedResponse">
+                <span class="bg-green-900 text-green-200 px-2 py-1 rounded-full text-xs">Submitted</span>
+              </template>
+              <template x-if="!isSubmittedResponse">
+                <span class="bg-yellow-900 text-yellow-200 px-2 py-1 rounded-full text-xs">Draft</span>
+              </template>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <template x-if="canEditResponse() && !isSubmittedResponse">
+              <a :href="`/pc-analytics-jaffar/forms/edit/${response.responseId?.replace('response-', '')}/${response.responseId}`" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600 text-white">
+                Edit Response
+              </a>
+            </template>
+            <button @click="window.history.back()" class="bg-gray-500 px-4 py-2 rounded hover:bg-gray-600 text-white">
+              Back
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-4 text-sm text-gray-400">
+          <template x-if="response.author">
+            <span>Created by <span x-text="response.author"></span></span>
+          </template>
+          <template x-if="response.createdAt">
+            <span> on <span x-text="new Date(response.createdAt).toLocaleDateString()"></span></span>
+          </template>
+        </div>
+      </div>
+
+      <!-- Submitted response warning -->
+      <template x-if="isSubmittedResponse">
+        <div class="bg-transparent border-2 border-green-500 text-white p-4 rounded-lg mb-4">
+          <h2 class="text-lg font-bold mb-2">Submitted Response</h2>
+          <p>This response has been submitted and is now read-only.</p>
+        </div>
+      </template>
+
+      <!-- Form Configuration Info -->
+      <div class="bg-gray-800 p-4 rounded-lg mb-6">
+        <h2 class="text-xl font-bold text-white mb-4">Form Information</h2>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-400">Form ID</label>
+            <div class="text-white" x-text="config.id || 'N/A'"></div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-400">Form Name</label>
+            <div class="text-white" x-text="config.name || 'N/A'"></div>
+          </div>
+          <template x-if="config.description">
+            <div class="col-span-2">
+              <label class="block text-sm font-medium text-gray-400">Description</label>
+              <div class="text-white" x-text="config.description"></div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Response Answers -->
+      <div class="bg-gray-800 p-4 rounded-lg mb-6">
+        <h2 class="text-xl font-bold text-white mb-4">Response Data</h2>
+        <template x-if="response.answers && Object.keys(response.answers).length > 0">
+          <div class="grid grid-cols-1 gap-4">
+            <template x-for="[fieldKey, value] in Object.entries(response.answers)" :key="fieldKey">
+              <div class="border-b border-gray-700 pb-4">
+                <label class="block text-sm font-medium text-gray-400 mb-2" x-text="getFieldLabel(fieldKey)"></label>
+                
+                <!-- File field handling -->
+                <template x-if="isFileField(fieldKey) && Array.isArray(value)">
+                  <div class="space-y-2">
+                    <template x-for="filePath in value" :key="filePath">
+                      <div class="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
+                        <span class="text-white" x-text="getFileName(filePath)"></span>
+                        <button @click="downloadFile(filePath)" class="text-blue-400 hover:text-blue-300 text-sm">
+                          Download
+                        </button>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+                
+                <!-- Regular field handling -->
+                <template x-if="!isFileField(fieldKey)">
+                  <div>
+                    <template x-if="typeof value === 'string' && value.includes('<p>')">
+                      <div x-html="value" class="prose prose-invert text-white"></div>
+                    </template>
+                    <template x-if="!(typeof value === 'string' && value.includes('<p>'))">
+                      <div class="text-white" x-text="getFormattedValue(value)"></div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+        </template>
+        <template x-if="!response.answers || Object.keys(response.answers).length === 0">
+          <div class="text-gray-400 text-center py-4">
+            No response data available
+          </div>
+        </template>
+      </div>
+
+      <!-- Technical Information -->
+      <div class="bg-gray-800 p-4 rounded-lg">
+        <h2 class="text-xl font-bold text-white mb-4">Technical Information</h2>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <label class="block text-sm font-medium text-gray-400">Response ID</label>
+            <div class="text-white font-mono" x-text="response.responseId"></div>
+          </div>
+          <template x-if="response.formId">
+            <div>
+              <label class="block text-sm font-medium text-gray-400">Form ID</label>
+              <div class="text-white font-mono" x-text="response.formId"></div>
+            </div>
+          </template>
+          <template x-if="response.status">
+            <div>
+              <label class="block text-sm font-medium text-gray-400">Status</label>
+              <div class="text-white" x-text="response.status"></div>
+            </div>
+          </template>
+          <template x-if="response.createdAt">
+            <div>
+              <label class="block text-sm font-medium text-gray-400">Created At</label>
+              <div class="text-white" x-text="new Date(response.createdAt).toLocaleString()"></div>
+            </div>
+          </template>
+          <template x-if="response.updatedAt">
+            <div>
+              <label class="block text-sm font-medium text-gray-400">Updated At</label>
+              <div class="text-white" x-text="new Date(response.updatedAt).toLocaleString()"></div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Loading state -->
+  <template x-if="!response || !config">
+    <div class="text-center py-8">
+      <div class="text-gray-400">Loading response details...</div>
+    </div>
+  </template>
+</div>
+{% endblock %}
