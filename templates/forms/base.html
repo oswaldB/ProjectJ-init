@@ -85,6 +85,13 @@
       }
       </style>
     <script>
+        // Initialize Alpine.js store
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('formSettings', {
+                showMenu: true // default value
+            });
+        });
+
         const currentPath = window.location.pathname;
         if (!localStorage.getItem('author2') && !currentPath.includes('login')) {
             const currentUrl = currentPath + window.location.search;
@@ -125,6 +132,13 @@
                             window.Alpine.store('formSettings', {
                                 showMenu: window.showFormMenu
                             });
+                        } else {
+                            // If Alpine is not ready yet, wait for it
+                            document.addEventListener('alpine:init', () => {
+                                window.Alpine.store('formSettings', {
+                                    showMenu: window.showFormMenu
+                                });
+                            });
                         }
                     }
                 } catch (error) {
@@ -138,7 +152,8 @@
 <body class="bg-gray-900 text-white" 
       x-data="{ 
           saving: false, 
-          demoMode: localStorage.getItem('demoMode') === null ? true : localStorage.getItem('demoMode') === 'true' 
+          demoMode: localStorage.getItem('demoMode') === null ? true : localStorage.getItem('demoMode') === 'true',
+          get showMenu() { return this.$store.formSettings?.showMenu !== false; }
       }" 
     >
     <!-- Demo Mode Toggle -->
@@ -164,7 +179,7 @@
     </div>
     <div class="min-h-screen flex">
         <!-- Sidebar Menu -->
-        <template x-if="window.showFormMenu !== false">
+        <template x-if="showMenu">
           <aside class="fixed inset-y-0 left-0 w-64 bg-gray-800 border-r border-gray-700 z-40">
             <div class="flex flex-col h-full">
               <!-- Header -->
@@ -181,7 +196,7 @@
         </template>
 
         <!-- Main Content -->
-        <div class="flex-1" :class="window.showFormMenu !== false ? 'ml-64' : ''">
+        <div class="flex-1" :class="showMenu ? 'ml-64' : ''">
 
             <!-- Main Content Area -->
             <main class="p-6 mt-4">
