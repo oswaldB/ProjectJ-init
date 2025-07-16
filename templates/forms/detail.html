@@ -189,7 +189,7 @@ function responseDetailData() {
                     <template x-for="filePath in response.answers[field.key]" :key="filePath">
                       <div class="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
                         <span class="text-white" x-text="getFileName(filePath)"></span>
-                        <button @click="downloadFile(filePath)" class="text-blue-400 hover:text-blue-300 text-sm">
+                        <button @click="downloadFile(filePath)" class="text-red-400 hover:text-red-300 text-sm">
                           Download
                         </button>
                       </div>
@@ -321,7 +321,7 @@ function responseDetailData() {
 
                   <template x-if="change.type === 'system' || change.type === 'creation' || change.type === 'submission'">
                     <div>
-                      <div class="text-blue-400 font-semibold" x-text="change.author"></div>
+                      <div class="text-red-400 font-semibold" x-text="change.author"></div>
                       <div class="text-gray-300 mt-1" x-text="change.content"></div>
                     </div>
                   </template>
