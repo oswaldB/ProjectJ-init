@@ -3,15 +3,19 @@
 {% block title %}Form{% endblock %}
 
 {% block content %}
+<script>
+  window.responseId="{{ response_id }}";
+  window.formId="{{ form_id }}";
+</script>
 <div class="flex justify-center items-center min-h-screen bg-gray-900">
   <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-3xl" x-data="{
     config: null,
     formData: {},
     loading: true,
     saving: false,
-    responseId: null,
+    responseId: window.responseId,
     userName: localStorage.getItem('author2') || 'Anonymous',
-    formId: window.location.pathname.split('/').filter(part => part).pop(),
+    formId: window.formId,
     isValidationMode: {{ 'true' if validation else 'false' }},
 
     async loadConfig() {
