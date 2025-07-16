@@ -1,19 +1,9 @@
 <template x-if="field.type === 'actions'">
-  <div class="space-y-3">
-    <!-- Title -->
-    <div x-show="field.title" class="text-lg font-semibold text-white" x-html="interpolateVariables(field.title || '', formData)"></div>
-
-    <!-- Text Content -->
-    <div x-show="field.text" class="text-gray-300 whitespace-pre-wrap" x-html="interpolateVariables(field.text || '', formData)"></div>
-
-    <!-- Action Buttons -->
-    <div x-show="field.actions && field.actions.length > 0" class="flex flex-wrap gap-2">
-      <template x-for="action in field.actions || []">
-        <a :href="interpolateVariables(action.url || '', formData)" 
-           :target="action.openInNewWindow ? '_blank' : '_self'"
-           class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-colors duration-200 text-sm"
-           x-html="interpolateVariables(action.label || '', formData)">
-        </a>
+  <div class="p-4 border border-red-500 rounded bg-gray-900 space-y-4">
+    <div x-html="field.markdown || ''"></div>
+    <div class="flex flex-wrap gap-2">
+      <template x-for="btn in field.buttons || []">
+        <a :href="btn.url" target="_blank" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition" x-text="btn.label"></a>
       </template>
     </div>
   </div>
