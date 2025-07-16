@@ -701,18 +701,6 @@
                 {% include "sultan/forms/partials/editor/file_upload.html" %}
                 {% include "sultan/forms/partials/editor/multiple_checkbox.html" %}
 
-                <!-- Input Editor -->
-                <template x-if="field.type === 'text' || field.type === 'text_input'">
-                  <div class="mt-4 space-y-2">
-                    <div class="p-2 border border-gray-600 rounded">
-                      <label class="flex items-center space-x-2">
-                        <input type="checkbox" x-model="field.readOnly" class="form-checkbox text-blue-600">
-                        <span class="text-sm font-medium text-blue-300">Read-only (non modifiable)</span>
-                      </label>
-                    </div>
-                  </div>
-                </template>
-
                 <div class="space-y-2">
                   <label class="block text-sm font-medium text-gray-300">Question Title</label>
                   <input type="text" x-model.debounce.500ms="field.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question title">
