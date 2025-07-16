@@ -243,16 +243,28 @@
                 </div>
               </div>
 
-              <!-- HTML Content Option -->
+              <!-- Column Type Configuration -->
               <div class="border-t border-gray-600 pt-3">
-                <label class="flex items-center space-x-2 mb-2">
-                  <input type="checkbox" 
-                         x-model="column.isHtml" 
-                         class="rounded">
-                  <span class="text-sm text-gray-300">Content contains HTML</span>
-                </label>
-                <div x-show="column.isHtml" class="text-xs text-gray-400">
-                  <em>Enable this if the column content contains HTML formatting that should be rendered</em>
+                <label class="block text-xs text-gray-400 mb-1">Column Type</label>
+                <select x-model="column.type" 
+                        x-init="column.type = column.type || 'text'"
+                        class="w-full bg-gray-600 text-white text-sm p-2 rounded border border-gray-500 mb-2">
+                  <option value="text">Text</option>
+                  <option value="files">Files</option>
+                  <option value="html">HTML Content</option>
+                </select>
+                
+                <!-- Help text for each type -->
+                <div class="text-xs text-gray-400">
+                  <div x-show="column.type === 'text'">
+                    <em>Standard text display</em>
+                  </div>
+                  <div x-show="column.type === 'files'">
+                    <em>Display file icons with download links</em>
+                  </div>
+                  <div x-show="column.type === 'html'">
+                    <em>Render content as HTML (be careful with user input)</em>
+                  </div>
                 </div>
               </div>
 

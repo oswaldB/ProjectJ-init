@@ -698,46 +698,38 @@
           <div class="grid gap-2 text-xs text-gray-300 py-2 border-b border-gray-600" :style="`grid-template-columns: repeat(${((card.config.columns || []).filter(col => col.visible).length + (card.config.actionsColumns || []).length)}, minmax(80px, 200px))`">
             <template x-for="(column, index) in (card.config.columns || []).filter(col => col.visible)" :key="column.key">
               <div class="break-words overflow-wrap-anywhere">
+                <!-- Files Type -->
+                <template x-if="column.type === 'files'">
+                  <div class="flex flex-wrap gap-1">
+                    <template x-for="(file, fileIndex) in (Array.isArray(row[column.key]) ? row[column.key] : (row[column.key] ? [row[column.key]] : []))" :key="fileIndex">
+                      <a :href="`/pc-analytics-jaffar/dashboard/attachment/?file=${encodeURIComponent(file)}`" 
+                         target="_blank"
+                         class="text-blue-400 hover:text-blue-600 transition-colors"
+                         title="Open file">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                        </svg>
+                      </a>
+                    </template>
+                  </div>
+                </template>
+
                 <!-- HTML Content -->
-                <template x-if="column.isHtml && !Array.isArray(row[column.key]) && row[column.key] !== null && row[column.key] !== undefined">
+                <template x-if="column.type === 'html' && !Array.isArray(row[column.key]) && row[column.key] !== null && row[column.key] !== undefined">
                   <div x-html="row[column.key]" class="whitespace-pre-wrap"></div>
                 </template>
-                <!-- Array Content -->
-                <template x-if="!column.isHtml && Array.isArray(row[column.key])">
-                  <span x-text="row[column.key].join(', ')" class="whitespace-pre-wrap"></span>
-                </template>
-                <!-- Column Type Specific Rendering -->
-            <template x-if="column.type === 'actions'">
-              <div class="flex flex-wrap gap-1">
-                <template x-for="(action, actionIndex) in (card.config.actionsColumns || [])" :key="actionIndex">
-                  <button 
-                    @click="window.open(processButtonUrl(action.url, row), action.openInNewWindow ? '_blank' : '_self')"
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs"
-                    x-text="action.label || 'Action'">
-                  </button>
-                </template>
-              </div>
-            </template>
 
-            <template x-if="column.type === 'files'">
-              <div class="flex flex-wrap gap-1">
-                <template x-for="(file, fileIndex) in (Array.isArray(row[column.key]) ? row[column.key] : (row[column.key] ? [row[column.key]] : []))" :key="fileIndex">
-                  <a :href="`/pc-analytics-jaffar/dashboard/attachment/?file=${encodeURIComponent(file)}`" 
-                     target="_blank"
-                     class="text-blue-400 hover:text-blue-600 transition-colors"
-                     title="Open file">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </a>
+                <!-- Default Text Content (including arrays) -->
+                <template x-if="!column.type || column.type === 'text'">
+                  <div>
+                    <template x-if="Array.isArray(row[column.key])">
+                      <span x-text="row[column.key].join(', ')" class="whitespace-pre-wrap"></span>
+                    </template>
+                    <template x-if="!Array.isArray(row[column.key])">
+                      <span x-text="row[column.key]" class="whitespace-pre-wrap"></span>
+                    </template>
+                  </div>
                 </template>
-              </div>
-            </template>
-
-            <!-- Default text display for other column types -->
-            <template x-if="!column.type || (column.type !== 'actions' && column.type !== 'files')">
-              <span x-text="row[column.key]" class="whitespace-pre-wrap"></span>
-            </template>
               </div>
             </template>
             <!-- Actions Columns -->
