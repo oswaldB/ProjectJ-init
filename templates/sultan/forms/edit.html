@@ -457,6 +457,14 @@
   <div class="border-b border-gray-700 p-4 flex items-center justify-between bg-gray-800">
     <div class="flex flex-col">
       <h1 class="text-2xl font-bold text-white">Form Editor</h1>
+      <!-- Warning when form is locked -->
+      <div x-show="form.status === 'Open'" class="mt-2 p-2 bg-red-600 bg-opacity-20 border border-red-500 rounded flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <span class="text-red-300 text-sm">🔒 This form is locked for editing because its status is "Open". Please close it first to make changes.</span>
+      </div>
+
       <!-- Warning for missing submit button -->
       <div x-show="!form.fields.some(field => field.type === 'submit_issue')" class="mt-2 p-2 bg-yellow-600 bg-opacity-20 border border-yellow-500 rounded flex items-center space-x-2">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -477,6 +485,11 @@
               this.showValidation = false;
             }
             this.previousStatus = form.status;
+            
+            // Automatically save when status changes
+            this.$nextTick(() => {
+              saveForm();
+            });
           }
         }" x-init="previousStatus = form.status">
           <button @click="shareDropdownOpen = !shareDropdownOpen" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Share</button>
@@ -504,7 +517,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.732 15.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
-                  At least 2 people must validate the form publication, including 1 GCB3.
+                  To reopen this form, at least 2 people must validate the change, including 1 GCB3.
                 </div>
 
                 <div class="space-y-2">
@@ -557,7 +570,10 @@
       </div>
 
       <div class="space-y-4">
-          <input type="text" x-model.debounce.500ms="form.name" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Form Name">
+          <input type="text" x-model.debounce.500ms="form.name" 
+                 :disabled="form.status === 'Open'"
+                 class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 disabled:bg-gray-700 disabled:cursor-not-allowed" 
+                 placeholder="Form Name">
 
           <!-- Privacy and Menu Settings -->
           <div class="bg-gray-800 p-4 rounded border border-gray-600">
@@ -569,7 +585,8 @@
                 <input 
                   type="checkbox" 
                   x-model="form.isPrivate"
-                  class="bg-gray-700 border-gray-600"
+                  :disabled="form.status === 'Open'"
+                  class="bg-gray-700 border-gray-600 disabled:cursor-not-allowed"
                 >
                 <span class="text-white text-sm">Private Form</span>
               </div>
@@ -581,7 +598,8 @@
                 <input 
                   type="checkbox" 
                   x-model="form.showMenu"
-                  class="bg-gray-700 border-gray-600"
+                  :disabled="form.status === 'Open'"
+                  class="bg-gray-700 border-gray-600 disabled:cursor-not-allowed"
                 >
                 <span class="text-white text-sm">Show Menu in Form</span>
               </div>
@@ -597,12 +615,14 @@
                       <input 
                         type="email" 
                         x-model="form.authorizedUsers[index]"
+                        :disabled="form.status === 'Open'"
                         placeholder="user@example.com"
-                        class="flex-1 bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 text-sm"
+                        class="flex-1 bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 text-sm disabled:cursor-not-allowed"
                       >
                       <button 
                         @click="form.authorizedUsers.splice(index, 1)"
-                        class="bg-red-500 text-white px-2 py-2 rounded hover:bg-red-600"
+                        :disabled="form.status === 'Open'"
+                        class="bg-red-500 text-white px-2 py-2 rounded hover:bg-red-600 disabled:bg-gray-600 disabled:cursor-not-allowed"
                       >
                         ×
                       </button>
@@ -610,7 +630,8 @@
                   </template>
                   <button 
                     @click="if (!form.authorizedUsers) form.authorizedUsers = []; form.authorizedUsers.push('')"
-                    class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 text-sm w-full"
+                    :disabled="form.status === 'Open'"
+                    class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 text-sm w-full disabled:bg-gray-600 disabled:cursor-not-allowed"
                   >
                     + Add User
                   </button>
@@ -640,15 +661,17 @@
                 </span>
                 <div class="flex space-x-2">
                   <button @click="if(index > 0) { const items = [...form.fields]; const item = items[index]; items.splice(index, 1); items.splice(index - 1, 0, item); form.fields = items; }"
+                          :disabled="form.status === 'Open'"
                           class="text-gray-400 hover:text-white"
-                          :class="{ 'opacity-50 cursor-not-allowed': index === 0 }">
+                          :class="{ 'opacity-50 cursor-not-allowed': index === 0 || form.status === 'Open' }">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
                     </svg>
                   </button>
                   <button @click="if(index < form.fields.length - 1) { const items = [...form.fields]; const item = items[index]; items.splice(index, 1); items.splice(index + 1, 0, item); form.fields = items; }"
+                          :disabled="form.status === 'Open'"
                           class="text-gray-400 hover:text-white"
-                          :class="{ 'opacity-50 cursor-not-allowed': index === form.fields.length - 1 }">
+                          :class="{ 'opacity-50 cursor-not-allowed': index === form.fields.length - 1 || form.status === 'Open' }">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
@@ -656,10 +679,12 @@
                 </div>
               </div>
               <div class="p-4">
-              <div class="absolute left-0 top-0 h-full w-1 cursor-move bg-gray-600 group-hover:bg-blue-500"></div>
+              <div class="absolute left-0 top-0 h-full w-1 cursor-move bg-gray-600 group-hover:bg-blue-500" :class="{ 'cursor-not-allowed': form.status === 'Open' }"></div>
               <div class="flex justify-between items-center mb-2">
                 <div class="flex items-center space-x-4">
-                  <button @click="toggleField(index)" class="text-blue-400 hover:text-blue-300">
+                  <button @click="toggleField(index)" 
+                          :disabled="form.status === 'Open'"
+                          class="text-blue-400 hover:text-blue-300 disabled:text-gray-500 disabled:cursor-not-allowed">
                     <svg x-show="!field.open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -673,7 +698,9 @@
                     <span class="text-gray-400 text-xs" x-text="field.key || ''"></span>
                   </div>
                 </div>
-                <button @click="form.fields.splice(index, 1)" class="text-red-400 hover:text-red-300">
+                <button @click="form.fields.splice(index, 1)" 
+                        :disabled="form.status === 'Open'"
+                        class="text-red-400 hover:text-red-300 disabled:text-gray-500 disabled:cursor-not-allowed">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -681,7 +708,9 @@
               </div>
               <div class="space-y-2" x-show="field.open">
                 <div>
-                  <select x-model="field.type" class="bg-gray-800 text-white p-2 rounded border border-gray-600">
+                  <select x-model="field.type" 
+                          :disabled="form.status === 'Open'"
+                          class="bg-gray-800 text-white p-2 rounded border border-gray-600 disabled:bg-gray-700 disabled:cursor-not-allowed">
                     <option value="text">Text Input</option>
                     <option value="number">Number</option>
                     <option value="single_select">Single Select</option>
@@ -704,7 +733,10 @@
 
                 <div class="space-y-2">
                   <label class="block text-sm font-medium text-gray-300">Question Title</label>
-                  <input type="text" x-model.debounce.500ms="field.label" class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Enter the question title">
+                  <input type="text" x-model.debounce.500ms="field.label" 
+                         :disabled="form.status === 'Open'"
+                         class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 disabled:bg-gray-700 disabled:cursor-not-allowed" 
+                         placeholder="Enter the question title">
                 </div>
 
                 <div class="mt-4 space-y-2">
@@ -724,7 +756,9 @@
                 </div>
 
                 <label class="flex items-center space-x-2 text-white mt-4">
-                  <input type="checkbox" x-model="field.required" class="bg-gray-800 border-gray-600">
+                  <input type="checkbox" x-model="field.required" 
+                         :disabled="form.status === 'Open'"
+                         class="bg-gray-800 border-gray-600 disabled:cursor-not-allowed">
                   <span>Required</span>
                 </label>
 
@@ -733,7 +767,8 @@
                   <div class="relative">
                     <input type="text" x-model="field.key"
                            @input="field.key = field.key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')"
-                           class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+                           :disabled="form.status === 'Open'"
+                           class="w-full bg-gray-800 text-white p-2 rounded border border-gray-600 disabled:bg-gray-700 disabled:cursor-not-allowed"
                            placeholder="Question Key (slug format)">
                   </div>
                   <div x-show="!field.key" class="mt-2 p-2 rounded border border-yellow-500 bg-black bg-[repeating-linear-gradient(45deg, black, black 10px, yellow 10px, yellow 20px)] text-yellow-300 flex items-center space-x-2">
@@ -762,28 +797,37 @@
                     <div class="border-b border-gray-600 pb-4">
                       <h3 class="text-lg font-medium text-white mb-2">Options</h3>
                       <div class="space-y-2">
-                        <button @click="field.options = field.options || []; field.options.push({name: '', show: '', questions: []})" class="text-blue-400 hover:text-blue-300">Add Option</button>
+                        <button @click="field.options = field.options || []; field.options.push({name: '', show: '', questions: []})" 
+                                :disabled="form.status === 'Open'"
+                                class="text-blue-400 hover:text-blue-300 disabled:text-gray-500 disabled:cursor-not-allowed">Add Option</button>
                         <template x-for="(option, optIndex) in field.options">
 
                             <div class="flex space-x-2 items-center">
                               <div class="flex flex-col space-y-1">
                                 <button @click="if(optIndex > 0) { const items = [...field.options]; const item = items[optIndex]; items.splice(optIndex, 1); items.splice(optIndex - 1, 0, item); field.options = items; }"
+                                        :disabled="form.status === 'Open'"
                                         class="text-gray-400 hover:text-white"
-                                        :class="{ 'opacity-50 cursor-not-allowed': optIndex === 0 }">
+                                        :class="{ 'opacity-50 cursor-not-allowed': optIndex === 0 || form.status === 'Open' }">
                                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
                                   </svg>
                                 </button>
                                 <button @click="if(optIndex < field.options.length - 1) { const items = [...field.options]; const item = items[optIndex]; items.splice(optIndex, 1); items.splice(optIndex + 1, 0, item); field.options = items; }"
+                                        :disabled="form.status === 'Open'"
                                         class="text-gray-400 hover:text-white"
-                                        :class="{ 'opacity-50 cursor-not-allowed': optIndex === field.options.length - 1 }">
+                                        :class="{ 'opacity-50 cursor-not-allowed': optIndex === field.options.length - 1 || form.status === 'Open' }">
                                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                   </svg>
                                 </button>
                               </div>
-                              <input type="text" x-model.debounce.500ms="option.name" class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" placeholder="Option Name">
-                              <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-300">×</button>
+                              <input type="text" x-model.debounce.500ms="option.name" 
+                                     :disabled="form.status === 'Open'"
+                                     class="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600 disabled:bg-gray-700 disabled:cursor-not-allowed" 
+                                     placeholder="Option Name">
+                              <button @click="field.options.splice(optIndex, 1)" 
+                                      :disabled="form.status === 'Open'"
+                                      class="text-red-400 hover:text-red-300 disabled:text-gray-500 disabled:cursor-not-allowed">×</button>
                             </div>
 
                         </template>
@@ -800,8 +844,12 @@
         </div>
 
         <div class="flex gap-2">
-          <button @click="addField()" class="flex-1 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Add Field</button>
-          <button @click="form.fields.forEach(field => field.open = false)" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-500">Close All</button>
+          <button @click="addField()" 
+                  :disabled="form.status === 'Open'"
+                  class="flex-1 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 disabled:bg-gray-600 disabled:cursor-not-allowed">Add Field</button>
+          <button @click="form.fields.forEach(field => field.open = false)" 
+                  :disabled="form.status === 'Open'"
+                  class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-500 disabled:bg-gray-700 disabled:cursor-not-allowed">Close All</button>
         </div>
       </div>
     </div>
