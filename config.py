@@ -33,12 +33,19 @@ def restore_local_to_s3():
         for file in files:
             local_path = os.path.join(root, file)
             s3_key = os.path.relpath(local_path, LOCAL_BUCKET_DIR)
-            with open(local_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-                try:
-                    s3.put_object(Bucket=BUCKET_NAME, Key=s3_key, Body=content)
-                except Exception as e:
-                    print(f"Failed to restore {s3_key} to S3: {e}")
+            try:
+                # Try to read as text first (for JSON files)
+                if file.endswith('.json'):
+                    with open(local_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        s3.put_object(Bucket=BUCKET_NAME, Key=s3_key, Body=content)
+                else:
+                    # Read as binary for other files (PDFs, etc.)
+                    with open(local_path, 'rb') as f:
+                        content = f.read()
+                        s3.put_object(Bucket=BUCKET_NAME, Key=s3_key, Body=content)
+            except Exception as e:
+                print(f"Failed to restore {s3_key} to S3: {e}")
 
 # Initialize S3 with local data
 restore_local_to_s3()
