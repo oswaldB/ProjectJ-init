@@ -1,1 +1,1 @@
-{"fields": [], "id": "forms-1752654968777", "name": "Sultan form approval", "status": "Open"}
+{"fields": [{"type": "actions", "label": "", "description": "", "required": false, "key": "", "options": [], "open": true, "autoSelect": false, "autoSelectKey": "", "autoSelectComparator": "equals", "autoSelectValue": "", "autoSelectOption": "", "dataSource": "", "actionButtons": [], "resultsPerPage": 3, "searchPlaceholder": "Search...", "markdown": "<p>Hello you</p>"}], "id": "forms-1752654968777", "name": "Sultan form approval", "status": "Open"}
